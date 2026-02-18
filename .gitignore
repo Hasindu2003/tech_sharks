@@ -362,7 +362,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# ASP.NET Core - Development settings (may contain local secrets/connection strings)
+# ASP.NET Core - Settings files (may contain secrets/connection strings)
+appsettings.json
 appsettings.Development.json
 
 # Local databases (SQLite, etc.)
