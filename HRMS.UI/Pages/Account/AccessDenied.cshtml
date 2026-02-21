@@ -1,0 +1,42 @@
+@page
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Access Denied – HRMS</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <style>
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', sans-serif;
+            color: #fff;
+            text-align: center;
+        }
+        .code { font-size: 5rem; font-weight: 800; color: #e94560; line-height: 1; }
+        .message { font-size: 1.2rem; color: rgba(255,255,255,0.6); margin: 1rem 0 2rem; }
+        .btn-back {
+            background: linear-gradient(135deg, #e94560, #c0392b);
+            border: none; border-radius: 10px;
+            padding: 0.65rem 2rem; font-weight: 600; color: #fff;
+            text-decoration: none; display: inline-block;
+        }
+        .btn-back:hover { opacity: 0.88; color: #fff; }
+    </style>
+</head>
+<body>
+<div>
+    <div class="code">403</div>
+    <div class="message">You do not have permission to access this page.</div>
+    <a class="btn-back" asp-page="/Index">Go to Home</a>
+</div>
+</body>
+</html>
