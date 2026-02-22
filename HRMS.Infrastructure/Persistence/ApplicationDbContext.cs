@@ -20,6 +20,8 @@ using HRMS.Domain.Entities.Training;
 // Transfer
 using HRMS.Domain.Entities.Transfer;
 
+
+
 namespace HRMS.Infrastructure.Persistence
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -62,6 +64,7 @@ namespace HRMS.Infrastructure.Persistence
         // ---------------- Transfer ----------------
         public DbSet<EmployeeTransfer> EmployeeTransfers { get; set; } = null!;
         public DbSet<TransferApproval> TransferApprovals { get; set; } = null!;
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

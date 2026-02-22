@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        new MySqlServerVersion(new Version(8, 0, 0))
     )
 );
 
@@ -45,6 +45,8 @@ builder.Services.ConfigureApplicationCookie(options =>
 // Add Razor Pages
 builder.Services.AddRazorPages();
 
+
+
 var app = builder.Build();
 
 // Seed roles and default admin user
@@ -76,6 +78,23 @@ using (var scope = app.Services.CreateScope())
         var result = await userManager.CreateAsync(adminUser, adminPassword);
         if (result.Succeeded)
             await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+
+    // Seed default HR Manager user
+    const string hrEmail = "hr@hrms.local";
+    const string hrPassword = "HrManager@123";
+
+    if (await userManager.FindByEmailAsync(hrEmail) is null)
+    {
+        var hrUser = new ApplicationUser
+        {
+            UserName = hrEmail,
+            Email = hrEmail,
+            EmailConfirmed = true
+        };
+        var hrResult = await userManager.CreateAsync(hrUser, hrPassword);
+        if (hrResult.Succeeded)
+            await userManager.AddToRoleAsync(hrUser, "HR Manager");
     }
 }
 

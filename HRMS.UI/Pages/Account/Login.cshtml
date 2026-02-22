@@ -1,7 +1,7 @@
 @page
 @model HRMS.UI.Pages.Account.LoginModel
 @{
-    ViewData["Title"] = "Login";
+    ViewData["Title"] = "Sign In";
     Layout = null;
 }
 <!DOCTYPE html>
@@ -9,100 +9,570 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login – HRMS</title>
+    <title>Sign in to HRMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <style>
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            min-height: 100vh;
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            font-family: 'Manrope', sans-serif;
+            background: #f6f8f7;
+        }
+
+        .login-wrapper {
+            display: flex;
+            height: 100vh;
+            min-height: 600px;
+        }
+
+        /* ── LEFT PANEL ── */
+        .left-panel {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 35%;
+            min-width: 360px;
+            max-width: 672px;
+            background: #ffffff;
+            padding: 48px 80px;
+            overflow: hidden;
+        }
+
+        .logo-wrap {
+            position: absolute;
+            top: 33px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 312px;
+            text-align: center;
+        }
+
+        .logo-wrap img {
+            height: 60px;
+            width: auto;
+        }
+
+        /* Fallback text logo */
+        .logo-text {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo-text .logo-leaf {
+            width: 44px;
+            height: 44px;
+        }
+        .logo-text .logo-name {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.1;
+        }
+        .logo-text .logo-name strong {
+            font-size: 18px;
+            font-weight: 700;
+            color: #10823c;
+            letter-spacing: 1px;
+        }
+        .logo-text .logo-name span {
+            font-size: 11px;
+            font-weight: 600;
+            color: #111814;
+            letter-spacing: 2px;
+        }
+        .logo-sub {
+            font-size: 10px;
+            color: #638871;
+            margin-top: 2px;
+        }
+
+        .form-container {
+            width: 100%;
+            max-width: 460px;
+        }
+
+        .form-heading {
+            font-size: 36px;
+            font-weight: 700;
+            color: #111814;
+            letter-spacing: -0.9px;
+            line-height: 40px;
+            margin-bottom: 8px;
+        }
+
+        .form-subtitle {
+            font-size: 16px;
+            font-weight: 400;
+            color: #638871;
+            line-height: 24px;
+            margin-bottom: 32px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111814;
+            line-height: 21px;
+            margin-bottom: 8px;
+        }
+
+        .input-wrap {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-field {
+            position: relative;
+        }
+
+        .form-input {
+            width: 100%;
+            height: 56px;
+            padding: 17px 48px 17px 17px;
+            border: 1px solid #dce5df;
+            border-radius: 8px;
+            background: #ffffff;
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 400;
+            color: #111814;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-input::placeholder {
+            color: #638871;
+        }
+
+        .form-input:focus {
+            border-color: #10823c;
+            box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.12);
+        }
+
+        .form-input.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .input-icon {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #638871;
+            pointer-events: none;
+        }
+
+        .eye-toggle {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            color: #638871;
+            display: flex;
+            align-items: center;
+        }
+
+        .options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            border: 1px solid #dce5df;
+            border-radius: 4px;
+            accent-color: #10823c;
+            cursor: pointer;
+        }
+
+        .checkbox-label span {
+            font-size: 14px;
+            font-weight: 500;
+            color: #638871;
+            line-height: 20px;
+        }
+
+        .forgot-link {
+            font-size: 14px;
+            font-weight: 600;
+            color: #10823c;
+            text-decoration: none;
+            line-height: 20px;
+        }
+
+        .forgot-link:hover {
+            text-decoration: underline;
+        }
+
+        .btn-signin {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: 'Segoe UI', sans-serif;
-        }
-        .login-card {
-            background: rgba(255,255,255,0.05);
-            backdrop-filter: blur(16px);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 20px;
-            padding: 2.5rem 2rem;
+            gap: 8px;
             width: 100%;
-            max-width: 420px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            color: #fff;
-        }
-        .login-card h2 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.25rem;
-        }
-        .login-card p.subtitle {
-            color: rgba(255,255,255,0.55);
-            font-size: 0.9rem;
-            margin-bottom: 1.8rem;
-        }
-        .form-label { color: rgba(255,255,255,0.8); font-size: 0.85rem; }
-        .form-control {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: #fff;
-            border-radius: 10px;
-            padding: 0.65rem 1rem;
-        }
-        .form-control:focus {
-            background: rgba(255,255,255,0.12);
-            border-color: #e94560;
-            box-shadow: 0 0 0 3px rgba(233,69,96,0.25);
-            color: #fff;
-        }
-        .form-control::placeholder { color: rgba(255,255,255,0.3); }
-        .btn-login {
-            background: linear-gradient(135deg, #e94560, #c0392b);
+            height: 56px;
+            background: #10823c;
+            color: #ffffff;
             border: none;
-            border-radius: 10px;
-            padding: 0.7rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-            transition: opacity 0.2s;
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            line-height: 24px;
+            cursor: pointer;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background 0.2s, box-shadow 0.2s;
+            margin-top: 12px;
         }
-        .btn-login:hover { opacity: 0.88; }
-        .divider { border-color: rgba(255,255,255,0.12); margin: 1.2rem 0; }
-        a.link { color: #e94560; text-decoration: none; }
-        a.link:hover { text-decoration: underline; }
-        .brand { font-size: 1rem; color: rgba(255,255,255,0.4); margin-bottom: 1.5rem; letter-spacing: 0.08em; text-transform: uppercase; }
+
+        .btn-signin:hover {
+            background: #0d6e32;
+            box-shadow: 0 4px 12px rgba(16, 130, 60, 0.3);
+        }
+
+        .btn-signin svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .support-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 24px;
+        }
+
+        .support-row p {
+            font-size: 14px;
+            font-weight: 400;
+            color: #638871;
+            margin: 0;
+        }
+
+        .support-link {
+            font-size: 14px;
+            font-weight: 500;
+            color: #10823c;
+            text-decoration: none;
+        }
+
+        .support-link:hover { text-decoration: underline; }
+
+        .copyright {
+            position: absolute;
+            bottom: 32px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 400;
+            color: rgba(99, 136, 113, 0.5);
+        }
+
+        .validation-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            color: #dc3545;
+            font-size: 14px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+        }
+
+        /* ── RIGHT PANEL ── */
+        .right-panel {
+            flex: 1;
+            position: relative;
+            background: #f6f8f7;
+            padding: 32px;
+            overflow: hidden;
+        }
+
+        .right-inner {
+            position: relative;
+            height: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .right-bg {
+            position: absolute;
+            inset: 0;
+            background-image: url('/images/login-bg.webp');
+            background-size: cover;
+            background-position: center top;
+        }
+
+        .right-gradient {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                to top,
+                rgba(16, 130, 60, 0.9) 0%,
+                rgba(16, 130, 60, 0.4) 50%,
+                rgba(16, 130, 60, 0) 100%
+            );
+            mix-blend-mode: multiply;
+        }
+
+        .right-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .right-content {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 373px;
+            padding: 0 64px;
+        }
+
+        .slide-indicator {
+            width: 64px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 9999px;
+            margin-top: 64px;
+            margin-bottom: 20px;
+        }
+
+        .slide-heading {
+            font-size: 36px;    
+            font-weight: 700;
+            color: #ffffff;
+            line-height: 45px;
+            margin-bottom: 16px;
+        }
+
+        .slide-desc {
+            font-size: 20px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 32.5px;
+            max-width: 576px;
+        }
+
+        .slide-dots {
+            display: flex;
+            gap: 10px;
+            margin-top: 32px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .dot.active { background: #ffffff; }
+        .dot.inactive { background: rgba(255, 255, 255, 0.4); }
+
+        /* ── Tablet (≤ 1024px) ── */
+        @@media (max-width: 1024px) {
+            .left-panel { padding: 48px 48px; min-width: 320px; }
+        }
+
+        /* ── Hide right panel on smaller screens (≤ 900px) ── */
+        @@media (max-width: 900px) {
+            .right-panel { display: none; }
+            .left-panel {
+                width: 100%;
+                max-width: 100%;
+                padding: 48px 48px;
+            }
+            .logo-wrap {
+                position: static;
+                transform: none;
+                width: auto;
+                text-align: left;
+                margin-bottom: 32px;
+            }
+            .form-container { max-width: 100%; }
+        }
+
+        /* ── Mobile (≤ 600px) ── */
+        @@media (max-width: 600px) {
+            .left-panel { padding: 32px 24px; }
+            .form-heading { font-size: 28px; line-height: 34px; }
+            .form-subtitle { font-size: 14px; }
+            .logo-wrap img { height: 50px; }
+        }
+
+        /* ── Small mobile (≤ 400px) ── */
+        @@media (max-width: 400px) {
+            .left-panel { padding: 24px 16px; }
+            .form-heading { font-size: 24px; }
+            .btn-signin { height: 48px; font-size: 15px; }
+            .form-input { height: 48px; font-size: 15px; }
+        }
     </style>
 </head>
 <body>
-<div class="login-card">
-    <div class="brand">HRMS</div>
-    <h2>Welcome back</h2>
-    <p class="subtitle">Sign in to your account</p>
+<div class="login-wrapper">
 
-    <form method="post">
-        <div asp-validation-summary="ModelOnly" class="text-danger mb-3" style="font-size:0.85rem;"></div>
+    <!-- ── LEFT PANEL ── -->
+    <div class="left-panel">
 
-        <div class="mb-3">
-            <label asp-for="Input.Email" class="form-label">Email address</label>
-            <input asp-for="Input.Email" class="form-control" placeholder="you@example.com" autocomplete="email" />
-            <span asp-validation-for="Input.Email" class="text-danger" style="font-size:0.8rem;"></span>
+        <!-- Kanrich Limited Logo -->
+        <div class="logo-wrap">
+            <img src="/images/logo.webp" alt="Kanrich Limited" style="height:65px; width:auto;" />
         </div>
 
-        <div class="mb-4">
-            <label asp-for="Input.Password" class="form-label">Password</label>
-            <input asp-for="Input.Password" class="form-control" placeholder="••••••••" autocomplete="current-password" />
-            <span asp-validation-for="Input.Password" class="text-danger" style="font-size:0.8rem;"></span>
+        <!-- Form Container -->
+        <div class="form-container">
+            <h1 class="form-heading">Sign in to HRMS</h1>
+            <p class="form-subtitle">Welcome back! Please enter your details.</p>
+
+            <form method="post" novalidate>
+                @Html.AntiForgeryToken()
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert-error">
+                        <div asp-validation-summary="ModelOnly"></div>
+                    </div>
+                }
+
+                <!-- Username / Email -->
+                <div class="input-wrap">
+                    <label asp-for="Input.Email" class="field-label">Username or Email</label>
+                    <div class="input-field">
+                        <input asp-for="Input.Email"
+                               class="form-input"
+                               placeholder="Enter your username"
+                               autocomplete="email" />
+                        <span class="input-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </span>
+                    </div>
+                    <span asp-validation-for="Input.Email" class="validation-message"></span>
+                </div>
+
+                <!-- Password -->
+                <div class="input-wrap">
+                    <label asp-for="Input.Password" class="field-label">Password</label>
+                    <div class="input-field">
+                        <input asp-for="Input.Password"
+                               id="passwordInput"
+                               class="form-input"
+                               placeholder="Enter your password"
+                               autocomplete="current-password" />
+                        <button type="button" class="eye-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
+                            <svg id="eyeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <span asp-validation-for="Input.Password" class="validation-message"></span>
+                </div>
+
+                <!-- Remember me + Forgot password -->
+                <div class="options-row">
+                    <label class="checkbox-label">
+                        <input asp-for="Input.RememberMe" type="checkbox" />
+                        <span>Remember for 30 days</span>
+                    </label>
+                    <a href="#" class="forgot-link">Forgot password?</a>
+                </div>
+
+                <!-- Sign In Button -->
+                <button type="submit" class="btn-signin">
+                    Sign In
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"/>
+                        <polyline points="12 5 19 12 12 19"/>
+                    </svg>
+                </button>
+            </form>
+
+            <!-- Support -->
+            <div class="support-row">
+                <p>Having trouble logging in?</p>
+                <a href="#" class="support-link">Contact Support</a>
+            </div>
         </div>
 
-        <div class="mb-3 form-check">
-            <input asp-for="Input.RememberMe" class="form-check-input" type="checkbox" />
-            <label asp-for="Input.RememberMe" class="form-check-label" style="color:rgba(255,255,255,0.6);font-size:0.85rem;">Remember me</label>
-        </div>
+        <div class="copyright">© 2026 Kanrich Limited. All rights reserved.</div>
+    </div>
 
-        <button type="submit" class="btn btn-danger btn-login w-100 text-white">Sign In</button>
-    </form>
+    <!-- ── RIGHT PANEL ── -->
+    <div class="right-panel">
+        <div class="right-inner">
+            <div class="right-bg"></div>
+            <div class="right-gradient"></div>
+            <div class="right-overlay"></div>
+            <div class="right-content">
+                <div class="slide-indicator"></div>
+                <h2 class="slide-heading">
+                    Streamline your workforce<br />management.
+                </h2>
+                <p class="slide-desc">
+                    Experience the next generation of HR tools designed for<br />
+                    efficiency, clarity, and growth at Kanrich Limited.
+                </p>
+                <div class="slide-dots">
+                    <div class="dot active"></div>
+                    <div class="dot inactive"></div>
+                    <div class="dot inactive"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
+<script>
+    function togglePassword() {
+        const input = document.getElementById('passwordInput');
+        const icon = document.getElementById('eyeIcon');
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.innerHTML = `
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>`;
+        } else {
+            input.type = 'password';
+            icon.innerHTML = `
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>`;
+        }
+    }
+</script>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>

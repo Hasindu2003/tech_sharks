@@ -1,70 +1,242 @@
-﻿<!DOCTYPE html>
+﻿@{
+    // Pages set ViewData["ActiveNav"] to highlight the current nav item.
+    // e.g. ViewData["ActiveNav"] = "Calendar";
+    var activeNav = ViewData["ActiveNav"]?.ToString() ?? "";
+}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HRMS.UI</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/HRMS.UI.styles.css" asp-append-version="true" />
+    <title>@ViewData["Title"] – Kanrich HRMS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            font-family: 'Manrope', sans-serif;
+            background: #f6f8f7;
+            color: #151811;
+        }
+
+        /* ── LAYOUT ── */
+        .app-shell { display: flex; height: 100vh; overflow: hidden; }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: 250px; min-width: 250px;
+            background: #ffffff;
+            border-right: 1px solid #e2e5dc;
+            display: flex; flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+        .sidebar-top { padding: 20px 16px 22px; }
+        .sidebar-brand { margin-bottom: 32px; }
+        .sidebar-brand-title { font-size: 16px; font-weight: 700; color: #151811; line-height: 24px; }
+        .sidebar-brand-sub  { font-size: 12px; font-weight: 400; color: #7a8863; line-height: 18px; }
+
+        .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .nav-item a {
+            display: flex; align-items: center; gap: 10px;
+            padding: 10px 12px; border-radius: 8px;
+            text-decoration: none; font-size: 14px; font-weight: 500; color: #151811;
+            transition: background 0.15s;
+        }
+        .nav-item a:hover { background: #f6f8f7; }
+        .nav-item.active a { background: rgba(16,130,60,.1); color: #10823c; font-weight: 700; }
+        .nav-icon { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: inherit; }
+        .nav-icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; }
+
+        .sidebar-bottom { padding: 20px 16px; }
+        .btn-logout {
+            display: flex; align-items: center; justify-content: center;
+            width: 100%; height: 40px;
+            background: #10823c; color: #ffffff; border: none; border-radius: 8px;
+            font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 700;
+            cursor: pointer; text-decoration: none; transition: background 0.2s;
+        }
+        .btn-logout:hover { background: #0d6e32; color: #fff; }
+
+        /* ── MAIN COLUMN ── */
+        .main-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+
+        /* ── TOPBAR ── */
+        .topbar {
+            background: #ffffff; border-bottom: 1px solid #e2e5dc;
+            padding: 16px 32px 17px; display: flex; align-items: center; gap: 20px;
+            flex-shrink: 0; z-index: 10;
+        }
+        .topbar-logo   { height: 44px; width: auto; flex-shrink: 0; }
+        .topbar-title  { flex: 1; text-align: center; font-size: 20px; font-weight: 700; color: #151811; letter-spacing: -0.3px; }
+        .topbar-right  { display: flex; align-items: center; gap: 8px; }
+
+        .icon-btn {
+            position: relative; width: 44px; height: 44px;
+            background: #f6f8f7; border: none; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.15s;
+        }
+        .icon-btn:hover { background: #e2e5dc; }
+        .icon-btn svg  { width: 22px; height: 22px; stroke: #151811; fill: none; }
+        .notif-dot {
+            position: absolute; top: 8px; right: 8px;
+            width: 8px; height: 8px;
+            background: #ef4444; border: 1.5px solid #fff; border-radius: 50%;
+        }
+        .avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            background: linear-gradient(135deg, #10823c, #0d6e32);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 14px; font-weight: 700;
+            box-shadow: 0 0 0 2px rgba(16,130,60,.2); cursor: pointer;
+        }
+
+        /* ── PAGE CONTENT ── */
+        .page-content { flex: 1; overflow: auto; background: #f6f8f7; }
+    </style>
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">HRMS.UI</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item">
-                                <span class="nav-link text-dark">Hello, @User.Identity.Name!</span>
-                            </li>
-                            <li class="nav-item">
-                                <form method="post" asp-page="/Account/Logout">
-                                    <button type="submit" class="nav-link btn btn-link text-dark px-0">Logout</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Login">Login</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
+<div class="app-shell">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="sidebar">
+        <div class="sidebar-top">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-title">Kanrich HRMS</div>
+                <div class="sidebar-brand-sub">Admin Portal</div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
+            <nav>
+                <ul class="nav-list">
+                    <li class="nav-item @(activeNav == "Dashboard" ? "active" : "")">
+                        <a href="/Index">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                                    <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                                </svg>
+                            </span>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item @(activeNav == "Employees" ? "active" : "")">
+                        <a href="/Employees">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </span>
+                            Employees
+                        </a>
+                    </li>
+                    <li class="nav-item @(activeNav == "Training" ? "active" : "")">
+                        <a href="#">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                            </span>
+                            Training
+                        </a>
+                    </li>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - HRMS.UI - <a asp-area="" asp-page="/Privacy">Privacy</a>
+                    <li class="nav-item @(activeNav == "Transfers" ? "active" : "")">
+                        <a href="#">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="17 1 21 5 17 9"/>
+                                    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
+                                    <polyline points="7 23 3 19 7 15"/>
+                                    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                                </svg>
+                            </span>
+                            Transfers
+                        </a>
+                    </li>
+                    <li class="nav-item @(activeNav == "Welfare" ? "active" : "")">
+                        <a href="#">
+                            <span class="nav-icon">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                </svg>
+                            </span>
+                            Welfare
+                        </a>
+                    </li>
+                    @if (User.IsInRole("Admin") || User.IsInRole("HR Manager"))
+                    {
+                        <li class="nav-item @(activeNav == "Settings" ? "active" : "")">
+                            <a href="/Settings">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="3"/>
+                                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                                    </svg>
+                                </span>
+                                Settings
+                            </a>
+                        </li>
+                    }
+                </ul>
+            </nav>
         </div>
-    </footer>
+        <div class="sidebar-bottom">
+            <form method="post" action="/Account/Logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-logout">Log Out</button>
+            </form>
+        </div>
+    </aside>
 
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+    <!-- ── MAIN COLUMN ── -->
+    <div class="main-col">
 
-    @await RenderSectionAsync("Scripts", required: false)
+        <!-- TOPBAR -->
+        <header class="topbar">
+            <img src="/images/logo.webp" alt="Kanrich Limited" class="topbar-logo" />
+            <div class="topbar-title">@(ViewData["PageTitle"] ?? ViewData["Title"])</div>
+            <div class="topbar-right">
+                <button class="icon-btn" title="Notifications">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="notif-dot"></span>
+                </button>
+                @if (User.IsInRole("Admin") || User.IsInRole("HR Manager"))
+                {
+                    <a href="/Settings" class="icon-btn" title="Settings" style="color: inherit;">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                        </svg>
+                    </a>
+                }
+                
+                @{
+                    var roleText = User.IsInRole("Admin") ? "Admin" : 
+                                  User.IsInRole("HR Manager") ? "HR Manager" : "Employee";
+                    var userInitial = User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U";
+                }
+                <div class="avatar" title="@roleText">@userInitial</div>
+            </div>
+        </header>
+
+        <!-- PAGE CONTENT -->
+        <div class="page-content">
+            @RenderBody()
+        </div>
+
+    </div><!-- /main-col -->
+</div><!-- /app-shell -->
+
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
