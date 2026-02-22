@@ -372,3 +372,5 @@ appsettings.Development.json
 
 # Visual Studio backup temp files
 *.Backup.tmp
+# Google service account key
+HRMS.UI/google-calendar-key.json

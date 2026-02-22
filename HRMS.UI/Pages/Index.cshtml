@@ -1,10 +1,868 @@
-ï»¿@page
-@model IndexModel
+@page
+@model HRMS.UI.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Dashboard";
+    ViewData["PageTitle"] = "Dashboard Overview";
+    ViewData["ActiveNav"] = "Dashboard";
+    Layout = "_Layout";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@section Styles {
+<style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            height: 100%;
+            font-family: 'Manrope', sans-serif;
+            background: #f6f8f7;
+            color: #151811;
+        }
+
+        /* -- LAYOUT -- */
+        .app-shell {
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* -- SIDEBAR -- */
+        .sidebar {
+            width: 250px;
+            min-width: 250px;
+            background: #ffffff;
+            border-right: 1px solid #e2e5dc;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .sidebar-top {
+            padding: 20px 16px 22px;
+        }
+
+        .sidebar-brand {
+            margin-bottom: 32px;
+        }
+
+        .sidebar-brand-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #151811;
+            line-height: 24px;
+        }
+
+        .sidebar-brand-sub {
+            font-size: 12px;
+            font-weight: 400;
+            color: #7a8863;
+            line-height: 18px;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .nav-item a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #151811;
+            transition: background 0.15s;
+        }
+
+        .nav-item a:hover {
+            background: #f6f8f7;
+        }
+
+        .nav-item.active a {
+            background: rgba(16, 130, 60, 0.1);
+            color: #10823c;
+            font-weight: 700;
+        }
+
+        .nav-icon {
+            flex-shrink: 0;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+        }
+
+        .nav-icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; }
+
+        .sidebar-bottom {
+            padding: 20px 16px;
+        }
+
+        .btn-logout {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 40px;
+            background: #10823c;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.21px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-logout:hover { background: #0d6e32; color: #fff; }
+
+        /* -- MAIN COLUMN -- */
+        .main-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        /* -- HEADER -- */
+        .topbar {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e5dc;
+            padding: 16px 32px 17px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .topbar-logo {
+            height: 44px;
+            width: auto;
+            flex-shrink: 0;
+        }
+
+        .topbar-title {
+            flex: 1;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #151811;
+            letter-spacing: -0.3px;
+            line-height: 25px;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f6f8f7;
+            border-radius: 8px;
+            height: 44px;
+            padding: 0 16px;
+            gap: 8px;
+            min-width: 200px;
+        }
+
+        .search-box svg { width: 20px; height: 20px; color: #7a8863; }
+
+        .search-box input {
+            border: none;
+            background: transparent;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            color: #151811;
+            outline: none;
+            width: 100%;
+        }
+
+        .search-box input::placeholder { color: #7a8863; }
+
+        .icon-btn {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            background: #f6f8f7;
+            border: none;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .icon-btn:hover { background: #e2e5dc; }
+        .icon-btn svg { width: 22px; height: 22px; stroke: #151811; fill: none; }
+
+        .notif-dot {
+            position: absolute;
+            top: 8px; right: 8px;
+            width: 8px; height: 8px;
+            background: #ef4444;
+            border: 1.5px solid #fff;
+            border-radius: 50%;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10823c, #0d6e32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: 0 0 0 2px rgba(16, 130, 60, 0.2);
+            cursor: pointer;
+        }
+
+        /* -- CONTENT -- */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            background: #f6f8f7;
+            padding: 32px 32px;
+        }
+
+        .content-inner {
+            max-width: 1400px;
+        }
+
+        /* -- GREETING ROW -- */
+        .greeting-row {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .greeting-name {
+            font-size: 28px;
+            font-weight: 800;
+            color: #151811;
+            line-height: 36px;
+        }
+
+        .greeting-sub {
+            font-size: 15px;
+            font-weight: 400;
+            color: #7a8863;
+            line-height: 24px;
+            margin-top: 4px;
+        }
+
+        .date-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            height: 42px;
+            padding: 0 16px;
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #7a8863;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .date-badge svg { width: 16px; height: 16px; stroke: #7a8863; fill: none; }
+
+        /* -- STAT CARDS -- */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 16px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .stat-card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .stat-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .stat-icon svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+        .stat-icon.green { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+        .stat-icon.orange { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+        .stat-icon.blue { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+        .stat-icon.purple { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+
+        .stat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .stat-badge.up { background: rgba(7, 136, 26, 0.1); color: #07881a; }
+        .stat-badge.alert { background: rgba(231, 27, 8, 0.1); color: #e71b08; }
+        .stat-badge.new { background: rgba(7, 136, 26, 0.1); color: #07881a; }
+
+        .stat-label {
+            font-size: 13px;
+            font-weight: 500;
+            color: #7a8863;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: #151811;
+            line-height: 1.2;
+        }
+
+        /* -- BOTTOM ROW -- */
+        .bottom-row {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* -- SECTION TITLE -- */
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #151811;
+            line-height: 28px;
+            margin-bottom: 14px;
+        }
+
+        /* -- QUICK ACTIONS -- */
+        .quick-actions-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 28px;
+        }
+
+        .action-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 16px;
+            padding: 16px;
+            cursor: pointer;
+            text-decoration: none;
+            flex: 1;
+            min-width: 160px;
+            transition: box-shadow 0.15s, border-color 0.15s;
+        }
+
+        .action-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-color: rgba(16, 130, 60, 0.3);
+        }
+
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(16, 130, 60, 0.1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #10823c;
+        }
+
+        .action-icon svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+
+        .action-text {}
+        .action-title { font-size: 14px; font-weight: 700; color: #151811; }
+        .action-sub { font-size: 12px; font-weight: 400; color: #7a8863; margin-top: 2px; }
+
+        /* -- PENDING APPROVALS -- */
+        .approvals-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .view-all-link {
+            font-size: 14px;
+            font-weight: 700;
+            color: #10823c;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .view-all-link:hover { text-decoration: underline; }
+        .view-all-link svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+
+        .table-wrap {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #f8f9fa;
+        }
+
+        thead th {
+            padding: 14px 20px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: #7a8863;
+            border-bottom: 1px solid #e2e5dc;
+        }
+
+        thead th:last-child { text-align: right; }
+
+        tbody tr { border-bottom: 1px solid #e2e5dc; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #fafafa; }
+
+        tbody td {
+            padding: 14px 20px;
+            font-size: 14px;
+            color: #7a8863;
+            vertical-align: middle;
+        }
+
+        .employee-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .emp-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a8d5b5, #7bc496);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: #10823c;
+            flex-shrink: 0;
+        }
+
+        .emp-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #151811;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-badge.approved {
+            background: rgba(16, 130, 60, 0.1);
+            color: #10823c;
+        }
+
+        .btn-review {
+            padding: 7px 18px;
+            background: rgba(16, 130, 60, 0.05);
+            border: 1px solid rgba(16, 130, 60, 0.2);
+            border-radius: 8px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #10823c;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .btn-review:hover { background: rgba(16, 130, 60, 0.12); }
+
+        td:last-child { text-align: right; }
+
+        /* -- EVENTS PANEL -- */
+        .events-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .events-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .event-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .event-date-box {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .event-date-box.green { background: #ffffff; border: 1px solid #e2e5dc; color: #10823c; }
+        .event-date-box.orange { background: #ffedd5; color: #ea580c; }
+        .event-date-box.blue { background: #dbeafe; color: #2563eb; }
+
+        .event-month {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .event-day {
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .event-info {}
+        .event-title { font-size: 14px; font-weight: 700; color: #151811; }
+        .event-time { font-size: 12px; font-weight: 400; color: #7a8863; margin-top: 2px; }
+
+        .event-divider {
+            height: 1px;
+            background: #e2e5dc;
+        }
+
+        .btn-calendar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 42px;
+            border: 1px solid rgba(16, 130, 60, 0.2);
+            border-radius: 12px;
+            background: transparent;
+            font-family: 'Manrope', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            color: #10823c;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.15s;
+        }
+
+        .btn-calendar:hover { background: rgba(16, 130, 60, 0.05); }
+</style>
+}
+
+        </header>
+
+        <!-- CONTENT -->
+        <main class="content">
+            <div class="content-inner">
+
+                <!-- GREETING -->
+                <div class="greeting-row">
+                    <div>
+                        <div class="greeting-name">Good Morning, Sahan</div>
+                        <div class="greeting-sub">Here's what's happening at Kanrich Limited today.</div>
+                    </div>
+                    <div class="date-badge">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                            <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+                            <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        @DateTime.Now.ToString("MMM dd, yyyy")
+                    </div>
+                </div>
+
+                <!-- STAT CARDS -->
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-top">
+                            <div class="stat-icon green">
+                                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                            </div>
+                            <span class="stat-badge up">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                                3%
+                            </span>
+                        </div>
+                        <div class="stat-label">Total Employees</div>
+                        <div class="stat-value">142</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-top">
+                            <div class="stat-icon orange">
+                                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <line x1="23" y1="11" x2="17" y2="11"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="stat-label">On Leave Today</div>
+                        <div class="stat-value">8</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-top">
+                            <div class="stat-icon blue">
+                                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                    <polyline points="14 2 14 8 20 8"/>
+                                    <line x1="16" y1="13" x2="8" y2="13"/>
+                                    <line x1="16" y1="17" x2="8" y2="17"/>
+                                </svg>
+                            </div>
+                            <span class="stat-badge alert">+2 new</span>
+                        </div>
+                        <div class="stat-label">Pending Requests</div>
+                        <div class="stat-value">12</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-top">
+                            <div class="stat-icon purple">
+                                <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                </svg>
+                            </div>
+                            <span class="stat-badge new">+1 role</span>
+                        </div>
+                        <div class="stat-label">Open Positions</div>
+                        <div class="stat-value">4</div>
+                    </div>
+                </div>
+
+                <!-- BOTTOM ROW -->
+                <div class="bottom-row">
+
+                    <!-- LEFT: Quick Actions + Pending Approvals -->
+                    <div>
+                        <!-- QUICK ACTIONS -->
+                        <div class="section-title">Quick Actions</div>
+                        <div class="quick-actions-grid">
+                            <a href="#" class="action-card">
+                                <div class="action-icon">
+                                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="8.5" cy="7" r="4"/>
+                                        <line x1="20" y1="8" x2="20" y2="14"/>
+                                        <line x1="23" y1="11" x2="17" y2="11"/>
+                                    </svg>
+                                </div>
+                                <div class="action-text">
+                                    <div class="action-title">New Hire</div>
+                                    <div class="action-sub">Onboard employee</div>
+                                </div>
+                            </a>
+                            <a href="#" class="action-card">
+                                <div class="action-icon">
+                                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                        <line x1="16" y1="2" x2="16" y2="6"/>
+                                        <line x1="8" y1="2" x2="8" y2="6"/>
+                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                        <polyline points="9 16 11 18 15 14"/>
+                                    </svg>
+                                </div>
+                                <div class="action-text">
+                                    <div class="action-title">Approve Leaves</div>
+                                    <div class="action-sub">12 pending</div>
+                                </div>
+                            </a>
+                            <a href="#" class="action-card">
+                                <div class="action-icon">
+                                    <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="12" y1="1" x2="12" y2="23"/>
+                                        <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                                    </svg>
+                                </div>
+                                <div class="action-text">
+                                    <div class="action-title">Run Payroll</div>
+                                    <div class="action-sub">Next: Oct 30</div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- PENDING APPROVALS -->
+                        <div class="approvals-header">
+                            <div class="section-title" style="margin-bottom:0;">Pending Approvals</div>
+                            <a href="#" class="view-all-link">
+                                View All Request
+                                <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="9 18 15 12 9 6"/>
+                                </svg>
+                            </a>
+                        </div>
+                        <div class="table-wrap">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Employee</th>
+                                        <th>Request Type</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="employee-cell">
+                                                <div class="emp-avatar">RD</div>
+                                                <span class="emp-name">Ruwan Deshapriya</span>
+                                            </div>
+                                        </td>
+                                        <td>Sick Leave</td>
+                                        <td>Aug 24 - Aug 25</td>
+                                        <td><span class="status-badge pending">Pending</span></td>
+                                        <td><button class="btn-review">Review</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="employee-cell">
+                                                <div class="emp-avatar">PS</div>
+                                                <span class="emp-name">Pabani Senarath</span>
+                                            </div>
+                                        </td>
+                                        <td>Expense Claim</td>
+                                        <td>Aug 22</td>
+                                        <td><span class="status-badge pending">Pending</span></td>
+                                        <td><button class="btn-review">Review</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="employee-cell">
+                                                <div class="emp-avatar" style="background:linear-gradient(135deg,#b5c4a8,#8fa882);">HS</div>
+                                                <span class="emp-name">Harshana Senevirathne</span>
+                                            </div>
+                                        </td>
+                                        <td>Vacation</td>
+                                        <td>Sep 01 - Sep 10</td>
+                                        <td><span class="status-badge pending">Pending</span></td>
+                                        <td><button class="btn-review">Review</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: Upcoming Events -->
+                    <div>
+                        <div class="section-title">Upcoming Events</div>
+                        <div class="events-panel">
+                            <div class="events-card">
+                                <div class="event-item">
+                                    <div class="event-date-box green">
+                                        <span class="event-month">Aug</span>
+                                        <span class="event-day">25</span>
+                                    </div>
+                                    <div class="event-info">
+                                        <div class="event-title">Design Team Meeting</div>
+                                        <div class="event-time">10:00 AM – 11:30 AM</div>
+                                    </div>
+                                </div>
+                                <div class="event-divider"></div>
+                                <div class="event-item">
+                                    <div class="event-date-box orange">
+                                        <span class="event-month">Aug</span>
+                                        <span class="event-day">28</span>
+                                    </div>
+                                    <div class="event-info">
+                                        <div class="event-title">Monthly Town Hall</div>
+                                        <div class="event-time">02:00 PM – 03:00 PM</div>
+                                    </div>
+                                </div>
+                                <div class="event-divider"></div>
+                                <div class="event-item">
+                                    <div class="event-date-box blue">
+                                        <span class="event-month">Sep</span>
+                                        <span class="event-day">02</span>
+                                    </div>
+                                    <div class="event-info">
+                                        <div class="event-title">Labor Day Holiday</div>
+                                        <div class="event-time">All Day</div>
+                                    </div>
+                                </div>
+                                <a href="#" class="btn-calendar">View Full Calendar</a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>

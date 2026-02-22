@@ -1,0 +1,44 @@
+@page
+@model HRMS.UI.Pages.Settings.Branches.CreateModel
+@{
+    ViewData["Title"] = "Add Branch";
+    ViewData["PageTitle"] = "Settings / Branches";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+<style>
+    .form-container { padding: 24px; max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #e2e5dc; border-radius: 6px; font-family: inherit; }
+    .btn-primary { background: #10823c; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
+</style>
+
+<div style="padding: 24px;">
+    <div class="form-container">
+        <h2 style="margin-bottom: 24px;">Add New Branch</h2>
+        
+        <form method="post">
+            <div class="form-group">
+                <label>Branch Name</label>
+                <input type="text" asp-for="NewBranch.Name" class="form-control" required placeholder="e.g. Headquarters" />
+            </div>
+            
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" asp-for="NewBranch.Location" class="form-control" required placeholder="e.g. Colombo, Sri Lanka" />
+            </div>
+
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" asp-for="NewBranch.Capacity" class="form-control" required min="1" value="50" />
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/Settings/Branches" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Branch</button>
+            </div>
+        </form>
+    </div>
+</div>
