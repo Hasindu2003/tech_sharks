@@ -1,0 +1,164 @@
+@page
+@model HRMS.UI.Pages.Training.ManageModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Manage Training Requests - Kanrich HRMS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --main-green: #15803d; 
+            --active-green-bg: #f0fdf4;
+            --bg-body: #f8fafc;
+            --text-gray: #6b7280;
+        }
+
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-body); margin: 0; }
+
+        .sidebar {
+            width: var(--sidebar-width); height: 100vh; background: #ffffff;
+            position: fixed; left: 0; top: 0; z-index: 1000;
+            border-right: 1px solid #e2e8f0; display: flex; flex-direction: column;
+        }
+        .sidebar-header { padding: 20px 25px; }
+        .sidebar-logo-text { font-weight: 700; color: #111827; font-size: 1rem; margin-bottom: 0; }
+        .sidebar-sub-text { font-size: 0.7rem; color: var(--text-gray); }
+
+        .nav-list { padding: 20px 10px; flex-grow: 1; }
+        .nav-link {
+            display: flex; align-items: center; padding: 12px 20px; color: #4b5563;
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px; font-size: 0.9rem;
+        }
+        .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        .nav-link:hover, .nav-link.active { background: var(--active-green-bg); color: var(--main-green); }
+
+        .logout-container { padding: 20px; }
+        .logout-btn {
+            background: #15803d; color: white !important; width: 100%;
+            border-radius: 8px; justify-content: center;
+        }
+
+        .main-wrapper { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        
+        .top-navbar {
+            height: 70px; background: #ffffff; padding: 0 40px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 900;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .topbar-title { font-size: 1.2rem; font-weight: 600; color: #111827; margin: 0; }
+        .topbar-actions { display: flex; align-items: center; gap: 20px; }
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        .page-content { padding: 35px; }
+        
+        .content-card { 
+            background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
+            margin-bottom: 30px; overflow: hidden;
+        }
+        .card-title-area { padding: 20px 25px; border-bottom: 1px solid #f8fafc; }
+        .card-title-area h5 { font-weight: 700; color: #1e293b; margin-bottom: 2px; font-size: 1rem; }
+        .card-title-area p { color: #94a3b8; font-size: 0.75rem; margin: 0; }
+
+        .custom-table thead th { 
+            background: #fcfcfc; color: #94a3b8; font-size: 0.65rem; 
+            text-transform: uppercase; font-weight: 600; padding: 12px 25px;
+        }
+        .custom-table td { padding: 15px 25px; border-bottom: 1px solid #f8fafc; vertical-align: middle; font-size: 0.85rem; }
+
+        .status-badge {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600;
+        }
+        .status-pending { background: #fef9c3; color: #a16207; }
+        .status-approved { background: #dcfce7; color: #15803d; }
+        .status-rejected { background: #fee2e2; color: #b91c1c; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <p class="sidebar-logo-text">Kanrich HRMS</p>
+            <p class="sidebar-sub-text">Admin Portal</p>
+        </div>
+        <nav class="nav-list">
+            <a asp-page="./Dashboard" class="nav-link"><i class="bi bi-grid"></i> Dashboard</a>
+            <a href="#" class="nav-link"><i class="bi bi-people"></i> Employees</a>
+            <a asp-page="./Dashboard" class="nav-link active"><i class="bi bi-mortarboard"></i> Training</a>
+            <a href="#" class="nav-link"><i class="bi bi-calendar3"></i> Calendar</a>
+            <a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i> Separation</a>
+        </nav>
+        <div class="logout-container">
+            <a href="#" class="nav-link logout-btn">Log Out</a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <h1 class="topbar-title">Manage Training Requests</h1>
+            <div class="topbar-actions">
+                <div class="icon-btn" style="position:relative; color:#6b7280;"><i class="bi bi-bell"></i></div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=15803d&color=fff" class="user-avatar" alt="User">
+            </div>
+        </header>
+
+        <main class="page-content">
+            <div class="content-card shadow-sm">
+                <div class="card-title-area">
+                    <h5>All Training Applications</h5>
+                    <p>Review and manage employee requests for training programs.</p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table custom-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Program Name</th>
+                                <th>Requested Date</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (!Model.TrainingRequests.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No requests found.</td>
+                                </tr>
+                            }
+                            @foreach (var item in Model.TrainingRequests)
+                            {
+                                <tr>
+                                    <td><div class="fw-bold text-dark">@item.EmployeeName</div></td>
+                                    <td class="text-muted">@item.ProgramName</td>
+                                    <td class="text-muted">@item.Date</td>
+                                    <td>
+                                        <span class="status-badge @(item.Status == "Pending" ? "status-pending" : item.Status == "Approved" ? "status-approved" : "status-rejected")">
+                                            @item.Status
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <a asp-page="./Details" asp-route-id="@item.Id" 
+                                           class="btn btn-sm px-3 fw-bold" 
+                                           style="background-color: var(--active-green-bg); color: var(--main-green); border: 1px solid var(--main-green); border-radius: 6px;">
+                                            View
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

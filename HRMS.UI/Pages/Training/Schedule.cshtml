@@ -1,0 +1,160 @@
+@page
+@model HRMS.UI.Pages.Training.ScheduleModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schedule Training - Kanrich HRMS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --main-green: #15803d; 
+            --active-green-bg: #f0fdf4;
+            --bg-body: #f8fafc;
+            --text-gray: #6b7280;
+        }
+
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-body); margin: 0; }
+        
+        .sidebar { 
+            width: var(--sidebar-width); height: 100vh; background: #ffffff; 
+            position: fixed; left: 0; top: 0; z-index: 1000;
+            border-right: 1px solid #e2e8f0; display: flex; flex-direction: column; 
+        }
+        .sidebar-header { padding: 20px 25px; }
+        .sidebar-logo-text { font-weight: 700; color: #111827; font-size: 1rem; margin-bottom: 0; }
+        .sidebar-sub-text { font-size: 0.7rem; color: var(--text-gray); }
+        
+        .nav-list { padding: 20px 10px; flex-grow: 1; }
+        .nav-link { 
+            display: flex; align-items: center; padding: 12px 20px; color: #4b5563; 
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px; font-size: 0.9rem; 
+        }
+        .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        .nav-link:hover, .nav-link.active { background: var(--active-green-bg); color: var(--main-green); font-weight: 600; }
+
+        .logout-container { padding: 20px; }
+        .logout-btn { background: #15803d; color: white !important; width: 100%; border-radius: 8px; justify-content: center; }
+
+        .main-wrapper { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        
+        .top-navbar { 
+            height: 70px; background: #ffffff; padding: 0 40px; 
+            display: flex; align-items: center; justify-content: space-between; 
+            position: sticky; top: 0; z-index: 900;
+            border-bottom: 1px solid #f1f5f9; 
+        }
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        .page-content { padding: 35px; }
+        .content-card { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 30px; }
+        .emp-selection-list { max-height: 250px; overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 8px; background: #fcfcfc; padding: 10px; }
+        .emp-item { padding: 10px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+        .emp-item:last-child { border-bottom: none; }
+        .emp-name { font-size: 0.85rem; font-weight: 600; color: #1e293b; }
+        .emp-dept { font-size: 0.75rem; color: #64748b; }
+        .btn-schedule { background: var(--main-green); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; }
+        .text-danger { font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <p class="sidebar-logo-text">Kanrich HRMS</p>
+            <p class="sidebar-sub-text">Admin Portal</p>
+        </div>
+        <nav class="nav-list">
+            <a href="/Training/Dashboard" class="nav-link"><i class="bi bi-grid"></i> Dashboard</a>
+            <a href="#" class="nav-link"><i class="bi bi-people"></i> Employees</a>
+            <a href="/Training/Dashboard" class="nav-link active"><i class="bi bi-mortarboard"></i> Training</a>
+            <a href="#" class="nav-link"><i class="bi bi-calendar3"></i> Calendar</a>
+            <a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i> Separation</a>
+        </nav>
+        <div class="logout-container">
+            <a href="#" class="nav-link logout-btn">Log Out</a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <h1 class="fs-5 fw-bold m-0">Schedule Training Session</h1>
+            <div class="d-flex align-items-center gap-3">
+                <div class="text-end d-none d-sm-block">
+                    <p class="small fw-bold m-0">Admin User</p>
+                    <p class="small text-muted m-0" style="font-size: 0.65rem;">HR Department</p>
+                </div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=15803d&color=fff" class="user-avatar" alt="User">
+            </div>
+        </header>
+
+        <main class="page-content">
+            <div class="content-card shadow-sm mx-auto" style="max-width: 850px;">
+                <form method="post">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    
+                    <div class="row g-4">
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Training Program</label>
+                            <select asp-for="SelectedProgramTitle" class="form-select form-select-lg" style="font-size: 0.95rem;" required>
+                                <option value="" selected disabled>Select the approved training title...</option>
+                                @foreach (var program in Model.ApprovedPrograms)
+                                {
+                                    <option value="@program">@program</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Approved Employees</label>
+                            <div class="emp-selection-list">
+                                @if (Model.ApprovedEmployees.Any())
+                                {
+                                    @foreach (var emp in Model.ApprovedEmployees)
+                                    {
+                                        <div class="emp-item">
+                                            <input class="form-check-input" type="checkbox" name="SelectedRequestIds" value="@emp.RequestId">
+                                            <div class="d-flex flex-column">
+                                                <span class="emp-name">@emp.EmployeeName</span>
+                                                <span class="emp-dept">@emp.DepartmentName | Requested: <strong>@emp.TrainingTitle</strong></span>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="p-4 text-center text-muted">No approved requests found.</div>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Date</label>
+                            <input type="date" asp-for="SessionDate" class="form-control" required 
+                                   min="@DateTime.Now.ToString("yyyy-MM-dd")" />
+                            <span asp-validation-for="SessionDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted text-uppercase">Start Time</label>
+                            <input type="time" asp-for="StartTimeValue" class="form-control" required />
+                        </div>
+
+                        <div class="col-12 mt-4 pt-3 border-top">
+                            <button type="submit" class="btn-schedule w-100">
+                                <i class="bi bi-calendar-check me-2"></i> Schedule & Send Notifications
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

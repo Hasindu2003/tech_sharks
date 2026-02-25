@@ -1,0 +1,154 @@
+@page
+@model HRMS.UI.Pages.Training.EvaluateInternModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evaluate Intern - Kanrich HRMS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --main-green: #15803d; 
+            --active-green-bg: #f0fdf4;
+            --bg-body: #f8fafc;
+            --text-gray: #6b7280;
+        }
+
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-body); margin: 0; }
+
+        .sidebar {
+            width: var(--sidebar-width); height: 100vh; background: #ffffff;
+            position: fixed; left: 0; top: 0; z-index: 1000;
+            border-right: 1px solid #e2e8f0; display: flex; flex-direction: column;
+        }
+        .sidebar-header { padding: 20px 25px; }
+        .sidebar-logo-text { font-weight: 700; color: #111827; font-size: 1rem; margin-bottom: 0; }
+        .sidebar-sub-text { font-size: 0.7rem; color: var(--text-gray); }
+
+        .nav-list { padding: 20px 10px; flex-grow: 1; }
+        .nav-link {
+            display: flex; align-items: center; padding: 12px 20px; color: #4b5563;
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px; font-size: 0.9rem;
+        }
+        .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        .nav-link:hover, .nav-link.active { background: var(--active-green-bg); color: var(--main-green); }
+
+        .logout-container { padding: 20px; }
+        .logout-btn {
+            background: #15803d; color: white !important; width: 100%;
+            border-radius: 8px; justify-content: center;
+        }
+
+        .main-wrapper { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        
+        .top-navbar {
+            height: 70px; background: #ffffff; padding: 0 40px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 900;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .topbar-title { font-size: 1.2rem; font-weight: 600; color: #111827; margin: 0; }
+        .topbar-actions { display: flex; align-items: center; gap: 20px; }
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        .page-content { padding: 35px; }
+        
+        .content-card { 
+            background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
+            margin-bottom: 30px; overflow: hidden;
+        }
+        .card-title-area { padding: 20px 25px; border-bottom: 1px solid #f8fafc; }
+        .card-title-area h5 { font-weight: 700; color: #1e293b; margin-bottom: 2px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <p class="sidebar-logo-text">Kanrich HRMS</p>
+            <p class="sidebar-sub-text">Admin Portal</p>
+        </div>
+        <nav class="nav-list">
+            <a href="#" class="nav-link"><i class="bi bi-grid"></i> Dashboard</a>
+            <a href="#" class="nav-link"><i class="bi bi-people"></i> Employees</a>
+            <a href="/Training/Dashboard" class="nav-link active"><i class="bi bi-mortarboard"></i> Training</a>
+            <a href="#" class="nav-link"><i class="bi bi-calendar3"></i> Calendar</a>
+            <a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i> Separation</a>
+        </nav>
+        <div class="logout-container">
+            <a href="#" class="nav-link logout-btn">Log Out</a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <h1 class="topbar-title">Intern Evaluation Form</h1>
+            <div class="topbar-actions">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=15803d&color=fff" class="user-avatar" alt="User">
+            </div>
+        </header>
+
+        <main class="page-content">
+            <div class="content-card">
+                <div class="card-title-area">
+                    <h5>Intern Skills Assessment</h5>
+                    <p class="text-muted small mb-0">Evaluate performance for: <strong>@Model.Intern.FullName</strong> (@Model.Intern.Department)</p>
+                </div>
+                <div class="p-4">
+                    <form method="post">
+                        <input type="hidden" asp-for="Evaluation.EmployeeId" />
+                        
+                        <div class="row g-4">
+                            <div class="col-md-12 mb-2">
+                                <label class="form-label fw-bold small text-success">Select Evaluation Month</label>
+                                <select asp-for="Evaluation.EvaluationMonth" class="form-select border-success" required style="max-width: 300px;">
+                                    <option value="">-- Choose Month --</option>
+                                    @for (int i = 1; i <= 6; i++)
+                                    {
+                                        if (Model.ExistingMonths.Contains(i))
+                                        {
+                                            <option value="@i" disabled style="background-color: #f1f5f9; color: #94a3b8;">Month @i (Already Evaluated)</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@i">Month @i</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Technical Skills (0-100)</label>
+                                <input type="number" asp-for="Evaluation.TechnicalSkillsScore" class="form-control" min="0" max="100" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Communication (0-100)</label>
+                                <input type="number" asp-for="Evaluation.CommunicationScore" class="form-control" min="0" max="100" required />
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Teamwork (0-100)</label>
+                                <input type="number" asp-for="Evaluation.TeamworkScore" class="form-control" min="0" max="100" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label fw-bold small">Final Feedback</label>
+                                <textarea asp-for="Evaluation.Comments" class="form-control" rows="4"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-top d-flex gap-2">
+                            <button type="submit" class="btn btn-sm px-4 fw-bold" style="background-color: var(--main-green); color: white;">Save Assessment</button>
+                            <a href="/Training/Dashboard" class="btn btn-sm px-4 fw-bold border bg-light text-dark">Back</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -7,16 +7,12 @@ using HRMS.Infrastructure.Identity;
 
 // Core
 using HRMS.Domain.Entities.Core;
-
 // Attendance
 using HRMS.Domain.Entities.Attendance;
-
 // Leave
 using HRMS.Domain.Entities.Leave;
-
 // Training
 using HRMS.Domain.Entities.Training;
-
 // Transfer
 using HRMS.Domain.Entities.Transfer;
 
@@ -62,22 +58,5 @@ namespace HRMS.Infrastructure.Persistence
         // ---------------- Transfer ----------------
         public DbSet<EmployeeTransfer> EmployeeTransfers { get; set; } = null!;
         public DbSet<TransferApproval> TransferApprovals { get; set; } = null!;
-
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            base.OnModelCreating(builder);
-
-            // Remove unused Identity columns from AspNetUsers
-            builder.Entity<ApplicationUser>(entity =>
-            {
-                entity.Ignore(e => e.PhoneNumber);
-                entity.Ignore(e => e.PhoneNumberConfirmed);
-                entity.Ignore(e => e.TwoFactorEnabled);
-            });
-
-            // Remove unused Identity tables
-            builder.Entity<IdentityUserLogin<string>>()
-                .ToTable("AspNetUserLogins", t => t.ExcludeFromMigrations());
-        }
     }
 }

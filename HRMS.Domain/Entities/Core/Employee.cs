@@ -1,4 +1,5 @@
 using System;
+using HRMS.Domain.Enums; 
 
 namespace HRMS.Domain.Entities.Core
 {
@@ -21,6 +22,8 @@ namespace HRMS.Domain.Entities.Core
         public string EPFNumber { get; set; } = null!;
         public string BankAccountName { get; set; } = null!;
         public string BankAccountNumber { get; set; } = null!;
+        public string Location { get; set; } = "Default";
+        
 
         // Designation FK and navigation
         public int DesignationId { get; set; }
@@ -34,5 +37,9 @@ namespace HRMS.Domain.Entities.Core
         // Every employee belongs to a branch
         public int BranchId { get; set; }
         public Branch Branch { get; set; } = null!;
+
+        
+        public EmployeeType EmployeeType { get; set; } 
+        public int ProbationPeriodMonths { get; set; } = 6; // සාමාන්‍යයෙන් මාස 6ක් ලෙස තබා ගනිමු
     }
 }

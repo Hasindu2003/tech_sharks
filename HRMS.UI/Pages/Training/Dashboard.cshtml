@@ -1,0 +1,336 @@
+@page
+@model HRMS.UI.Pages.Training.DashboardModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Training Dashboard - Kanrich HRMS</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --main-green: #15803d; 
+            --active-green-bg: #f0fdf4;
+            --bg-body: #f8fafc;
+            --text-gray: #6b7280;
+        }
+
+        body { font-family: 'Inter', system-ui, sans-serif; background-color: var(--bg-body); margin: 0; }
+
+        .sidebar {
+            width: var(--sidebar-width); height: 100vh; background: #ffffff;
+            position: fixed; left: 0; top: 0; z-index: 1000;
+            border-right: 1px solid #e2e8f0; display: flex; flex-direction: column;
+        }
+        .sidebar-header { padding: 20px 25px; }
+        .sidebar-logo-text { font-weight: 700; color: #111827; font-size: 1rem; margin-bottom: 0; }
+        .sidebar-sub-text { font-size: 0.7rem; color: var(--text-gray); }
+
+        .nav-list { padding: 20px 10px; flex-grow: 1; }
+        .nav-link {
+            display: flex; align-items: center; padding: 12px 20px; color: #4b5563;
+            text-decoration: none; border-radius: 8px; margin-bottom: 5px; font-size: 0.9rem;
+        }
+        .nav-link i { margin-right: 12px; font-size: 1.1rem; }
+        .nav-link:hover, .nav-link.active { background: var(--active-green-bg); color: var(--main-green); }
+
+        .logout-container { padding: 20px; }
+        .logout-btn {
+            background: #15803d; color: white !important; width: 100%;
+            border-radius: 8px; justify-content: center;
+        }
+
+        .main-wrapper { margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); }
+        
+        .top-navbar {
+            height: 70px; background: #ffffff; padding: 0 40px;
+            display: flex; align-items: center; justify-content: space-between;
+            position: sticky; top: 0; z-index: 900;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .topbar-title { font-size: 1.2rem; font-weight: 600; color: #111827; margin: 0; }
+        .topbar-actions { display: flex; align-items: center; gap: 20px; }
+        .icon-btn { color: #6b7280; font-size: 1.2rem; cursor: pointer; position: relative; }
+        .notification-dot { 
+            position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; 
+            background: #ef4444; border-radius: 50%; border: 2px solid white; 
+        }
+        .user-avatar { width: 35px; height: 35px; border-radius: 50%; object-fit: cover; }
+
+        .page-content { padding: 35px; }
+        
+        .stats-card {
+            background: white; border-radius: 12px; border: 1px solid #e2e8f0;
+            padding: 20px; display: flex; align-items: center; margin-bottom: 25px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+        .stats-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        .stats-icon {
+            width: 48px; height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin-right: 15px;
+        }
+
+        .content-card { 
+            background: white; border-radius: 12px; border: 1px solid #e2e8f0; 
+            margin-bottom: 30px; overflow: hidden;
+        }
+        .card-title-area { padding: 20px 25px; border-bottom: 1px solid #f8fafc; }
+        .card-title-area h5 { font-weight: 700; color: #1e293b; margin-bottom: 2px; font-size: 1rem; }
+        .card-title-area p { color: #94a3b8; font-size: 0.75rem; margin: 0; }
+
+        .custom-table thead th { 
+            background: #fcfcfc; color: #94a3b8; font-size: 0.65rem; 
+            text-transform: uppercase; font-weight: 600; padding: 12px 25px;
+        }
+        .custom-table td { padding: 15px 25px; border-bottom: 1px solid #f8fafc; vertical-align: middle; font-size: 0.85rem; }
+
+        .status-pill {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;
+        }
+        .status-on-track { background: #dcfce7; color: #15803d; }
+        .status-intern { background: #fef9c3; color: #a16207; }
+        .avatar-initial { width: 32px; height: 32px; font-size: 0.75rem; }
+        
+        .card-link { text-decoration: none; color: inherit; display: block; }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <p class="sidebar-logo-text">Kanrich HRMS</p>
+            <p class="sidebar-sub-text">Admin Portal</p>
+        </div>
+        <nav class="nav-list">
+            <a href="#" class="nav-link"><i class="bi bi-grid"></i> Dashboard</a>
+            <a href="#" class="nav-link"><i class="bi bi-people"></i> Employees</a>
+            <a href="/Training/Dashboard" class="nav-link active"><i class="bi bi-mortarboard"></i> Training</a>
+            <a href="#" class="nav-link"><i class="bi bi-calendar3"></i> Calendar</a>
+            <a href="#" class="nav-link"><i class="bi bi-arrow-left-right"></i> Separation</a>
+        </nav>
+        <div class="logout-container">
+            <a href="#" class="nav-link logout-btn">Log Out</a>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-navbar">
+            <h1 class="topbar-title">Training & Probation Dashboard</h1>
+            <div class="topbar-actions">
+                <div class="icon-btn"><i class="bi bi-bell"></i><span class="notification-dot"></span></div>
+                <div class="icon-btn"><i class="bi bi-gear"></i></div>
+                <img src="https://ui-avatars.com/api/?name=Admin&background=15803d&color=fff" class="user-avatar" alt="User">
+            </div>
+        </header>
+
+        <main class="page-content">
+            <div class="row gx-3">
+                <div class="col-md-4">
+                    <a href="/Training/Manage" class="card-link">
+                        <div class="stats-card">
+                            <div class="stats-icon" style="background: #ecfdf5; color: #15803d;"><i class="bi bi-send-check"></i></div>
+                            <div>
+                                <p class="text-muted small mb-0">Training Requests</p>
+                                <h5 class="fw-bold mb-0">@Model.PendingTrainingRequestsCount.ToString("D2") <span class="text-muted small fw-normal" style="font-size: 0.7rem;">(Pending)</span></h5>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="stats-card">
+                        <div class="stats-icon" style="background: #eff6ff; color: #2563eb;"><i class="bi bi-calendar2-check"></i></div>
+                        <div>
+                            <p class="text-muted small mb-0">Scheduled Sessions</p>
+                            <h5 class="fw-bold mb-0">@Model.ScheduledSessionsCount.ToString("D2") <span class="text-muted small fw-normal" style="font-size: 0.7rem;">(Active)</span></h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-title-area d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5>Upcoming Scheduled Sessions</h5>
+                        <p>Currently active training schedules for staff members.</p>
+                    </div>
+                    <a href="/Training/Schedule" class="btn btn-sm px-3 fw-bold" style="background-color: var(--main-green); color: white; border-radius: 6px;">
+                        <i class="bi bi-plus-lg"></i> Schedule New
+                    </a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table custom-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Program Title</th>
+                                <th>Employee</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ScheduledSessions.Any())
+                            {
+                                foreach (var session in Model.ScheduledSessions)
+                                {
+                                    <tr>
+                                        <td><div class="fw-bold">@session.Title</div></td>
+                                        <td>@session.EmployeeName</td>
+                                        <td class="text-muted">@session.Date.ToString("dd MMM yyyy")</td>
+                                        <td><span class="status-pill status-on-track"><i class="bi bi-clock-history"></i> Scheduled</span></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center py-4 text-muted">No scheduled sessions found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-title-area">
+                    <h5>Probationary Staff Tracking</h5>
+                    <p>Managing the 6-month evaluation process for permanent job confirmation.</p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table custom-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Hire Date</th>
+                                <th>Probation Progress</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.ProbationEmployees.Any())
+                            {
+                                foreach (var item in Model.ProbationEmployees)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-success avatar-initial">
+                                                    @(string.IsNullOrEmpty(item.FirstName) ? "?" : item.FirstName.Substring(0,1))
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">@item.FirstName @item.LastName</div>
+                                                    <div class="text-muted" style="font-size: 0.65rem;">EMP-PB-@item.Id</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-muted">@item.DateJoined.ToString("dd MMM yyyy")</td>
+                                        <td style="width: 140px;">
+                                            <div class="progress mb-1" style="height: 5px;"><div class="progress-bar bg-success" style="width: @item.ProgressPercentage%;"></div></div>
+                                            <span style="font-size: 0.65rem;" class="text-muted">Month @item.CurrentMonth of 6</span>
+                                        </td>
+                                        <td><span class="status-pill status-on-track"><i class="bi bi-check-circle-fill"></i> @item.Status</span></td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <a href="/Training/ViewProfile?id=@item.Id" class="btn btn-sm px-3 fw-bold" style="background-color: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                                <a href="/Training/EvaluateProbation?id=@item.Id" class="btn btn-sm px-3 fw-bold" style="background-color: var(--active-green-bg); color: var(--main-green); border: 1px solid var(--main-green); border-radius: 6px;">
+                                                    Evaluate
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="5" class="text-center py-4 text-muted">No probation records found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="content-card">
+                <div class="card-title-area">
+                    <h5>Interns Tracking</h5>
+                    <p>6-month internship program monitoring and batch management.</p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table custom-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Intern Name</th>
+                                <th>Internship Progress</th>
+                                <th>Status</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.InternEmployees.Any())
+                            {
+                                foreach (var intern in Model.InternEmployees)
+                                {
+                                    var currentMonth = intern.EvaluationsCount;
+                                    var progressPercentage = (currentMonth / 6.0) * 100;
+
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3 bg-light rounded-circle d-flex align-items-center justify-content-center fw-bold text-warning avatar-initial">@(string.IsNullOrEmpty(intern.FirstName) ? "?" : intern.FirstName.Substring(0,1))</div>
+                                                <div>
+                                                    <div class="fw-bold">@intern.FirstName @intern.LastName</div>
+                                                    <div class="text-muted" style="font-size: 0.65rem;">EMP-INT-@intern.Id</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="width: 140px;">
+                                            <div class="progress mb-1" style="height: 5px;">
+                                                <div class="progress-bar bg-success" style="width: @(progressPercentage)%;"></div>
+                                            </div>
+                                            <span style="font-size: 0.65rem;" class="text-muted">Month @currentMonth of 6</span>
+                                        </td>
+                                        <td>
+                                            @if (currentMonth >= 6)
+                                            {
+                                                <span class="status-pill status-on-track"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-pill status-intern">@intern.Status</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            <div class="d-flex justify-content-end gap-2">
+                                                <a href="/Training/ViewProfile?id=@intern.Id" class="btn btn-sm px-3 fw-bold" style="background-color: #f8fafc; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 6px;">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                                <a href="/Training/EvaluateIntern?id=@intern.Id" class="btn btn-sm px-3 fw-bold" style="background-color: var(--active-green-bg); color: var(--main-green); border: 1px solid var(--main-green); border-radius: 6px;">
+                                                    Evaluate
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" class="text-center py-4 text-muted">No intern records found.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
