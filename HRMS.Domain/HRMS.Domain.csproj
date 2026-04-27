@@ -9,7 +9,6 @@
   <ItemGroup>
     <Folder Include="Entities\Calendar\" />
     <Folder Include="Entities\Recruitment\" />
-    <Folder Include="Entities\Welfare\" />
     <Folder Include="Entities\Training\" />
     <Folder Include="Entities\Core\" />
     <Folder Include="Entities\Attendance\" />

@@ -1,0 +1,225 @@
+﻿@page "{id:int}"
+@model HRMS.UI.Pages.Welfare.EditRequestModel
+@{
+    ViewData["Title"] = "Edit Welfare Request";
+    Layout = null;
+    var req = Model.WelfareRequest!;
+    var hoursLeft = (int)(req.CreatedAt.AddHours(24) - DateTime.Now).TotalHours;
+    var minutesLeft = (int)((req.CreatedAt.AddHours(24) - DateTime.Now).TotalMinutes % 60);
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Welfare Request — Kanrich HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: "#10823c" }, fontFamily: { display: "Manrope" } } } };</script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        .icon-fill {
+            font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope',sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-[#f6f8f7] text-[#151811] overflow-hidden">
+    <div class="flex h-screen w-full">
+
+        <!-- Sidebar -->
+        <aside class="w-[260px] bg-white border-r border-[#e2e5dc] flex flex-col justify-between shrink-0 h-full overflow-y-auto">
+            <div class="flex flex-col gap-5 p-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-[#10823c] rounded-xl size-10 flex items-center justify-center text-white font-bold text-lg shadow-lg">K</div>
+                    <div>
+                        <h1 class="text-[#151811] text-base font-bold leading-tight">Kanrich HRMS</h1>
+                        <p class="text-[#7a8863] text-xs">Employee Portal</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-1">
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Main Menu</p>
+                    <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">dashboard</span><span class="text-sm font-medium">Dashboard</span>
+                    </a>
+                    <a href="/Welfare/RequestForm" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span><span class="text-sm font-medium">New Request</span>
+                    </a>
+                    <a href="/Welfare/RequestList" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#10823c]/10 text-[#10823c]">
+                        <span class="material-symbols-outlined icon-fill text-[20px]">list_alt</span><span class="text-sm font-bold">My Requests</span>
+                    </a>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <a href="/Welfare/StatusTracking" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">track_changes</span><span class="text-sm font-medium">Status Tracking</span>
+                    </a>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Payroll</p>
+                    <a href="/Payroll/Payslips" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">receipt_long</span><span class="text-sm font-medium">My Payslips</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-5">
+                <a href="/Account/Logout" class="flex w-full items-center justify-center h-10 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">Log Out</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="flex flex-col flex-1 h-full overflow-hidden">
+            <header class="flex items-center justify-between border-b border-[#e2e5dc] bg-white px-8 py-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-bold">Edit Welfare Request</h2>
+                    <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">WF-@req.RequestId.ToString("D4")</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-orange-50 border border-orange-200 rounded-xl">
+                        <span class="material-symbols-outlined text-orange-500 text-[16px]">timer</span>
+                        <span class="text-xs font-bold text-orange-600" id="countdown">@hoursLeft h @minutesLeft m remaining</span>
+                    </div>
+                    <button onclick="openNotifications()" class="relative flex size-10 items-center justify-center rounded-xl bg-[#f6f8f7] hover:bg-gray-200 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="notif-dot absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border border-white" style="display:none"></span>
+                    </button>
+                </div>
+            </header>
+
+            <main class="flex-1 overflow-y-auto bg-[#f6f8f7] p-8">
+                <div class="max-w-[800px] mx-auto flex flex-col gap-6">
+
+                    <!-- Breadcrumb -->
+                    <div class="flex items-center gap-2 text-xs text-[#7a8863]">
+                        <a href="/" class="hover:text-[#10823c]">Home</a>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        <a href="/Welfare/RequestList" class="hover:text-[#10823c]">My Requests</a>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        <span class="text-[#151811] font-semibold">Edit Request</span>
+                    </div>
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-sm font-medium text-green-800">
+                            <span class="material-symbols-outlined icon-fill text-green-600 text-[20px]">check_circle</span>
+                            @TempData["Success"]
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-sm font-medium text-red-800">
+                            <span class="material-symbols-outlined icon-fill text-red-600 text-[20px]">error</span>
+                            @TempData["Error"]
+                        </div>
+                    }
+
+                    <!-- Edit Window Banner -->
+                    <div class="flex items-center gap-3 px-5 py-3.5 bg-orange-50 border border-orange-200 rounded-2xl text-sm text-orange-800">
+                        <span class="material-symbols-outlined icon-fill text-orange-500 text-[20px]">warning</span>
+                        <p>You can edit this request for <strong>24 hours</strong> after submission. Edit window closes at <strong>@req.CreatedAt.AddHours(24).ToString("MMM dd, yyyy hh:mm tt")</strong>.</p>
+                    </div>
+
+                    <!-- Edit Form -->
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="flex flex-col gap-5">
+
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                    <span class="material-symbols-outlined text-[#10823c] text-[20px]">description</span>
+                                    <h3 class="text-sm font-bold">Request Details</h3>
+                                </div>
+                                <div class="p-6 grid grid-cols-2 gap-4">
+
+                                    <!-- Assistance Type — ✅ using asp-for tag helper -->
+                                    <div>
+                                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Assistance Type *</label>
+                                        <select asp-for="WelfareTypeId" required
+                                                class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]">
+                                            <option value="1">Medical Assistance</option>
+                                            <option value="2">Education Assistance</option>
+                                            <option value="3">Housing Loan</option>
+                                            <option value="4">Festival Advance</option>
+                                            <option value="5">Funeral Assistance</option>
+                                        </select>
+                                    </div>
+
+                                    <!-- Request Date — ✅ using asp-for -->
+                                    <div>
+                                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Request Date *</label>
+                                        <input asp-for="RequestDate" type="date" required
+                                               class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                    </div>
+
+                                    <!-- Requested Amount — ✅ using asp-for -->
+                                    <div>
+                                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Requested Amount (LKR) *</label>
+                                        <div class="flex">
+                                            <span class="bg-[#f6f8f7] border border-r-0 border-[#e2e5dc] rounded-l-xl px-3 py-2.5 text-sm text-[#7a8863] font-semibold">LKR</span>
+                                            <input asp-for="RequestedAmount" type="number" min="1" step="0.01" required
+                                                   class="flex-1 bg-[#f6f8f7] border border-[#e2e5dc] rounded-r-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Reason — ✅ using asp-for -->
+                                    <div class="col-span-2">
+                                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Reason for Request *</label>
+                                        <textarea asp-for="Remark" rows="4" required
+                                                  class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c] resize-none"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex justify-end gap-3">
+                                <a href="/Welfare/RequestList"
+                                   class="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#e2e5dc] text-[#151811] text-sm font-bold rounded-xl hover:bg-gray-50 transition-all">
+                                    <span class="material-symbols-outlined text-[16px]">arrow_back</span> Cancel
+                                </a>
+                                <button type="submit"
+                                        class="flex items-center gap-2 px-6 py-2.5 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md shadow-[#10823c]/20">
+                                    <span class="material-symbols-outlined text-[16px]">save</span> Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const deadline = new Date('@req.CreatedAt.AddHours(24).ToString("yyyy-MM-ddTHH:mm:ss")');
+        function updateCountdown() {
+            const diff = deadline - new Date();
+            if (diff <= 0) {
+                document.getElementById('countdown').textContent = 'Edit window expired!';
+                document.getElementById('countdown').classList.remove('text-orange-600');
+                document.getElementById('countdown').classList.add('text-red-600');
+                return;
+            }
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const s = Math.floor((diff % 60000) / 1000);
+            document.getElementById('countdown').textContent = h + 'h ' + m + 'm ' + s + 's remaining';
+        }
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    </script>
+    <script src="/js/notifications.js"></script>
+</body>
+</html>

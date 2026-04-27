@@ -1,0 +1,358 @@
+﻿@page
+@model HRMS.UI.Pages.Welfare.StatusTrackingModel
+@{
+    ViewData["Title"] = "Request Status Tracking";
+    Layout = null;
+    var req = Model.WelfareRequest!;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Status Tracking — Kanrich HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary:"#10823c" }, fontFamily:{ display:"Manrope" } } } };</script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        .icon-fill {
+            font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-[#f6f8f7] text-[#151811] overflow-hidden">
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR -->
+        <aside class="w-[260px] bg-white border-r border-[#e2e5dc] flex flex-col justify-between shrink-0 h-full overflow-y-auto">
+            <div class="flex flex-col gap-5 p-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-[#10823c] rounded-xl size-10 flex items-center justify-center text-white font-bold text-lg shadow-lg">K</div>
+                    <div>
+                        <h1 class="text-[#151811] text-base font-bold leading-tight">Kanrich HRMS</h1>
+                        <p class="text-[#7a8863] text-xs">Employee Portal</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-1">
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Main Menu</p>
+                    <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                        <span class="text-sm font-medium">Dashboard</span>
+                    </a>
+                    <a href="/Welfare/RequestForm" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">add_circle</span>
+                        <span class="text-sm font-medium">New Request</span>
+                    </a>
+                    <a href="/Welfare/RequestList" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">list_alt</span>
+                        <span class="text-sm font-medium">My Requests</span>
+                    </a>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Payroll</p>
+                    <a href="/Payroll/Payslips" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+                        <span class="text-sm font-medium">My Payslips</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-5">
+                <a href="/Account/Logout" class="flex w-full items-center justify-center h-10 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">Log Out</a>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="flex flex-col flex-1 h-full overflow-hidden">
+
+            <!-- HEADER -->
+            <header class="flex items-center justify-between border-b border-[#e2e5dc] bg-white px-8 py-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-bold">Request Status Tracking</h2>
+                    <span class="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold border border-blue-200">
+                        WF-@req.RequestId.ToString("D4")
+                    </span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="openNotifications()"
+                            class="relative flex size-10 items-center justify-center rounded-xl bg-[#f6f8f7] hover:bg-gray-200 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="notif-dot absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border border-white" style="display:none"></span>
+                    </button>
+                    <a href="/Welfare/RequestList"
+                       class="flex items-center gap-2 px-4 py-2 bg-[#f6f8f7] border border-[#e2e5dc] text-sm font-bold rounded-xl hover:bg-gray-100 transition-colors">
+                        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to My Requests
+                    </a>
+
+                    <!-- Profile Pill -->
+                    @await Html.PartialAsync("_ProfilePill", Model.CurrentUser)
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <main class="flex-1 overflow-y-auto bg-[#f6f8f7] p-8">
+                <div class="max-w-[1100px] mx-auto flex flex-col gap-6">
+
+                    <!-- Breadcrumb -->
+                    <div class="flex items-center gap-2 text-xs text-[#7a8863]">
+                        <a href="/" class="hover:text-[#10823c]">Home</a>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        <a href="/Welfare/RequestList" class="hover:text-[#10823c]">My Requests</a>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        <span class="text-[#151811] font-semibold">Request #@req.RequestId</span>
+                    </div>
+
+                    <div class="flex gap-6 items-start">
+                        <div class="flex-1 flex flex-col gap-5">
+
+                            <!-- Employee Info -->
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                    <span class="material-symbols-outlined text-[#10823c] text-[20px]">person</span>
+                                    <h3 class="text-sm font-bold">Employee Information</h3>
+                                </div>
+                                <div class="p-6 grid grid-cols-3 gap-4">
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Full Name</p><p class="text-sm font-semibold">@req.Employee?.FirstName @req.Employee?.LastName</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">NIC</p><p class="text-sm font-semibold">@req.Employee?.NIC</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">EPF Number</p><p class="text-sm font-semibold">@req.Employee?.EPFNumber</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Designation</p><p class="text-sm font-semibold">@(req.Employee?.Designation?.Title ?? "—")</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Department</p><p class="text-sm font-semibold">@(req.Employee?.Department?.Name ?? "—")</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Branch</p><p class="text-sm font-semibold">@(req.Employee?.Branch?.Name ?? "—")</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Email</p><p class="text-sm font-semibold">@req.Employee?.Email</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Phone</p><p class="text-sm font-semibold">@req.Employee?.PhoneNumber</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Bank Account</p><p class="text-sm font-semibold">@req.Employee?.BankAccountNumber</p></div>
+                                </div>
+                            </div>
+
+                            <!-- Request Details -->
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                    <span class="material-symbols-outlined text-[#10823c] text-[20px]">description</span>
+                                    <h3 class="text-sm font-bold">Request Details</h3>
+                                </div>
+                                <div class="p-6 grid grid-cols-3 gap-4">
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Assistance Type</p><p class="text-sm font-semibold">@req.WelfareType?.TypeName</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Request Date</p><p class="text-sm font-semibold">@req.RequestDate.ToString("MMM dd, yyyy")</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Submitted On</p><p class="text-sm font-semibold">@req.CreatedAt.ToString("MMM dd, yyyy")</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Requested Amount</p><p class="text-sm font-bold text-[#10823c]">LKR @req.RequestedAmount.ToString("N2")</p></div>
+                                    <div><p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Approved Amount</p><p class="text-sm font-bold text-[#10823c]">@(req.ApprovedAmount.HasValue ? "LKR " + req.ApprovedAmount.Value.ToString("N2") : "—")</p></div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Current Status</p>
+                                        @{
+                                            var (stBg, stDot) = req.CurrentStatus switch
+                                            {
+                                                    "Approved" => ("bg-green-100 text-green-700", "bg-green-500"),
+                                                    "Rejected" => ("bg-red-100 text-red-700", "bg-red-500"),
+                                                    "Pending" => ("bg-yellow-100 text-yellow-700", "bg-yellow-500"),
+                                                    "UnderReview" => ("bg-blue-100 text-blue-700", "bg-blue-500"),
+                                                    "PaymentCompleted" => ("bg-emerald-100 text-emerald-700", "bg-emerald-500"),
+                                                _ => ("bg-gray-100 text-gray-600", "bg-gray-400")
+                                            };
+                                        }
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold @stBg">
+                                            <span class="size-1.5 rounded-full @stDot"></span>
+                                            @(req.CurrentStatus == "PaymentCompleted" ? "Payment Completed" : req.CurrentStatus)
+                                        </span>
+                                    </div>
+                                    <div class="col-span-3">
+                                        <p class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider mb-1">Reason</p>
+                                        <p class="text-sm text-[#151811] bg-[#f6f8f7] rounded-xl px-4 py-3 border border-[#e2e5dc]">
+                                            @(string.IsNullOrEmpty(req.Remark) ? "No reason provided." : req.Remark)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Approval Timeline -->
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                    <span class="material-symbols-outlined text-[#10823c] text-[20px]">timeline</span>
+                                    <h3 class="text-sm font-bold">Approval Timeline</h3>
+                                </div>
+                                <div class="p-6">
+                                    @{
+                                        var levels = new[] {
+                                                                        new { Key="Submitted",        Label="Request Submitted",          Icon="edit_note" },
+                                                                        new { Key="BranchDGM",        Label="Branch DGM Approval",        Icon="person" },
+                                                                        new { Key="HODGM",            Label="HO DGM Approval",            Icon="person" },
+                                                                        new { Key="SeniorManagement", Label="Senior Management Approval", Icon="supervisor_account" },
+                                                                        new { Key="Finance",          Label="Finance Department",         Icon="payments" },
+                                                                        new { Key="Completed",        Label="Payment Completed",          Icon="check_circle" }
+                                                                        };
+                                        var approvalDict = Model.Approvals
+                                        .GroupBy(a => a.ApproverLevel)
+                                        .ToDictionary(g => g.Key, g => g.Last());
+
+                                        bool isPaymentCompleted = req.Status == "PaymentCompleted" ||
+                                        req.CurrentStatus == "PaymentCompleted";
+
+                                        var financeApproval = Model.Approvals
+                                        .Where(a => a.ApproverLevel == "Finance")
+                                        .OrderByDescending(a => a.ActionDate)
+                                        .FirstOrDefault();
+                                    }
+                                    <div class="flex flex-col gap-0">
+                                        @for (int i = 0; i < levels.Length; i++)
+                                        {
+                                            var level = levels[i];
+                                            string iconBg, iconText, statusText, dateText = "", comment = "";
+                                            bool isLast = i == levels.Length - 1;
+
+                                            if (level.Key == "Submitted")
+                                            {
+                                                iconBg = "bg-green-100 border-2 border-[#10823c]";
+                                                iconText = "text-green-700";
+                                                statusText = "Submitted";
+                                                dateText = req.CreatedAt.ToString("MMM dd, yyyy HH:mm");
+                                            }
+                                            else if (approvalDict.ContainsKey(level.Key))
+                                            {
+                                                var appr = approvalDict[level.Key];
+                                                iconBg = appr.Action == "Approved" ? "bg-green-100 border-2 border-[#10823c]"
+                                                : appr.Action == "Rejected" ? "bg-red-100 border-2 border-red-500"
+                                                : "bg-orange-100 border-2 border-orange-400";
+                                                iconText = appr.Action == "Approved" ? "text-green-700"
+                                                : appr.Action == "Rejected" ? "text-red-700"
+                                                : "text-orange-600";
+                                                statusText = appr.Action;
+                                                dateText = appr.ActionDate.ToString("MMM dd, yyyy HH:mm");
+                                                comment = appr.Comments ?? "";
+                                            }
+                                            else if (level.Key == "Completed" && isPaymentCompleted)
+                                            {
+                                                iconBg = "bg-emerald-100 border-2 border-emerald-500";
+                                                iconText = "text-emerald-700";
+                                                statusText = "Completed";
+                                                dateText = financeApproval?.ActionDate.ToString("MMM dd, yyyy HH:mm") ?? "";
+                                                comment = req.ApprovedAmount.HasValue
+                                                ? $"Payment of LKR {req.ApprovedAmount.Value:N2} confirmed." : "";
+                                            }
+                                            else if (level.Key == req.CurrentLevel && req.CurrentStatus == "Pending")
+                                            {
+                                                iconBg = "bg-blue-100 border-2 border-blue-500";
+                                                iconText = "text-blue-700";
+                                                statusText = "In Review";
+                                            }
+                                            else
+                                            {
+                                                iconBg = "bg-gray-100 border-2 border-gray-200";
+                                                iconText = "text-gray-400";
+                                                statusText = "Waiting";
+                                            }
+
+                                            <div class="flex gap-4">
+                                                <div class="flex flex-col items-center">
+                                                    <div class="size-10 rounded-full @iconBg flex items-center justify-center shrink-0">
+                                                        <span class="material-symbols-outlined @iconText text-[18px]">@level.Icon</span>
+                                                    </div>
+                                                    @if (!isLast)
+                                                    {
+                                                        <div class="w-0.5 flex-1 @(iconBg.Contains("border-[#10823c]") || iconBg.Contains("border-emerald") ? "bg-[#10823c]" : "bg-gray-200") my-1 min-h-[24px]"></div>
+                                                    }
+                                                </div>
+                                                <div class="flex-1 pb-6">
+                                                    <div class="flex items-center justify-between">
+                                                        <p class="text-sm font-bold text-[#151811]">@level.Label</p>
+                                                        @if (!string.IsNullOrEmpty(dateText))
+                                                        {
+                                                            <span class="text-[10px] text-[#7a8863]">@dateText</span>
+                                                        }
+                                                    </div>
+                                                    <span class="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[10px] font-bold
+                                                        @(statusText == "Approved" || statusText == "Submitted" ? "bg-green-100 text-green-700" :
+                                                                                                                statusText == "Completed" ? "bg-emerald-100 text-emerald-700" :
+                                                                                                                statusText == "Rejected" ? "bg-red-100 text-red-700" :
+                                                                                                                statusText == "In Review" ? "bg-blue-100 text-blue-700" :
+                                                                                                                "bg-gray-100 text-gray-400")">@statusText</span>
+                                                    @if (!string.IsNullOrEmpty(comment))
+                                                    {
+                                                        <div class="mt-2 px-3 py-2 bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-xs text-[#151811]">"@comment"</div>
+                                                    }
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Right Sidebar -->
+                        <div class="w-72 shrink-0 flex flex-col gap-4">
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                <div class="flex items-center gap-2 px-5 py-4 border-b border-[#e2e5dc]">
+                                    <span class="material-symbols-outlined text-[#10823c] text-[20px]">info</span>
+                                    <h3 class="text-sm font-bold">Request Summary</h3>
+                                </div>
+                                <div class="p-5 flex flex-col gap-3">
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Request ID</span><span class="text-xs font-bold text-[#151811]">WF-@req.RequestId.ToString("D4")</span></div>
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Type</span><span class="text-xs font-bold text-[#151811]">@req.WelfareType?.TypeName</span></div>
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Requested</span><span class="text-xs font-bold text-[#10823c]">LKR @req.RequestedAmount.ToString("N2")</span></div>
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Approved</span><span class="text-xs font-bold text-[#10823c]">@(req.ApprovedAmount.HasValue ? "LKR " + req.ApprovedAmount.Value.ToString("N2") : "—")</span></div>
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Current Level</span><span class="text-xs font-bold text-[#151811]">@req.CurrentLevel</span></div>
+                                    <div class="h-px bg-gray-100"></div>
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Approvals Done</span><span class="text-xs font-bold text-[#10823c]">@Model.Approvals.Count(a => a.Action == "Approved")</span></div>
+                                    <div class="flex justify-between items-center"><span class="text-xs text-[#7a8863]">Documents</span><span class="text-xs font-bold text-[#151811]">@Model.Documents.Count</span></div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                <div class="flex items-center gap-2 px-5 py-4 border-b border-[#e2e5dc]">
+                                    <span class="material-symbols-outlined text-[#10823c] text-[20px]">attach_file</span>
+                                    <h3 class="text-sm font-bold">Supporting Documents</h3>
+                                </div>
+                                <div class="p-5">
+                                    @if (!Model.Documents.Any())
+                                    {
+                                        <div class="flex flex-col items-center py-6 text-[#7a8863]">
+                                            <span class="material-symbols-outlined text-3xl mb-2">folder_open</span>
+                                            <p class="text-xs">No documents uploaded.</p>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="flex flex-col gap-2">
+                                            @foreach (var doc in Model.Documents)
+                                            {
+                                                <a href="@doc.FilePath" target="_blank"
+                                                   class="flex items-center gap-3 p-3 bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl hover:bg-[#10823c]/5 transition-colors">
+                                                    <div class="size-8 rounded-lg bg-[#10823c]/10 flex items-center justify-center shrink-0">
+                                                        <span class="material-symbols-outlined text-[#10823c] text-[16px]">description</span>
+                                                    </div>
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="text-xs font-semibold text-[#151811] truncate">@doc.FileName</p>
+                                                        <p class="text-[10px] text-[#7a8863]">@doc.FileType</p>
+                                                    </div>
+                                                    <span class="material-symbols-outlined text-[#7a8863] text-[16px]">open_in_new</span>
+                                                </a>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="/js/notifications.js"></script>
+</body>
+</html>

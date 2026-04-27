@@ -1,0 +1,364 @@
+﻿@page
+@model HRMS.UI.Pages.Payroll.PayslipsModel
+@{
+    ViewData["Title"] = "Payslips";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Payslips — Kanrich HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: "#10823c" }, fontFamily: { display: "Manrope" } } } };</script>
+    <style>
+        .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+        .icon-fill { font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24; }
+        body { font-family:'Manrope',sans-serif; }
+        ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-thumb { background:#d1d5db; border-radius:3px; }
+
+        /* Payslip print modal */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(4px); z-index:50; align-items:center; justify-content:center; }
+        .modal-overlay.open { display:flex; }
+
+        @@media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body class="bg-[#f6f8f7] text-[#151811] overflow-hidden">
+<div class="flex h-screen w-full">
+
+    <!-- Sidebar -->
+    <aside class="w-[260px] bg-white border-r border-[#e2e5dc] flex flex-col justify-between shrink-0 h-full overflow-y-auto z-20">
+        <div class="flex flex-col gap-5 p-5">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#10823c] rounded-xl size-10 flex items-center justify-center text-white font-bold text-lg shadow-lg">K</div>
+                <div>
+                    <h1 class="text-[#151811] text-base font-bold leading-tight">Kanrich HRMS</h1>
+                    <p class="text-[#7a8863] text-xs">Admin Portal</p>
+                </div>
+            </div>
+            <nav class="flex flex-col gap-1">
+                <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Main Menu</p>
+                <a href="/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">dashboard</span><span class="text-sm font-medium">Dashboard</span>
+                </a>
+                <a href="/Employees/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">group</span><span class="text-sm font-medium">Employees</span>
+                </a>
+                <a href="/Performance/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">bar_chart</span><span class="text-sm font-medium">Performance</span>
+                </a>
+                <a href="/Welfare/RequestList" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">volunteer_activism</span><span class="text-sm font-medium">Welfare</span>
+                </a>
+                <a href="/Payroll/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#10823c]/10 text-[#10823c]">
+                    <span class="material-symbols-outlined icon-fill text-[20px]">payments</span><span class="text-sm font-bold">Payroll</span>
+                </a>
+                <div class="h-px bg-gray-100 my-2"></div>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">analytics</span><span class="text-sm font-medium">Reports</span>
+                </a>
+            </nav>
+        </div>
+        <div class="p-5">
+            <a href="/Account/Logout" class="flex w-full items-center justify-center h-10 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">Log Out</a>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="flex flex-col flex-1 h-full overflow-hidden">
+
+        <!-- Header -->
+        <header class="flex items-center justify-between border-b border-[#e2e5dc] bg-white px-8 py-4 shrink-0">
+            <div class="flex items-center gap-3">
+                <h2 class="text-xl font-bold">Payroll Management</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="openNotifications()" class="relative flex size-10 items-center justify-center rounded-xl bg-[#f6f8f7] hover:bg-gray-200 transition-colors">
+                    <span class="material-symbols-outlined text-[20px]">notifications</span>
+                    <span class="notif-dot absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border border-white" style="display:none"></span>
+                </button>
+                <div class="size-9 rounded-full bg-[#10823c]/10 flex items-center justify-center text-[#10823c] font-bold text-sm">
+                    @(User.Identity?.Name?.Length > 0 ? User.Identity.Name.Substring(0, 1).ToUpper() : "A")
+                </div>
+            </div>
+        </header>
+
+        <!-- Tabs -->
+        <div class="flex items-center gap-1 px-8 bg-white border-b border-[#e2e5dc] shrink-0">
+            <a href="/Payroll/Index" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Dashboard</a>
+            <a href="/Payroll/AttendanceReview" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Attendance Review</a>
+            <a href="/Payroll/Bonuses" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Bonuses</a>
+            <a href="/Payroll/EpfEtf" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">EPF & ETF</a>
+            <a href="/Payroll/Payslips" class="px-4 py-3.5 text-sm font-bold text-[#10823c] border-b-2 border-[#10823c]">Payslips</a>
+        </div>
+
+        <!-- Content -->
+        <main class="flex-1 overflow-y-auto bg-[#f6f8f7] p-8">
+            <div class="max-w-[1300px] mx-auto flex flex-col gap-6">
+
+                <!-- Page Header -->
+                <div class="flex items-start justify-between">
+                    <div>
+                        <h3 class="text-2xl font-bold">Payslips</h3>
+                        <p class="text-sm text-[#7a8863] mt-1">View and download employee payslips by month</p>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="flex items-center gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Payroll Run</label>
+                        <select id="runFilter" onchange="filterPayslips()" class="bg-white border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 min-w-48">
+                            <option value="">All Runs</option>
+                            @foreach (var run in Model.PayrollRuns)
+                            {
+                                <option value="@run.Id">@run.MonthName</option>
+                            }
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Search Employee</label>
+                        <div class="flex items-center bg-white border border-[#e2e5dc] rounded-xl px-3 py-2.5 gap-2 focus-within:border-[#10823c]">
+                            <span class="material-symbols-outlined text-[#7a8863] text-[16px]">search</span>
+                            <input id="payslipSearch" oninput="filterPayslips()" class="bg-transparent text-sm placeholder:text-[#7a8863] focus:outline-none w-48" placeholder="Search by name..." />
+                        </div>
+                    </div>
+                </div>
+
+                @if (!Model.Payslips.Any())
+                {
+                    <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm flex flex-col items-center justify-center py-16 text-[#7a8863]">
+                        <span class="material-symbols-outlined text-5xl mb-3">receipt_long</span>
+                        <p class="text-sm font-semibold">No payslips generated yet</p>
+                        <p class="text-xs mt-1">Go to Dashboard and click <strong>Run Payroll</strong> to generate payslips.</p>
+                        <a href="/Payroll/Index" class="mt-4 flex items-center gap-2 px-5 py-2.5 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all">
+                            <span class="material-symbols-outlined text-[16px]">play_circle</span> Go to Dashboard
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <!-- Table -->
+                    <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm" id="payslipTable">
+                                <thead class="bg-[#f8f9fa] text-[#7a8863] border-b border-[#e2e5dc]">
+                                    <tr>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Employee</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Month</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Basic Salary</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Gross Pay</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-red-600">Deductions</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-[#10823c]">Net Pay</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e2e5dc]" id="payslipBody">
+                                    @foreach (var ps in Model.Payslips)
+                                    {
+                                        <tr class="hover:bg-gray-50 transition-colors payslip-row"
+                                            data-name="@((ps.Employee?.FirstName + " " + ps.Employee?.LastName).ToLower())"
+                                            data-run="@ps.PayrollRunId">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="size-8 rounded-full bg-[#10823c]/10 flex items-center justify-center text-[#10823c] font-bold text-xs shrink-0">
+                                                        @ps.Employee?.FirstName[0]
+                                                    </div>
+                                                    <div>
+                                                        <p class="font-bold text-[#151811]">@ps.Employee?.FirstName @ps.Employee?.LastName</p>
+                                                        <p class="text-xs text-[#7a8863]">@(ps.Employee?.Designation?.Title ?? "—")</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 text-[#7a8863]">@ps.PayrollRun?.MonthName</td>
+                                            <td class="px-6 py-4 font-semibold">Rs @ps.BasicSalary.ToString("N0")</td>
+                                            <td class="px-6 py-4 font-semibold">Rs @ps.GrossPay.ToString("N0")</td>
+                                            <td class="px-6 py-4 font-semibold text-red-600">Rs @ps.TotalDeductions.ToString("N0")</td>
+                                            <td class="px-6 py-4 font-bold text-[#10823c]">Rs @ps.NetPay.ToString("N0")</td>
+                                            <td class="px-6 py-4">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                                    @ps.Status
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-right">
+                                                <div class="flex items-center gap-2 justify-end">
+                                                    <button onclick="viewPayslip(@ps.Id)"
+                                                            class="px-3 py-1.5 bg-[#10823c] text-white text-xs font-bold rounded-lg hover:bg-opacity-90 transition-colors">
+                                                        View
+                                                    </button>
+                                                    <a href="/Payroll/PayslipPdf/@ps.Id" target="_blank"
+                                                       class="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">
+                                                        <span class="material-symbols-outlined text-[12px]">download</span> PDF
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="px-6 py-3 border-t border-[#e2e5dc] text-xs text-[#7a8863] text-center">
+                            Showing @Model.Payslips.Count payslip(s)
+                        </div>
+                    </div>
+                }
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Payslip Detail Modal -->
+<div class="modal-overlay" id="payslipModal" onclick="closePayslipModal(event)">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4" onclick="event.stopPropagation()" id="printArea">
+
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#e2e5dc]">
+            <div class="flex items-center gap-3">
+                <div class="bg-[#10823c] rounded-xl size-8 flex items-center justify-center text-white font-bold text-sm">K</div>
+                <div>
+                    <p class="text-sm font-black text-[#151811]">Kanrich HRMS</p>
+                    <p class="text-xs text-[#7a8863]">Official Payslip</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="window.print()" class="flex items-center gap-1 px-3 py-1.5 bg-[#f6f8f7] border border-[#e2e5dc] text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors">
+                    <span class="material-symbols-outlined text-[14px]">print</span> Print
+                </button>
+                <button onclick="closePayslipModal()" class="size-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">close</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Payslip Content -->
+        <div class="p-6">
+            <!-- Employee Info -->
+            <div class="flex items-center gap-4 p-4 bg-[#f6f8f7] rounded-xl mb-5">
+                <div class="size-12 rounded-full bg-[#10823c]/10 flex items-center justify-center text-[#10823c] font-black text-lg" id="psAvatar">A</div>
+                <div class="flex-1">
+                    <p class="font-black text-[#151811]" id="psName">—</p>
+                    <p class="text-xs text-[#7a8863]" id="psRole">—</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-xs text-[#7a8863]">Pay Period</p>
+                    <p class="text-sm font-bold text-[#151811]" id="psMonth">—</p>
+                </div>
+            </div>
+
+            <!-- Earnings -->
+            <div class="mb-4">
+                <p class="text-xs font-bold text-[#7a8863] uppercase tracking-wider mb-2">Earnings</p>
+                <div class="bg-[#f6f8f7] rounded-xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">Basic Salary</span><span class="font-semibold" id="psBasic">—</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">Housing Allowance</span><span class="font-semibold" id="psHousing">—</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">Transport Allowance</span><span class="font-semibold" id="psTransport">—</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">Medical Allowance</span><span class="font-semibold" id="psMedical">—</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">Bonuses</span><span class="font-semibold text-purple-600" id="psBonus">—</span></div>
+                    <div class="h-px bg-gray-200 my-1"></div>
+                    <div class="flex justify-between text-sm font-bold"><span>Gross Pay</span><span class="text-[#10823c]" id="psGross">—</span></div>
+                </div>
+            </div>
+
+            <!-- Deductions -->
+            <div class="mb-4">
+                <p class="text-xs font-bold text-[#7a8863] uppercase tracking-wider mb-2">Deductions</p>
+                <div class="bg-[#f6f8f7] rounded-xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">EPF (Employee 8%)</span><span class="font-semibold text-red-600" id="psEpfEmp">—</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">Tax Deduction</span><span class="font-semibold text-red-600" id="psTax">—</span></div>
+                    <div class="h-px bg-gray-200 my-1"></div>
+                    <div class="flex justify-between text-sm font-bold"><span>Total Deductions</span><span class="text-red-600" id="psTotalDed">—</span></div>
+                </div>
+            </div>
+
+            <!-- Employer Contributions -->
+            <div class="mb-5">
+                <p class="text-xs font-bold text-[#7a8863] uppercase tracking-wider mb-2">Employer Contributions</p>
+                <div class="bg-[#f6f8f7] rounded-xl p-4 flex flex-col gap-2">
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">EPF (Employer 12%)</span><span class="font-semibold text-blue-600" id="psEpfEr">—</span></div>
+                    <div class="flex justify-between text-sm"><span class="text-[#7a8863]">ETF (Employer 3%)</span><span class="font-semibold text-orange-600" id="psEtf">—</span></div>
+                </div>
+            </div>
+
+            <!-- Net Pay -->
+            <div class="flex items-center justify-between p-4 bg-[#10823c] rounded-xl text-white">
+                <p class="font-bold">Net Pay</p>
+                <p class="text-2xl font-black" id="psNetPay">—</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Payslip data from server
+    const payslips = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Payslips.Select(p => new {
+        id              = p.Id,
+        name            = p.Employee?.FirstName + " " + p.Employee?.LastName,
+        role            = p.Employee?.Designation?.Title ?? "—",
+        month           = p.PayrollRun?.MonthName ?? "—",
+        basicSalary     = p.BasicSalary,
+        housingAllowance    = p.HousingAllowance,
+        transportAllowance  = p.TransportAllowance,
+        medicalAllowance    = p.MedicalAllowance,
+        bonuses         = p.Bonuses,
+        grossPay        = p.GrossPay,
+        epfEmployee     = p.EpfEmployee,
+        epfEmployer     = p.EpfEmployer,
+        etf             = p.Etf,
+        taxDeduction    = p.TaxDeduction,
+        totalDeductions = p.TotalDeductions,
+        netPay          = p.NetPay
+    })));
+
+    function fmt(n) { return 'Rs ' + parseFloat(n).toLocaleString('en-LK', { minimumFractionDigits: 2 }); }
+
+    function viewPayslip(id) {
+        const ps = payslips.find(p => p.id === id);
+        if (!ps) return;
+
+        document.getElementById('psAvatar').textContent    = ps.name[0];
+        document.getElementById('psName').textContent      = ps.name;
+        document.getElementById('psRole').textContent      = ps.role;
+        document.getElementById('psMonth').textContent     = ps.month;
+        document.getElementById('psBasic').textContent     = fmt(ps.basicSalary);
+        document.getElementById('psHousing').textContent   = fmt(ps.housingAllowance);
+        document.getElementById('psTransport').textContent = fmt(ps.transportAllowance);
+        document.getElementById('psMedical').textContent   = fmt(ps.medicalAllowance);
+        document.getElementById('psBonus').textContent     = fmt(ps.bonuses);
+        document.getElementById('psGross').textContent     = fmt(ps.grossPay);
+        document.getElementById('psEpfEmp').textContent    = fmt(ps.epfEmployee);
+        document.getElementById('psTax').textContent       = fmt(ps.taxDeduction);
+        document.getElementById('psTotalDed').textContent  = fmt(ps.totalDeductions);
+        document.getElementById('psEpfEr').textContent     = fmt(ps.epfEmployer);
+        document.getElementById('psEtf').textContent       = fmt(ps.etf);
+        document.getElementById('psNetPay').textContent    = fmt(ps.netPay);
+
+        document.getElementById('payslipModal').classList.add('open');
+    }
+
+    function closePayslipModal(e) {
+        if (!e || e.target === document.getElementById('payslipModal'))
+            document.getElementById('payslipModal').classList.remove('open');
+    }
+
+    function filterPayslips() {
+        const search = document.getElementById('payslipSearch').value.toLowerCase();
+        const run    = document.getElementById('runFilter').value;
+        document.querySelectorAll('.payslip-row').forEach(row => {
+            const matchName = !search || row.dataset.name.includes(search);
+            const matchRun  = !run    || row.dataset.run === run;
+            row.style.display = matchName && matchRun ? '' : 'none';
+        });
+    }
+</script>
+<script src="/js/notifications.js"></script>
+</body>
+</html>

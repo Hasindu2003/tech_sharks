@@ -1,0 +1,433 @@
+﻿@page
+@model HRMS.UI.Pages.Payroll.AttendanceReviewModel
+@{
+    ViewData["Title"] = "Attendance Review";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance Review — Kanrich HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: "#10823c" }, fontFamily: { display: "Manrope" } } } };</script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        .icon-fill {
+            font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-[#f6f8f7] text-[#151811] overflow-hidden">
+    <div class="flex h-screen w-full">
+
+        <!-- Sidebar -->
+        <aside class="w-[260px] bg-white border-r border-[#e2e5dc] flex flex-col justify-between shrink-0 h-full overflow-y-auto z-20">
+            <div class="flex flex-col gap-5 p-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-[#10823c] rounded-xl size-10 flex items-center justify-center text-white font-bold text-lg shadow-lg">K</div>
+                    <div>
+                        <h1 class="text-[#151811] text-base font-bold leading-tight">Kanrich HRMS</h1>
+                        <p class="text-[#7a8863] text-xs">Admin Portal</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-1">
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Main Menu</p>
+                    <a href="/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">dashboard</span><span class="text-sm font-medium">Dashboard</span>
+                    </a>
+                    <a href="/Employees/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">group</span><span class="text-sm font-medium">Employees</span>
+                    </a>
+                    <a href="/Performance/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">bar_chart</span><span class="text-sm font-medium">Performance</span>
+                    </a>
+                    <a href="/Welfare/RequestList" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">volunteer_activism</span><span class="text-sm font-medium">Welfare</span>
+                    </a>
+                    <a href="/Payroll/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#10823c]/10 text-[#10823c]">
+                        <span class="material-symbols-outlined icon-fill text-[20px]">payments</span><span class="text-sm font-bold">Payroll</span>
+                    </a>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">analytics</span><span class="text-sm font-medium">Reports</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-5">
+                <a href="/Account/Logout" class="flex w-full items-center justify-center h-10 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">Log Out</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="flex flex-col flex-1 h-full overflow-hidden">
+
+            <!-- Header -->
+            <header class="flex items-center justify-between border-b border-[#e2e5dc] bg-white px-8 py-4 shrink-0">
+                <h2 class="text-xl font-bold">Payroll Management</h2>
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center bg-[#f6f8f7] rounded-xl px-4 py-2.5 gap-2 min-w-48 border border-transparent focus-within:border-[#10823c]/40">
+                        <span class="material-symbols-outlined text-[#7a8863] text-[18px]">search</span>
+                        <input id="searchInput" oninput="filterTable()" class="bg-transparent text-sm placeholder:text-[#7a8863] focus:outline-none w-full" placeholder="Search employees..." />
+                    </div>
+                    <button onclick="openNotifications()" class="relative flex size-10 items-center justify-center rounded-xl bg-[#f6f8f7] hover:bg-gray-200 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="notif-dot absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border border-white" style="display:none"></span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Tabs -->
+            <div class="flex items-center gap-1 px-8 bg-white border-b border-[#e2e5dc] shrink-0">
+                <a href="/Payroll/Index" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Dashboard</a>
+                <a href="/Payroll/AttendanceReview" class="px-4 py-3.5 text-sm font-bold text-[#10823c] border-b-2 border-[#10823c]">Attendance Review</a>
+                <a href="/Payroll/Bonuses" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Bonuses</a>
+                <a href="/Payroll/EpfEtf" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">EPF & ETF</a>
+                <a href="/Payroll/Payslips" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Payslips</a>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto bg-[#f6f8f7] p-8">
+                <div class="max-w-[1200px] mx-auto flex flex-col gap-6">
+
+                    <!-- Page Header -->
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-2xl font-bold">Payroll Attendance Check</h3>
+                            <p class="text-sm text-[#7a8863] mt-1">Review working days, leaves, and overtime for @DateTime.Now.ToString("MMMM yyyy")</p>
+                        </div>
+                        <div class="flex gap-3">
+                            <button onclick="resolveAnomalies()" id="resolveBtn"
+                                    class="flex items-center gap-2 px-5 py-2.5 bg-white border border-orange-200 text-orange-600 text-sm font-bold rounded-xl hover:bg-orange-50 transition-colors shadow-sm">
+                                <span class="material-symbols-outlined text-[16px]">warning</span>
+                                Resolve <span id="anomalyCount">@Model.AttendanceData.Count(a => a.Status == "Anomaly")</span> Anomalies
+                            </button>
+                            <button onclick="markAsFinalized()" id="finalizeBtn"
+                                    class="flex items-center gap-2 px-5 py-2.5 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md shadow-[#10823c]/20">
+                                <span class="material-symbols-outlined text-[16px]">check_circle</span> Mark as Finalized
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Toast -->
+                    <div id="toastMsg" class="hidden items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium"></div>
+
+                    <!-- Info Banner -->
+                    <div class="flex items-center gap-3 px-5 py-3.5 bg-blue-50 border border-blue-200 rounded-2xl text-sm text-blue-800">
+                        <span class="material-symbols-outlined icon-fill text-blue-500 text-[20px]">info</span>
+                        <p>This page shows <strong>sample attendance data</strong>. It will be connected to the Attendance & Leave module after project integration.</p>
+                    </div>
+
+                    <!-- Filters -->
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Department</label>
+                            <select id="deptFilter" onchange="filterTable()" class="w-full bg-white border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20">
+                                <option value="">All Departments</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="Finance">Finance</option>
+                                <option value="HR">Human Resources</option>
+                                <option value="Operations">Operations</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Status</label>
+                            <select id="statusFilter" onchange="filterTable()" class="w-full bg-white border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20">
+                                <option value="">All Status</option>
+                                <option value="Verified">Verified</option>
+                                <option value="Anomaly">Anomaly</option>
+                                <option value="Pending">Pending</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Search Employee</label>
+                            <div class="flex items-center bg-white border border-[#e2e5dc] rounded-xl px-3 py-2.5 gap-2 focus-within:border-[#10823c]">
+                                <span class="material-symbols-outlined text-[#7a8863] text-[16px]">search</span>
+                                <input id="tableSearch" oninput="filterTable()" class="bg-transparent text-sm placeholder:text-[#7a8863] focus:outline-none flex-1" placeholder="Search by name or ID..." />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Table -->
+                    <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm" id="attendanceTable">
+                                <thead class="bg-[#f8f9fa] text-[#7a8863] border-b border-[#e2e5dc]">
+                                    <tr>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Employee</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Working Days</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Paid Leaves</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-orange-600">No-Pay Leaves</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-blue-600">Approved OT</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-[#e2e5dc]" id="attendanceBody">
+                                    @foreach (var emp in Model.AttendanceData)
+                                    {
+                                        <tr class="hover:bg-gray-50 transition-colors att-row"
+                                            data-empid="@emp.EmpId"
+                                            data-name="@emp.Name.ToLower()"
+                                            data-dept="@emp.Department"
+                                            data-status="@emp.Status">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="size-9 rounded-full bg-[#10823c]/10 flex items-center justify-center text-[#10823c] font-bold text-sm shrink-0">@emp.Name[0]</div>
+                                                    <div>
+                                                        <p class="font-bold text-[#151811]">@emp.Name</p>
+                                                        <p class="text-xs text-[#7a8863]">@emp.EmpId • @emp.Department</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="font-bold text-[#151811]">@emp.WorkingDays</span>
+                                                <span class="text-[#7a8863] text-xs"> / @emp.TotalDays</span>
+                                            </td>
+                                            <td class="px-6 py-4 text-center font-semibold">@emp.PaidLeaves</td>
+                                            <td class="px-6 py-4 text-center">
+                                                @if (emp.NoPayLeaves > 0 && emp.Status == "Anomaly")
+                                                {
+                                                    <div class="inline-flex flex-col items-center">
+                                                        <span class="font-bold text-red-600">@emp.NoPayLeaves</span>
+                                                        <span class="text-[10px] text-red-500">Unexcused</span>
+                                                    </div>
+                                                }
+                                                else if (emp.NoPayLeaves > 0)
+                                                {
+                                                    <div class="inline-flex flex-col items-center">
+                                                        <span class="font-bold text-orange-600">@emp.NoPayLeaves</span>
+                                                        <span class="text-[10px] text-orange-500">Approved</span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="text-[#7a8863]">0</span>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-4 text-center font-semibold text-blue-600">@emp.OvertimeHours h</td>
+                                            <td class="px-6 py-4 status-cell">
+                                                @if (emp.Status == "Verified")
+                                                {
+                                                    <span class="status-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                                                        <span class="material-symbols-outlined icon-fill text-[14px]">check_circle</span> Verified
+                                                    </span>
+                                                }
+                                                else if (emp.Status == "Anomaly")
+                                                {
+                                                    <span class="status-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                                                        <span class="material-symbols-outlined icon-fill text-[14px]">error</span> Anomaly
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="status-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
+                                                        <span class="material-symbols-outlined text-[14px]">pending</span> Pending
+                                                    </span>
+                                                }
+                                            </td>
+                                            <td class="px-6 py-4 text-right action-cell">
+                                                @if (emp.Status == "Anomaly")
+                                                {
+                                                    <button onclick="resolveRow(this)" class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors">Resolve</button>
+                                                }
+                                                else if (emp.Status == "Pending")
+                                                {
+                                                    <button onclick="validateRow(this)" class="px-3 py-1.5 bg-blue-50 border border-blue-200 text-blue-600 text-xs font-bold rounded-lg hover:bg-blue-100 transition-colors">Validate</button>
+                                                }
+                                                else
+                                                {
+                                                    <button class="px-3 py-1.5 bg-[#f6f8f7] border border-[#e2e5dc] text-[#151811] text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors">Edit</button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="flex items-center justify-between px-6 py-4 border-t border-[#e2e5dc]">
+                            <span class="text-xs text-[#7a8863]" id="recordCount">Showing @Model.AttendanceData.Count employees (sample data)</span>
+                            <div class="flex items-center gap-1">
+                                <button class="size-7 flex items-center justify-center rounded-lg border border-[#e2e5dc] bg-white hover:bg-gray-50">
+                                    <span class="material-symbols-outlined text-[14px]">chevron_left</span>
+                                </button>
+                                <button class="size-7 flex items-center justify-center rounded-lg bg-[#10823c] text-white text-xs font-bold">1</button>
+                                <button class="size-7 flex items-center justify-center rounded-lg border border-[#e2e5dc] bg-white hover:bg-gray-50 text-xs">2</button>
+                                <button class="size-7 flex items-center justify-center rounded-lg border border-[#e2e5dc] bg-white hover:bg-gray-50 text-xs">3</button>
+                                <button class="size-7 flex items-center justify-center rounded-lg border border-[#e2e5dc] bg-white hover:bg-gray-50">
+                                    <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'attendance_states';
+        const FINALIZED_KEY = 'attendance_finalized';
+
+        // ── Load saved states from sessionStorage on page load ────────────────────
+        function loadSavedStates() {
+            const finalized = sessionStorage.getItem(FINALIZED_KEY) === 'true';
+            const savedStates = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
+
+            document.querySelectorAll('.att-row').forEach(row => {
+                const empId = row.dataset.empid;
+                if (finalized || savedStates[empId] === 'Verified') {
+                    setRowVerifiedDOM(row);
+                }
+            });
+
+            if (finalized) {
+                disableFinalizeButtons();
+            }
+
+            updateAnomalyCount();
+        }
+
+        // ── Set row to Verified in DOM ────────────────────────────────────────────
+        function setRowVerifiedDOM(row) {
+            row.dataset.status = 'Verified';
+            row.querySelector('.status-cell').innerHTML = `
+                <span class="status-badge inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700">
+                    <span style="font-family:'Material Symbols Outlined';font-variation-settings:'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;font-size:14px;">check_circle</span> Verified
+                </span>`;
+            row.querySelector('.action-cell').innerHTML = `
+                <button class="px-3 py-1.5 bg-[#f6f8f7] border border-[#e2e5dc] text-[#151811] text-xs font-bold rounded-lg hover:bg-gray-100 transition-colors">Edit</button>`;
+        }
+
+        // ── Save row state to sessionStorage ─────────────────────────────────────
+        function saveRowState(empId, status) {
+            const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || '{}');
+            saved[empId] = status;
+            sessionStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+        }
+
+        // ── Resolve single row ────────────────────────────────────────────────────
+        function resolveRow(btn) {
+            const row = btn.closest('tr');
+            setRowVerifiedDOM(row);
+            saveRowState(row.dataset.empid, 'Verified');
+            updateAnomalyCount();
+            showToast('✓ Anomaly resolved successfully!', 'success');
+        }
+
+        // ── Validate single row ───────────────────────────────────────────────────
+        function validateRow(btn) {
+            const row = btn.closest('tr');
+            setRowVerifiedDOM(row);
+            saveRowState(row.dataset.empid, 'Verified');
+            updateAnomalyCount();
+            showToast('✓ Record validated successfully!', 'success');
+        }
+
+        // ── Resolve ALL anomaly rows ──────────────────────────────────────────────
+        function resolveAnomalies() {
+            const anomalyRows = document.querySelectorAll('.att-row[data-status="Anomaly"]');
+            if (anomalyRows.length === 0) {
+                showToast('ℹ No anomalies found!', 'info');
+                return;
+            }
+            anomalyRows.forEach(row => {
+                setRowVerifiedDOM(row);
+                saveRowState(row.dataset.empid, 'Verified');
+            });
+            updateAnomalyCount();
+            showToast(`✓ ${anomalyRows.length} anomaly records resolved successfully!`, 'success');
+        }
+
+        // ── Mark ALL rows as Finalized ────────────────────────────────────────────
+        function markAsFinalized() {
+            if (!confirm('Mark all attendance records as finalized? This will be saved for this session.')) return;
+
+            document.querySelectorAll('.att-row').forEach(row => {
+                setRowVerifiedDOM(row);
+                saveRowState(row.dataset.empid, 'Verified');
+            });
+
+            // ✅ Save finalized state to sessionStorage
+            sessionStorage.setItem(FINALIZED_KEY, 'true');
+
+            updateAnomalyCount();
+            disableFinalizeButtons();
+            showToast('✓ All attendance records marked as finalized!', 'success');
+        }
+
+        // ── Disable buttons after finalization ────────────────────────────────────
+        function disableFinalizeButtons() {
+            const resolveBtn  = document.getElementById('resolveBtn');
+            const finalizeBtn = document.getElementById('finalizeBtn');
+            resolveBtn.disabled = true;
+            resolveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            finalizeBtn.disabled = true;
+            finalizeBtn.innerHTML = '<span style="font-family:\'Material Symbols Outlined\';font-variation-settings:\'FILL\' 1,\'wght\' 400,\'GRAD\' 0,\'opsz\' 24;font-size:16px;">check_circle</span> Finalized ✓';
+            finalizeBtn.classList.add('opacity-75', 'cursor-not-allowed');
+        }
+
+        // ── Update anomaly count in button ────────────────────────────────────────
+        function updateAnomalyCount() {
+            const count = document.querySelectorAll('.att-row[data-status="Anomaly"]').length;
+            document.getElementById('anomalyCount').textContent = count;
+            if (count === 0 && !sessionStorage.getItem(FINALIZED_KEY)) {
+                document.getElementById('resolveBtn').disabled = true;
+                document.getElementById('resolveBtn').classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // ── Filter table ──────────────────────────────────────────────────────────
+        function filterTable() {
+            const search = (document.getElementById('searchInput').value + document.getElementById('tableSearch').value).toLowerCase();
+            const dept   = document.getElementById('deptFilter').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value.toLowerCase();
+            document.querySelectorAll('.att-row').forEach(row => {
+                const matchName   = !search || row.dataset.name.includes(search);
+                const matchDept   = !dept   || row.dataset.dept.toLowerCase().includes(dept);
+                const matchStatus = !status || row.dataset.status.toLowerCase() === status;
+                row.style.display = matchName && matchDept && matchStatus ? '' : 'none';
+            });
+        }
+
+        // ── Show toast ────────────────────────────────────────────────────────────
+        function showToast(msg, type) {
+            const toast  = document.getElementById('toastMsg');
+            const colors = {
+                success: 'flex bg-green-50 border border-green-200 text-green-800',
+                info:    'flex bg-blue-50 border border-blue-200 text-blue-800',
+                warning: 'flex bg-orange-50 border border-orange-200 text-orange-800'
+            };
+            toast.className = colors[type] + ' items-center gap-3 px-5 py-3.5 rounded-2xl text-sm font-medium';
+            toast.innerHTML = msg;
+            setTimeout(() => toast.className = 'hidden', 4000);
+        }
+
+        // ── Run on page load ──────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', loadSavedStates);
+    </script>
+
+    <script src="/js/notifications.js"></script>
+</body>
+</html>

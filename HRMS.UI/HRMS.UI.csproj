@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -17,6 +18,10 @@
     <ProjectReference Include="..\HRMS.Application\HRMS.Application.csproj" />
     <ProjectReference Include="..\HRMS.Domain\HRMS.Domain.csproj" />
     <ProjectReference Include="..\HRMS.Infrastructure\HRMS.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\uploads\welfare\" />
   </ItemGroup>
 
 </Project>

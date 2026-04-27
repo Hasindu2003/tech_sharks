@@ -1,0 +1,312 @@
+﻿@page
+@model HRMS.UI.Pages.Payroll.BonusesModel
+@{
+    ViewData["Title"] = "Bonuses & Allowances";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonuses & Allowances — Kanrich HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: "#10823c" }, fontFamily: { display: "Manrope" } } } };</script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        .icon-fill {
+            font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope',sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body class="bg-[#f6f8f7] text-[#151811] overflow-hidden">
+    <div class="flex h-screen w-full">
+
+        <!-- Sidebar -->
+        <aside class="w-[260px] bg-white border-r border-[#e2e5dc] flex flex-col justify-between shrink-0 h-full overflow-y-auto z-20">
+            <div class="flex flex-col gap-5 p-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-[#10823c] rounded-xl size-10 flex items-center justify-center text-white font-bold text-lg shadow-lg">K</div>
+                    <div>
+                        <h1 class="text-[#151811] text-base font-bold leading-tight">Kanrich HRMS</h1>
+                        <p class="text-[#7a8863] text-xs">Admin Portal</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-1">
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Main Menu</p>
+                    <a href="/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">dashboard</span><span class="text-sm font-medium">Dashboard</span>
+                    </a>
+                    <a href="/Employees/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">group</span><span class="text-sm font-medium">Employees</span>
+                    </a>
+                    <a href="/Performance/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">bar_chart</span><span class="text-sm font-medium">Performance</span>
+                    </a>
+                    <a href="/Welfare/RequestList" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">volunteer_activism</span><span class="text-sm font-medium">Welfare</span>
+                    </a>
+                    <a href="/Payroll/Index" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#10823c]/10 text-[#10823c]">
+                        <span class="material-symbols-outlined icon-fill text-[20px]">payments</span><span class="text-sm font-bold">Payroll</span>
+                    </a>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">analytics</span><span class="text-sm font-medium">Reports</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-5">
+                <a href="/Account/Logout" class="flex w-full items-center justify-center h-10 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">Log Out</a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="flex flex-col flex-1 h-full overflow-hidden">
+
+            <!-- Header -->
+            <header class="flex items-center justify-between border-b border-[#e2e5dc] bg-white px-8 py-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <h2 class="text-xl font-bold">Payroll Management</h2>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="openNotifications()" class="relative flex size-10 items-center justify-center rounded-xl bg-[#f6f8f7] hover:bg-gray-200 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="notif-dot absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border border-white" style="display:none"></span>
+                    </button>
+                    <div class="size-9 rounded-full bg-[#10823c]/10 flex items-center justify-center text-[#10823c] font-bold text-sm">
+                        @(User.Identity?.Name?.Length > 0 ? User.Identity.Name.Substring(0, 1).ToUpper() : "A")
+                    </div>
+                </div>
+            </header>
+
+            <!-- Tabs -->
+            <div class="flex items-center gap-1 px-8 bg-white border-b border-[#e2e5dc] shrink-0">
+                <a href="/Payroll/Index" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Dashboard</a>
+                <a href="/Payroll/AttendanceReview" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Attendance Review</a>
+                <a href="/Payroll/Bonuses" class="px-4 py-3.5 text-sm font-bold text-[#10823c] border-b-2 border-[#10823c]">Bonuses</a>
+                <a href="/Payroll/EpfEtf" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">EPF & ETF</a>
+                <a href="/Payroll/Payslips" class="px-4 py-3.5 text-sm font-medium text-[#7a8863] hover:text-[#151811] border-b-2 border-transparent hover:border-gray-300 transition-colors">Payslips</a>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto bg-[#f6f8f7] p-8">
+                <div class="max-w-[1300px] mx-auto flex flex-col gap-6">
+
+                    <!-- Page Header -->
+                    <div class="flex items-start justify-between">
+                        <div>
+                            <h3 class="text-2xl font-bold">Manage Bonuses & Allowances</h3>
+                            <p class="text-sm text-[#7a8863] mt-1">Assign and manage bonuses for @DateTime.Now.ToString("MMMM yyyy")</p>
+                        </div>
+                    </div>
+
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-sm font-medium text-green-800">
+                            <span class="material-symbols-outlined icon-fill text-green-600 text-[20px]">check_circle</span>
+                            @TempData["Success"]
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-sm font-medium text-red-800">
+                            <span class="material-symbols-outlined icon-fill text-red-600 text-[20px]">error</span>
+                            @TempData["Error"]
+                        </div>
+                    }
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+
+                        <!-- Add Bonus Form -->
+                        <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                            <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                <span class="material-symbols-outlined text-[#10823c] text-[20px]">add_circle</span>
+                                <h3 class="text-sm font-bold">Assign Bonus</h3>
+                            </div>
+                            <div class="p-6">
+                                <form method="post">
+                                    @Html.AntiForgeryToken()
+                                    <div class="flex flex-col gap-4">
+                                        <div>
+                                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Employee *</label>
+                                            <select name="EmployeeId" required class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]">
+                                                <option value="">Select employee…</option>
+                                                @foreach (var emp in Model.Employees)
+                                                {
+                                                    <option value="@emp.Id">@emp.FirstName @emp.LastName — @(emp.Department?.Name ?? "—")</option>
+                                                }
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Bonus Type *</label>
+                                            <select name="BonusType" required class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]">
+                                                <option value="">Select type…</option>
+                                                <option value="Performance">Performance Bonus</option>
+                                                <option value="Festival">Festival Allowance</option>
+                                                <option value="Overtime">Overtime Pay</option>
+                                                <option value="Special">Special Allowance</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Amount (LKR) *</label>
+                                            <div class="flex">
+                                                <span class="bg-[#f6f8f7] border border-r-0 border-[#e2e5dc] rounded-l-xl px-3 py-2.5 text-sm text-[#7a8863] font-semibold">Rs</span>
+                                                <input type="number" name="Amount" placeholder="0.00" min="1" step="0.01" required
+                                                       class="flex-1 bg-[#f6f8f7] border border-[#e2e5dc] rounded-r-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Payroll Month *</label>
+                                            <input type="month" name="PayrollMonth" value="@DateTime.Now.ToString("yyyy-MM")" required
+                                                   class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                        </div>
+                                        <div>
+                                            <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Remarks</label>
+                                            <textarea name="Reason" rows="3" placeholder="Add a note..."
+                                                      class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c] resize-none"></textarea>
+                                        </div>
+                                        <button type="submit" class="w-full flex items-center justify-center gap-2 py-2.5 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md shadow-[#10823c]/20">
+                                            <span class="material-symbols-outlined text-[16px]">add</span> Assign Bonus
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Bonuses Table -->
+                        <div class="lg:col-span-2 flex flex-col gap-4">
+
+                            <!-- Table Controls -->
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <select id="monthFilter" onchange="filterBonuses()" class="bg-white border border-[#e2e5dc] rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20">
+                                        <option value="">All Months</option>
+                                        <option value="@DateTime.Now.Month-@DateTime.Now.Year" selected>@DateTime.Now.ToString("MMMM yyyy")</option>
+                                    </select>
+                                    <select id="typeFilter" onchange="filterBonuses()" class="bg-white border border-[#e2e5dc] rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20">
+                                        <option value="">All Types</option>
+                                        <option value="Performance">Performance</option>
+                                        <option value="Festival">Festival</option>
+                                        <option value="Overtime">Overtime</option>
+                                        <option value="Special">Special</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="text-sm text-[#7a8863]">
+                                    Total this month: <strong class="text-[#151811]">Rs @Model.TotalThisMonth.ToString("N0")</strong>
+                                </div>
+                            </div>
+
+                            <!-- Table -->
+                            <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                @if (!Model.Bonuses.Any())
+                                {
+                                    <div class="flex flex-col items-center justify-center py-16 text-[#7a8863]">
+                                        <span class="material-symbols-outlined text-5xl mb-3">workspace_premium</span>
+                                        <p class="text-sm font-semibold">No bonuses assigned yet</p>
+                                        <p class="text-xs mt-1">Use the form to assign bonuses to employees.</p>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-left text-sm" id="bonusTable">
+                                            <thead class="bg-[#f8f9fa] text-[#7a8863] border-b border-[#e2e5dc]">
+                                                <tr>
+                                                    <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Employee</th>
+                                                    <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Bonus Type</th>
+                                                    <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Amount</th>
+                                                    <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Month</th>
+                                                    <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider">Remarks</th>
+                                                    <th class="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-right">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody class="divide-y divide-[#e2e5dc]">
+                                                @foreach (var bonus in Model.Bonuses)
+                                                {
+                                                    <tr class="hover:bg-gray-50 transition-colors bonus-row" data-type="@bonus.BonusType">
+                                                        <td class="px-6 py-4">
+                                                            <div class="flex items-center gap-3">
+                                                                <div class="size-8 rounded-full bg-[#10823c]/10 flex items-center justify-center text-[#10823c] font-bold text-xs shrink-0">
+                                                                    @bonus.Employee?.FirstName[0]
+                                                                </div>
+                                                                <div>
+                                                                    <p class="font-bold text-[#151811]">@bonus.Employee?.FirstName @bonus.Employee?.LastName</p>
+                                                                    <p class="text-xs text-[#7a8863]">@(bonus.Employee?.Designation?.Title ?? "—")</p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-6 py-4">
+                                                            @{
+                                                                var (tagBg, tagText) = bonus.BonusType switch
+                                                                {
+                                                                                "Performance" => ("bg-purple-100 text-purple-700", bonus.BonusType),
+                                                                                "Festival" => ("bg-blue-100 text-blue-700", bonus.BonusType),
+                                                                                "Overtime" => ("bg-orange-100 text-orange-700", bonus.BonusType),
+                                                                                "Special" => ("bg-teal-100 text-teal-700", bonus.BonusType),
+                                                                    _ => ("bg-gray-100 text-gray-600", bonus.BonusType)
+                                                                };
+                                                            }
+                                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold @tagBg">@tagText</span>
+                                                        </td>
+                                                        <td class="px-6 py-4 font-bold text-[#10823c]">Rs @bonus.Amount.ToString("N0")</td>
+                                                        <td class="px-6 py-4 text-[#7a8863]">@(new DateTime(bonus.Year, bonus.Month, 1).ToString("MMM yyyy"))</td>
+                                                        <td class="px-6 py-4 text-[#7a8863] text-xs">@(bonus.Reason ?? "—")</td>
+                                                        <td class="px-6 py-4 text-right">
+                                                            <form method="post" asp-page-handler="Delete" style="display:inline">
+                                                                @Html.AntiForgeryToken()
+                                                                <input type="hidden" name="BonusId" value="@bonus.Id" />
+                                                                <button type="submit" onclick="return confirm('Delete this bonus?')"
+                                                                        class="px-3 py-1.5 bg-red-50 border border-red-200 text-red-600 text-xs font-bold rounded-lg hover:bg-red-100 transition-colors">
+                                                                    Delete
+                                                                </button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="px-6 py-3 border-t border-[#e2e5dc] text-center text-xs text-[#7a8863]">
+                                        Showing @Model.Bonuses.Count record(s)
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        function filterBonuses() {
+            const type = document.getElementById('typeFilter').value.toLowerCase();
+            document.querySelectorAll('.bonus-row').forEach(row => {
+                const matchType = !type || row.dataset.type.toLowerCase() === type;
+                row.style.display = matchType ? '' : 'none';
+            });
+        }
+    </script>
+    <script src="/js/notifications.js"></script>
+</body>
+</html>

@@ -1,0 +1,504 @@
+﻿@page
+@model HRMS.UI.Pages.Welfare.RequestFormModel
+@{
+    ViewData["Title"] = "Welfare Request Form";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Welfare Request Form — Kanrich HRMS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: { primary: "#10823c" },
+                    fontFamily: { display: "Manrope" }
+                }
+            }
+        };
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        .icon-fill {
+            font-variation-settings: 'FILL' 1,'wght' 400,'GRAD' 0,'opsz' 24;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        input, select, textarea {
+            font-family: 'Manrope', sans-serif;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
+        }
+
+        #profileDropdown {
+            transform-origin: top right;
+            transition: opacity 0.15s ease, transform 0.15s ease;
+            opacity: 0;
+            transform: scale(0.95);
+            pointer-events: none;
+        }
+
+            #profileDropdown.open {
+                opacity: 1;
+                transform: scale(1);
+                pointer-events: all;
+            }
+
+        #profileChevron {
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-[#f6f8f7] text-[#151811] overflow-hidden">
+    <div class="flex h-screen w-full">
+
+        <!-- SIDEBAR -->
+        <aside class="w-[260px] bg-white border-r border-[#e2e5dc] flex flex-col justify-between shrink-0 h-full overflow-y-auto">
+            <div class="flex flex-col gap-5 p-5">
+                <div class="flex items-center gap-3">
+                    <div class="bg-[#10823c] rounded-xl size-10 flex items-center justify-center text-white font-bold text-lg shadow-lg">K</div>
+                    <div>
+                        <h1 class="text-[#151811] text-base font-bold leading-tight">Kanrich HRMS</h1>
+                        <p class="text-[#7a8863] text-xs">Employee Portal</p>
+                    </div>
+                </div>
+                <nav class="flex flex-col gap-1">
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Main Menu</p>
+                    <a href="/" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">dashboard</span>
+                        <span class="text-sm font-medium">Dashboard</span>
+                    </a>
+                    <a href="/Welfare/RequestForm" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-[#10823c]/10 text-[#10823c]">
+                        <span class="material-symbols-outlined icon-fill text-[20px]">add_circle</span>
+                        <span class="text-sm font-bold">New Request</span>
+                    </a>
+                    <a href="/Welfare/RequestList" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">list_alt</span>
+                        <span class="text-sm font-medium">My Requests</span>
+                    </a>
+                    <div class="h-px bg-gray-100 my-2"></div>
+                    <p class="px-3 text-[10px] font-bold text-[#7a8863] uppercase tracking-widest mb-1">Payroll</p>
+                    <a href="/Payroll/Payslips" class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#f6f8f7] text-[#7a8863] transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">receipt_long</span>
+                        <span class="text-sm font-medium">My Payslips</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="p-5">
+                <a href="/Account/Logout" class="flex w-full items-center justify-center h-10 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md">Log Out</a>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <div class="flex flex-col flex-1 h-full overflow-hidden">
+
+            <!-- HEADER -->
+            <header class="flex items-center justify-between border-b border-[#e2e5dc] bg-white px-8 py-4 shrink-0">
+                <h2 class="text-xl font-bold">Welfare Request Form</h2>
+                <div class="flex items-center gap-3">
+
+                    <!-- Notifications -->
+                    <button onclick="openNotifications()" class="relative flex size-10 items-center justify-center rounded-xl bg-[#f6f8f7] hover:bg-gray-200 transition-colors">
+                        <span class="material-symbols-outlined text-[20px]">notifications</span>
+                        <span class="notif-dot absolute top-2.5 right-2.5 size-2 bg-red-500 rounded-full border border-white" style="display:none"></span>
+                    </button>
+
+                    <!-- Profile Pill -->
+                    <div class="relative" id="profileWrap">
+                        <button id="profileBtn" onclick="toggleProfile()"
+                                class="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 bg-[#f6f8f7] border border-[#e2e5dc] rounded-full hover:bg-[#edf0eb] transition-colors">
+                            @if (!string.IsNullOrEmpty(Model.CurrentUser.PhotoUrl))
+                            {
+                                <img src="@Model.CurrentUser.PhotoUrl" alt="Profile"
+                                     class="size-8 rounded-full object-cover shrink-0 border border-[#e2e5dc]" />
+                            }
+                            else
+                            {
+                                <div class="size-8 rounded-full bg-[#10823c] flex items-center justify-center text-white text-xs font-bold shrink-0 select-none">
+                                    @Model.CurrentUser.Initials
+                                </div>
+                            }
+                            <div class="text-left leading-tight">
+                                <p class="text-[13px] font-semibold text-[#151811] whitespace-nowrap max-w-[140px] truncate">@Model.CurrentUser.FullName</p>
+                                <p class="text-[11px] text-[#7a8863] whitespace-nowrap max-w-[140px] truncate">@Model.CurrentUser.Designation</p>
+                            </div>
+                            <span class="material-symbols-outlined text-[18px] text-[#7a8863]" id="profileChevron">expand_more</span>
+                        </button>
+
+                        <!-- Dropdown -->
+                        <div id="profileDropdown"
+                             class="absolute right-0 top-[calc(100%+8px)] w-64 bg-white border border-[#e2e5dc] rounded-2xl shadow-xl overflow-hidden z-50">
+                            <div class="flex items-center gap-3 p-4 border-b border-[#e2e5dc] bg-[#f6f8f7]/60">
+                                @if (!string.IsNullOrEmpty(Model.CurrentUser.PhotoUrl))
+                                {
+                                    <img src="@Model.CurrentUser.PhotoUrl" alt="Profile"
+                                         class="size-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm" />
+                                }
+                                else
+                                {
+                                    <div class="size-12 rounded-full bg-[#10823c] flex items-center justify-center text-white font-bold text-base shrink-0 select-none shadow-sm">
+                                        @Model.CurrentUser.Initials
+                                    </div>
+                                }
+                                <div class="min-w-0">
+                                    <p class="text-sm font-bold text-[#151811] truncate">@Model.CurrentUser.FullName</p>
+                                    <p class="text-[11px] text-[#7a8863] truncate">@Model.CurrentUser.EmployeeCode · @Model.CurrentUser.Department</p>
+                                    <p class="text-[11px] font-semibold text-[#10823c] mt-0.5">● @Model.CurrentUser.Status</p>
+                                </div>
+                            </div>
+                            <div class="py-1.5">
+                                <a href="/Employee/Profile" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#151811] hover:bg-[#f6f8f7] transition-colors">
+                                    <span class="material-symbols-outlined text-[18px] text-[#7a8863]">person</span> View Profile
+                                </a>
+                                <a href="/Employee/Details" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#151811] hover:bg-[#f6f8f7] transition-colors">
+                                    <span class="material-symbols-outlined text-[18px] text-[#7a8863]">badge</span> My Details
+                                </a>
+                                <a href="/Account/ChangePassword" class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#151811] hover:bg-[#f6f8f7] transition-colors">
+                                    <span class="material-symbols-outlined text-[18px] text-[#7a8863]">lock</span> Change Password
+                                </a>
+                                <div class="h-px bg-[#e2e5dc] my-1.5 mx-4"></div>
+                                <a href="/Account/Logout" class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                    <span class="material-symbols-outlined text-[18px] text-red-500">logout</span> Log Out
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /Profile Pill -->
+
+                </div>
+            </header>
+
+            <!-- CONTENT -->
+            <main class="flex-1 overflow-y-auto bg-[#f6f8f7] p-8">
+                <div class="max-w-[1100px] mx-auto flex flex-col gap-6">
+
+                    <!-- Breadcrumb -->
+                    <div class="flex items-center gap-2 text-xs text-[#7a8863]">
+                        <a href="/" class="hover:text-[#10823c]">Home</a>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        <a href="/Welfare/RequestList" class="hover:text-[#10823c]">My Requests</a>
+                        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+                        <span class="text-[#151811] font-semibold">New Request</span>
+                    </div>
+
+                    <!-- Banners -->
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 bg-green-50 border border-green-200 rounded-2xl text-sm font-medium text-green-800">
+                            <span class="material-symbols-outlined icon-fill text-green-600 text-[20px]">check_circle</span>
+                            @TempData["Success"]
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="flex items-center gap-3 px-5 py-3.5 bg-red-50 border border-red-200 rounded-2xl text-sm font-medium text-red-800">
+                            <span class="material-symbols-outlined icon-fill text-red-600 text-[20px]">error</span>
+                            @TempData["Error"]
+                        </div>
+                    }
+
+                    <!-- FORM -->
+                    <form method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="IsDraft" id="isDraftInput" value="false" />
+
+                        <div class="flex gap-6 items-start">
+
+                            <!-- LEFT MAIN -->
+                            <div class="flex-1 flex flex-col gap-5">
+
+                                <!-- Employee Info -->
+                                <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                    <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                        <span class="material-symbols-outlined text-[#10823c] text-[20px]">person</span>
+                                        <h3 class="text-sm font-bold">Employee Information</h3>
+                                    </div>
+                                    <div class="p-6">
+                                        <div class="grid grid-cols-3 gap-4">
+                                            <div class="col-span-1">
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Employee ID *</label>
+                                                <div class="flex">
+                                                    <input type="number" id="employeeIdInput" name="EmployeeId" placeholder="Enter ID…" min="1" required
+                                                           class="flex-1 bg-[#f6f8f7] border border-[#e2e5dc] rounded-l-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                                    <button type="button" onclick="fetchEmployee()" class="bg-[#10823c] text-white px-4 rounded-r-xl text-xs font-bold hover:bg-opacity-90 transition-all flex items-center gap-1">
+                                                        <span class="material-symbols-outlined text-[16px]">search</span>
+                                                    </button>
+                                                </div>
+                                                <div id="employeeIdHint" class="text-[11px] mt-1"></div>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Full Name</label>
+                                                <input type="text" id="empFullName" readonly placeholder="Auto-filled after fetch…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" />
+                                            </div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">NIC</label><input type="text" id="empNic" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Email</label><input type="text" id="empEmail" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Phone</label><input type="text" id="empPhone" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">EPF Number</label><input type="text" id="empEpf" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Designation</label><input type="text" id="empDesignation" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Department</label><input type="text" id="empDepartment" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Branch</label><input type="text" id="empBranch" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Bank Account Name</label><input type="text" id="empBankName" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Bank Account Number</label><input type="text" id="empBankNumber" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                            <div><label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Status</label><input type="text" id="empStatus" readonly placeholder="Auto-filled…" class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 text-[#7a8863] focus:outline-none" /></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Request Details -->
+                                <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                    <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                        <span class="material-symbols-outlined text-[#10823c] text-[20px]">description</span>
+                                        <h3 class="text-sm font-bold">Request Details</h3>
+                                    </div>
+                                    <div class="p-6">
+                                        <div class="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Assistance Type *</label>
+                                                <select name="WelfareTypeId" id="welfareTypeId" onchange="onTypeChange()" required
+                                                        class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]">
+                                                    <option value="">Select type…</option>
+                                                    <option value="1" data-max="100000" data-cat="Health & Welfare">Medical Assistance</option>
+                                                    <option value="2" data-max="50000" data-cat="Education">Education Assistance</option>
+                                                    <option value="3" data-max="500000" data-cat="Housing">Housing Loan</option>
+                                                    <option value="4" data-max="25000" data-cat="Financial">Festival Advance</option>
+                                                    <option value="5" data-max="30000" data-cat="Emergency">Funeral Assistance</option>
+                                                </select>
+                                                <div id="typeCategory" class="text-[11px] text-[#7a8863] mt-1"></div>
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Request Date *</label>
+                                                <input type="date" name="RequestDate" id="requestDate" required
+                                                       class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Requested Amount (LKR) *</label>
+                                                <div class="flex">
+                                                    <span class="bg-[#f6f8f7] border border-r-0 border-[#e2e5dc] rounded-l-xl px-3 py-2.5 text-sm text-[#7a8863] font-semibold">LKR</span>
+                                                    <input type="number" name="RequestedAmount" id="requestedAmount" placeholder="0.00" min="1" step="0.01" oninput="validateAmount()" required
+                                                           class="flex-1 bg-[#f6f8f7] border border-[#e2e5dc] rounded-r-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]" />
+                                                </div>
+                                                <div id="amountHint" class="text-[11px] text-[#7a8863] mt-1">Maximum eligible: <strong id="maxAmount">—</strong></div>
+                                            </div>
+                                            <div id="repaymentDiv">
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Repayment Period</label>
+                                                <select id="repaymentPeriod" onchange="updateMonthly()"
+                                                        class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c]">
+                                                    <option value="">Select period…</option>
+                                                    <option value="3">3 Months</option>
+                                                    <option value="6">6 Months</option>
+                                                    <option value="12">12 Months</option>
+                                                    <option value="18">18 Months</option>
+                                                    <option value="24">24 Months</option>
+                                                </select>
+                                                <div id="monthlyDeduction" class="text-[11px] text-[#7a8863] mt-1"></div>
+                                            </div>
+                                            <div>
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Urgency Level</label>
+                                                <div class="flex gap-3 mt-2">
+                                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="Urgency" value="High" class="accent-[#10823c]" /><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-100 text-red-700">High</span></label>
+                                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="Urgency" value="Medium" class="accent-[#10823c]" /><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-100 text-orange-700">Medium</span></label>
+                                                    <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="Urgency" value="Normal" checked class="accent-[#10823c]" /><span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-700">Normal</span></label>
+                                                </div>
+                                            </div>
+                                            <div class="col-span-2">
+                                                <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Reason for Request *</label>
+                                                <textarea name="Remark" id="remark" rows="4" oninput="updateCount()" placeholder="Provide a clear reason for your request…" required
+                                                          class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#10823c]/20 focus:border-[#10823c] resize-none"></textarea>
+                                                <div class="text-right text-[11px] text-[#7a8863] mt-1"><span id="remarkCount">0 / 500</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Documents -->
+                                <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                    <div class="flex items-center gap-2 px-6 py-4 border-b border-[#e2e5dc]">
+                                        <span class="material-symbols-outlined text-[#10823c] text-[20px]">attach_file</span>
+                                        <h3 class="text-sm font-bold">Supporting Documents</h3>
+                                    </div>
+                                    <div class="p-6">
+                                        <label class="text-[10px] font-bold text-[#7a8863] uppercase tracking-wider block mb-1.5">Attach Documents</label>
+                                        <input type="file" name="Documents" id="uploadedFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previewFiles()"
+                                               class="w-full bg-[#f6f8f7] border border-[#e2e5dc] rounded-xl text-sm px-3 py-2.5 focus:outline-none" />
+                                        <p class="text-[11px] text-[#7a8863] mt-1.5">Accepted: PDF, JPG, PNG, DOC, DOCX. Maximum 5 files.</p>
+                                        <div id="filePreview" class="flex flex-wrap gap-2 mt-3"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Actions -->
+                                <div class="flex justify-end gap-3">
+                                    <button type="button" onclick="saveDraft()" class="flex items-center gap-2 px-6 py-2.5 bg-white border border-[#10823c] text-[#10823c] text-sm font-bold rounded-xl hover:bg-[#10823c]/5 transition-all">
+                                        <span class="material-symbols-outlined text-[16px]">save</span> Save as Draft
+                                    </button>
+                                    <button type="submit" class="flex items-center gap-2 px-6 py-2.5 bg-[#10823c] text-white text-sm font-bold rounded-xl hover:bg-opacity-90 transition-all shadow-md shadow-[#10823c]/20">
+                                        <span class="material-symbols-outlined text-[16px]">send</span> Submit Request
+                                    </button>
+                                </div>
+
+                            </div>
+                            <!-- /LEFT MAIN -->
+                            <!-- RIGHT SIDEBAR -->
+                            <div class="w-64 shrink-0 flex flex-col gap-4">
+                                <div class="bg-white rounded-2xl border border-[#e2e5dc] shadow-sm overflow-hidden">
+                                    <div class="flex items-center gap-2 px-5 py-4 border-b border-[#e2e5dc]">
+                                        <span class="material-symbols-outlined text-[#10823c] text-[20px]">info</span>
+                                        <h3 class="text-sm font-bold">Policy Guidelines</h3>
+                                    </div>
+                                    <div class="p-5 flex flex-col gap-3">
+                                        @foreach (var policy in new[] {
+                                                                                "Medical claims require original bills",
+                                                                                "Approvals over LKR 50,000 require HO clearance",
+                                                                                "Maximum 2 welfare requests per year",
+                                                                                "Repayment cannot exceed 24 months"
+                                                                                })
+                                        {
+                                            <div class="flex items-start gap-2.5 text-xs text-[#166534]">
+                                                <span class="material-symbols-outlined icon-fill text-[#10823c] text-[16px] mt-0.5 shrink-0">check_circle</span>
+                                                <span>@policy</span>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="bg-[#10823c]/5 border border-[#10823c]/20 rounded-2xl p-5">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="material-symbols-outlined text-[#10823c] text-[20px]">help</span>
+                                        <p class="text-sm font-bold text-[#10823c]">Need Help?</p>
+                                    </div>
+                                    <p class="text-xs text-[#7a8863]">Contact HR at <strong class="text-[#151811]">hr@@kanrich.lk</strong> or call extension <strong class="text-[#151811]">1234</strong></p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </form>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('requestDate').value = new Date().toISOString().split('T')[0];
+        });
+
+        function toggleProfile() {
+            const d = document.getElementById('profileDropdown');
+            const c = document.getElementById('profileChevron');
+            const open = d.classList.contains('open');
+            d.classList.toggle('open', !open);
+            c.style.transform = open ? '' : 'rotate(180deg)';
+        }
+
+        document.addEventListener('click', function(e) {
+            const wrap = document.getElementById('profileWrap');
+            if (wrap && !wrap.contains(e.target)) {
+                document.getElementById('profileDropdown').classList.remove('open');
+                document.getElementById('profileChevron').style.transform = '';
+            }
+        });
+
+        function previewFiles() {
+            const preview = document.getElementById('filePreview');
+            const files = document.getElementById('uploadedFiles').files;
+            preview.innerHTML = '';
+            if (files.length > 5) { alert('Maximum 5 files allowed.'); document.getElementById('uploadedFiles').value = ''; return; }
+            for (let i = 0; i < files.length; i++) {
+                preview.insertAdjacentHTML('beforeend', `
+                    <div class="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-xs font-medium text-green-700">
+                        <span class="material-symbols-outlined" style="font-size:14px;font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24">description</span>
+                        ${files[i].name}
+                    </div>`);
+            }
+        }
+
+        async function fetchEmployee() {
+            const id = document.getElementById('employeeIdInput').value;
+            if (!id || parseInt(id) <= 0) { alert('Please enter a valid Employee ID.'); return; }
+            try {
+                const res = await fetch(`/api/WelfareRequest/employee/${id}`);
+                if (!res.ok) {
+                    const e = await res.json();
+                    document.getElementById('employeeIdHint').innerHTML = `<span class="text-red-500">✗ ${e.message}</span>`;
+                    return;
+                }
+                const emp = await res.json();
+                document.getElementById('empFullName').value    = emp.fullName;
+                document.getElementById('empNic').value         = emp.nic;
+                document.getElementById('empEmail').value       = emp.email;
+                document.getElementById('empPhone').value       = emp.phoneNumber;
+                document.getElementById('empEpf').value         = emp.epfNumber;
+                document.getElementById('empDesignation').value = emp.designation ?? '—';
+                document.getElementById('empDepartment').value  = emp.department  ?? '—';
+                document.getElementById('empBranch').value      = emp.branch      ?? '—';
+                document.getElementById('empBankName').value    = emp.bankAccountName;
+                document.getElementById('empBankNumber').value  = emp.bankAccountNumber;
+                document.getElementById('empStatus').value      = emp.status;
+                document.getElementById('employeeIdHint').innerHTML = `<span class="text-green-600 font-semibold">✓ Employee found!</span>`;
+            } catch (err) { alert('Failed to fetch employee details.'); }
+        }
+
+        function saveDraft() {
+            document.getElementById('isDraftInput').value = 'true';
+            document.querySelector('form').submit();
+        }
+
+        function onTypeChange() {
+            const sel = document.getElementById('welfareTypeId');
+            const opt = sel.options[sel.selectedIndex];
+            if (!opt.value) return;
+            document.getElementById('maxAmount').textContent = 'LKR ' + formatNum(opt.dataset.max);
+            document.getElementById('typeCategory').textContent = opt.dataset.cat ? 'Category: ' + opt.dataset.cat : '';
+            document.getElementById('repaymentDiv').style.display = opt.value === '3' ? '' : 'none';
+            if (opt.value !== '3') { document.getElementById('repaymentPeriod').value = ''; document.getElementById('monthlyDeduction').innerHTML = ''; }
+            validateAmount();
+        }
+
+        function validateAmount() {
+            const sel = document.getElementById('welfareTypeId');
+            const opt = sel.options[sel.selectedIndex];
+            if (!opt?.value) return;
+            const max = parseFloat(opt.dataset.max);
+            const val = parseFloat(document.getElementById('requestedAmount').value) || 0;
+            document.getElementById('amountHint').innerHTML = val > max
+                ? `<span class="text-red-500">✗ Exceeds max: LKR ${formatNum(max)}</span>`
+                : `Maximum eligible: <strong>LKR ${formatNum(max)}</strong>`;
+            updateMonthly();
+        }
+
+        function updateMonthly() {
+            const a = parseFloat(document.getElementById('requestedAmount').value) || 0;
+            const m = parseInt(document.getElementById('repaymentPeriod').value) || 0;
+            document.getElementById('monthlyDeduction').innerHTML = a > 0 && m > 0 ? `Monthly deduction: <strong>LKR ${formatNum(a / m)}</strong>` : '';
+        }
+
+        function updateCount() {
+            document.getElementById('remarkCount').textContent = document.getElementById('remark').value.length + ' / 500';
+        }
+
+        function formatNum(n) {
+            return parseFloat(n).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    </script>
+
+    <script src="/js/notifications.js"></script>
+</body>
+</html>

@@ -1,0 +1,124 @@
+﻿@using HRMS.UI.Pages
+@model CurrentUserProfile
+
+@* ── Profile Pill — drop into any header with:
+       @await Html.PartialAsync("_ProfilePill", Model.CurrentUser)
+   ── *@
+
+<style>
+    #profileDropdown {
+        transform-origin: top right;
+        transition: opacity 0.15s ease, transform 0.15s ease;
+        opacity: 0;
+        transform: scale(0.95);
+        pointer-events: none;
+    }
+
+        #profileDropdown.open {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: all;
+        }
+
+    #profileChevron {
+        transition: transform 0.2s ease;
+    }
+</style>
+
+<div class="relative" id="profileWrap">
+
+    <button id="profileBtn" onclick="toggleProfile()"
+            class="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 bg-[#f6f8f7] border border-[#e2e5dc] rounded-full hover:bg-[#edf0eb] transition-colors">
+
+        @if (!string.IsNullOrEmpty(Model?.PhotoUrl))
+        {
+            <img src="@Model.PhotoUrl" alt="Profile"
+                 class="size-8 rounded-full object-cover shrink-0 border border-[#e2e5dc]" />
+        }
+        else
+        {
+            <div class="size-8 rounded-full bg-[#10823c] flex items-center justify-center text-white text-xs font-bold shrink-0 select-none">
+                @(Model?.Initials ?? "?")
+            </div>
+        }
+
+        <div class="text-left leading-tight">
+            <p class="text-[13px] font-semibold text-[#151811] whitespace-nowrap max-w-[140px] truncate">
+                @(Model?.FullName ?? "Employee")
+            </p>
+            <p class="text-[11px] text-[#7a8863] whitespace-nowrap max-w-[140px] truncate">
+                @(Model?.Designation ?? "")
+            </p>
+        </div>
+
+        <span class="material-symbols-outlined text-[18px] text-[#7a8863]" id="profileChevron">expand_more</span>
+    </button>
+
+    <!-- Dropdown -->
+    <div id="profileDropdown"
+         class="absolute right-0 top-[calc(100%+8px)] w-64 bg-white border border-[#e2e5dc] rounded-2xl shadow-xl overflow-hidden z-50">
+
+        <!-- Header card -->
+        <div class="flex items-center gap-3 p-4 border-b border-[#e2e5dc] bg-[#f6f8f7]/60">
+            @if (!string.IsNullOrEmpty(Model?.PhotoUrl))
+            {
+                <img src="@Model.PhotoUrl" alt="Profile"
+                     class="size-12 rounded-full object-cover shrink-0 border-2 border-white shadow-sm" />
+            }
+            else
+            {
+                <div class="size-12 rounded-full bg-[#10823c] flex items-center justify-center text-white font-bold text-base shrink-0 select-none shadow-sm">
+                    @(Model?.Initials ?? "?")
+                </div>
+            }
+            <div class="min-w-0">
+                <p class="text-sm font-bold text-[#151811] truncate">@(Model?.FullName ?? "Employee")</p>
+                <p class="text-[11px] text-[#7a8863] truncate">@(Model?.EmployeeCode) · @(Model?.Department)</p>
+                <p class="text-[11px] font-semibold text-[#10823c] mt-0.5">● @(Model?.Status ?? "Active")</p>
+            </div>
+        </div>
+
+        <!-- Menu -->
+        <div class="py-1.5">
+            <a href="/Employee/Profile"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#151811] hover:bg-[#f6f8f7] transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-[#7a8863]">person</span>
+                View Profile
+            </a>
+            <a href="/Employee/Details"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#151811] hover:bg-[#f6f8f7] transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-[#7a8863]">badge</span>
+                My Details
+            </a>
+            <a href="/Account/ChangePassword"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm text-[#151811] hover:bg-[#f6f8f7] transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-[#7a8863]">lock</span>
+                Change Password
+            </a>
+            <div class="h-px bg-[#e2e5dc] my-1.5 mx-4"></div>
+            <a href="/Account/Logout"
+               class="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                <span class="material-symbols-outlined text-[18px] text-red-500">logout</span>
+                Log Out
+            </a>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function toggleProfile() {
+        const d = document.getElementById('profileDropdown');
+        const c = document.getElementById('profileChevron');
+        const open = d.classList.contains('open');
+        d.classList.toggle('open', !open);
+        c.style.transform = open ? '' : 'rotate(180deg)';
+    }
+    document.addEventListener('click', function (e) {
+        const wrap = document.getElementById('profileWrap');
+        if (wrap && !wrap.contains(e.target)) {
+            document.getElementById('profileDropdown').classList.remove('open');
+            document.getElementById('profileChevron').style.transform = '';
+        }
+    });
+</script>

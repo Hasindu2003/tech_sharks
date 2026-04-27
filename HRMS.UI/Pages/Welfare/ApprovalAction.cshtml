@@ -1,0 +1,97 @@
+﻿@page
+@model HRMS.UI.Pages.Welfare.ApprovalActionModel
+@{
+    ViewData["Title"] = "Approval Action";
+    Layout = "_Layout";
+}
+<div style="padding:26px">
+    @if (Model.Request == null)
+    {
+        <div class="alert alert-warning">Request not found.</div>
+    }
+    else
+    {
+        var req = Model.Request;
+        <h4 class="fw-bold mb-3">Welfare Request — WF-@req.RequestId.ToString("D4")</h4>
+        <div class="row g-3" style="font-size:13px">
+            <div class="col-md-4">
+                <span class="text-muted" style="font-size:11px;font-weight:600">EMPLOYEE</span>
+                <p class="fw-semibold mt-1">@req.Employee?.FirstName @req.Employee?.LastName</p>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted" style="font-size:11px;font-weight:600">WELFARE TYPE</span>
+                <p class="mt-1">@req.WelfareType?.TypeName</p>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted" style="font-size:11px;font-weight:600">REQUESTED AMOUNT</span>
+                <p class="fw-bold mt-1" style="color:#1a7a3c">LKR @req.RequestedAmount.ToString("N2")</p>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted" style="font-size:11px;font-weight:600">REQUEST DATE</span>
+                <p class="mt-1">@req.RequestDate.ToString("yyyy-MM-dd")</p>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted" style="font-size:11px;font-weight:600">STATUS</span>
+                <p class="mt-1">@req.CurrentStatus</p>
+            </div>
+            <div class="col-12">
+                <span class="text-muted" style="font-size:11px;font-weight:600">REASON</span>
+                <p class="mt-1">@req.Remark</p>
+            </div>
+        </div>
+
+        <!-- Supporting Documents -->
+        @if (req.Documents != null && req.Documents.Any())
+        {
+            <div class="mt-4 p-3 rounded" style="background:#f6f8f7;border:1px solid #e2e5dc">
+                <div class="d-flex align-items-center mb-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10823c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="me-2">
+                        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
+                    </svg>
+                    <span class="text-muted" style="font-size:11px;font-weight:600;letter-spacing:0.5px">
+                        SUPPORTING DOCUMENTS (@req.Documents.Count)
+                    </span>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var doc in req.Documents)
+                    {
+                        var ext = System.IO.Path.GetExtension(doc.FileName)?.ToLowerInvariant() ?? "";
+                        var canPreview = ext == ".pdf" || ext == ".jpg" || ext == ".jpeg" || ext == ".png";
+                        var iconColor = ext switch
+                        {
+                                            ".pdf" => "#dc2626",
+                                            ".jpg" or ".jpeg" or ".png" => "#2563eb",
+                                            ".doc" or ".docx" => "#1d4ed8",
+                            _ => "#6b7280"
+                        };
+
+                        <div class="d-flex align-items-center gap-2 px-3 py-2 bg-white rounded" style="border:1px solid #e2e5dc">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="@iconColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                            </svg>
+                            <span style="font-size:12px;font-weight:500;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="@doc.FileName">
+                                @doc.FileName
+                            </span>
+                            @if (canPreview)
+                            {
+                                <a href="/Welfare/DownloadDocument?id=@doc.DocumentId&mode=view" target="_blank"
+                                   class="btn btn-sm"
+                                   style="background:rgba(16,130,60,0.1);color:#10823c;font-size:11px;font-weight:700;padding:3px 10px;border:none"
+                                   title="View in browser">
+                                    View
+                                </a>
+                            }
+                            <a href="/Welfare/DownloadDocument?id=@doc.DocumentId"
+                               class="btn btn-sm"
+                               style="background:#f6f8f7;color:#7a8863;font-size:11px;font-weight:700;padding:3px 10px;border:1px solid #e2e5dc"
+                               title="Download">
+                                Download
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>

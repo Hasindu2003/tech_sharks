@@ -1,0 +1,23 @@
+﻿@page
+@model HRMS.UI.Pages.Account.AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "_Layout";
+}
+
+<div class="page-body d-flex align-items-center justify-content-center" style="min-height:60vh">
+    <div class="text-center">
+        <div style="font-size:72px;color:#dc3545;margin-bottom:16px">
+            <i class="bi bi-shield-lock"></i>
+        </div>
+        <h2 style="font-size:22px;font-weight:800;color:#151811;margin-bottom:8px">Access Denied</h2>
+        <p style="color:#6b7280;font-size:14px;margin-bottom:24px">
+            You do not have permission to access this page.<br />
+            Please contact your administrator if you think this is a mistake.
+        </p>
+        <a asp-page="/Index" class="btn py-2 px-4 fw-semibold"
+           style="background:#1a7a3c;color:#fff;border-radius:8px;font-size:14px">
+            <i class="bi bi-house me-2"></i>Go to Home
+        </a>
+    </div>
+</div>

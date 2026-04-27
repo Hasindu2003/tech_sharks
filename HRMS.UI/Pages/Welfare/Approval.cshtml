@@ -1,0 +1,516 @@
+﻿@page
+@model HRMS.UI.Pages.Welfare.ApprovalListModel
+@{
+    ViewData["Title"] = "Pending Approvals";
+    var levelLabel = Model.ApproverLevel switch
+    {
+        "BranchDGM" => "Branch DGM",
+        "HODGM" => "HO DGM",
+        "SeniorManagement" => "Senior Management",
+        _ => Model.ApproverLevel
+    };
+}
+
+<style>
+    .wrap {
+        padding: 26px;
+        background: #ffffff;
+        min-height: calc(100vh - 62px);
+    }
+
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 18px;
+        font-size: 12px;
+        color: #7a8863;
+    }
+
+        .breadcrumb a {
+            color: #7a8863;
+            text-decoration: none;
+        }
+
+            .breadcrumb a:hover {
+                color: #10823c;
+            }
+
+        .breadcrumb svg {
+            width: 12px;
+            height: 12px;
+            stroke: #7a8863;
+            fill: none;
+        }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+
+    .page-title {
+        font-size: 19px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0 0 4px 0;
+    }
+
+    .page-sub {
+        font-size: 12px;
+        color: #7a8863;
+        margin: 0;
+    }
+
+    .stats-row {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        flex: 1;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .stat-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+        .stat-icon svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .stat-icon.pending {
+            background: #fef3c7;
+        }
+
+            .stat-icon.pending svg {
+                stroke: #92400e;
+            }
+
+        .stat-icon.approved {
+            background: #d1fae5;
+        }
+
+            .stat-icon.approved svg {
+                stroke: #065f46;
+            }
+
+        .stat-icon.rejected {
+            background: #fee2e2;
+        }
+
+            .stat-icon.rejected svg {
+                stroke: #991b1b;
+            }
+
+        .stat-icon.total {
+            background: #eff6ff;
+        }
+
+            .stat-icon.total svg {
+                stroke: #1e40af;
+            }
+
+    .stat-info label {
+        font-size: 11px;
+        font-weight: 600;
+        color: #7a8863;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .stat-info span {
+        font-size: 20px;
+        font-weight: 800;
+        color: #151811;
+    }
+
+    .card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .card-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 18px;
+        border-bottom: 1px solid #e2e5dc;
+    }
+
+    .card-head-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .card-head svg {
+        width: 16px;
+        height: 16px;
+        stroke: #10823c;
+        fill: none;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .card-head-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: #151811;
+        margin: 0;
+    }
+
+    .filter-row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .filter-select, .search-input {
+        border: 1px solid #e2e5dc;
+        border-radius: 7px;
+        font-size: 12px;
+        color: #151811;
+        padding: 6px 10px;
+        outline: none;
+        background: #fff;
+    }
+
+        .filter-select:focus, .search-input:focus {
+            border-color: #10823c;
+        }
+
+    .search-input {
+        width: 180px;
+    }
+
+    .tbl {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+        .tbl thead tr {
+            background: #f9fafb;
+            border-bottom: 1px solid #e2e5dc;
+        }
+
+        .tbl th {
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #7a8863;
+            text-align: left;
+        }
+
+        .tbl td {
+            padding: 10px 16px;
+            font-size: 12px;
+            color: #151811;
+            border-top: 1px solid #e2e5dc;
+        }
+
+        .tbl tbody tr:hover {
+            background: #fafafa;
+        }
+
+    .badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 9999px;
+        display: inline-block;
+    }
+
+    .badge-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-rejected {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .badge-draft {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .badge-sentback {
+        background: #ffedd5;
+        color: #9a3412;
+    }
+
+    /* Attachment badge */
+    .attach-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 9999px;
+        background: rgba(16,130,60,0.08);
+        color: #10823c;
+        margin-left: 6px;
+        vertical-align: middle;
+    }
+
+        .attach-badge svg {
+            width: 10px;
+            height: 10px;
+            stroke: #10823c;
+            fill: none;
+            stroke-width: 2.2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+    .btn-review {
+        background: #10823c;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        transition: background 0.15s;
+    }
+
+        .btn-review:hover {
+            background: #0d6e32;
+        }
+
+    .btn-view {
+        background: rgba(16,130,60,0.05);
+        border: 1px solid rgba(16,130,60,0.2);
+        color: #10823c;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 5px 12px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        transition: background 0.15s;
+        margin-left: 4px;
+    }
+
+        .btn-view:hover {
+            background: rgba(16,130,60,0.12);
+        }
+
+    .empty {
+        text-align: center;
+        padding: 48px;
+        color: #7a8863;
+        font-size: 13px;
+    }
+
+        .empty svg {
+            width: 40px;
+            height: 40px;
+            stroke: #c4c9bb;
+            fill: none;
+            margin-bottom: 10px;
+        }
+
+    .level-chip {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        background: #eff6ff;
+        color: #1e40af;
+        display: inline-block;
+    }
+</style>
+
+<div class="wrap">
+    <div class="breadcrumb">
+        <a href="/">Home</a>
+        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6" /></svg>
+        <span>Welfare Approvals</span>
+    </div>
+
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Welfare Approval Queue</h2>
+            <p class="page-sub">Requests pending your review as <strong>@levelLabel</strong></p>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-icon pending">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+            </div>
+            <div class="stat-info">
+                <label>Pending</label>
+                <span>@Model.Requests.Count(r => r.CurrentStatus == "Pending" && r.CurrentLevel == Model.ApproverLevel)</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon approved">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+            </div>
+            <div class="stat-info">
+                <label>Approved by Me</label>
+                <span>@Model.MyApprovedCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon rejected">
+                <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+            </div>
+            <div class="stat-info">
+                <label>Rejected by Me</label>
+                <span>@Model.MyRejectedCount</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon total">
+                <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
+            </div>
+            <div class="stat-info">
+                <label>Total Seen</label>
+                <span>@Model.Requests.Count</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+        <div class="card-head">
+            <div class="card-head-left">
+                <svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6" /><line x1="8" y1="12" x2="21" y2="12" /><line x1="8" y1="18" x2="21" y2="18" /><line x1="3" y1="6" x2="3.01" y2="6" /><line x1="3" y1="12" x2="3.01" y2="12" /><line x1="3" y1="18" x2="3.01" y2="18" /></svg>
+                <h6 class="card-head-title">Request List</h6>
+            </div>
+            <div class="filter-row">
+                <select class="filter-select" id="statusFilter" onchange="filterTable()">
+                    <option value="">All Status</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="SentBack">Sent Back</option>
+                </select>
+                <input type="text" class="search-input" id="searchBox" placeholder="Search…" oninput="filterTable()" />
+            </div>
+        </div>
+
+        @if (!Model.Requests.Any())
+        {
+            <div class="empty">
+                <svg viewBox="0 0 24 24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                </svg>
+                <p>No requests found for your approval level.</p>
+            </div>
+        }
+        else
+        {
+            <table class="tbl" id="requestTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee</th>
+                        <th>Assistance Type</th>
+                        <th>Request Date</th>
+                        <th>Requested Amount</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Requests)
+                    {
+                        var statusClass = item.CurrentStatus switch
+                        {
+                                                    "Approved" => "badge-approved",
+                                                    "Rejected" => "badge-rejected",
+                                                    "Pending" => "badge-pending",
+                                                    "Draft" => "badge-draft",
+                                                    "SentBack" => "badge-sentback",
+                            _ => "badge-draft"
+                        };
+                        bool canReview = item.CurrentStatus == "Pending" && item.CurrentLevel == Model.ApproverLevel;
+                        int docCount = item.Documents?.Count ?? 0;
+
+                        <tr>
+                            <td>@item.RequestId</td>
+                            <td>
+                                @item.Employee?.FirstName @item.Employee?.LastName
+                                @if (docCount > 0)
+                                {
+                                    <span class="attach-badge" title="@docCount supporting document(s)">
+                                        <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                                        @docCount
+                                    </span>
+                                }
+                            </td>
+                            <td>@item.WelfareType?.TypeName</td>
+                            <td>@item.RequestDate.ToString("yyyy-MM-dd")</td>
+                            <td>LKR @item.RequestedAmount.ToString("N2")</td>
+                            <td><span class="badge @statusClass">@item.CurrentStatus</span></td>
+                            <td>@item.CreatedAt.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                @if (canReview)
+                                {
+                                    <a href="/Welfare/ApprovalAction?id=@item.RequestId&level=@Model.ApproverLevel" class="btn-review">Review</a>
+                                }
+                                <a href="/Welfare/StatusTracking?id=@item.RequestId" class="btn-view">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const search = document.getElementById('searchBox').value.toLowerCase();
+            const status = document.getElementById('statusFilter').value.toLowerCase();
+            const rows   = document.querySelectorAll('#requestTable tbody tr');
+            rows.forEach(row => {
+                const text        = row.innerText.toLowerCase();
+                const matchSearch = text.includes(search);
+                const matchStatus = status === '' || text.includes(status);
+                row.style.display = matchSearch && matchStatus ? '' : 'none';
+            });
+        }
+    </script>
+}
