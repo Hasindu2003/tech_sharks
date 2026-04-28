@@ -1,0 +1,104 @@
+@page
+@model HRMS.UI.Pages.Employees.CreateModel
+@{
+    ViewData["Title"] = "Add Employee";
+    ViewData["PageTitle"] = "Employees";
+    ViewData["ActiveNav"] = "Employees";
+}
+
+<style>
+    .form-container { padding: 24px; max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #e2e5dc; border-radius: 6px; font-family: inherit; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .btn-primary { background: #10823c; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
+</style>
+
+<div style="padding: 24px;">
+    <div class="form-container">
+        <h2 style="margin-bottom: 24px;">Add New Employee</h2>
+        
+        <form method="post">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" asp-for="NewEmployee.FirstName" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" asp-for="NewEmployee.LastName" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" asp-for="NewEmployee.Email" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="text" asp-for="NewEmployee.PhoneNumber" class="form-control" required />
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>NIC</label>
+                    <input type="text" asp-for="NewEmployee.NIC" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" asp-for="NewEmployee.DateOfBirth" class="form-control" required />
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Department</label>
+                    <select asp-for="NewEmployee.DepartmentId" asp-items="Model.DepartmentList" class="form-control" required>
+                        <option value="">-- Select Department --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Designation</label>
+                    <select asp-for="NewEmployee.DesignationId" asp-items="Model.DesignationList" class="form-control" required>
+                        <option value="">-- Select Designation --</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Branch</label>
+                    <select asp-for="NewEmployee.BranchId" asp-items="Model.BranchList" class="form-control" required>
+                        <option value="">-- Select Branch --</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e5dc;" />
+            <h4>Bank Details</h4>
+            <div class="form-row" style="margin-top: 16px;">
+                <div class="form-group">
+                    <label>EPF Number</label>
+                    <input type="text" asp-for="NewEmployee.EPFNumber" class="form-control" required />
+                </div>
+                <div class="form-group">
+                    <label>Bank Account Name</label>
+                    <input type="text" asp-for="NewEmployee.BankAccountName" class="form-control" required />
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Bank Account Number</label>
+                <input type="text" asp-for="NewEmployee.BankAccountNumber" class="form-control" required />
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/Employees" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Employee</button>
+            </div>
+        </form>
+    </div>
+</div>

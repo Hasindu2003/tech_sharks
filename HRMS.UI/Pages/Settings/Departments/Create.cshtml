@@ -1,0 +1,62 @@
+@page
+@model HRMS.UI.Pages.Settings.Departments.CreateModel
+@{
+    ViewData["Title"] = "Add Department";
+    ViewData["PageTitle"] = "Settings / Departments";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+<style>
+    .form-container { padding: 24px; max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+    .form-control { width: 100%; padding: 10px; border: 1px solid #e2e5dc; border-radius: 6px; font-family: inherit; }
+    .btn-primary { background: #10823c; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
+</style>
+
+<div style="padding: 24px;">
+    <div class="form-container">
+        <h2 style="margin-bottom: 24px;">Add New Department</h2>
+        
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" style="color: red; margin-bottom: 16px;"></div>
+            
+            <div class="form-group">
+                <label>Department Name</label>
+                <input type="text" asp-for="NewDepartment.Name" class="form-control" required placeholder="e.g. Finance" />
+            </div>
+            
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea asp-for="NewDepartment.Description" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Capacity</label>
+                <input type="number" asp-for="NewDepartment.Capacity" class="form-control" required min="1" value="20" />
+            </div>
+            
+            @if (Model.IsAdmin)
+            {
+                <div class="form-group">
+                    <label>Assigned Branch</label>
+                    <select asp-for="NewDepartment.BranchId" asp-items="Model.BranchList" class="form-control" required>
+                        <option value="">-- Select Branch --</option>
+                    </select>
+                </div>
+            }
+            else
+            {
+                <div class="form-group" style="padding: 12px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 13px;">
+                    <strong>Note:</strong> You are adding this department to your assigned branch.
+                </div>
+            }
+
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/Settings/Departments" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Department</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -4,6 +4,8 @@ using HRMS.UI.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,12 +14,14 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseMySql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
         ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))
+        new MySqlServerVersion(new Version(8, 0, 0))
     )
 );
 
 // Add ASP.NET Core Identity
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
+    // Password rules
     options.Password.RequireDigit = true;
     options.Password.RequireLowercase = true;
     options.Password.RequireUppercase = true;
@@ -34,10 +38,18 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     options.Lockout.MaxFailedAccessAttempts = 5;
     options.Lockout.AllowedForNewUsers = true;
+    // Use email as the unique identifier
+    options.User.RequireUniqueEmail = true;
+
+    // Email must be confirmed before login; phone/2FA not used
+    options.SignIn.RequireConfirmedAccount = true;
+    options.SignIn.RequireConfirmedEmail = true;
+    options.SignIn.RequireConfirmedPhoneNumber = false;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
+// Configure login/logout paths
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Account/Login";
@@ -80,6 +92,16 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Seed roles and dummy users
+});
+
+// Add Razor Pages
+builder.Services.AddRazorPages();
+
+
+
+var app = builder.Build();
+
+// Seed roles and default admin user
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -87,6 +109,7 @@ using (var scope = app.Services.CreateScope())
 
     // Seed roles
     string[] roles = ["Area Manager", "HR Manager", "Branch Manager", "Employee"];
+    string[] roles = ["Admin", "HR Manager", "Employee"];
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -187,6 +210,38 @@ using (var scope = app.Services.CreateScope())
             if (result.Succeeded)
                 await userManager.AddToRoleAsync(user, dummy.Role);
         }
+    // Seed default admin user
+    const string adminEmail = "admin@hrms.local";
+    const string adminPassword = "Admin@123";
+
+    if (await userManager.FindByEmailAsync(adminEmail) is null)
+    {
+        var adminUser = new ApplicationUser
+        {
+            UserName = adminEmail,
+            Email = adminEmail,
+            EmailConfirmed = true
+        };
+        var result = await userManager.CreateAsync(adminUser, adminPassword);
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(adminUser, "Admin");
+    }
+
+    // Seed default HR Manager user
+    const string hrEmail = "hr@hrms.local";
+    const string hrPassword = "HrManager@123";
+
+    if (await userManager.FindByEmailAsync(hrEmail) is null)
+    {
+        var hrUser = new ApplicationUser
+        {
+            UserName = hrEmail,
+            Email = hrEmail,
+            EmailConfirmed = true
+        };
+        var hrResult = await userManager.CreateAsync(hrUser, hrPassword);
+        if (hrResult.Succeeded)
+            await userManager.AddToRoleAsync(hrUser, "HR Manager");
     }
 }
 
@@ -203,4 +258,12 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapRazorPages();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapRazorPages();
+
 app.Run();

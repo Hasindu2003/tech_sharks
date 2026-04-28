@@ -20,6 +20,8 @@ using HRMS.Domain.Entities.Training;
 // Transfer
 using HRMS.Domain.Entities.Transfer;
 
+
+
 namespace HRMS.Infrastructure.Persistence
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
@@ -65,10 +67,12 @@ namespace HRMS.Infrastructure.Persistence
         public DbSet<TransferRequest> TransferRequests { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
 
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+            // Remove unused Identity columns from AspNetUsers
             builder.Entity<ApplicationUser>(entity =>
             {
                 entity.Ignore(e => e.PhoneNumber);
@@ -92,6 +96,9 @@ namespace HRMS.Infrastructure.Persistence
                 entity.HasIndex(e => new { e.RecipientEmail, e.IsRead });
                 entity.HasIndex(e => e.CreatedAt);
             });
+            // Remove unused Identity tables
+            builder.Entity<IdentityUserLogin<string>>()
+                .ToTable("AspNetUserLogins", t => t.ExcludeFromMigrations());
         }
     }
 }

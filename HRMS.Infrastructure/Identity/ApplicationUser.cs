@@ -25,5 +25,7 @@ namespace HRMS.Infrastructure.Identity
         public string? Department { get; set; }
 
         public DateTime DateOfJoining { get; set; }
+        // Link to the Employee record (optional)
+        public int? EmployeeId { get; set; }
     }
 }

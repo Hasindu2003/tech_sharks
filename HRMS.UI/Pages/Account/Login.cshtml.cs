@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.ComponentModel.DataAnnotations;
+using HRMS.Infrastructure.Identity;
 
 namespace HRMS.UI.Pages.Account
 {
@@ -35,6 +36,16 @@ namespace HRMS.UI.Pages.Account
                 ErrorMessage = "Password must be at least 8 characters long.")]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
+        public string? ReturnUrl { get; set; }
+
+        public class InputModel
+        {
+            [Required]
+            [EmailAddress]
+            public string Email { get; set; } = string.Empty;
+
+            [Required]
+            [DataType(DataType.Password)]
             public string Password { get; set; } = string.Empty;
 
             [Display(Name = "Remember me?")]
@@ -49,6 +60,16 @@ namespace HRMS.UI.Pages.Account
 
         public async Task<IActionResult> OnPostAsync()
         {
+        public async Task OnGetAsync(string? returnUrl = null)
+        {
+            ReturnUrl = returnUrl;
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+        }
+
+        public async Task<IActionResult> OnPostAsync(string? returnUrl = null)
+        {
+            returnUrl ??= Url.Content("~/");
+
             if (!ModelState.IsValid)
                 return Page();
 
@@ -74,6 +95,13 @@ namespace HRMS.UI.Pages.Account
                 ErrorMessage = "Invalid email or password. Please check your credentials and try again.";
                 return Page();
             }
+                Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
+
+            if (result.Succeeded)
+                return LocalRedirect(returnUrl);
+
+            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            return Page();
         }
     }
 }

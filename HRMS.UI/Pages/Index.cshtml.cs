@@ -3,6 +3,7 @@ using HRMS.UI.Models;
 using HRMS.UI.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
@@ -68,6 +69,16 @@ namespace HRMS.UI.Pages
 
                 PendingCount = PendingRequests.Count;
             }
+        private readonly ILogger<IndexModel> _logger;
+
+        public IndexModel(ILogger<IndexModel> logger)
+        {
+            _logger = logger;
+        }
+
+        public void OnGet()
+        {
+
         }
     }
 }

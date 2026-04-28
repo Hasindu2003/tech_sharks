@@ -1,0 +1,68 @@
+@page
+@model HRMS.UI.Pages.Settings.Branches.IndexModel
+@{
+    ViewData["Title"] = "Manage Branches";
+    ViewData["PageTitle"] = "Settings / Branches";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+<style>
+    .set-container { padding: 24px; max-width: 1000px; margin: 0 auto; }
+    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .btn-primary { background: #10823c; color: white; padding: 10px 16px; border: none; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
+    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 16px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 14px; }
+    .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e2e5dc; }
+    .data-table th { background: #f6f8f7; color: #7a8863; font-size: 13px; text-transform: uppercase; }
+    .data-table tr:hover { background: #fafafa; }
+    .action-links a { color: #10823c; text-decoration: none; font-weight: 600; margin-right: 12px; }
+    .action-links a:hover { text-decoration: underline; }
+</style>
+
+<div class="set-container">
+    <div style="margin-bottom: 20px;">
+        <a href="/Settings" class="btn-secondary" style="margin-bottom: 16px; display: inline-block;">&larr; Back to Settings</a>
+    </div>
+
+    <div class="header-row">
+        <h2>Branches</h2>
+        <a href="/Settings/Branches/Create" class="btn-primary">+ Add New Branch</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: 600;">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Location</th>
+                <th>Capacity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Branches.Count == 0)
+            {
+                <tr><td colspan="5" style="text-align:center; color:#7a8863;">No branches found.</td></tr>
+            }
+            @foreach (var item in Model.Branches)
+            {
+                <tr>
+                    <td>@item.Id</td>
+                    <td>@item.Name</td>
+                    <td>@item.Location</td>
+                    <td>@item.Capacity</td>
+                    <td class="action-links">
+                        <a href="/Settings/Branches/Edit?id=@item.Id">Edit</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
