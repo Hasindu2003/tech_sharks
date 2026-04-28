@@ -1,0 +1,174 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.AreaManager.ReviewTransferModel
+@{
+    ViewData["Title"] = "Transfer Request Review — Final Decision";
+}
+
+@if (Model.TransferRequest == null)
+{
+    <div class="k-alert k-alert-danger"><i class="bi bi-exclamation-triangle"></i> Transfer request not found.</div>
+}
+else
+{
+    var req = Model.TransferRequest;
+    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+
+    <div style="margin-bottom:20px">
+        <a asp-page="/AreaManager/ReviewTransfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back to Separation
+        </a>
+        <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
+    </div>
+
+    <div class="profile-header">
+        <div class="profile-info">
+            <div class="profile-avatar">@initials</div>
+            <div>
+                <div class="profile-name">@req.EmployeeName</div>
+                <div class="profile-meta">
+                    <span><i class="bi bi-hash"></i> @req.EpfNumber</span>
+                    <span><i class="bi bi-building"></i> @req.CurrentBranch</span>
+                    <span><i class="bi bi-diagram-3"></i> @req.Department</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="transfer-detail-grid">
+        <div>
+            <div class="k-card" style="margin-bottom:20px">
+                <div class="k-card-header">Transfer Details</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
+                    <div>
+                        <div class="detail-label">Current Branch</div>
+                        <div class="detail-value">@req.CurrentBranch</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Target Branch</div>
+                        <div class="detail-value">@req.RequestedBranch</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value">@req.Department</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
+                    <div>
+                        <div class="detail-label">Position</div>
+                        <div class="detail-value">@req.CurrentDesignation</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Years of Service</div>
+                        <div class="detail-value">@req.YearsOfService years</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Submission Date</div>
+                        <div class="detail-value">@req.RequestedDate.ToString("MMM dd, yyyy")</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="detail-label">Reason for Transfer</div>
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-top:6px;font-size:0.9rem;color:#374151;line-height:1.6">
+                        @req.Reason
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prior Reviews Chain -->
+            @if (!string.IsNullOrEmpty(req.HRManagerReview))
+            {
+                <div class="review-card @(req.HRManagerReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-badge"></i> Step 1 — HR Manager</h6>
+                    <div style="font-size:0.88rem"><strong>@req.HRManagerReview</strong> on @req.HRManagerReviewDate?.ToString("MMM dd, yyyy") — @req.HRManagerComments</div>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(req.CurrentBMReview))
+            {
+                <div class="review-card @(req.CurrentBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 2a — Current Branch Manager (@req.CurrentBranch)</h6>
+                    <div style="font-size:0.88rem"><strong>@req.CurrentBMReview</strong> on @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy") — @req.CurrentBMComments</div>
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(req.TargetBMReview))
+            {
+                <div class="review-card @(req.TargetBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 2b — Target Branch Manager (@req.RequestedBranch)</h6>
+                    <div style="font-size:0.88rem"><strong>@req.TargetBMReview</strong> on @req.TargetBMReviewDate?.ToString("MMM dd, yyyy") — @req.TargetBMComments</div>
+                </div>
+            }
+
+            @if (req.HasDocument)
+            {
+                <div class="k-card" style="margin-top:12px">
+                    <div class="k-card-header">Document Attachments</div>
+                    <div class="doc-item">
+                        <div class="doc-info">
+                            @{
+                                var ext = req.DocumentFileName?.Split('.').LastOrDefault()?.ToLower();
+                                var iconClass = ext switch { "pdf" => "pdf", "jpg" or "jpeg" or "png" => "img", _ => "doc" };
+                                var icon = ext switch { "pdf" => "bi-file-earmark-pdf", "jpg" or "jpeg" or "png" => "bi-file-earmark-image", _ => "bi-file-earmark-word" };
+                            }
+                            <div class="doc-icon @iconClass"><i class="bi @icon"></i></div>
+                            <div><div class="doc-name">@req.DocumentFileName</div></div>
+                        </div>
+                        <a asp-page="/Transfer/DownloadDocument" asp-route-id="@req.Id" style="color:#1a7a3a;font-size:1.1rem"><i class="bi bi-download"></i></a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div>
+            @if (req.Status == TransferStatus.BothBMsApproved)
+            {
+                <div class="eligibility-panel">
+                    <h5><i class="bi bi-shield-check"></i> Final Decision</h5>
+                    <p class="ep-subtitle">All prior approvals completed. Make the final decision.</p>
+
+                    <div class="ep-check-item">
+                        <div class="ep-check-circle" style="border-color:#22c55e;background:#22c55e"></div>
+                        <div>
+                            <div class="ep-check-label">HR Manager ✓</div>
+                            <div class="ep-check-desc">Approved</div>
+                        </div>
+                    </div>
+                    <div class="ep-check-item">
+                        <div class="ep-check-circle" style="border-color:#22c55e;background:#22c55e"></div>
+                        <div>
+                            <div class="ep-check-label">Current Branch Manager ✓</div>
+                            <div class="ep-check-desc">Approved</div>
+                        </div>
+                    </div>
+                    <div class="ep-check-item">
+                        <div class="ep-check-circle" style="border-color:#22c55e;background:#22c55e"></div>
+                        <div>
+                            <div class="ep-check-label">Target Branch Manager ✓</div>
+                            <div class="ep-check-desc">Approved</div>
+                        </div>
+                    </div>
+
+                    <form method="post" class="ep-actions">
+                        <input type="hidden" name="id" value="@req.Id" />
+                        <div style="margin-bottom:10px">
+                            <textarea name="comments" placeholder="Add your final decision comments..." required minlength="10"
+                                      style="width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-family:inherit;resize:vertical;min-height:80px"></textarea>
+                        </div>
+                        <button type="submit" name="action" value="approve" class="btn-ep-approve">
+                            <i class="bi bi-check-circle"></i> Approve Transfer
+                        </button>
+                        <button type="submit" name="action" value="reject" class="btn-ep-reject">
+                            <i class="bi bi-x-circle"></i> Reject Transfer
+                        </button>
+                    </form>
+                </div>
+            }
+            else
+            {
+                <div class="k-card">
+                    <div class="k-alert k-alert-info" style="margin-bottom:0">
+                        <i class="bi bi-info-circle"></i> This request has already been finalized.
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

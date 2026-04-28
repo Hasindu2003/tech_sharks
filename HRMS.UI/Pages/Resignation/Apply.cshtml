@@ -1,0 +1,163 @@
+@page
+@model HRMS.UI.Pages.Resignation.ApplyModel
+@{
+    ViewData["Title"] = "Submit Resignation";
+}
+
+<div class="page-header">
+    <h1 class="page-title">Submit Resignation</h1>
+    <p class="page-subtitle">Complete this form to initiate your resignation process.</p>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <!-- Employee Info Card -->
+    <div class="col-lg-4">
+        <div class="k-card">
+            <div class="k-card-header"><i class="bi bi-person-badge me-2"></i>Your Details</div>
+            <div class="k-card-body">
+                <div class="info-row"><span class="info-label">Name</span><span class="info-value">@Model.CurrentUser?.FullName</span></div>
+                <div class="info-row"><span class="info-label">EPF No.</span><span class="info-value">@Model.CurrentUser?.EpfNumber</span></div>
+                <div class="info-row"><span class="info-label">Branch</span><span class="info-value">@Model.CurrentUser?.Branch</span></div>
+                <div class="info-row"><span class="info-label">Department</span><span class="info-value">@Model.CurrentUser?.Department</span></div>
+                <div class="info-row"><span class="info-label">Designation</span><span class="info-value">@Model.CurrentUser?.Designation</span></div>
+                <div class="info-row"><span class="info-label">Joined</span><span class="info-value">@Model.CurrentUser?.DateOfJoining.ToString("MMMM dd, yyyy")</span></div>
+            </div>
+        </div>
+
+        <div class="k-card mt-3" style="border-left: 4px solid #f59e0b;">
+            <div class="k-card-body">
+                <p class="mb-1 fw-semibold" style="color:#f59e0b;"><i class="bi bi-info-circle me-1"></i> Approval Flow</p>
+                <ol class="ps-3 mb-0" style="font-size:0.85rem; color: var(--text-secondary);">
+                    <li class="mb-1">Branch Manager — Acknowledges</li>
+                    <li class="mb-1">Area Manager — Reviews &amp; Approves</li>
+                    <li>HR Manager — Final Approval</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="col-lg-8">
+        <div class="k-card">
+            <div class="k-card-header"><i class="bi bi-pencil-square me-2"></i>Resignation Details</div>
+            <div class="k-card-body">
+                <form method="post" enctype="multipart/form-data" id="resignationForm">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:none"></div>
+
+                    <!-- Reason -->
+                    <div class="mb-4">
+                        <label asp-for="Input.ReasonForResignation" class="form-label fw-semibold">Reason for Resignation <span class="text-danger">*</span></label>
+                        <textarea asp-for="Input.ReasonForResignation" class="form-control" rows="4"
+                            placeholder="Please provide a detailed reason (minimum 20 characters)..."></textarea>
+                        <span asp-validation-for="Input.ReasonForResignation" class="text-danger small"></span>
+                    </div>
+
+                    <!-- Effective Date -->
+                    <div class="mb-4">
+                        <label asp-for="Input.EffectiveDate" class="form-label fw-semibold">Last Working Day <span class="text-danger">*</span></label>
+                        <input asp-for="Input.EffectiveDate" type="date" class="form-control"
+                               min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")" id="effectiveDateInput" />
+                        <span asp-validation-for="Input.EffectiveDate" class="text-danger small"></span>
+                        <div class="form-text">Minimum 14 days notice required. Notice period: <strong id="noticeDaysDisplay">—</strong></div>
+                    </div>
+
+                    <!-- Additional Remarks -->
+                    <div class="mb-4">
+                        <label asp-for="Input.AdditionalRemarks" class="form-label fw-semibold">Additional Remarks</label>
+                        <textarea asp-for="Input.AdditionalRemarks" class="form-control" rows="2"
+                            placeholder="Any additional information..."></textarea>
+                    </div>
+
+                    <!-- Obligations -->
+                    <div class="k-section-divider mb-3">
+                        <span>Financial Obligations</span>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check mb-2">
+                            <input asp-for="Input.HasOutstandingLoans" class="form-check-input" type="checkbox" id="loansCheck" />
+                            <label asp-for="Input.HasOutstandingLoans" class="form-check-label">I have outstanding loan balances</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input asp-for="Input.IsLoanGuarantor" class="form-check-input" type="checkbox" id="guarantorCheck" />
+                            <label asp-for="Input.IsLoanGuarantor" class="form-check-label">I am a guarantor for another employee's loan</label>
+                        </div>
+                        <div class="form-check mb-2" id="overrideRow" style="display:none;">
+                            <input asp-for="Input.HasOverridePermission" class="form-check-input" type="checkbox" />
+                            <label asp-for="Input.HasOverridePermission" class="form-check-label text-warning">Senior management override granted</label>
+                        </div>
+                    </div>
+                    <div class="mb-4" id="obligationDetailsRow" style="display:none;">
+                        <label asp-for="Input.ObligationDetails" class="form-label fw-semibold">Obligation Details</label>
+                        <textarea asp-for="Input.ObligationDetails" class="form-control" rows="2"
+                            placeholder="Describe the obligations..."></textarea>
+                    </div>
+
+                    <!-- Documents -->
+                    <div class="k-section-divider mb-3">
+                        <span>Supporting Documents</span>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Attach Documents <span class="text-danger">*</span></label>
+                        <input asp-for="Input.Documents" type="file" class="form-control" multiple
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                        <div class="form-text">Accepted: PDF, DOC, DOCX, JPG, PNG. Max 5MB per file. At least one document required for submission.</div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-3 flex-wrap">
+                        <button type="submit" asp-page-handler="Submit" class="btn-primary-action" id="submitBtn">
+                            <i class="bi bi-send me-2"></i>Submit Resignation
+                        </button>
+                        <button type="submit" asp-page-handler="SaveDraft" class="btn-secondary-action">
+                            <i class="bi bi-floppy me-2"></i>Save as Draft
+                        </button>
+                        <a asp-page="/Resignation/MyRequests" class="btn-secondary-action">
+                            <i class="bi bi-x-lg me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<partial name="_ValidationScriptsPartial" />
+<script>
+    // Notice period auto-calculator
+    const effectiveDateInput = document.getElementById('effectiveDateInput');
+    const noticeDaysDisplay = document.getElementById('noticeDaysDisplay');
+    effectiveDateInput?.addEventListener('change', function () {
+        const today = new Date(); today.setHours(0,0,0,0);
+        const effective = new Date(this.value);
+        if (!isNaN(effective)) {
+            const days = Math.round((effective - today) / 86400000);
+            noticeDaysDisplay.textContent = days + ' day' + (days !== 1 ? 's' : '');
+        }
+    });
+
+    // Show obligation details when checkboxes ticked
+    const loansCheck = document.getElementById('loansCheck');
+    const guarantorCheck = document.getElementById('guarantorCheck');
+    const overrideRow = document.getElementById('overrideRow');
+    const obligationDetailsRow = document.getElementById('obligationDetailsRow');
+
+    function updateObligationVisibility() {
+        const hasObligation = loansCheck.checked || guarantorCheck.checked;
+        overrideRow.style.display = hasObligation ? 'block' : 'none';
+        obligationDetailsRow.style.display = hasObligation ? 'block' : 'none';
+    }
+    loansCheck?.addEventListener('change', updateObligationVisibility);
+    guarantorCheck?.addEventListener('change', updateObligationVisibility);
+    updateObligationVisibility();
+</script>
+}

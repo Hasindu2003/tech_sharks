@@ -1,0 +1,93 @@
+@page
+@model HRMS.UI.Pages.Resignation.AcceptanceLetterModel
+@{
+    ViewData["Title"] = "Resignation Acceptance Letter";
+    var r = Model.Request!;
+}
+
+<div class="page-header d-print-none">
+    <h1 class="page-title">Acceptance Letter</h1>
+    <div class="d-flex gap-2">
+        <button onclick="window.print()" class="btn-primary-action"><i class="bi bi-printer me-2"></i>Print</button>
+        <a asp-page="/Resignation/Details" asp-route-id="@r.Id" class="btn-secondary-action"><i class="bi bi-arrow-left me-2"></i>Back</a>
+    </div>
+</div>
+
+<!-- Letter Body -->
+<div class="k-card" style="max-width:800px; margin:0 auto; font-family: 'Georgia', serif;">
+    <div class="k-card-body p-5">
+        <!-- Header -->
+        <div class="text-center mb-5">
+            <h2 class="mb-1" style="font-size:1.5rem; letter-spacing:2px; font-weight:700;">KANRICH CORPORATION</h2>
+            <p class="mb-0 text-muted" style="font-size:0.85rem;">Human Resources Department | Head Office, Colombo</p>
+            <hr class="mt-3" style="border-color: var(--accent); border-width:2px;">
+        </div>
+
+        <!-- Date -->
+        <p class="text-end mb-4">@r.AcceptanceLetterDate?.ToString("MMMM dd, yyyy")</p>
+
+        <!-- Reference -->
+        <p><strong>Ref:</strong> RESIG/@r.Id/@r.EffectiveDate.Year</p>
+
+        <!-- Addressee -->
+        <div class="mb-4">
+            <p class="mb-1"><strong>@r.EmployeeName</strong></p>
+            <p class="mb-1">@r.Designation</p>
+            <p class="mb-1">@r.Department</p>
+            <p class="mb-0">@r.Branch</p>
+        </div>
+
+        <!-- Subject -->
+        <p class="mb-4"><strong>Subject: Acceptance of Resignation</strong></p>
+
+        <!-- Body -->
+        <p>Dear <strong>@r.EmployeeName.Split(' ')[0]</strong>,</p>
+
+        <p style="line-height:2.0; text-align:justify;">
+            This is to formally acknowledge and accept your resignation submitted on
+            <strong>@r.ResignationDate.ToString("MMMM dd, yyyy")</strong>, from the position of
+            <strong>@r.Designation</strong> in the <strong>@r.Department</strong> department at
+            <strong>@r.Branch</strong>.
+        </p>
+
+        <p style="line-height:2.0; text-align:justify;">
+            As per your resignation notice and organizational policy, your <strong>last working day</strong>
+            will be <strong>@r.EffectiveDate.ToString("MMMM dd, yyyy")</strong> (a notice period of
+            <strong>@r.NoticePeriodDays days</strong>). Your payroll will remain active until this date.
+        </p>
+
+        <p style="line-height:2.0; text-align:justify;">
+            We kindly request that you complete all necessary knowledge transfer and handover responsibilities
+            before your last working day. Please coordinate with your Branch Manager to ensure operational
+            continuity. Kindly return all organizational assets, access cards, and equipment to the HR department.
+        </p>
+
+        <p style="line-height:2.0;">
+            We sincerely appreciate your contributions to Kanrich Corporation and wish you all the best in
+            your future endeavors.
+        </p>
+
+        <!-- Signature -->
+        <div class="mt-5">
+            <p class="mb-1"><strong>@r.HREmail?.Split('@')[0].Replace('.', ' ')</strong></p>
+            <p class="mb-1">Human Resources Manager</p>
+            <p class="mb-1">Kanrich Corporation</p>
+            <p class="mb-0 text-muted small">Date: @r.HRReviewDate?.ToString("MMMM dd, yyyy")</p>
+        </div>
+
+        <!-- Stamp -->
+        <div class="text-center mt-5 pt-4" style="border-top:1px dashed var(--border-color);">
+            <p class="text-muted small mb-0">
+                This is a system-generated acceptance letter | Reference: #@r.Id | Kanrich HRMS
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+@@media print {
+    .sidebar, .topbar, .page-header, .d-print-none { display: none !important; }
+    .main-content { margin: 0 !important; padding: 0 !important; }
+    .k-card { box-shadow: none !important; border: none !important; }
+}
+</style>

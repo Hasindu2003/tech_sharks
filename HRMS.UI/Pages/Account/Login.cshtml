@@ -1,0 +1,126 @@
+@page
+@model HRMS.UI.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Login";
+    Layout = "_Layout";
+}
+
+@if (User.Identity?.IsAuthenticated != true)
+{
+<div class="login-wrapper">
+    <!-- Left Side: Form -->
+    <div class="login-form-side">
+        <div class="login-logo">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
+                <div style="width:44px;height:44px;background:linear-gradient(135deg,#1a7a3a,#22c55e);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.3rem;">K</div>
+                <div>
+                    <div class="logo-title">KANRICH</div>
+                    <div class="logo-subtitle">LIMITED</div>
+                </div>
+            </div>
+            <div style="font-size:0.7rem;color:#9ca3af;margin-top:2px;letter-spacing:0.5px;font-style:italic;">Relationships without borders</div>
+        </div>
+
+        <h1 class="login-heading">Sign in to HRMS</h1>
+        <p class="login-subheading">Welcome back! Please enter your details.</p>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="k-alert k-alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> @Model.ErrorMessage
+            </div>
+        }
+
+        <div asp-validation-summary="ModelOnly" class="k-alert k-alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "flex" : "none")"></div>
+
+        <form method="post" novalidate class="login-form">
+            <div class="k-form-group">
+                <label asp-for="Input.Email">Username or Email</label>
+                <div style="position:relative">
+                    <input asp-for="Input.Email" class="k-form-control" placeholder="Enter your username"
+                           autocomplete="email" style="padding-right:40px" />
+                    <i class="bi bi-person" style="position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#9ca3af"></i>
+                </div>
+                <span asp-validation-for="Input.Email" class="text-danger small"></span>
+            </div>
+
+            <div class="k-form-group">
+                <label asp-for="Input.Password">Password</label>
+                <div style="position:relative">
+                    <input asp-for="Input.Password" class="k-form-control" type="password" id="passwordInput"
+                           placeholder="Enter your password" autocomplete="current-password" style="padding-right:40px" />
+                    <button type="button" id="togglePassword"
+                            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#9ca3af;cursor:pointer;padding:4px">
+                        <i class="bi bi-eye" id="toggleIcon"></i>
+                    </button>
+                </div>
+                <span asp-validation-for="Input.Password" class="text-danger small"></span>
+            </div>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+                <div class="form-check">
+                    <input asp-for="Input.RememberMe" class="form-check-input" />
+                    <label asp-for="Input.RememberMe" class="form-check-label" style="font-size:0.85rem;color:#6b7280">Remember for 30 days</label>
+                </div>
+                <a href="#" style="font-size:0.85rem;color:#1a7a3a;font-weight:600;text-decoration:none">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="btn-login">
+                Sign In <i class="bi bi-arrow-right"></i>
+            </button>
+        </form>
+
+        <div style="margin-top:20px;text-align:center;font-size:0.82rem;color:#9ca3af">
+            Having trouble logging in? <a href="#" style="color:#1a7a3a;font-weight:600;text-decoration:none">Contact Support</a>
+        </div>
+
+        <!-- Test Credentials -->
+        <details style="margin-top:24px;font-size:0.8rem">
+            <summary style="color:#9ca3af;cursor:pointer;font-weight:500">Test Credentials (Password: <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px">Kanrich@2024</code>)</summary>
+            <table class="k-table" style="margin-top:10px">
+                <thead>
+                    <tr>
+                        <th>Role</th>
+                        <th>Email</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Area Manager</td><td><code>nimal.perera@("@")kanrich.lk</code></td></tr>
+                    <tr><td>HR Manager</td><td><code>priyantha.jayasekara@("@")kanrich.lk</code></td></tr>
+                    <tr><td>Branch Manager</td><td><code>kamani.silva@("@")kanrich.lk</code></td></tr>
+                    <tr><td>Employee</td><td><code>kasun.bandara@("@")kanrich.lk</code></td></tr>
+                </tbody>
+            </table>
+        </details>
+
+        <div class="login-footer">
+            &copy; 2026 Kanrich Limited. All rights reserved.
+        </div>
+    </div>
+
+    <!-- Right Side: Image / Branding -->
+    <div class="login-image">
+        <div class="login-image-text">
+            <h2>Streamline your workforce management.</h2>
+            <p>Experience the next generation of HR tools designed for efficiency, clarity, and growth at Kanrich Limited.</p>
+        </div>
+    </div>
+</div>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const input = document.getElementById('passwordInput');
+            const icon = document.getElementById('toggleIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'bi bi-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'bi bi-eye';
+            }
+        });
+    </script>
+}

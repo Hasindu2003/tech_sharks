@@ -1,0 +1,211 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager")]
+@model HRMS.UI.Pages.Termination.CreateRequestModel
+@{
+    ViewData["Title"] = "Employee Termination";
+}
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">New Termination Request</h2>
+        <p style="color:#6b7280;font-size:0.9rem;margin:0">Initiate an employee termination process</p>
+    </div>
+    <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>
+
+@if (TempData["ErrorMessage"] is string errorMsg)
+{
+    <div class="k-alert k-alert-danger">
+        <i class="bi bi-exclamation-triangle"></i> @errorMsg
+    </div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="k-alert k-alert-danger" style="display:none"></div>
+
+    <!-- Section 1: Select Employee -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-person-badge" style="margin-right:8px;color:var(--primary)"></i>Employee Selection</div>
+        <div class="k-form-group">
+            <label asp-for="Input.SelectedEmployeeEmail">Select Employee <span style="color:var(--accent-red)">*</span></label>
+            <select asp-for="Input.SelectedEmployeeEmail" class="k-form-control" id="employeeSelect" onchange="populateEmployeeInfo()">
+                <option value="">-- Select an employee --</option>
+                @foreach (var emp in Model.Employees)
+                {
+                    <option value="@emp.Email"
+                            data-name="@emp.FullName"
+                            data-epf="@emp.EpfNumber"
+                            data-branch="@emp.Branch"
+                            data-dept="@emp.Department"
+                            data-desig="@emp.Designation">
+                        @emp.FullName (@emp.EpfNumber) — @emp.Branch
+                    </option>
+                }
+            </select>
+            <span asp-validation-for="Input.SelectedEmployeeEmail" class="text-danger small"></span>
+        </div>
+
+        <!-- Auto-filled employee info panel -->
+        <div id="employeeInfoPanel" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+                <div>
+                    <div class="detail-label">Employee Name</div>
+                    <div class="detail-value" id="infoName">—</div>
+                </div>
+                <div>
+                    <div class="detail-label">EPF Number</div>
+                    <div class="detail-value" id="infoEpf">—</div>
+                </div>
+                <div>
+                    <div class="detail-label">Branch</div>
+                    <div class="detail-value" id="infoBranch">—</div>
+                </div>
+                <div>
+                    <div class="detail-label">Department</div>
+                    <div class="detail-value" id="infoDept">—</div>
+                </div>
+                <div>
+                    <div class="detail-label">Designation</div>
+                    <div class="detail-value" id="infoDesig">—</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Termination Details -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-clipboard-x" style="margin-right:8px;color:var(--accent-red)"></i>Termination Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.TerminationType">Termination Type <span style="color:var(--accent-red)">*</span></label>
+                <select asp-for="Input.TerminationType" class="k-form-control">
+                    <option value="0">Voluntary</option>
+                    <option value="1">Involuntary</option>
+                    <option value="2">Retirement</option>
+                    <option value="3">End of Contract</option>
+                    <option value="4">Probation</option>
+                    <option value="5">Death</option>
+                </select>
+                <span asp-validation-for="Input.TerminationType" class="text-danger small"></span>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.InitiationDate">Initiation Date <span style="color:var(--accent-red)">*</span></label>
+                <input asp-for="Input.InitiationDate" type="date" class="k-form-control" />
+                <span asp-validation-for="Input.InitiationDate" class="text-danger small"></span>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.EffectiveTerminationDate">Effective Termination Date <span style="color:var(--accent-red)">*</span></label>
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="k-form-control" />
+                <span asp-validation-for="Input.EffectiveTerminationDate" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="k-form-group">
+            <label asp-for="Input.ReasonForTermination">Reason for Termination <span style="color:var(--accent-red)">*</span></label>
+            <textarea asp-for="Input.ReasonForTermination" class="k-form-control" rows="3" placeholder="Provide a detailed reason for the termination..."></textarea>
+            <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.SupervisorRemarks">Supervisor Remarks</label>
+                <textarea asp-for="Input.SupervisorRemarks" class="k-form-control" rows="2" placeholder="Optional supervisor remarks..."></textarea>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.SpecialRemarks">Special Remarks / Notes</label>
+                <textarea asp-for="Input.SpecialRemarks" class="k-form-control" rows="2" placeholder="Any special notes..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Obligations -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-exclamation-triangle" style="margin-right:8px;color:var(--accent-orange)"></i>Employee Obligations</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.DirectObligations">Direct Obligations (e.g. outstanding loans)</label>
+                <textarea asp-for="Input.DirectObligations" class="k-form-control" rows="2" placeholder="List any direct financial obligations..."></textarea>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.IndirectObligations">Indirect Obligations (e.g. loan guarantor)</label>
+                <textarea asp-for="Input.IndirectObligations" class="k-form-control" rows="2" placeholder="List any indirect obligations..."></textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:32px;margin-top:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
+                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+                Employee has outstanding loan balances
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
+                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+                Employee is a loan guarantor
+            </label>
+        </div>
+        <div style="margin-top:16px;padding:14px 18px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;font-weight:600;color:#92400e">
+                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:18px;height:18px;accent-color:var(--accent-orange)" />
+                <i class="bi bi-shield-exclamation"></i> Senior Management Override (allows termination despite outstanding obligations)
+            </label>
+        </div>
+    </div>
+
+    <!-- Section 4: Documents -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-file-earmark-arrow-up" style="margin-right:8px;color:var(--accent-blue)"></i>Supporting Documents</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.DocumentType">Document Type</label>
+                <select asp-for="Input.DocumentType" class="k-form-control">
+                    <option value="TerminationLetter">Termination Letter</option>
+                    <option value="DisciplinaryReport">Disciplinary Investigation Report</option>
+                    <option value="WarningLetter">Warning Letter</option>
+                    <option value="Other" selected>Other</option>
+                </select>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.Documents">Upload Files</label>
+                <input asp-for="Input.Documents" type="file" class="k-form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
+        <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">Cancel</a>
+        <button type="submit" asp-page-handler="SaveDraft" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">
+            <i class="bi bi-save"></i> Save as Draft
+        </button>
+        <button type="submit" asp-page-handler="Submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-lg">
+            <i class="bi bi-send"></i> Submit for Approval
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function populateEmployeeInfo() {
+            var select = document.getElementById('employeeSelect');
+            var option = select.options[select.selectedIndex];
+            var panel = document.getElementById('employeeInfoPanel');
+
+            if (option.value) {
+                panel.style.display = 'block';
+                document.getElementById('infoName').textContent = option.getAttribute('data-name');
+                document.getElementById('infoEpf').textContent = option.getAttribute('data-epf');
+                document.getElementById('infoBranch').textContent = option.getAttribute('data-branch');
+                document.getElementById('infoDept').textContent = option.getAttribute('data-dept');
+                document.getElementById('infoDesig').textContent = option.getAttribute('data-desig');
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+
+        // Re-populate if value was already set (e.g. post-back)
+        document.addEventListener('DOMContentLoaded', function() {
+            var select = document.getElementById('employeeSelect');
+            if (select.value) populateEmployeeInfo();
+        });
+    </script>
+}

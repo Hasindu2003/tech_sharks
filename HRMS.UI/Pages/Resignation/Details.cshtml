@@ -1,0 +1,162 @@
+@page
+@model HRMS.UI.Pages.Resignation.DetailsModel
+@{
+    ViewData["Title"] = $"Resignation Request #{Model.Request?.Id}";
+    var r = Model.Request!;
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Resignation Request <span style="color:var(--accent)">#@r.Id</span></h1>
+        <span class="k-badge @r.StatusBadgeClass" style="font-size:0.9rem;">@r.StatusDisplay</span>
+    </div>
+    <a asp-page="/Resignation/MyRequests" class="btn-secondary-action"><i class="bi bi-arrow-left me-2"></i>Back</a>
+</div>
+
+<!-- Approval Timeline -->
+<div class="k-card mb-4">
+    <div class="k-card-header"><i class="bi bi-diagram-3 me-2"></i>Approval Timeline</div>
+    <div class="k-card-body">
+        <div class="approval-timeline">
+            @{ var steps = new[] {
+                ("Submitted", r.ResignationDate.ToString("dd MMM yyyy"), r.Status >= ResignationStatusEnum.SubmittedForApproval, "bi-send"),
+                ("Branch Manager", r.BMReviewDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status > ResignationStatusEnum.SubmittedForApproval, "bi-person-check"),
+                ("Area Manager", r.AMReviewDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status > ResignationStatusEnum.BMApproved, "bi-person-check"),
+                ("HR Manager", r.HRReviewDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status >= ResignationStatusEnum.HRApproved, "bi-shield-check"),
+                ("Completed", r.AccountDeactivatedDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status == ResignationStatusEnum.Completed, "bi-check2-all")
+            }; }
+            @foreach (var (label, date, done, icon) in steps)
+            {
+                <div class="timeline-step @(done ? "done" : "")">
+                    <div class="timeline-icon"><i class="bi @icon"></i></div>
+                    <div class="timeline-label">@label</div>
+                    <div class="timeline-date">@date</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Employee Details -->
+    <div class="col-md-6">
+        <div class="k-card h-100">
+            <div class="k-card-header"><i class="bi bi-person-badge me-2"></i>Employee Details</div>
+            <div class="k-card-body">
+                <div class="info-row"><span class="info-label">Name</span><span class="info-value">@r.EmployeeName</span></div>
+                <div class="info-row"><span class="info-label">EPF No.</span><span class="info-value">@r.EpfNumber</span></div>
+                <div class="info-row"><span class="info-label">Email</span><span class="info-value">@r.EmployeeEmail</span></div>
+                <div class="info-row"><span class="info-label">Branch</span><span class="info-value">@r.Branch</span></div>
+                <div class="info-row"><span class="info-label">Department</span><span class="info-value">@r.Department</span></div>
+                <div class="info-row"><span class="info-label">Designation</span><span class="info-value">@r.Designation</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resignation Details -->
+    <div class="col-md-6">
+        <div class="k-card h-100">
+            <div class="k-card-header"><i class="bi bi-calendar-x me-2"></i>Resignation Details</div>
+            <div class="k-card-body">
+                <div class="info-row"><span class="info-label">Submitted On</span><span class="info-value">@r.ResignationDate.ToString("dd MMM yyyy")</span></div>
+                <div class="info-row"><span class="info-label">Last Working Day</span><span class="info-value fw-semibold" style="color:var(--accent)">@r.EffectiveDate.ToString("dd MMM yyyy")</span></div>
+                <div class="info-row"><span class="info-label">Notice Period</span><span class="info-value">@r.NoticePeriodDays days</span></div>
+                <div class="info-row"><span class="info-label">Has Loans</span><span class="info-value">@(r.HasOutstandingLoans ? "Yes" : "No")</span></div>
+                <div class="info-row"><span class="info-label">Loan Guarantor</span><span class="info-value">@(r.IsLoanGuarantor ? "Yes" : "No")</span></div>
+                <div class="info-row"><span class="info-label">Override</span><span class="info-value">@(r.HasOverridePermission ? "Yes" : "No")</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reason -->
+    <div class="col-12">
+        <div class="k-card">
+            <div class="k-card-header"><i class="bi bi-chat-quote me-2"></i>Reason for Resignation</div>
+            <div class="k-card-body"><p class="mb-0" style="line-height:1.8;">@r.ReasonForResignation</p></div>
+        </div>
+    </div>
+
+    <!-- Review Comments -->
+    @if (r.BMReview != null || r.AMReview != null || r.HRReview != null)
+    {
+        <div class="col-12">
+            <div class="k-card">
+                <div class="k-card-header"><i class="bi bi-chat-dots me-2"></i>Review Comments</div>
+                <div class="k-card-body">
+                    @if (r.BMReview != null)
+                    {
+                        <div class="review-block @(r.BMReview == "Approved" ? "review-approved" : "review-rejected")">
+                            <div class="review-header">
+                                <span class="fw-semibold">Branch Manager</span>
+                                <span class="k-badge @(r.BMReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">@r.BMReview</span>
+                                <span class="text-muted small">@r.BMReviewDate?.ToString("dd MMM yyyy HH:mm")</span>
+                            </div>
+                            <p class="mb-0 mt-2">@r.BMComments</p>
+                        </div>
+                    }
+                    @if (r.AMReview != null)
+                    {
+                        <div class="review-block @(r.AMReview == "Approved" ? "review-approved" : "review-rejected") mt-3">
+                            <div class="review-header">
+                                <span class="fw-semibold">Area Manager</span>
+                                <span class="k-badge @(r.AMReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">@r.AMReview</span>
+                                <span class="text-muted small">@r.AMReviewDate?.ToString("dd MMM yyyy HH:mm")</span>
+                            </div>
+                            <p class="mb-0 mt-2">@r.AMComments</p>
+                        </div>
+                    }
+                    @if (r.HRReview != null)
+                    {
+                        <div class="review-block @(r.HRReview == "Approved" ? "review-approved" : "review-rejected") mt-3">
+                            <div class="review-header">
+                                <span class="fw-semibold">HR Manager</span>
+                                <span class="k-badge @(r.HRReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">@r.HRReview</span>
+                                <span class="text-muted small">@r.HRReviewDate?.ToString("dd MMM yyyy HH:mm")</span>
+                            </div>
+                            <p class="mb-0 mt-2">@r.HRComments</p>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Documents -->
+    @if (r.Documents.Any())
+    {
+        <div class="col-12">
+            <div class="k-card">
+                <div class="k-card-header"><i class="bi bi-paperclip me-2"></i>Supporting Documents</div>
+                <div class="k-card-body">
+                    @foreach (var doc in r.Documents)
+                    {
+                        <div class="doc-item d-flex align-items-center justify-content-between p-2 mb-2 rounded" style="background:var(--bg-tertiary)">
+                            <span><i class="bi bi-file-earmark me-2"></i>@doc.FileName</span>
+                            <a asp-page="/Resignation/DownloadDocument" asp-route-id="@doc.Id" class="btn-icon-sm" title="Download">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Acceptance Letter -->
+    @if (r.AcceptanceLetterGenerated)
+    {
+        <div class="col-12">
+            <div class="k-card" style="border-left:4px solid #22c55e;">
+                <div class="k-card-body d-flex align-items-center justify-content-between">
+                    <div>
+                        <p class="fw-semibold mb-1" style="color:#22c55e;"><i class="bi bi-file-earmark-check me-2"></i>Acceptance Letter Generated</p>
+                        <p class="mb-0 text-muted small">Generated on @r.AcceptanceLetterDate?.ToString("dd MMM yyyy HH:mm")</p>
+                    </div>
+                    <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@r.Id" class="btn-primary-action">
+                        <i class="bi bi-eye me-2"></i>View Letter
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>

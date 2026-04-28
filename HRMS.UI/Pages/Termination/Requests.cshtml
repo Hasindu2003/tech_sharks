@@ -1,0 +1,157 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager,Area Manager")]
+@model HRMS.UI.Pages.Termination.RequestsModel
+@{
+    ViewData["Title"] = "Employee Termination";
+}
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Employee Termination</h2>
+        <p style="color:#6b7280;font-size:0.9rem;margin:0">Manage employee termination requests and track their status</p>
+    </div>
+    @if (User.IsInRole("HR Manager"))
+    {
+        <a asp-page="/Termination/CreateRequest" class="btn-kanrich btn-kanrich-primary">
+            <i class="bi bi-plus-lg"></i> New Termination Request
+        </a>
+    }
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success">
+        <i class="bi bi-check-circle"></i> @successMsg
+    </div>
+}
+
+<!-- Filters -->
+<div class="k-card" style="padding:16px;margin-bottom:20px">
+    <form method="get" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
+        <div class="k-form-group" style="margin-bottom:0;flex:1;min-width:200px">
+            <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary)">Search</label>
+            <input type="text" name="Search" value="@Model.Search" class="k-form-control" placeholder="Employee name, EPF number, or email..." />
+        </div>
+        <div class="k-form-group" style="margin-bottom:0;min-width:180px">
+            <label style="font-size:0.8rem;font-weight:600;color:var(--text-secondary)">Status</label>
+            <select name="StatusFilter" class="k-form-control">
+                <option value="">All Statuses</option>
+                <option value="New" selected="@(Model.StatusFilter == "New")">New (Draft)</option>
+                <option value="SubmittedForApproval" selected="@(Model.StatusFilter == "SubmittedForApproval")">Submitted for Approval</option>
+                <option value="Approved" selected="@(Model.StatusFilter == "Approved")">Approved</option>
+                <option value="Rejected" selected="@(Model.StatusFilter == "Rejected")">Rejected</option>
+                <option value="FinanceClearance" selected="@(Model.StatusFilter == "FinanceClearance")">Finance Clearance</option>
+                <option value="Terminated" selected="@(Model.StatusFilter == "Terminated")">Terminated</option>
+            </select>
+        </div>
+        <button type="submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm" style="height:42px">
+            <i class="bi bi-search"></i> Filter
+        </button>
+        <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="height:42px">
+            <i class="bi bi-x-lg"></i> Clear
+        </a>
+    </form>
+</div>
+
+<!-- Stats -->
+@{
+    var totalCount = Model.Requests.Count;
+    var newCount = Model.Requests.Count(r => r.Status == HRMS.UI.Models.TerminationStatusEnum.New);
+    var submittedCount = Model.Requests.Count(r => r.Status == HRMS.UI.Models.TerminationStatusEnum.SubmittedForApproval);
+    var terminatedCount = Model.Requests.Count(r => r.Status == HRMS.UI.Models.TerminationStatusEnum.Terminated);
+    var rejectedCount = Model.Requests.Count(r => r.Status == HRMS.UI.Models.TerminationStatusEnum.Rejected);
+}
+
+<div class="stat-cards">
+    <div class="stat-card">
+        <div class="stat-icon blue"><i class="bi bi-clipboard-data"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Total Requests</div>
+            <div class="stat-value">@totalCount</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon orange"><i class="bi bi-hourglass-split"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Pending</div>
+            <div class="stat-value">@(newCount + submittedCount)</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon green"><i class="bi bi-check-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Terminated</div>
+            <div class="stat-value">@terminatedCount</div>
+        </div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon red"><i class="bi bi-x-circle"></i></div>
+        <div class="stat-info">
+            <div class="stat-label">Rejected</div>
+            <div class="stat-value">@rejectedCount</div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+@if (Model.Requests.Any())
+{
+    <div class="k-card" style="padding:0;overflow:hidden">
+        <table class="k-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee</th>
+                    <th>Type</th>
+                    <th>Effective Date</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var req in Model.Requests)
+                {
+                    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td style="font-weight:600;color:var(--text-secondary)">#@req.Id</td>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="emp-avatar">@initials</div>
+                                <div class="emp-details">
+                                    <div class="emp-name">@req.EmployeeName</div>
+                                    <div class="emp-dept">@req.EpfNumber · @req.Department</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@req.TerminationTypeDisplay</td>
+                        <td>@req.EffectiveTerminationDate.ToString("MMM dd, yyyy")</td>
+                        <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
+                        <td>@req.CreatedDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            @if (req.Status == HRMS.UI.Models.TerminationStatusEnum.New || req.Status == HRMS.UI.Models.TerminationStatusEnum.Rejected)
+                            {
+                                <a asp-page="/Termination/EditRequest" asp-route-id="@req.Id"
+                                   class="btn-kanrich btn-kanrich-primary btn-kanrich-sm"><i class="bi bi-pencil"></i> Edit</a>
+                            }
+                            else
+                            {
+                                <a asp-page="/Termination/Details" asp-route-id="@req.Id"
+                                   class="btn-kanrich btn-kanrich-outline btn-kanrich-sm"><i class="bi bi-eye"></i> View</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No termination requests found</div>
+        <div style="font-size:0.88rem">Create a new termination request to get started</div>
+    </div>
+}
