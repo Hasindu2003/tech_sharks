@@ -1,0 +1,86 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager")]
+@model HRMS.UI.Pages.HRManager.ReviewTransfersModel
+@{
+    ViewData["Title"] = "Separation";
+}
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Employee Separation</h2>
+        <p style="color:#6b7280;font-size:0.9rem;margin:0">Review transfer requests — Initial screening and approval</p>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success">
+        <i class="bi bi-check-circle"></i> @successMsg
+    </div>
+}
+
+<div style="display:flex;gap:24px;margin-bottom:24px;border-bottom:2px solid #e5e7eb;padding-bottom:0">
+    <div style="padding:10px 4px;border-bottom:2px solid #1a7a3a;margin-bottom:-2px;font-weight:600;color:#1a7a3a;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Transfer <span style="background:#e8f5e9;color:#1a7a3a;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">@Model.PendingRequests.Count</span>
+    </div>
+    <div style="padding:10px 4px;color:#9ca3af;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Termination <span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">0</span>
+    </div>
+    <div style="padding:10px 4px;color:#9ca3af;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Resignation <span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">0</span>
+    </div>
+    <div style="padding:10px 4px;color:#9ca3af;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Death <span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">0</span>
+    </div>
+</div>
+
+@if (Model.PendingRequests.Any())
+{
+    <h5 class="section-title">New Requests — Awaiting HR Screening</h5>
+    <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
+        <table class="k-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>From Branch</th>
+                    <th>To Branch</th>
+                    <th>Submission Date</th>
+                    <th>Review</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var request in Model.PendingRequests)
+                {
+                    var initials = string.Join("", request.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="emp-avatar">@initials</div>
+                                <div class="emp-details">
+                                    <div class="emp-name">@request.EmployeeName</div>
+                                    <div class="emp-dept">@request.Department</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@request.CurrentBranch</td>
+                        <td>@request.RequestedBranch</td>
+                        <td>@request.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <a asp-page="/HRManager/ReviewTransfer" asp-route-id="@request.Id"
+                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No pending requests</div>
+        <div style="font-size:0.88rem">All transfer requests have been screened</div>
+    </div>
+}

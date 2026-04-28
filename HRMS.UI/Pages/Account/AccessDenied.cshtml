@@ -1,4 +1,18 @@
 @page
+@model HRMS.UI.Pages.Account.AccessDeniedModel
+@{
+    ViewData["Title"] = "Access Denied";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="alert alert-danger text-center">
+            <h2>Access Denied</h2>
+            <p>You do not have permission to access this page.</p>
+            <a asp-page="/Index" class="btn btn-primary mt-3">Go to Home</a>
+        </div>
+    </div>
+</div>
 @{
     ViewData["Title"] = "Access Denied";
     Layout = null;

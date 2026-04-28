@@ -1,3 +1,258 @@
+ï»¿@page
+@model HRMS.UI.Pages.IndexModel
+@{
+    ViewData["Title"] = "Dashboard Overview";
+}
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <!-- Page Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px">
+        <div>
+            <h1 style="font-weight:700;font-size:1.7rem;margin-bottom:4px">@Model.Greeting, @Model.FullName.Split(' ')[0]</h1>
+            <p style="color:#6b7280;font-size:0.9rem;margin:0">Here's what's happening at Kanrich Limited today</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid #e5e7eb;border-radius:8px;font-size:0.88rem;color:#6b7280">
+            <i class="bi bi-calendar3"></i> @DateTime.Now.ToString("MMM dd, yyyy")
+        </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-people"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Total Employees</div>
+                <div class="stat-value">142 <span class="stat-badge up"><i class="bi bi-arrow-up"></i> 3%</span></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="bi bi-person-dash"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">On Leave Today</div>
+                <div class="stat-value">8</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-file-earmark-text"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Pending Requests</div>
+                <div class="stat-value">@Model.PendingCount <span class="stat-badge new">+@(Model.PendingCount > 0 ? Model.PendingCount : 0) new</span></div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="bi bi-briefcase"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Open Positions</div>
+                <div class="stat-value">4 <span class="stat-badge new">+1 role</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <h5 class="section-title">Quick Actions</h5>
+    <div class="quick-actions">
+        @if (User.IsInRole("Employee") || User.IsInRole("Branch Manager") || User.IsInRole("HR Manager"))
+        {
+            <a asp-page="/Transfer/Apply" class="quick-action-btn">
+                <span class="qa-icon green"><i class="bi bi-plus-circle"></i></span>
+                <div>
+                    <div style="font-weight:600">New Transfer</div>
+                    <div style="font-size:0.75rem;color:#9ca3af">Submit request</div>
+                </div>
+            </a>
+        }
+        @if (User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager"))
+        {
+            <a asp-page="@(User.IsInRole("Branch Manager") ? "/BranchManager/ReviewTransfers" : User.IsInRole("HR Manager") ? "/HRManager/ReviewTransfers" : "/AreaManager/ReviewTransfers")" class="quick-action-btn">
+                <span class="qa-icon orange"><i class="bi bi-clipboard-check"></i></span>
+                <div>
+                    <div style="font-weight:600">Review Transfers</div>
+                    <div style="font-size:0.75rem;color:#9ca3af">@Model.PendingCount pending</div>
+                </div>
+            </a>
+        }
+        <a asp-page="/Employee/Profile" class="quick-action-btn">
+            <span class="qa-icon blue"><i class="bi bi-person-circle"></i></span>
+            <div>
+                <div style="font-weight:600">My Profile</div>
+                <div style="font-size:0.75rem;color:#9ca3af">View details</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Pending Approvals / My Requests -->
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start">
+        <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                <h5 class="section-title" style="margin-bottom:0">
+                    @(User.IsInRole("Employee") ? "My Transfer Requests" : "Pending Approvals")
+                </h5>
+                @if (User.IsInRole("Employee"))
+                {
+                    <a asp-page="/Transfer/MyRequests" style="font-size:0.85rem;color:#1a7a3a;font-weight:600;text-decoration:none">
+                        View All Requests <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+                else if (User.IsInRole("Branch Manager"))
+                {
+                    <a asp-page="/BranchManager/ReviewTransfers" style="font-size:0.85rem;color:#1a7a3a;font-weight:600;text-decoration:none">
+                        View All Requests <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+                else if (User.IsInRole("HR Manager"))
+                {
+                    <a asp-page="/HRManager/ReviewTransfers" style="font-size:0.85rem;color:#1a7a3a;font-weight:600;text-decoration:none">
+                        View All Requests <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+                else
+                {
+                    <a asp-page="/AreaManager/ReviewTransfers" style="font-size:0.85rem;color:#1a7a3a;font-weight:600;text-decoration:none">
+                        View All Requests <i class="bi bi-chevron-right"></i>
+                    </a>
+                }
+            </div>
+            <div class="k-card" style="padding:0;overflow:hidden">
+                @if (Model.PendingRequests.Any())
+                {
+                    <table class="k-table">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th>Request Type</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var req in Model.PendingRequests.Take(5))
+                            {
+                                var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                                <tr>
+                                    <td>
+                                        <div class="employee-cell">
+                                            <div class="emp-avatar">@initials</div>
+                                            <div class="emp-details">
+                                                <div class="emp-name">@req.EmployeeName</div>
+                                                <div class="emp-dept">@req.CurrentBranch</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>Transfer Request</td>
+                                    <td>@req.RequestedDate.ToString("MMM dd, yyyy")</td>
+                                    <td>
+                                        @switch (req.Status)
+                                        {
+                                            case TransferStatus.Pending:
+                                                <span class="k-badge k-badge-pending">Pending HR</span>
+                                                break;
+                                            case TransferStatus.HRManagerApproved:
+                                                <span class="k-badge k-badge-info">HR Approved</span>
+                                                break;
+                                            case TransferStatus.HRManagerRejected:
+                                                <span class="k-badge k-badge-rejected">HR Rejected</span>
+                                                break;
+                                            case TransferStatus.CurrentBMApproved:
+                                            case TransferStatus.TargetBMApproved:
+                                                <span class="k-badge k-badge-info">BM Review</span>
+                                                break;
+                                            case TransferStatus.CurrentBMRejected:
+                                            case TransferStatus.TargetBMRejected:
+                                                <span class="k-badge k-badge-rejected">BM Rejected</span>
+                                                break;
+                                            case TransferStatus.BothBMsApproved:
+                                                <span class="k-badge k-badge-info">Awaiting AM</span>
+                                                break;
+                                            case TransferStatus.AreaManagerApproved:
+                                                <span class="k-badge k-badge-approved">Approved</span>
+                                                break;
+                                            case TransferStatus.AreaManagerRejected:
+                                                <span class="k-badge k-badge-rejected">Rejected</span>
+                                                break;
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (User.IsInRole("Employee"))
+                                        {
+                                            <a asp-page="/Transfer/Details" asp-route-id="@req.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">View</a>
+                                        }
+                                        else if (User.IsInRole("Branch Manager"))
+                                        {
+                                            <a asp-page="/BranchManager/ReviewTransfer" asp-route-id="@req.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                                        }
+                                        else if (User.IsInRole("HR Manager"))
+                                        {
+                                            <a asp-page="/HRManager/ReviewTransfer" asp-route-id="@req.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                                        }
+                                        else
+                                        {
+                                            <a asp-page="/AreaManager/ReviewTransfer" asp-route-id="@req.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+                else
+                {
+                    <div style="padding:40px;text-align:center;color:#9ca3af">
+                        <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+                        No pending items
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Upcoming Events (Sidebar) -->
+        <div>
+            <h5 class="section-title">Upcoming Events</h5>
+            <div class="k-card">
+                <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:18px">
+                    <div style="width:48px;height:48px;background:#e8f5e9;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+                        <span style="font-size:0.6rem;font-weight:700;color:#1a7a3a;text-transform:uppercase">@DateTime.Now.ToString("MMM")</span>
+                        <span style="font-size:1.1rem;font-weight:700;color:#1a7a3a">@DateTime.Now.Day</span>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:0.9rem">Team Meeting</div>
+                        <div style="font-size:0.78rem;color:#9ca3af">10:00 AM - 11:30 AM</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:18px">
+                    <div style="width:48px;height:48px;background:#fef3c7;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+                        <span style="font-size:0.6rem;font-weight:700;color:#92400e;text-transform:uppercase">@DateTime.Now.AddDays(3).ToString("MMM")</span>
+                        <span style="font-size:1.1rem;font-weight:700;color:#92400e">@DateTime.Now.AddDays(3).Day</span>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:0.9rem">Monthly Town Hall</div>
+                        <div style="font-size:0.78rem;color:#9ca3af">02:00 PM - 03:00 PM</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:14px;align-items:flex-start">
+                    <div style="width:48px;height:48px;background:#dbeafe;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0">
+                        <span style="font-size:0.6rem;font-weight:700;color:#1e40af;text-transform:uppercase">@DateTime.Now.AddDays(7).ToString("MMM")</span>
+                        <span style="font-size:1.1rem;font-weight:700;color:#1e40af">@DateTime.Now.AddDays(7).Day</span>
+                    </div>
+                    <div>
+                        <div style="font-weight:600;font-size:0.9rem">Training Session</div>
+                        <div style="font-size:0.78rem;color:#9ca3af">All Day</div>
+                    </div>
+                </div>
+                <div style="margin-top:18px;text-align:center">
+                    <a href="#" style="font-size:0.85rem;color:#1a7a3a;font-weight:600;text-decoration:none">View Full Calendar</a>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div style="text-align:center;padding:60px">
+        <p>Please <a asp-page="/Account/Login" style="color:#1a7a3a;font-weight:600">login</a> to access the system.</p>
+    </div>
+}
 @page
 @model HRMS.UI.Pages.IndexModel
 @{
@@ -833,7 +1088,7 @@
                                     </div>
                                     <div class="event-info">
                                         <div class="event-title">Design Team Meeting</div>
-                                        <div class="event-time">10:00 AM � 11:30 AM</div>
+                                        <div class="event-time">10:00 AM  11:30 AM</div>
                                     </div>
                                 </div>
                                 <div class="event-divider"></div>
@@ -844,7 +1099,7 @@
                                     </div>
                                     <div class="event-info">
                                         <div class="event-title">Monthly Town Hall</div>
-                                        <div class="event-time">02:00 PM � 03:00 PM</div>
+                                        <div class="event-time">02:00 PM  03:00 PM</div>
                                     </div>
                                 </div>
                                 <div class="event-divider"></div>

@@ -64,6 +64,8 @@ namespace HRMS.Infrastructure.Persistence
         // ---------------- Transfer ----------------
         public DbSet<EmployeeTransfer> EmployeeTransfers { get; set; } = null!;
         public DbSet<TransferApproval> TransferApprovals { get; set; } = null!;
+        public DbSet<TransferRequest> TransferRequests { get; set; } = null!;
+        public DbSet<Notification> Notifications { get; set; } = null!;
 
 
         protected override void OnModelCreating(ModelBuilder builder)
@@ -78,6 +80,22 @@ namespace HRMS.Infrastructure.Persistence
                 entity.Ignore(e => e.TwoFactorEnabled);
             });
 
+            builder.Entity<IdentityUserLogin<string>>()
+                .ToTable("AspNetUserLogins", t => t.ExcludeFromMigrations());
+
+            builder.Entity<TransferRequest>(entity =>
+            {
+                entity.HasIndex(e => e.RequestedBy);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.RequestedDate);
+                entity.HasIndex(e => e.EpfNumber);
+            });
+
+            builder.Entity<Notification>(entity =>
+            {
+                entity.HasIndex(e => new { e.RecipientEmail, e.IsRead });
+                entity.HasIndex(e => e.CreatedAt);
+            });
             // Remove unused Identity tables
             builder.Entity<IdentityUserLogin<string>>()
                 .ToTable("AspNetUserLogins", t => t.ExcludeFromMigrations());

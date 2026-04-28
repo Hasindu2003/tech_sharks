@@ -1,0 +1,119 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Employee")]
+@model HRMS.UI.Pages.Transfer.SeparationModel
+@{
+    ViewData["Title"] = "Separation";
+}
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Employee Separation</h2>
+        <p style="color:#6b7280;font-size:0.9rem;margin:0">Manage your Transfer, Termination, Resignation and Death requests</p>
+    </div>
+    <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary" style="padding:10px 20px">
+        <i class="bi bi-plus-circle"></i> New Process
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success">
+        <i class="bi bi-check-circle"></i> @successMsg
+    </div>
+}
+
+<!-- Tabs -->
+<div style="display:flex;gap:24px;margin-bottom:24px;border-bottom:2px solid #e5e7eb;padding-bottom:0">
+    <div style="padding:10px 4px;border-bottom:2px solid #1a7a3a;margin-bottom:-2px;font-weight:600;color:#1a7a3a;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Transfer <span style="background:#e8f5e9;color:#1a7a3a;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">@Model.TransferCount</span>
+    </div>
+    <div style="padding:10px 4px;color:#9ca3af;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Termination <span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">0</span>
+    </div>
+    <div style="padding:10px 4px;color:#9ca3af;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Resignation <span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">0</span>
+    </div>
+    <div style="padding:10px 4px;color:#9ca3af;font-size:0.9rem;cursor:pointer;display:flex;align-items:center;gap:6px">
+        Death <span style="background:#f3f4f6;color:#9ca3af;padding:2px 8px;border-radius:10px;font-size:0.75rem;font-weight:700">0</span>
+    </div>
+</div>
+
+<!-- Transfer Tab Content: My Requests -->
+@if (Model.MyRequests.Any())
+{
+    <h5 class="section-title">My Transfer Requests</h5>
+    <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
+        <table class="k-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Status</th>
+                    <th>View</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var request in Model.MyRequests)
+                {
+                    <tr>
+                        <td style="font-weight:600">#@request.Id</td>
+                        <td>@request.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td>@request.CurrentBranch</td>
+                        <td>@request.RequestedBranch</td>
+                        <td>
+                            @switch (request.Status)
+                            {
+                                case TransferStatus.Pending:
+                                    <span class="k-badge k-badge-pending"><i class="bi bi-clock"></i> Pending HR</span>
+                                    break;
+                                case TransferStatus.HRManagerApproved:
+                                    <span class="k-badge k-badge-info"><i class="bi bi-check"></i> HR Approved</span>
+                                    break;
+                                case TransferStatus.HRManagerRejected:
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> HR Rejected</span>
+                                    break;
+                                case TransferStatus.CurrentBMApproved:
+                                case TransferStatus.TargetBMApproved:
+                                    <span class="k-badge k-badge-info"><i class="bi bi-clock"></i> BM Review</span>
+                                    break;
+                                case TransferStatus.CurrentBMRejected:
+                                case TransferStatus.TargetBMRejected:
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> BM Rejected</span>
+                                    break;
+                                case TransferStatus.BothBMsApproved:
+                                    <span class="k-badge k-badge-info"><i class="bi bi-check-all"></i> Awaiting AM</span>
+                                    break;
+                                case TransferStatus.AreaManagerApproved:
+                                    <span class="k-badge k-badge-approved"><i class="bi bi-check-circle"></i> Approved</span>
+                                    break;
+                                case TransferStatus.AreaManagerRejected:
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x-circle"></i> Rejected</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            <a asp-page="/Transfer/Details" asp-route-id="@request.Id"
+                               class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1rem;margin-bottom:8px">No transfer requests yet</div>
+        <div style="font-size:0.88rem;margin-bottom:16px">Submit a transfer request to get started</div>
+        <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary">
+            <i class="bi bi-plus-circle"></i> Submit a Transfer Request
+        </a>
+    </div>
+}
