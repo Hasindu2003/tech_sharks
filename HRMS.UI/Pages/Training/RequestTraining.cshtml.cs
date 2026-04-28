@@ -89,7 +89,7 @@ namespace HRMS.UI.Pages.Training
 
             try 
             {
-                // TrainingRequest object එක null නොවන බව තහවුරු කිරීමට model validation පාවිච්චි කරමු
+              
                 var newRequest = new TrainingProgramRequest
                 {
                     EmployeeId = testEmployeeId,

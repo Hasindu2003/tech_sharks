@@ -16,7 +16,7 @@ namespace HRMS.UI.Pages.Training
             _context = context;
         }
 
-        // Error එක අයින් වෙන්න මෙතන string.Empty පාවිච්චි කරලා තියෙනවා
+
         public class RequestView
         {
             public int Id { get; set; }
@@ -30,7 +30,7 @@ namespace HRMS.UI.Pages.Training
 
         public async Task OnGetAsync()
         {
-            // Database එකෙන් Employees සහ Training Requests ලින්ක් කරලා දත්ත ගැනීම
+
             var data = await (from r in _context.TrainingProgramRequests
                               join e in _context.Employees on r.EmployeeId equals e.Id
                               select new RequestView

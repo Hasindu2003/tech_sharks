@@ -68,7 +68,7 @@ namespace HRMS.UI.Pages.Training
                 ModelState.AddModelError("SessionDate", "Training date cannot be in the past.");
             }
 
-            // List එක null ද නැද්ද කියලා check කිරීම (Warning Fix)
+           
             if (SelectedRequestIds == null || !SelectedRequestIds.Any())
             {
                 ModelState.AddModelError("", "Please select at least one employee.");
@@ -82,18 +82,18 @@ namespace HRMS.UI.Pages.Training
 
             var connection = _context.Database.GetDbConnection();
             
-            // Connection එක null ද කියා පරීක්ෂා කිරීම (Warning Fix)
+          
             if (connection == null) return Page();
 
             if (connection.State != ConnectionState.Open) 
                 await connection.OpenAsync();
 
-            // SelectedRequestIds null නොවන බව සහතික නිසා පාවිච්චි කළ හැක
+            
             foreach (var requestId in SelectedRequestIds!) 
             {
                 var request = await _context.Set<HRMS.Domain.Entities.Training.TrainingProgramRequest>().FindAsync(requestId);
                 
-                // Request එක null නොවන බව සහතික කිරීම (Warning Fix)
+               
                 if (request != null)
                 {
                     using (var cmd = connection.CreateCommand())
@@ -126,7 +126,7 @@ namespace HRMS.UI.Pages.Training
             return RedirectToPage("./Dashboard");
         }
 
-        // Object එක null විය හැකි බව පෙන්වීමට 'object?' පාවිච්චි කිරීම
+        
         private IDbDataParameter CreateParam(IDbCommand cmd, string name, object? value)
         {
             var param = cmd.CreateParameter();

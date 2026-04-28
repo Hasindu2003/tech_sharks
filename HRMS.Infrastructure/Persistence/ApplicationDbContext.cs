@@ -58,5 +58,19 @@ namespace HRMS.Infrastructure.Persistence
         // ---------------- Transfer ----------------
         public DbSet<EmployeeTransfer> EmployeeTransfers { get; set; } = null!;
         public DbSet<TransferApproval> TransferApprovals { get; set; } = null!;
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+           
+            modelBuilder.Entity<TrainingProgramRequest>()
+                .HasOne(t => t.Employee)
+                .WithMany() 
+                .HasForeignKey(t => t.EmployeeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+ 
+        }
     }
 }
