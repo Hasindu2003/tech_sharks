@@ -1,0 +1,25 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Branch Manager,Area Manager")]
+@model HRMS.UI.Pages.BranchManager.TransferReviewModel
+@{
+    ViewData["Title"] = "Transfer Review";
+}
+
+<h1>Transfer Review</h1>
+<p class="lead">Review and manage employee transfer requests</p>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="alert alert-warning">
+            <h5>Coming Soon</h5>
+            <p>Transfer review features will be implemented here including:</p>
+            <ul>
+                <li>Pending transfer requests</li>
+                <li>Approve/reject transfers</li>
+                <li>Transfer history</li>
+                <li>Employee transfer records</li>
+            </ul>
+        </div>
+    </div>
+</div>

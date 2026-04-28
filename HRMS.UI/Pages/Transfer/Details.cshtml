@@ -1,0 +1,202 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.Transfer.DetailsModel
+@{
+    ViewData["Title"] = "Transfer Request Details";
+}
+
+@if (Model.TransferRequest == null)
+{
+    <div class="k-alert k-alert-danger"><i class="bi bi-exclamation-triangle"></i> Transfer request not found.</div>
+}
+else
+{
+    var req = Model.TransferRequest;
+    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+
+    <div style="margin-bottom:20px">
+        <a asp-page="/Transfer/MyRequests" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back to My Requests
+        </a>
+        <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
+    </div>
+
+    <div class="profile-header">
+        <div class="profile-info">
+            <div class="profile-avatar">@initials</div>
+            <div>
+                <div class="profile-name">@req.EmployeeName</div>
+                <div class="profile-meta">
+                    <span><i class="bi bi-hash"></i> @req.EpfNumber</span>
+                    <span><i class="bi bi-envelope"></i> @req.EmployeeEmail</span>
+                    <span><i class="bi bi-diagram-3"></i> @req.Department</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+        <div>
+            <div class="k-card" style="margin-bottom:20px">
+                <div class="k-card-header">Transfer Details</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px">
+                    <div>
+                        <div class="detail-label">From Branch</div>
+                        <div class="detail-value">@req.CurrentBranch</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">To Branch</div>
+                        <div class="detail-value">@req.RequestedBranch</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Designation</div>
+                        <div class="detail-value">@req.CurrentDesignation</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Preferred Date</div>
+                        <div class="detail-value">@req.PreferredDate?.ToString("MMM dd, yyyy")</div>
+                    </div>
+                </div>
+                <div style="margin-bottom:16px">
+                    <div class="detail-label">Current Status</div>
+                    <div class="detail-value">
+                        @switch (req.Status)
+                        {
+                            case TransferStatus.Pending:
+                                <span class="k-badge k-badge-pending">Pending HR Review</span>
+                                break;
+                            case TransferStatus.HRManagerApproved:
+                                <span class="k-badge k-badge-info">HR Approved — Awaiting BMs</span>
+                                break;
+                            case TransferStatus.HRManagerRejected:
+                                <span class="k-badge k-badge-rejected">Rejected by HR</span>
+                                break;
+                            case TransferStatus.CurrentBMApproved:
+                                <span class="k-badge k-badge-info">Current BM Approved — Awaiting Target BM</span>
+                                break;
+                            case TransferStatus.TargetBMApproved:
+                                <span class="k-badge k-badge-info">Target BM Approved — Awaiting Current BM</span>
+                                break;
+                            case TransferStatus.CurrentBMRejected:
+                            case TransferStatus.TargetBMRejected:
+                                <span class="k-badge k-badge-rejected">Rejected by Branch Manager</span>
+                                break;
+                            case TransferStatus.BothBMsApproved:
+                                <span class="k-badge k-badge-info">Both BMs Approved — Awaiting Area Manager</span>
+                                break;
+                            case TransferStatus.AreaManagerApproved:
+                                <span class="k-badge k-badge-approved">✅ Transfer Approved</span>
+                                break;
+                            case TransferStatus.AreaManagerRejected:
+                                <span class="k-badge k-badge-rejected">Rejected by Area Manager</span>
+                                break;
+                        }
+                    </div>
+                </div>
+                <div>
+                    <div class="detail-label">Reason</div>
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:14px;margin-top:6px;font-size:0.9rem;color:#374151;line-height:1.6">
+                        @req.Reason
+                    </div>
+                </div>
+            </div>
+
+            @if (req.HasDocument)
+            {
+                <div class="k-card">
+                    <div class="k-card-header">Attached Document</div>
+                    <div class="doc-item">
+                        <div class="doc-info">
+                            @{
+                                var ext = req.DocumentFileName?.Split('.').LastOrDefault()?.ToLower();
+                                var iconClass = ext switch { "pdf" => "pdf", "jpg" or "jpeg" or "png" => "img", _ => "doc" };
+                                var icon = ext switch { "pdf" => "bi-file-earmark-pdf", "jpg" or "jpeg" or "png" => "bi-file-earmark-image", _ => "bi-file-earmark-word" };
+                            }
+                            <div class="doc-icon @iconClass"><i class="bi @icon"></i></div>
+                            <div><div class="doc-name">@req.DocumentFileName</div></div>
+                        </div>
+                        <a asp-page="/Transfer/DownloadDocument" asp-route-id="@req.Id" style="color:#1a7a3a;font-size:1.1rem"><i class="bi bi-download"></i></a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Right Column: Review Timeline -->
+        <div>
+            <div class="k-card" style="margin-bottom:16px">
+                <div class="k-card-header">Approval Timeline</div>
+
+                <!-- Step 1: HR Manager -->
+                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+                    <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;
+                        @(req.HRManagerReview == "Approved" ? "background:#dcfce7;color:#16a34a" : req.HRManagerReview == "Rejected" ? "background:#fee2e2;color:#dc2626" : "background:#f3f4f6;color:#9ca3af")">1</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:0.88rem">HR Manager</div>
+                        @if (!string.IsNullOrEmpty(req.HRManagerReview))
+                        {
+                            <div style="font-size:0.82rem;color:#6b7280">@req.HRManagerReview — @req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                            <div style="font-size:0.82rem;color:#9ca3af;margin-top:2px">@req.HRManagerComments</div>
+                        }
+                        else
+                        {
+                            <div style="font-size:0.82rem;color:#9ca3af">Awaiting review</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 2: Current BM -->
+                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+                    <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;
+                        @(req.CurrentBMReview == "Approved" ? "background:#dcfce7;color:#16a34a" : req.CurrentBMReview == "Rejected" ? "background:#fee2e2;color:#dc2626" : "background:#f3f4f6;color:#9ca3af")">2a</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:0.88rem">Current BM (@req.CurrentBranch)</div>
+                        @if (!string.IsNullOrEmpty(req.CurrentBMReview))
+                        {
+                            <div style="font-size:0.82rem;color:#6b7280">@req.CurrentBMReview — @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy")</div>
+                            <div style="font-size:0.82rem;color:#9ca3af;margin-top:2px">@req.CurrentBMComments</div>
+                        }
+                        else
+                        {
+                            <div style="font-size:0.82rem;color:#9ca3af">Awaiting review</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 2b: Target BM -->
+                <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:16px">
+                    <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;
+                        @(req.TargetBMReview == "Approved" ? "background:#dcfce7;color:#16a34a" : req.TargetBMReview == "Rejected" ? "background:#fee2e2;color:#dc2626" : "background:#f3f4f6;color:#9ca3af")">2b</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:0.88rem">Target BM (@req.RequestedBranch)</div>
+                        @if (!string.IsNullOrEmpty(req.TargetBMReview))
+                        {
+                            <div style="font-size:0.82rem;color:#6b7280">@req.TargetBMReview — @req.TargetBMReviewDate?.ToString("MMM dd, yyyy")</div>
+                            <div style="font-size:0.82rem;color:#9ca3af;margin-top:2px">@req.TargetBMComments</div>
+                        }
+                        else
+                        {
+                            <div style="font-size:0.82rem;color:#9ca3af">Awaiting review</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Step 3: Area Manager -->
+                <div style="display:flex;align-items:flex-start;gap:12px">
+                    <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:700;flex-shrink:0;
+                        @(req.AreaManagerReview == "Approved" ? "background:#dcfce7;color:#16a34a" : req.AreaManagerReview == "Rejected" ? "background:#fee2e2;color:#dc2626" : "background:#f3f4f6;color:#9ca3af")">3</div>
+                    <div style="flex:1">
+                        <div style="font-weight:600;font-size:0.88rem">Area Manager — Final Decision</div>
+                        @if (!string.IsNullOrEmpty(req.AreaManagerReview))
+                        {
+                            <div style="font-size:0.82rem;color:#6b7280">@req.AreaManagerReview — @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                            <div style="font-size:0.82rem;color:#9ca3af;margin-top:2px">@req.AreaManagerComments</div>
+                        }
+                        else
+                        {
+                            <div style="font-size:0.82rem;color:#9ca3af">Awaiting review</div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

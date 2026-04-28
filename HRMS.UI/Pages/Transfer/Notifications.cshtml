@@ -1,0 +1,108 @@
+@page
+@using HRMS.Domain.Entities.Transfer
+@model HRMS.UI.Pages.Transfer.NotificationsModel
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+            <h2><i class="bi bi-bell" style="margin-right:8px"></i>Notifications</h2>
+            <p class="page-subtitle">Stay updated on your transfer request progress</p>
+        </div>
+        @if (Model.UnreadCount > 0)
+        {
+            <form method="post" asp-page-handler="MarkAllRead">
+                <button type="submit" class="btn-kanrich btn-kanrich-outline">
+                    <i class="bi bi-check-all"></i> Mark All as Read (@Model.UnreadCount)
+                </button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (Model.Notifications.Any())
+{
+    <div class="notification-list">
+        @foreach (var n in Model.Notifications)
+        {
+            var iconClass = n.Type switch
+            {
+                NotificationType.Approved => "bi-check-circle-fill",
+                NotificationType.Rejected => "bi-x-circle-fill",
+                _ => "bi-info-circle-fill"
+            };
+            var iconColor = n.Type switch
+            {
+                NotificationType.Approved => "#16a34a",
+                NotificationType.Rejected => "#dc2626",
+                _ => "#2563eb"
+            };
+            var bgColor = n.IsRead ? "#ffffff" : "#f0fdf4";
+            var borderColor = n.IsRead ? "#e5e7eb" : "#bbf7d0";
+            var timeAgo = GetTimeAgo(n.CreatedAt);
+
+            <div class="notification-item" style="background:@bgColor;border:1px solid @borderColor;border-radius:12px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:14px;transition:all 0.2s ease">
+                <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem;
+                    background:@(n.Type == NotificationType.Approved ? "#dcfce7" : n.Type == NotificationType.Rejected ? "#fee2e2" : "#dbeafe")">
+                    <i class="bi @iconClass" style="color:@iconColor"></i>
+                </div>
+                <div style="flex:1;min-width:0">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+                        <div style="flex:1">
+                            <div style="font-weight:@(n.IsRead ? "500" : "700");font-size:0.92rem;color:#111827;margin-bottom:4px">
+                                @n.Title
+                                @if (!n.IsRead)
+                                {
+                                    <span style="display:inline-block;width:8px;height:8px;background:#16a34a;border-radius:50%;margin-left:6px;vertical-align:middle"></span>
+                                }
+                            </div>
+                            <div style="font-size:0.85rem;color:#4b5563;line-height:1.5;margin-bottom:8px">@n.Message</div>
+                            <div style="display:flex;align-items:center;gap:12px;font-size:0.78rem;color:#9ca3af">
+                                <span><i class="bi bi-clock"></i> @timeAgo</span>
+                                <span>•</span>
+                                <span>@n.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</span>
+                            </div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+                            <a asp-page="/Transfer/Details" asp-route-id="@n.TransferRequestId"
+                               class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="white-space:nowrap">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                            @if (!n.IsRead)
+                            {
+                                <form method="post" asp-page-handler="MarkRead" asp-route-id="@n.Id" style="margin:0">
+                                    <button type="submit" class="btn-kanrich btn-kanrich-sm" style="background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;white-space:nowrap"
+                                            title="Mark as read">
+                                        <i class="bi bi-check2"></i>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:60px;color:#9ca3af">
+        <i class="bi bi-bell-slash" style="font-size:3rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1.1rem;margin-bottom:8px;color:#6b7280">No notifications yet</div>
+        <div style="font-size:0.88rem">You'll be notified when your transfer requests are reviewed</div>
+    </div>
+}
+
+@functions {
+    string GetTimeAgo(DateTime dateTime)
+    {
+        var span = DateTime.Now - dateTime;
+        if (span.TotalMinutes < 1) return "Just now";
+        if (span.TotalMinutes < 60) return $"{(int)span.TotalMinutes}m ago";
+        if (span.TotalHours < 24) return $"{(int)span.TotalHours}h ago";
+        if (span.TotalDays < 7) return $"{(int)span.TotalDays}d ago";
+        return dateTime.ToString("MMM dd, yyyy");
+    }
+}
