@@ -22,7 +22,7 @@ namespace HRMS.Domain.Entities.Core
         public string EPFNumber { get; set; } = null!;
         public string BankAccountName { get; set; } = null!;
         public string BankAccountNumber { get; set; } = null!;
-        public string Location { get; set; } = "Default";
+
         
 
         // Designation FK and navigation

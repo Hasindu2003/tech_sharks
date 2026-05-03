@@ -1,19 +1,11 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
-// Identity
 using HRMS.Infrastructure.Identity;
-
-// Core
+using HRMS.Domain.Entities.Recruitment;
 using HRMS.Domain.Entities.Core;
-// Attendance
 using HRMS.Domain.Entities.Attendance;
-// Leave
 using HRMS.Domain.Entities.Leave;
-// Training
 using HRMS.Domain.Entities.Training;
-// Transfer
 using HRMS.Domain.Entities.Transfer;
 
 namespace HRMS.Infrastructure.Persistence
@@ -40,15 +32,12 @@ namespace HRMS.Infrastructure.Persistence
         public DbSet<Leave> Leaves { get; set; } = null!;
         public DbSet<LeaveEntitlement> LeaveEntitlements { get; set; } = null!;
         public DbSet<LeaveApproval> LeaveApprovals { get; set; } = null!;
-        public DbSet<MaternityLeave> MaternityLeaves { get; set; } = null!;
-        public DbSet<MaternityPayment> MaternityPayments { get; set; } = null!;
-        public DbSet<OverseasLeave> OverseasLeaves { get; set; } = null!;
 
         // ---------------- Training ----------------
         public DbSet<Training> Trainings { get; set; } = null!;
         public DbSet<EmployeeTraining> EmployeeTrainings { get; set; } = null!;
-        public DbSet<Trainer> Trainers { get; set; } = null!;
         public DbSet<TrainingProgramRequest> TrainingProgramRequests { get; set; } = null!;
+        public DbSet<Trainer> Trainers { get; set; } = null!;
         public DbSet<TrainingFeedback> TrainingFeedbacks { get; set; } = null!;
         public DbSet<InternProgram> InternPrograms { get; set; } = null!;
         public DbSet<InternFeedback> InternFeedbacks { get; set; } = null!;
@@ -59,18 +48,18 @@ namespace HRMS.Infrastructure.Persistence
         public DbSet<EmployeeTransfer> EmployeeTransfers { get; set; } = null!;
         public DbSet<TransferApproval> TransferApprovals { get; set; } = null!;
 
+        // ---------------- Requirement ----------------
+        public DbSet<Candidate> Candidates { get; set; } = null!;
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-           
             modelBuilder.Entity<TrainingProgramRequest>()
                 .HasOne(t => t.Employee)
                 .WithMany() 
                 .HasForeignKey(t => t.EmployeeId)
                 .OnDelete(DeleteBehavior.Cascade);
-
- 
         }
     }
 }
