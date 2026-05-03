@@ -1,22 +1,164 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
+/* General Resets */
 body {
-  margin-bottom: 60px;
+    background-color: #fcfdfe;
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    overflow-x: hidden;
+}
+
+.wrapper {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+}
+
+/* Sidebar Styling */
+#sidebar {
+    min-width: 260px;
+    max-width: 260px;
+    background: #ffffff;
+    color: #4b5563;
+    transition: all 0.3s;
+    border-right: 1px solid #f1f5f9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    padding: 35px 25px;
+}
+
+.sidebar-header h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin-bottom: 0;
+}
+
+.admin-text {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 4px;
+}
+
+#sidebar ul.components {
+    padding: 10px 15px;
+    flex-grow: 1;
+}
+
+#sidebar ul li {
+    margin-bottom: 8px;
+}
+
+#sidebar ul li a {
+    padding: 12px 18px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    color: #64748b;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: 0.2s;
+    font-weight: 500;
+}
+
+#sidebar ul li a i {
+    margin-right: 15px;
+    font-size: 1.2rem;
+}
+
+/* රූපයේ පරිදි Active Highlight Style */
+#sidebar ul li.active a {
+    background-color: #f0fdf4 !important; /* ලා කොළ පැහැති background */
+    color: #15803d !important;           /* තද කොළ පැහැති අකුරු */
+}
+
+#sidebar ul li a:hover:not(.active) {
+    background-color: #f8fafc;
+    color: #1e293b;
+}
+
+/* Sidebar Footer & Logout */
+.sidebar-footer {
+    padding: 30px 20px;
+}
+
+.btn-logout {
+    width: 100%;
+    background-color: #15803d; 
+    color: #ffffff;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* Top Navbar Styling */
+#content {
+    width: 100%;
+    transition: all 0.3s;
+}
+
+.navbar {
+    padding: 20px 30px;
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.navbar-title {
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+/* Top Right Icons */
+.icon-group {
+    display: flex;
+    gap: 20px;
+}
+
+.icon-group i {
+    font-size: 1.3rem;
+    color: #64748b;
+    cursor: pointer;
+}
+
+.notification-wrapper {
+    position: relative;
+}
+
+.notification-wrapper .dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 6px;
+    height: 6px;
+    background-color: #ef4444;
+    border-radius: 50%;
+}
+
+.avatar {
+    width: 40px;
+    height: 40px;
+    background-color: #15803d;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* Layout Animation */
+#sidebar.active { margin-left: -260px; }
+
+@media (max-width: 768px) {
+    #sidebar { margin-left: -260px; }
+    #sidebar.active { margin-left: 0; }
 }

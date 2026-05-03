@@ -3,67 +3,237 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - HRMS.UI</title>
+    <title>@ViewData["Title"] - Kanrich HRMS</title>
+    
+    <!-- CSS Stylesheets -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/HRMS.UI.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <style>
+        /* මුළු Page එකේම Scroll එක නැවැත්වීම */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            background-color: #f8fafc;
+        }
+
+        /* ප්‍රධාන Wrapper එක Screen එකේ ප්‍රමාණයට සකස් කිරීම */
+        .wrapper {
+            display: flex;
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* Sidebar ස්ථාවරව තබා ගැනීම සහ Logout එක පහළට ගැනීම */
+        #sidebar {
+            min-width: 250px;
+            max-width: 250px;
+            height: 100vh;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column; /* මින් අන්තර්ගතය ඉහළ සිට පහළට පෙළගස්වයි */
+            transition: all 0.3s;
+            z-index: 1000;
+        }
+
+        #sidebar.active {
+            margin-left: -250px;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Sidebar Links වල කොටස පාලනය කිරීම */
+        .components-wrapper {
+            flex-grow: 1;
+            overflow-y: auto; /* Sidebar එක ඇතුළේ ලිස්ට් එක වැඩි උනොත් scroll වීමට */
+        }
+
+        /* Logout බටන් එක සැමවිටම පහළ තැබීම */
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid #f1f5f9;
+            flex-shrink: 0;
+        }
+
+        /* ප්‍රධාන Content Area එක පාලනය කිරීම */
+        #content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden; /* මෙතනින් මුළු Content area එකම scroll වීම නවත්වයි */
+        }
+
+        /* Topbar එක ස්ථාවරව තැබීම */
+        .navbar {
+            height: 70px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            flex-shrink: 0; /* Topbar එක කුඩා වීම වළක්වයි */
+            padding: 0 20px;
+        }
+
+        /* මැද අන්තර්ගතය (RenderBody) පමණක් Scroll වන කොටස */
+        .scrollable-content {
+            flex-grow: 1;
+            overflow-y: auto; /* මින් මැද කොටස පමණක් scroll වීමට ඉඩ සලසයි */
+            padding: 20px;
+        }
+
+        /* Professional Navbar Title Styles */
+        .navbar-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .module-name {
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+
+        .separator {
+            font-size: 1rem;
+            opacity: 0.5;
+            color: #94a3b8;
+        }
+
+        .page-name {
+            color: #1e293b;
+        }
+
+        .avatar {
+            width: 38px;
+            height: 38px;
+            background-color: #15803d;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+    </style>
+
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" asp-area="" asp-page="/Index">HRMS.UI</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
+    @{
+        var currentPath = ViewContext.RouteData.Values["page"]?.ToString() ?? "";
+        string moduleTitle = "Dashboard";
+        if (currentPath.Contains("/Training/")) moduleTitle = "Training & Probation";
+        else if (currentPath.Contains("/CV/")) moduleTitle = "CV Bank";
+        else if (currentPath.Contains("/Employees/")) moduleTitle = "Employees";
+
+        var pageTitle = ViewData["Title"]?.ToString() ?? "Home";
+    }
+
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h3>Kanrich HRMS</h3>
+                <p class="admin-text">Admin Portal</p>
+            </div>
+
+            <div class="components-wrapper">
+                <ul class="list-unstyled components">
+                    <li class="@(currentPath == "/Index" || currentPath == "/Dashboard" ? "active" : "")">
+                        <a href="/Index"><i class="bi bi-grid-1x2"></i> Dashboard</a>
+                    </li>
+                    
+                    <li class="@(currentPath.Contains("/Employees/") ? "active" : "")">
+                        <a href="#"><i class="bi bi-people"></i> Employees</a>
+                    </li>
+
+                    <li class="@(currentPath.Contains("/Training/") ? "active" : "")">
+                        <a asp-page="/Training/Dashboard"><i class="bi bi-mortarboard"></i> Training</a>
+                    </li>
+
+                    <li class="@(currentPath.Contains("/CV/") ? "active" : "")">
+                        <a asp-page="/CV/Index"><i class="bi bi-file-earmark-text"></i> CV Bank</a>
+                    </li>
+
+                    <li><a href="#"><i class="bi bi-calendar3"></i> Calendar</a></li>
+                    <li><a href="#"><i class="bi bi-arrow-left-right"></i> Separation</a></li>
+                </ul>
+            </div>
+
+            <!-- Logout Button (Fixed at Bottom) -->
+            <div class="sidebar-footer">
+                <button class="btn btn-logout w-100 text-start">
+                    <i class="fas fa-sign-out-alt me-2"></i> Log Out
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                    <ul class="navbar-nav">
-                        @if (User.Identity != null && User.Identity.IsAuthenticated)
-                        {
-                            <li class="nav-item">
-                                <span class="nav-link text-dark">Hello, @User.Identity.Name!</span>
-                            </li>
-                            <li class="nav-item">
-                                <form method="post" asp-page="/Account/Logout">
-                                    <button type="submit" class="nav-link btn btn-link text-dark px-0">Logout</button>
-                                </form>
-                            </li>
-                        }
-                        else
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link text-dark" asp-page="/Account/Login">Login</a>
-                            </li>
-                        }
-                    </ul>
-                </div>
             </div>
         </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
+
+        <!-- Page Content Area -->
+        <div id="content">
+            <!-- Fixed Top Navigation Bar -->
+            <nav class="navbar navbar-expand-lg">
+                <div class="container-fluid">
+                    <div class="d-flex align-items-center">
+                        <button type="button" id="sidebarCollapse" class="btn btn-menu me-3">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        
+                        <h4 class="navbar-title">
+                            @if (moduleTitle != "Dashboard")
+                            {
+                                <span class="module-name fw-normal">@moduleTitle</span>
+                                <span class="separator mx-2">/</span>
+                            }
+                            <span class="page-name">@pageTitle</span>
+                        </h4>
+                    </div>
+
+                    <div class="ms-auto d-flex align-items-center header-right">
+                        <div class="icon-group">
+                            <div class="notification-wrapper">
+                                <i class="bi bi-bell"></i>
+                                <span class="dot"></span>
+                            </div>
+                            <i class="bi bi-gear"></i>
+                        </div>
+                        <div class="user-profile ms-3">
+                            <div class="avatar">AD</div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Scrollable Content Area -->
+            <main class="scrollable-content">
+                <div class="container-fluid py-2">
+                    @RenderBody()
+                </div>
+            </main>
+        </div>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - HRMS.UI - <a asp-area="" asp-page="/Privacy">Privacy</a>
-        </div>
-    </footer>
-
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    
+    <script>
+        $(document).ready(function () {
+            $('#sidebarCollapse').on('click', function () {
+                $('#sidebar').toggleClass('active');
+            });
+        });
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

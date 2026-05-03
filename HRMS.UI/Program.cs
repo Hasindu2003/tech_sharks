@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Services එකතු කිරීම
+
 builder.Services.AddRazorPages();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -37,7 +37,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// 2. Seed Roles and Admin (මෙතන තමයි Database එක check කරන්නේ)
+// 2. Seed Roles and Admin 
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -59,7 +59,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// 3. HTTP Pipeline එක සැකසීම
+// 3. HTTP Pipeline 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
