@@ -38,6 +38,7 @@
         .custom-table td { padding: 15px 25px; border-bottom: 1px solid #f8fafc; vertical-align: middle; font-size: 0.85rem; }
         .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
         .status-on-track { background: #dcfce7; color: #15803d; }
+        .status-past { background: #f1f5f9; color: #64748b; }
         .status-intern { background: #fef9c3; color: #a16207; }
         .avatar-initial { width: 32px; height: 32px; font-size: 0.75rem; }
         .card-link { text-decoration: none; color: inherit; display: block; }
@@ -82,11 +83,12 @@
             </div>
         </div>
 
+        <!-- Upcoming Sessions -->
         <div class="content-card">
             <div class="card-title-area d-flex justify-content-between align-items-center">
                 <div>
                     <h5>Upcoming Scheduled Sessions</h5>
-                    <p>Currently active training schedules for staff members.</p>
+                    <p>Training programs scheduled for today and future dates.</p>
                 </div>
                 <a href="/Training/Schedule" class="btn btn-sm px-3 fw-bold" style="background-color: var(--main-green); color: white; border-radius: 6px;">
                     <i class="bi bi-plus-lg"></i> Schedule New
@@ -97,7 +99,8 @@
                     <thead>
                         <tr>
                             <th>Program Title</th>
-                            <th>Employee</th>
+                            <th>Trainer</th>
+                            <th>Location</th>
                             <th>Date</th>
                             <th>Status</th>
                         </tr>
@@ -107,13 +110,50 @@
                             foreach (var session in Model.ScheduledSessions) {
                                 <tr>
                                     <td><div class="fw-bold">@session.Title</div></td>
-                                    <td>@session.EmployeeName</td>
+                                    <td>@session.Trainer</td>
+                                    <td><i class="bi bi-geo-alt text-muted me-1"></i>@session.Location</td>
                                     <td class="text-muted">@session.Date.ToString("dd MMM yyyy")</td>
-                                    <td><span class="status-pill status-on-track"><i class="bi bi-clock-history"></i> Scheduled</span></td>
+                                    <td><span class="status-pill status-on-track"><i class="bi bi-clock-history"></i> Active</span></td>
                                 </tr>
                             }
                         } else {
-                            <tr><td colspan="4" class="text-center py-4 text-muted">No scheduled sessions found.</td></tr>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">No upcoming sessions found.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Past Sessions -->
+        <div class="content-card">
+            <div class="card-title-area">
+                <h5>Session History</h5>
+                <p>Completed or expired training sessions.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table custom-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Program Title</th>
+                            <th>Trainer</th>
+                            <th>Location</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.PastSessions.Any()) {
+                            foreach (var session in Model.PastSessions) {
+                                <tr>
+                                    <td class="text-muted">@session.Title</td>
+                                    <td class="text-muted">@session.Trainer</td>
+                                    <td class="text-muted">@session.Location</td>
+                                    <td class="text-muted">@session.Date.ToString("dd MMM yyyy")</td>
+                                    <td><span class="status-pill status-past">Expired</span></td>
+                                </tr>
+                            }
+                        } else {
+                            <tr><td colspan="5" class="text-center py-2 text-muted" style="font-size:0.75rem;">No past history found.</td></tr>
                         }
                     </tbody>
                 </table>

@@ -1,170 +1,149 @@
 @page
 @model HRMS.UI.Pages.Training.ScheduleModel
 @{
-    // Link to the shared professional layout
     Layout = "_Layout";
-    
-    // Set the page title for the browser tab and top bar
     ViewData["Title"] = "Schedule Training Session";
 }
 
 @section Styles {
     <style>
-        .page-content { padding: 10px 0; }
+        .page-content { 
+            padding: 20px; 
+            display: flex;
+            justify-content: center;
+        }
         
-        /* Form Card Styling */
+        /* Intern Evaluation window eke width ekatama (1100px) match kara */
         .content-card { 
             background: white; 
             border-radius: 12px; 
-            border: 1px solid #eef2f6; 
-            padding: 35px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        
-        /* Selection List for Employees */
-        .emp-selection-list { 
-            max-height: 280px; 
-            overflow-y: auto; 
             border: 1px solid #e2e8f0; 
-            border-radius: 10px; 
-            background: #fcfdfe; 
-            padding: 5px; 
+            width: 100%;
+            max-width: 1100px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
-        
-        .emp-item { 
-            padding: 12px 15px; 
-            border-bottom: 1px solid #f1f5f9; 
-            transition: background 0.2s;
-            display: flex; 
-            align-items: center; 
-            gap: 15px; 
-        }
-        
-        .emp-item:hover { background: #f8fafc; }
-        .emp-item:last-child { border-bottom: none; }
-        
-        .emp-name { font-size: 0.9rem; font-weight: 600; color: #1e293b; display: block; }
-        .emp-dept { font-size: 0.75rem; color: #64748b; }
 
-        /* Form Labels */
+        .card-title-area { 
+            padding: 20px 30px; 
+            border-bottom: 1px solid #f1f5f9; 
+        }
+
+        .card-title-area h5 { 
+            font-weight: 700; 
+            color: #1e293b; 
+            margin-bottom: 2px; 
+            font-size: 1.1rem; 
+        }
+
         .form-label-custom {
             font-weight: 700;
+            color: #15803d;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .input-label-bold {
+            font-weight: 700;
+            font-size: 0.85rem;
             color: #475569;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
-        /* Schedule Button */
-        .btn-schedule { 
-            background: #15803d; 
-            color: white; 
-            border: none; 
-            padding: 14px; 
-            border-radius: 10px; 
-            font-weight: 600; 
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-schedule:hover { 
-            background: #166534; 
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(21, 128, 61, 0.2);
-        }
-
-        .form-control-lg, .form-select-lg {
+        .form-control, .form-select {
             border-radius: 8px;
-            font-size: 0.95rem;
-            border-color: #e2e8f0;
+            border: 1px solid #e2e8f0;
+            padding: 10px 12px;
         }
 
-        .form-control:focus, .form-select:focus {
-            border-color: #15803d;
-            box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.1);
+        .action-footer {
+            margin-top: 25px;
+            padding: 20px 30px;
+            background-color: #f8fafc;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            gap: 10px;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        .btn-save {
+            background-color: #15803d;
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+
+        .btn-back {
+            background-color: white;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
         }
     </style>
 }
 
 <div class="page-content">
-    <div class="content-card mx-auto" style="max-width: 850px;">
-        <form method="post">
-            <!-- Validation Summary for errors -->
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
-            
-            <div class="row g-4">
-                <!-- Training Program Selection -->
-                <div class="col-12">
-                    <label class="form-label form-label-custom">Training Program Title</label>
-                    <select asp-for="SelectedProgramTitle" class="form-select form-select-lg" required>
-                        <option value="" selected disabled>Choose from approved programs...</option>
-                        @foreach (var program in Model.ApprovedPrograms)
-                        {
-                            <option value="@program">@program</option>
-                        }
-                    </select>
-                </div>
+    <div class="content-card">
+        <div class="card-title-area">
+            <h5>Schedule New Training Session</h5>
+            <p class="text-muted small mb-0">Fill in the details to announce a new training program for employees.</p>
+        </div>
 
-                <!-- Approved Employee List with Checkboxes -->
-                <div class="col-12">
-                    <label class="form-label form-label-custom">Select Employees for this Session</label>
-                    <div class="emp-selection-list shadow-sm">
-                        @if (Model.ApprovedEmployees != null && Model.ApprovedEmployees.Any())
-                        {
-                            @foreach (var emp in Model.ApprovedEmployees)
+        <div class="p-4 px-5">
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-4"></div>
+                
+                <div class="row g-4">
+                    <!-- Training Program Title -->
+                    <div class="col-12">
+                        <label class="form-label-custom">Training Program Title</label>
+                        <select asp-for="SelectedProgramTitle" class="form-select" required style="max-width: 500px;">
+                            <option value="" selected disabled>-- Choose from approved programs --</option>
+                            @foreach (var program in Model.ApprovedPrograms)
                             {
-                                <div class="emp-item">
-                                    <input class="form-check-input mt-0" type="checkbox" name="SelectedRequestIds" value="@emp.RequestId" style="width: 1.2rem; height: 1.2rem; cursor: pointer;">
-                                    <div class="ms-2">
-                                        <span class="emp-name">@emp.EmployeeName</span>
-                                        <span class="emp-dept">@emp.DepartmentName | Requested: <strong>@emp.TrainingTitle</strong></span>
-                                    </div>
-                                </div>
+                                <option value="@program">@program</option>
                             }
-                        }
-                        else
-                        {
-                            <div class="p-5 text-center">
-                                <i class="bi bi-person-x fs-2 text-muted d-block mb-2"></i>
-                                <span class="text-muted small">No approved employee requests found.</span>
-                            </div>
-                        }
+                        </select>
                     </div>
-                </div>
 
-                <!-- Session Date -->
-                <div class="col-md-6">
-                    <label class="form-label form-label-custom">Session Date</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-calendar-event"></i></span>
+                    <!-- Trainer Name -->
+                    <div class="col-md-6">
+                        <label class="input-label-bold">Trainer Name</label>
+                        <input type="text" asp-for="TrainerName" class="form-control" placeholder="Enter name" required />
+                    </div>
+
+                    <!-- Location -->
+                    <div class="col-md-6">
+                        <label class="input-label-bold">Location / Venue</label>
+                        <input type="text" asp-for="Location" class="form-control" placeholder="Venue or Online Link" required />
+                    </div>
+
+                    <!-- Session Date -->
+                    <div class="col-md-6">
+                        <label class="input-label-bold">Session Date</label>
                         <input type="date" asp-for="SessionDate" class="form-control" required 
                                min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                     </div>
-                    <span asp-validation-for="SessionDate" class="text-danger small"></span>
-                </div>
 
-                <!-- Session Start Time -->
-                <div class="col-md-6">
-                    <label class="form-label form-label-custom">Start Time</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-light"><i class="bi bi-clock"></i></span>
+                    <!-- Start Time -->
+                    <div class="col-md-6">
+                        <label class="input-label-bold">Start Time</label>
                         <input type="time" asp-for="StartTimeValue" class="form-control" required />
                     </div>
-                    <span asp-validation-for="StartTimeValue" class="text-danger small"></span>
                 </div>
 
-                <!-- Submit Button -->
-                <div class="col-12 mt-5">
-                    <button type="submit" class="btn-schedule w-100 shadow-sm">
-                        <i class="bi bi-send-check-fill me-2"></i> Schedule & Notify Employees
-                    </button>
-                    <p class="text-center text-muted mt-3 mb-0" style="font-size: 0.75rem;">
-                        <i class="bi bi-info-circle me-1"></i> Notifications will be sent automatically to all selected employees.
-                    </p>
+                <div class="action-footer">
+                    <button type="submit" class="btn-save">Confirm & Schedule</button>
+                    <a href="/Training/Dashboard" class="btn-back">Cancel</a>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 

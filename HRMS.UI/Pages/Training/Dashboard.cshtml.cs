@@ -21,6 +21,7 @@ namespace HRMS.UI.Pages.Training
         public int PendingTrainingRequestsCount { get; set; }
         public int ScheduledSessionsCount { get; set; } 
         public List<ScheduledSessionDto> ScheduledSessions { get; set; } = new();
+        public List<ScheduledSessionDto> PastSessions { get; set; } = new(); // New list for past trainings
         public List<ProbationDetailDto> ProbationEmployees { get; set; } = new();
         public List<InternDetailDto> InternEmployees { get; set; } = new();
 
@@ -32,35 +33,44 @@ namespace HRMS.UI.Pages.Training
                 if (connection.State != ConnectionState.Open) 
                     await connection.OpenAsync();
 
-                // 1. Pending Requests Count
+                // 1. Get counts for the stats cards
                 cmd.CommandText = "SELECT COUNT(*) FROM TrainingProgramRequests WHERE Status = 'Pending'";
                 PendingTrainingRequestsCount = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
-                // 2. Scheduled Sessions Count
-                cmd.CommandText = "SELECT COUNT(*) FROM trainings WHERE Status = 'Scheduled'";
+                cmd.CommandText = "SELECT COUNT(*) FROM trainings WHERE Status = 'Scheduled' AND Date >= CURRENT_DATE";
                 ScheduledSessionsCount = Convert.ToInt32(await cmd.ExecuteScalarAsync());
 
-                // 3. Fetch Scheduled Sessions
-                cmd.CommandText = @"SELECT t.Title, t.Date, CONCAT(e.FirstName, ' ', e.LastName) as EmpName 
-                                   FROM trainings t 
-                                   JOIN Employees e ON t.EmployeeId = e.Id 
-                                   WHERE t.Status = 'Scheduled' 
-                                   ORDER BY t.Date DESC LIMIT 5";
+                // 2. Fetch All Sessions (Logic to separate Upcoming vs Past)
+                // Updated to include Trainer and Location
+                cmd.CommandText = @"SELECT Title, Date, Trainer, Location 
+                                   FROM trainings 
+                                   ORDER BY Date ASC";
                 
                 using (var reader = await cmd.ExecuteReaderAsync())
                 {
                     ScheduledSessions.Clear();
+                    PastSessions.Clear();
+                    DateTime today = DateTime.Today;
+
                     while (await reader.ReadAsync())
                     {
-                        ScheduledSessions.Add(new ScheduledSessionDto {
+                        var sessionDate = reader["Date"] != DBNull.Value ? Convert.ToDateTime(reader["Date"]) : DateTime.Now;
+                        var dto = new ScheduledSessionDto {
                             Title = reader["Title"]?.ToString() ?? "Untitled",
-                            Date = reader["Date"] != DBNull.Value ? Convert.ToDateTime(reader["Date"]) : DateTime.Now,
-                            EmployeeName = reader["EmpName"]?.ToString() ?? "Unknown"
-                        });
+                            Date = sessionDate,
+                            Trainer = reader["Trainer"]?.ToString() ?? "N/A",
+                            Location = reader["Location"]?.ToString() ?? "N/A"
+                        };
+
+                        // Logic: If date is today or in the future, it is Upcoming. Otherwise, it is Past.
+                        if (sessionDate.Date >= today)
+                            ScheduledSessions.Add(dto);
+                        else
+                            PastSessions.Add(dto);
                     }
                 }
 
-                // 4. Fetch Probation Employees with Progress
+                // 3. Fetch Probation Employees
                 cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName, e.DateJoined,
                                    (SELECT MAX(EvaluationMonth) FROM ProbationEvaluations WHERE EmployeeId = e.Id) as LastMonth
                                    FROM Employees e 
@@ -84,8 +94,7 @@ namespace HRMS.UI.Pages.Training
                     }
                 }
 
-                // 5. Fetch Interns (UPDATED)
-                // මෙතනදී අපි 'COUNT' එක SQL එකෙන්ම අරගෙන එනවා
+                // 4. Fetch Interns
                 cmd.CommandText = @"SELECT e.Id, e.FirstName, e.LastName,
                                    (SELECT COUNT(*) FROM InternEvaluations WHERE EmployeeId = e.Id) as EvalCount
                                    FROM Employees e WHERE e.EmployeeType = 'Intern'";
@@ -96,12 +105,11 @@ namespace HRMS.UI.Pages.Training
                     while (await reader.ReadAsync())
                     {
                         int evalCount = reader["EvalCount"] != DBNull.Value ? Convert.ToInt32(reader["EvalCount"]) : 0;
-                        
                         InternEmployees.Add(new InternDetailDto {
                             Id = Convert.ToInt32(reader["Id"]),
                             FirstName = reader["FirstName"]?.ToString() ?? string.Empty,
                             LastName = reader["LastName"]?.ToString() ?? string.Empty,
-                            EvaluationsCount = evalCount, // අලුත් Property එකට අගය ලබා දීම
+                            EvaluationsCount = evalCount,
                             Status = evalCount >= 6 ? "Completed" : "In Training"
                         });
                     }
@@ -110,12 +118,11 @@ namespace HRMS.UI.Pages.Training
         }
     }
 
-    // --- DTOs ---
-
     public class ScheduledSessionDto {
         public string Title { get; set; } = string.Empty;
         public DateTime Date { get; set; }
-        public string EmployeeName { get; set; } = string.Empty;
+        public string Trainer { get; set; } = string.Empty; // Added Trainer
+        public string Location { get; set; } = string.Empty; // Added Location
     }
 
     public class ProbationDetailDto {
@@ -133,7 +140,6 @@ namespace HRMS.UI.Pages.Training
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-        // වැදගත්ම කොටස: මේ Property එක තමයි ඔයාගේ Error එකට හේතුව වුණේ
         public int EvaluationsCount { get; set; } 
     }
 }
