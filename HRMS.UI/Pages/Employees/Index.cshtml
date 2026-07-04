@@ -49,6 +49,7 @@
                 <th>Designation</th>
                 <th>Status</th>
                 <th>Login</th>
+                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -61,6 +62,10 @@
                     <td>@(emp.Department?.Name ?? "-")</td>
                     <td>@(emp.Designation?.Title ?? "-")</td>
                     <td>@emp.Status</td>
+                    <td>
+                        <a href="/Employees/Edit?id=@emp.Id"
+                           style="color:#10823c; font-weight:600; text-decoration:none;">Edit</a>
+                    </td>
                     <td>
                         @if (Model.EmployeeIdsWithLogin.Contains(emp.Id))
                         {

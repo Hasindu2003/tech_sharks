@@ -1,0 +1,65 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Notifications";
+    ViewData["PageTitle"] = "Notifications";
+}
+
+<style>
+    .lv-container {
+        padding: 24px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .notif-item {
+        background: white;
+        border-radius: 8px;
+        padding: 16px;
+        margin-bottom: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .notif-item.unread {
+        border-left: 4px solid #10823c;
+    }
+
+    .notif-title {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+
+    .notif-meta {
+        font-size: 12px;
+        color: #7a8863;
+        margin-top: 6px;
+    }
+</style>
+
+<div class="lv-container">
+    <h2 style="margin-bottom: 20px;">Notifications</h2>
+
+    @if (!Model.HasEmployeeProfile)
+    {
+        <p style="color:#7a8863;">Your account is not linked to an employee profile.</p>
+    }
+    else if (!Model.Notifications.Any())
+    {
+        <p style="color:#7a8863;">No notifications yet.</p>
+    }
+    else
+    {
+        @foreach (var n in Model.Notifications)
+        {
+            <div class="notif-item @(n.IsRead ? "" : "unread")">
+                <div class="notif-title">@n.Title</div>
+                <div>@n.Message</div>
+                @if (!string.IsNullOrEmpty(n.Link))
+                {
+                    <a href="@n.Link">View</a>
+                }
+                <div class="notif-meta">@n.CreatedAt.ToString("MMM d, yyyy h:mm tt")</div>
+            </div>
+        }
+    }
+</div>

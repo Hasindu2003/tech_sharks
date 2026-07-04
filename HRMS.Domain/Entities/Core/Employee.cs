@@ -1,10 +1,8 @@
-using System;
-
 namespace HRMS.Domain.Entities.Core
 {
     public class Employee
     {
-        public int Id { get; set; }   // Primary Key
+        public int Id { get; set; } // Primary Key
 
         // Basic Information
         public string FirstName { get; set; } = null!;
@@ -34,5 +32,9 @@ namespace HRMS.Domain.Entities.Core
         // Every employee belongs to a branch
         public int BranchId { get; set; }
         public Branch Branch { get; set; } = null!;
+
+        // Direct manager for leave approval routing (optional — top-level employees have none)
+        public int? ManagerId { get; set; }
+        public Employee? Manager { get; set; }
     }
 }

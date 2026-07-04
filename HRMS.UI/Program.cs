@@ -1,4 +1,7 @@
 using HRMS.Application.Attendance;
+using HRMS.Application.Leave;
+using HRMS.Application.Notifications;
+using HRMS.Application.Payroll;
 using HRMS.Infrastructure.Identity;
 using HRMS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
@@ -56,6 +59,10 @@ builder.Configuration.GetSection("AttendanceShift").Bind(shiftOptions);
 builder.Services.AddSingleton(shiftOptions);
 
 builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IEmailSender, NoOpEmailSender>();
+builder.Services.AddScoped<IPayrollLeaveExportService, PayrollLeaveExportService>();
 
 var app = builder.Build();
 

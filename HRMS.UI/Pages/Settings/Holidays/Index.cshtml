@@ -1,0 +1,134 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Holidays";
+    ViewData["PageTitle"] = "Settings / Holidays";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+<style>
+    .set-container {
+        padding: 24px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .btn-primary {
+        background: #10823c;
+        color: white;
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .btn-secondary {
+        background: #f6f8f7;
+        color: #151811;
+        padding: 10px 16px;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-table th, .data-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e2e5dc;
+    }
+
+    .data-table th {
+        background: #f6f8f7;
+        color: #7a8863;
+        font-size: 13px;
+        text-transform: uppercase;
+    }
+
+    .action-links a, .action-links button {
+        color: #10823c;
+        text-decoration: none;
+        font-weight: 600;
+        margin-right: 12px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+    }
+
+    .action-links button.danger {
+        color: #dc2626;
+    }
+</style>
+
+<div class="set-container">
+    <a href="/Settings" class="btn-secondary" style="margin-bottom: 16px; display: inline-block;">&larr; Back to
+        Settings</a>
+
+    <div class="header-row">
+        <h2>Holidays</h2>
+        <a href="/Settings/Holidays/Create" class="btn-primary">+ Add Holiday</a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: 600;">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <table class="data-table">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Name</th>
+            <th>Recurs Yearly</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        @if (Model.Holidays.Count == 0)
+        {
+            <tr>
+                <td colspan="4" style="text-align:center; color:#7a8863;">No holidays configured.</td>
+            </tr>
+        }
+        @foreach (var h in Model.Holidays)
+        {
+            <tr>
+                <td>@h.Date.ToString("MMM d, yyyy")</td>
+                <td>@h.Name</td>
+                <td>@(h.IsRecurringYearly ? "Yes" : "No")</td>
+                <td class="action-links">
+                    <a href="/Settings/Holidays/Edit?id=@h.Id">Edit</a>
+                    <form method="post" asp-page-handler="Delete" style="display:inline;"
+                          onsubmit="return confirm('Remove this holiday?');">
+                        <input type="hidden" name="id" value="@h.Id"/>
+                        <button type="submit" class="danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

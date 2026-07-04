@@ -1,0 +1,179 @@
+@page
+@model ManagerApprovalsModel
+@{
+    ViewData["Title"] = "Manager Approvals";
+    ViewData["PageTitle"] = "Manager Approvals";
+    ViewData["ActiveNav"] = "Leave";
+}
+
+<style>
+    .lv-container {
+        padding: 24px;
+        max-width: 1100px;
+        margin: 0 auto;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .data-table th, .data-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e2e5dc;
+        font-size: 14px;
+    }
+
+    .data-table th {
+        background: #f6f8f7;
+        color: #7a8863;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    .btn-approve {
+        background: #10823c;
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .btn-reject {
+        background: #dc2626;
+        color: white;
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .btn-info {
+        background: #f6f8f7;
+        color: #151811;
+        padding: 6px 12px;
+        border: 1px solid #e2e5dc;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 13px;
+    }
+
+    .action-cell {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .alert-success {
+        background: #dcfce7;
+        color: #166534;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-weight: 600;
+    }
+
+    .alert-error {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="lv-container">
+    @if (!Model.HasEmployeeProfile)
+    {
+        <div class="alert-error">Your account is not linked to an employee profile.</div>
+    }
+    else
+    {
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert-success">@TempData["SuccessMessage"]</div>
+        }
+
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert-error">@TempData["ErrorMessage"]</div>
+        }
+
+        <h2 style="margin-bottom: 20px;">Leave Requests Awaiting Your Approval</h2>
+
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>Employee</th>
+                <th>Type</th>
+                <th>Dates</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (!Model.PendingLeaves.Any())
+            {
+                <tr>
+                    <td colspan="6" style="text-align:center; color:#7a8863;">Nothing pending.</td>
+                </tr>
+            }
+            @foreach (var l in Model.PendingLeaves)
+            {
+                <tr>
+                    <td><a href="/Leave/Details?id=@l.Id">@l.EmployeeName</a></td>
+                    <td>@l.LeaveType@(l.IsHalfDay ? " (Half-day)" : "")</td>
+                    <td>@l.StartDate.ToString("MMM d")@(l.StartDate != l.EndDate ? " - " + l.EndDate.ToString("MMM d") : "")</td>
+                    <td>@l.DaysCount.ToString("0.#")</td>
+                    <td>@(l.Reason ?? "-")</td>
+                    <td class="action-cell">
+                        <form method="post" asp-page-handler="Action">
+                            <input type="hidden" name="leaveId" value="@l.Id"/>
+                            <input type="hidden" name="action" value="Approved"/>
+                            <button type="submit" class="btn-approve">Approve</button>
+                        </form>
+                        <form method="post" asp-page-handler="Action"
+                              onsubmit="return attachComment(this, 'Rejected');">
+                            <input type="hidden" name="leaveId" value="@l.Id"/>
+                            <input type="hidden" name="action" value="Rejected"/>
+                            <input type="hidden" name="comments" class="comments-input"/>
+                            <button type="submit" class="btn-reject">Reject</button>
+                        </form>
+                        <form method="post" asp-page-handler="Action"
+                              onsubmit="return attachComment(this, 'InfoRequested');">
+                            <input type="hidden" name="leaveId" value="@l.Id"/>
+                            <input type="hidden" name="action" value="InfoRequested"/>
+                            <input type="hidden" name="comments" class="comments-input"/>
+                            <button type="submit" class="btn-info">Request Info</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function attachComment(form, kind) {
+            const message = kind === 'Rejected' ? 'Reason for rejection (optional):' : 'What information do you need?';
+            const comments = prompt(message) || '';
+            form.querySelector('.comments-input').value = comments;
+            return true;
+        }
+    </script>
+}

@@ -1,0 +1,119 @@
+@page
+@model DetailsModel
+@{
+    var l = Model.Details!.Leave;
+    ViewData["Title"] = "Leave Details";
+    ViewData["PageTitle"] = "My Leave";
+    ViewData["ActiveNav"] = "Leave";
+}
+
+<style>
+    .lv-container {
+        padding: 24px;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: white;
+        border-radius: 10px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+    }
+
+    .detail-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+    }
+
+    .detail-row .label {
+        color: #7a8863;
+        font-weight: 600;
+    }
+
+    .timeline {
+        list-style: none;
+        padding: 0;
+    }
+
+    .timeline li {
+        padding: 12px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .timeline .stage {
+        font-weight: 700;
+        font-size: 13px;
+        color: #10823c;
+        text-transform: uppercase;
+    }
+
+    .timeline .meta {
+        font-size: 12px;
+        color: #7a8863;
+        margin-top: 2px;
+    }
+
+    .btn-secondary {
+        background: #f6f8f7;
+        color: #151811;
+        padding: 8px 14px;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+
+<div class="lv-container">
+    <a href="/Leave" class="btn-secondary" style="margin-bottom: 16px; display:inline-block;">&larr; Back to My
+        Leave</a>
+
+    <div class="card">
+        <h2 style="margin-bottom: 16px;">@l.LeaveType Leave — @l.EmployeeName</h2>
+        <div class="detail-row"><span
+                    class="label">Dates</span><span>@l.StartDate.ToString("MMM d, yyyy")@(l.StartDate != l.EndDate ? " - " + l.EndDate.ToString("MMM d, yyyy") : "")@(l.IsHalfDay ? " (Half-day)" : "")</span>
+        </div>
+        <div class="detail-row"><span class="label">Days</span><span>@l.DaysCount.ToString("0.#")</span></div>
+        <div class="detail-row"><span class="label">Status</span><span>@l.Status</span></div>
+        <div class="detail-row"><span class="label">Reason</span><span>@(l.Reason ?? "-")</span></div>
+        @if (!string.IsNullOrEmpty(l.AttachmentPath))
+        {
+            <div class="detail-row"><span class="label">Attachment</span><span><a href="@l.AttachmentPath"
+                                                                                  target="_blank">View file</a></span>
+            </div>
+        }
+        <div class="detail-row"><span
+                    class="label">Applied</span><span>@l.AppliedAt.ToString("MMM d, yyyy h:mm tt")</span></div>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-bottom: 12px;">Approval History</h3>
+        @if (!Model.Details.History.Any())
+        {
+            <p style="color:#7a8863;">No actions taken yet.</p>
+        }
+        else
+        {
+            <ul class="timeline">
+                @foreach (var h in Model.Details.History)
+                {
+                    <li>
+                        <div class="stage">@h.Stage — @h.Action</div>
+                        <div>@h.ActorName</div>
+                        @if (!string.IsNullOrEmpty(h.Comments))
+                        {
+                            <div>@h.Comments</div>
+                        }
+                        <div class="meta">@h.ActionDate.ToString("MMM d, yyyy h:mm tt")</div>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>

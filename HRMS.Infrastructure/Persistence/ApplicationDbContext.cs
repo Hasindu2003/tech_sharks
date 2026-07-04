@@ -1,25 +1,26 @@
+using HRMS.Domain.Entities.Attendance;
+using HRMS.Domain.Entities.Core;
+using HRMS.Domain.Entities.Leave;
+using HRMS.Domain.Entities.Notifications;
+using HRMS.Domain.Entities.Training;
+using HRMS.Domain.Entities.Transfer;
+using HRMS.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-
 // Identity
-using HRMS.Infrastructure.Identity;
 
 // Core
-using HRMS.Domain.Entities.Core;
 
 // Attendance
-using HRMS.Domain.Entities.Attendance;
 
 // Leave
-using HRMS.Domain.Entities.Leave;
+
+// Notifications
 
 // Training
-using HRMS.Domain.Entities.Training;
 
 // Transfer
-using HRMS.Domain.Entities.Transfer;
-
 
 
 namespace HRMS.Infrastructure.Persistence
@@ -46,9 +47,15 @@ namespace HRMS.Infrastructure.Persistence
         public DbSet<Leave> Leaves { get; set; } = null!;
         public DbSet<LeaveEntitlement> LeaveEntitlements { get; set; } = null!;
         public DbSet<LeaveApproval> LeaveApprovals { get; set; } = null!;
+        public DbSet<LeavePolicy> LeavePolicies { get; set; } = null!;
+        public DbSet<Holiday> Holidays { get; set; } = null!;
+        public DbSet<LeaveBalanceAdjustment> LeaveBalanceAdjustments { get; set; } = null!;
         public DbSet<MaternityLeave> MaternityLeaves { get; set; } = null!;
         public DbSet<MaternityPayment> MaternityPayments { get; set; } = null!;
         public DbSet<OverseasLeave> OverseasLeaves { get; set; } = null!;
+
+        // ---------------- Notifications ----------------
+        public DbSet<Notification> Notifications { get; set; } = null!;
 
         // ---------------- Training ----------------
         public DbSet<Training> Trainings { get; set; } = null!;
@@ -81,6 +88,89 @@ namespace HRMS.Infrastructure.Persistence
             // Remove unused Identity tables
             builder.Entity<IdentityUserLogin<string>>()
                 .ToTable("AspNetUserLogins", t => t.ExcludeFromMigrations());
+
+            // Self-referencing manager FK — Restrict avoids a cascade path back onto Employees.
+            builder.Entity<Employee>()
+                .HasOne(e => e.Manager)
+                .WithMany()
+                .HasForeignKey(e => e.ManagerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // LeaveApproval already cascades from Leave->Employee; the direct actor FK would create
+            // a second cascade path onto Employees, so it must be Restrict.
+            builder.Entity<LeaveApproval>()
+                .HasOne(a => a.ActorEmployee)
+                .WithMany()
+                .HasForeignKey(a => a.ActorEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<LeaveEntitlement>(entity =>
+            {
+                entity.HasOne(e => e.Employee)
+                    .WithMany()
+                    .HasForeignKey(e => e.EmployeeId)
+                    .OnDelete(DeleteBehavior.Restrict);
+
+                entity.HasIndex(e => new { e.EmployeeId, e.LeaveType, e.Year }).IsUnique();
+            });
+
+            builder.Entity<LeaveBalanceAdjustment>()
+                .HasOne(a => a.AdjustedByEmployee)
+                .WithMany()
+                .HasForeignKey(a => a.AdjustedByEmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Notification>()
+                .HasOne(n => n.Employee)
+                .WithMany()
+                .HasForeignKey(n => n.EmployeeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Seed the six leave policies from the business requirements — HR can tune them afterwards.
+            builder.Entity<LeavePolicy>().HasData(
+                new LeavePolicy
+                {
+                    Id = 1, LeaveType = LeaveType.Annual, Name = "Annual Leave", DaysPerYear = 14,
+                    IsPaid = true, AffectsBalance = true, RequiresAttachment = false, AllowHalfDay = true,
+                    ExcludeWeekends = true, ExcludeHolidays = true, AllowPastDates = false,
+                    CarryForwardAllowed = true, MaxCarryForwardDays = 7, Active = true
+                },
+                new LeavePolicy
+                {
+                    Id = 2, LeaveType = LeaveType.Casual, Name = "Casual Leave", DaysPerYear = 7,
+                    IsPaid = true, AffectsBalance = true, RequiresAttachment = false, AllowHalfDay = true,
+                    ExcludeWeekends = true, ExcludeHolidays = true, AllowPastDates = false,
+                    CarryForwardAllowed = false, MaxCarryForwardDays = null, Active = true
+                },
+                new LeavePolicy
+                {
+                    Id = 3, LeaveType = LeaveType.Sick, Name = "Sick Leave", DaysPerYear = 14,
+                    IsPaid = true, AffectsBalance = true, RequiresAttachment = true, AllowHalfDay = true,
+                    ExcludeWeekends = true, ExcludeHolidays = true, AllowPastDates = true,
+                    CarryForwardAllowed = false, MaxCarryForwardDays = null, Active = true
+                },
+                new LeavePolicy
+                {
+                    Id = 4, LeaveType = LeaveType.Maternity, Name = "Maternity Leave", DaysPerYear = 84,
+                    IsPaid = true, AffectsBalance = true, RequiresAttachment = true, AllowHalfDay = false,
+                    ExcludeWeekends = false, ExcludeHolidays = false, AllowPastDates = true,
+                    CarryForwardAllowed = false, MaxCarryForwardDays = null, Active = true
+                },
+                new LeavePolicy
+                {
+                    Id = 5, LeaveType = LeaveType.Overseas, Name = "Overseas Leave", DaysPerYear = null,
+                    IsPaid = true, AffectsBalance = false, RequiresAttachment = false, AllowHalfDay = false,
+                    ExcludeWeekends = true, ExcludeHolidays = true, AllowPastDates = false,
+                    CarryForwardAllowed = false, MaxCarryForwardDays = null, Active = true
+                },
+                new LeavePolicy
+                {
+                    Id = 6, LeaveType = LeaveType.NoPay, Name = "No Pay Leave", DaysPerYear = null,
+                    IsPaid = false, AffectsBalance = false, RequiresAttachment = false, AllowHalfDay = true,
+                    ExcludeWeekends = true, ExcludeHolidays = true, AllowPastDates = false,
+                    CarryForwardAllowed = false, MaxCarryForwardDays = null, Active = true
+                }
+            );
         }
     }
 }
