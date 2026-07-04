@@ -9,58 +9,66 @@ using Microsoft.EntityFrameworkCore;
 namespace HRMS.UI.Pages.Employees
 {
     [Authorize]
-    public class CreateModel : PageModel
+    public class EditModel : PageModel
     {
         private readonly ApplicationDbContext _context;
 
-        public CreateModel(ApplicationDbContext context)
+        public EditModel(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        [BindProperty] public Employee NewEmployee { get; set; } = new();
+        [BindProperty] public Employee EditingEmployee { get; set; } = default!;
 
         public SelectList DepartmentList { get; set; } = default!;
         public SelectList DesignationList { get; set; } = default!;
         public SelectList BranchList { get; set; } = default!;
         public SelectList ManagerList { get; set; } = default!;
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync(int? id)
         {
-            await LoadDropdownsAsync();
+            if (id == null) return NotFound();
+
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == id);
+            if (employee == null) return NotFound();
+
+            EditingEmployee = employee;
+            await LoadDropdownsAsync(employee.Id);
+            return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            ModelState.Remove("NewEmployee.Department");
-            ModelState.Remove("NewEmployee.Designation");
-            ModelState.Remove("NewEmployee.Branch");
-            ModelState.Remove("NewEmployee.Manager");
-            ModelState.Remove("NewEmployee.Status");
-            ModelState.Remove("NewEmployee.DateJoined");
+            ModelState.Remove("EditingEmployee.Department");
+            ModelState.Remove("EditingEmployee.Designation");
+            ModelState.Remove("EditingEmployee.Branch");
+            ModelState.Remove("EditingEmployee.Manager");
+
+            if (EditingEmployee.ManagerId == EditingEmployee.Id)
+                ModelState.AddModelError("EditingEmployee.ManagerId", "An employee cannot be their own manager.");
 
             if (!ModelState.IsValid)
             {
-                await LoadDropdownsAsync();
+                await LoadDropdownsAsync(EditingEmployee.Id);
                 return Page();
             }
 
-            NewEmployee.DateJoined = DateTime.Now;
-            NewEmployee.Status = "Active";
-
-            _context.Employees.Add(NewEmployee);
+            _context.Attach(EditingEmployee).State = EntityState.Modified;
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Employee {NewEmployee.FirstName} created successfully.";
+            TempData["SuccessMessage"] = $"Employee {EditingEmployee.FirstName} updated successfully.";
             return RedirectToPage("./Index");
         }
 
-        private async Task LoadDropdownsAsync()
+        private async Task LoadDropdownsAsync(int excludeEmployeeId)
         {
             var deps = await _context.Departments.ToListAsync();
             var desigs = await _context.Designations.ToListAsync();
             var branches = await _context.Branches.ToListAsync();
-            var employees = await _context.Employees.OrderBy(e => e.FirstName).ToListAsync();
+            var employees = await _context.Employees
+                .Where(e => e.Id != excludeEmployeeId)
+                .OrderBy(e => e.FirstName)
+                .ToListAsync();
 
             DepartmentList = new SelectList(deps, "Id", "Name");
             DesignationList = new SelectList(desigs, "Id", "Title");

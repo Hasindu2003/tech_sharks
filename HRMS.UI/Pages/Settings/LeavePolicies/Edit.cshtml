@@ -1,0 +1,115 @@
+@page
+@model EditModel
+@{
+    ViewData["Title"] = "Edit Leave Policy";
+    ViewData["PageTitle"] = "Settings / Leave Policies";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+<style>
+    .form-container {
+        padding: 24px;
+        max-width: 600px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #e2e5dc;
+        border-radius: 6px;
+        font-family: inherit;
+    }
+
+    .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .btn-primary {
+        background: #10823c;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-secondary {
+        background: #f6f8f7;
+        color: #151811;
+        padding: 10px 20px;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+    }
+</style>
+
+<div style="padding: 24px;">
+    <div class="form-container">
+        <h2 style="margin-bottom: 24px;">Edit @Model.EditingPolicy.Name Policy</h2>
+
+        <form method="post">
+            <input type="hidden" asp-for="EditingPolicy.Id"/>
+            <input type="hidden" asp-for="EditingPolicy.LeaveType"/>
+
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" asp-for="EditingPolicy.Name" class="form-control" required/>
+            </div>
+
+            <div class="form-group">
+                <label>Days Per Year (leave blank for unlimited)</label>
+                <input type="number" step="1" min="0" asp-for="EditingPolicy.DaysPerYear" class="form-control"/>
+            </div>
+
+            <div class="form-group">
+                <label>Max Carry-Forward Days</label>
+                <input type="number" step="1" min="0" asp-for="EditingPolicy.MaxCarryForwardDays" class="form-control"/>
+            </div>
+
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.IsPaid"/> <label style="margin:0;">Paid
+                    leave</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.AffectsBalance"/> <label
+                        style="margin:0;">Deducts from balance</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.RequiresAttachment"/> <label
+                        style="margin:0;">Requires attachment</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.AllowHalfDay"/> <label
+                        style="margin:0;">Allow half-day</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.ExcludeWeekends"/> <label
+                        style="margin:0;">Exclude weekends from day count</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.ExcludeHolidays"/> <label
+                        style="margin:0;">Exclude holidays from day count</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.AllowPastDates"/> <label
+                        style="margin:0;">Allow backdated applications</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.CarryForwardAllowed"/> <label
+                        style="margin:0;">Carry-forward allowed</label></div>
+            <div class="checkbox-row"><input type="checkbox" asp-for="EditingPolicy.Active"/> <label style="margin:0;">Active</label>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                <a href="/Settings/LeavePolicies" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>

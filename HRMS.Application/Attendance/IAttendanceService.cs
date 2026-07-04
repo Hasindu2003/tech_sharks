@@ -16,5 +16,10 @@ namespace HRMS.Application.Attendance
         Task<List<AttendanceHistoryItemDto>> GetHistoryAsync(int employeeId, DateTime from, DateTime to);
 
         Task<MonthSummaryDto> GetMonthSummaryAsync(int employeeId, int year, int month);
+
+        // Leave integration: upserts an Attendance row marking the day as on leave (called by
+        // LeaveService when HR gives final approval), and reverts it on cancellation.
+        Task MarkLeaveAsync(int employeeId, DateTime date, bool isHalfDay);
+        Task UnmarkLeaveAsync(int employeeId, DateTime date);
     }
 }

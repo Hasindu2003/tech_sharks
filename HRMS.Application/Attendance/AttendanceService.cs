@@ -167,6 +167,51 @@ namespace HRMS.Application.Attendance
             return summary;
         }
 
+        public async Task MarkLeaveAsync(int employeeId, DateTime date, bool isHalfDay)
+        {
+            var day = date.Date;
+            var existing = await _context.Attendances
+                .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.Date == day);
+
+            // A day that already has real punch data takes precedence over a leave marking.
+            if (existing != null)
+            {
+                if (existing.TimeIn == null)
+                {
+                    existing.Status = isHalfDay ? "HalfDayLeave" : "Leave";
+                    await _context.SaveChangesAsync();
+                }
+
+                return;
+            }
+
+            _context.Attendances.Add(new Domain.Entities.Attendance.Attendance
+            {
+                EmployeeId = employeeId,
+                Date = day,
+                Status = isHalfDay ? "HalfDayLeave" : "Leave"
+            });
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task UnmarkLeaveAsync(int employeeId, DateTime date)
+        {
+            var day = date.Date;
+            var existing = await _context.Attendances
+                .FirstOrDefaultAsync(a => a.EmployeeId == employeeId && a.Date == day);
+
+            // Only remove rows this method created — never touch a day with real punch data.
+            if (existing == null || existing.TimeIn != null)
+                return;
+
+            if (existing.Status is "Leave" or "HalfDayLeave")
+            {
+                _context.Attendances.Remove(existing);
+                await _context.SaveChangesAsync();
+            }
+        }
+
         private static TodayAttendanceDto ToTodayDto(Domain.Entities.Attendance.Attendance a) => new()
         {
             EmployeeId = a.EmployeeId,
