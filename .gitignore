@@ -374,3 +374,10 @@ appsettings.Development.json
 *.Backup.tmp
 # Google service account key
 HRMS.UI/google-calendar-key.json
+
+# Accidental local debug output
+mysql_err_tail.txt
+
+CLAUDE.md
+.claude
+.idea/.idea.HRMS/.idea/claudeCodeEditorTabs.xml

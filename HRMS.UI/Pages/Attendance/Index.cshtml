@@ -1,0 +1,328 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "My Attendance";
+    ViewData["PageTitle"] = "My Attendance";
+    ViewData["ActiveNav"] = "Attendance";
+
+    static string FormatMinutes(int? minutes)
+    {
+        if (minutes is null) return "-";
+        var h = minutes.Value / 60;
+        var m = minutes.Value % 60;
+        return $"{h}h {m}m";
+    }
+
+    var statusColors = new Dictionary<string, (string bg, string fg)>
+    {
+            ["Working"] = ("#dbeafe", "#1d4ed8"),
+            ["Present"] = ("#dcfce7", "#166534"),
+            ["Late"] = ("#fef3c7", "#92400e"),
+            ["HalfDay"] = ("#fee2e2", "#991b1b"),
+    };
+}
+
+<style>
+    .att-container {
+        padding: 24px;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .att-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 32px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+
+    .att-card h3 {
+        font-size: 15px;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        margin-bottom: 20px;
+    }
+
+    .punch-btn {
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        font-family: 'Manrope', sans-serif;
+        font-size: 22px;
+        font-weight: 700;
+        color: white;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 24px rgba(16, 130, 60, .25);
+        transition: transform .15s;
+    }
+
+    .punch-btn:hover {
+        transform: scale(1.03);
+    }
+
+    .punch-btn.in {
+        background: linear-gradient(135deg, #10823c, #0d6e32);
+    }
+
+    .punch-btn.out {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        box-shadow: 0 8px 24px rgba(220, 38, 38, .25);
+    }
+
+    .punch-btn:disabled {
+        opacity: .6;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .status-pill {
+        display: inline-block;
+        padding: 4px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .att-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+        text-align: left;
+    }
+
+    .att-stat {
+        background: #f6f8f7;
+        border-radius: 10px;
+        padding: 14px 16px;
+    }
+
+    .att-stat .label {
+        font-size: 12px;
+        color: #7a8863;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+    }
+
+    .att-stat .value {
+        font-size: 18px;
+        font-weight: 700;
+        color: #151811;
+    }
+
+    .timer {
+        font-size: 40px;
+        font-weight: 800;
+        color: #10823c;
+        font-variant-numeric: tabular-nums;
+        margin: 12px 0 24px;
+    }
+
+    .att-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .att-table th, .att-table td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid #e2e5dc;
+        font-size: 14px;
+    }
+
+    .att-table th {
+        background: #f6f8f7;
+        color: #7a8863;
+        font-size: 12px;
+        text-transform: uppercase;
+    }
+
+    #punchError {
+        display: none;
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-weight: 600;
+    }
+</style>
+
+<div class="att-container">
+
+    @if (!Model.HasEmployeeProfile)
+    {
+        <div class="att-card">
+            <p>Your account is not linked to an employee profile, so attendance punching is unavailable. Contact HR.</p>
+        </div>
+    }
+    else
+    {
+        <div id="punchError"></div>
+
+        <div class="att-card" id="attCard"
+             data-check-in="@(Model.Today?.CheckIn?.ToString("O"))"
+             data-has-punched-in="@(Model.Today?.HasPunchedIn == true ? "true" : "false")"
+             data-has-punched-out="@(Model.Today?.HasPunchedOut == true ? "true" : "false")">
+            <h3>Today's Attendance — @DateTime.Today.ToString("dddd, MMM d")</h3>
+
+            @if (Model.Today == null)
+            {
+                <button class="punch-btn in" id="punchBtn" data-action="punch-in">Punch In</button>
+            }
+            else if (!Model.Today.HasPunchedOut)
+            {
+                <div>
+                    @{
+                        var (bg, fg) = statusColors.GetValueOrDefault(Model.Today.Status, ("#f6f8f7", "#151811"));
+                    }
+                    <span class="status-pill" style="background:@bg; color:@fg;">@Model.Today.Status</span>
+                </div>
+                <div class="timer" id="liveTimer">00:00:00</div>
+                <button class="punch-btn out" id="punchBtn" data-action="punch-out">Punch Out</button>
+                <div class="att-stats">
+                    <div class="att-stat">
+                        <div class="label">Check In</div>
+                        <div class="value">@Model.Today.CheckIn?.ToString("hh:mm tt")</div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                var (bg, fg) = statusColors.GetValueOrDefault(Model.Today.Status, ("#f6f8f7", "#151811"));
+                <span class="status-pill" style="background:@bg; color:@fg;">@Model.Today.Status</span>
+                <div class="att-stats">
+                    <div class="att-stat">
+                        <div class="label">Check In</div>
+                        <div class="value">@Model.Today.CheckIn?.ToString("hh:mm tt")</div>
+                    </div>
+                    <div class="att-stat">
+                        <div class="label">Check Out</div>
+                        <div class="value">@Model.Today.CheckOut?.ToString("hh:mm tt")</div>
+                    </div>
+                    <div class="att-stat">
+                        <div class="label">Working Hours</div>
+                        <div class="value">@FormatMinutes(Model.Today.WorkingMinutes)</div>
+                    </div>
+                    <div class="att-stat">
+                        <div class="label">Late</div>
+                        <div class="value">@FormatMinutes(Model.Today.LateMinutes)</div>
+                    </div>
+                    <div class="att-stat">
+                        <div class="label">Early Leave</div>
+                        <div class="value">@FormatMinutes(Model.Today.EarlyLeaveMinutes)</div>
+                    </div>
+                    <div class="att-stat">
+                        <div class="label">Overtime</div>
+                        <div class="value">@FormatMinutes(Model.Today.OvertimeMinutes)</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <h3 style="margin-bottom: 12px; color:#151811;">Last 7 Days</h3>
+        <table class="att-table">
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>Check In</th>
+                <th>Check Out</th>
+                <th>Status</th>
+                <th>Working Hours</th>
+                <th>Late</th>
+                <th>Overtime</th>
+            </tr>
+            </thead>
+            <tbody>
+            @if (!Model.RecentHistory.Any())
+            {
+                <tr>
+                    <td colspan="7" style="text-align:center; color:#7a8863;">No attendance records yet.</td>
+                </tr>
+            }
+            @foreach (var day in Model.RecentHistory)
+            {
+                <tr>
+                    <td>@day.Date.ToString("MMM d")</td>
+                    <td>@(day.CheckIn?.ToString("hh:mm tt") ?? "-")</td>
+                    <td>@(day.CheckOut?.ToString("hh:mm tt") ?? "-")</td>
+                    <td>@day.Status</td>
+                    <td>@FormatMinutes(day.WorkingMinutes)</td>
+                    <td>@FormatMinutes(day.LateMinutes)</td>
+                    <td>@FormatMinutes(day.OvertimeMinutes)</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const card = document.getElementById('attCard');
+            if (!card) return;
+
+            const errorBox = document.getElementById('punchError');
+            const btn = document.getElementById('punchBtn');
+
+            function showError(message) {
+                errorBox.textContent = message;
+                errorBox.style.display = 'block';
+            }
+
+            if (btn) {
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    errorBox.style.display = 'none';
+                    const action = btn.dataset.action;
+                    try {
+                        const res = await fetch('/api/attendance/' + action, {method: 'POST'});
+                        const body = await res.json();
+                        if (!res.ok) {
+                            showError(body.message || 'Something went wrong.');
+                            btn.disabled = false;
+                            return;
+                        }
+                        window.location.reload();
+                    } catch (e) {
+                        showError('Network error — please try again.');
+                        btn.disabled = false;
+                    }
+                });
+            }
+
+            const checkInRaw = card.dataset.checkIn;
+            const hasPunchedIn = card.dataset.hasPunchedIn === 'true';
+            const hasPunchedOut = card.dataset.hasPunchedOut === 'true';
+            const timerEl = document.getElementById('liveTimer');
+
+            if (timerEl && hasPunchedIn && !hasPunchedOut && checkInRaw) {
+                const checkIn = new Date(checkInRaw);
+
+                function tick() {
+                    const diffMs = Date.now() - checkIn.getTime();
+                    const totalSeconds = Math.max(0, Math.floor(diffMs / 1000));
+                    const h = String(Math.floor(totalSeconds / 3600)).padStart(2, '0');
+                    const m = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+                    const s = String(totalSeconds % 60).padStart(2, '0');
+                    timerEl.textContent = `${h}:${m}:${s}`;
+                }
+
+                tick();
+                setInterval(tick, 1000);
+            }
+        })();
+    </script>
+}

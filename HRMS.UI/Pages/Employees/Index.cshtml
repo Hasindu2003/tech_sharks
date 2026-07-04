@@ -1,5 +1,5 @@
 @page
-@model HRMS.UI.Pages.Employees.IndexModel
+@model IndexModel
 @{
     ViewData["Title"] = "Employee Directory";
     ViewData["PageTitle"] = "Employees";
@@ -32,6 +32,12 @@
             @TempData["SuccessMessage"]
         </div>
     }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: #fee2e2; color: #991b1b; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: 600;">
+            @TempData["ErrorMessage"]
+        </div>
+    }
 
     <table class="emp-table">
         <thead>
@@ -42,6 +48,7 @@
                 <th>Department</th>
                 <th>Designation</th>
                 <th>Status</th>
+                <th>Login</th>
             </tr>
         </thead>
         <tbody>
@@ -54,6 +61,25 @@
                     <td>@(emp.Department?.Name ?? "-")</td>
                     <td>@(emp.Designation?.Title ?? "-")</td>
                     <td>@emp.Status</td>
+                    <td>
+                        @if (Model.EmployeeIdsWithLogin.Contains(emp.Id))
+                        {
+                            <span style="background:#dcfce7; color:#166534; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700;">Has Login</span>
+                        }
+                        else if (Model.CanManageLogins)
+                        {
+                            <form method="post" asp-page-handler="CreateLogin">
+                                <input type="hidden" name="employeeId" value="@emp.Id"/>
+                                <button type="submit" class="btn-primary" style="padding:6px 12px; font-size:12px;">
+                                    Create Login
+                                </button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span style="color:#7a8863;">-</span>
+                        }
+                    </td>
                 </tr>
             }
         </tbody>
