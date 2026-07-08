@@ -1,4 +1,4 @@
-﻿@{
+@{
     // Pages set ViewData["ActiveNav"] to highlight the current nav item.
     // e.g. ViewData["ActiveNav"] = "Calendar";
     var activeNav = ViewData["ActiveNav"]?.ToString() ?? "";
@@ -9,6 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] – Kanrich HRMS</title>
+    <link rel="icon" type="image/png" href="/images/logo-title.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
@@ -27,36 +28,36 @@
 
         /* ── SIDEBAR ── */
         .sidebar {
-            width: 250px; min-width: 250px;
+            width: 220px; min-width: 220px;
             background: #ffffff;
             border-right: 1px solid #e2e5dc;
             display: flex; flex-direction: column;
             justify-content: space-between;
             overflow: hidden;
         }
-        .sidebar-top { padding: 20px 16px 22px; }
-        .sidebar-brand { margin-bottom: 32px; }
-        .sidebar-brand-title { font-size: 16px; font-weight: 700; color: #151811; line-height: 24px; }
-        .sidebar-brand-sub  { font-size: 12px; font-weight: 400; color: #7a8863; line-height: 18px; }
+        .sidebar-top { padding: 16px 14px 18px; }
+        .sidebar-brand { margin-bottom: 24px; }
+        .sidebar-brand-title { font-size: 14px; font-weight: 700; color: #151811; line-height: 20px; }
+        .sidebar-brand-sub  { font-size: 11px; font-weight: 400; color: #7a8863; line-height: 16px; }
 
-        .nav-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+        .nav-list { list-style: none; display: flex; flex-direction: column; gap: 3px; }
         .nav-item a {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 12px; border-radius: 8px;
-            text-decoration: none; font-size: 14px; font-weight: 500; color: #151811;
+            display: flex; align-items: center; gap: 9px;
+            padding: 8px 11px; border-radius: 7px;
+            text-decoration: none; font-size: 13px; font-weight: 500; color: #151811;
             transition: background 0.15s;
         }
         .nav-item a:hover { background: #f6f8f7; }
         .nav-item.active a { background: rgba(16,130,60,.1); color: #10823c; font-weight: 700; }
-        .nav-icon { flex-shrink: 0; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; color: inherit; }
-        .nav-icon svg { width: 20px; height: 20px; stroke: currentColor; fill: none; }
+        .nav-icon { flex-shrink: 0; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; color: inherit; }
+        .nav-icon svg { width: 18px; height: 18px; stroke: currentColor; fill: none; }
 
-        .sidebar-bottom { padding: 20px 16px; }
+        .sidebar-bottom { padding: 16px 14px; }
         .btn-logout {
             display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 40px;
-            background: #10823c; color: #ffffff; border: none; border-radius: 8px;
-            font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 700;
+            width: 100%; height: 36px;
+            background: #10823c; color: #ffffff; border: none; border-radius: 7px;
+            font-family: 'Manrope', sans-serif; font-size: 12px; font-weight: 700;
             cursor: pointer; text-decoration: none; transition: background 0.2s;
         }
         .btn-logout:hover { background: #0d6e32; color: #fff; }
@@ -67,36 +68,76 @@
         /* ── TOPBAR ── */
         .topbar {
             background: #ffffff; border-bottom: 1px solid #e2e5dc;
-            padding: 16px 32px 17px; display: flex; align-items: center; gap: 20px;
+            padding: 10px 26px; display: flex; align-items: center; gap: 16px;
             flex-shrink: 0; z-index: 10;
         }
-        .topbar-logo   { height: 44px; width: auto; flex-shrink: 0; }
-        .topbar-title  { flex: 1; text-align: center; font-size: 20px; font-weight: 700; color: #151811; letter-spacing: -0.3px; }
-        .topbar-right  { display: flex; align-items: center; gap: 8px; }
+        .topbar-logo   { height: 34px; width: auto; flex-shrink: 0; }
+        .topbar-title  { flex: 1; text-align: center; font-size: 16px; font-weight: 700; color: #151811; letter-spacing: -0.2px; }
+        .topbar-right  { display: flex; align-items: center; gap: 7px; }
 
         .icon-btn {
-            position: relative; width: 44px; height: 44px;
-            background: #f6f8f7; border: none; border-radius: 8px;
+            position: relative; width: 36px; height: 36px;
+            background: #f6f8f7; border: none; border-radius: 7px;
             display: flex; align-items: center; justify-content: center;
             cursor: pointer; transition: background 0.15s;
         }
         .icon-btn:hover { background: #e2e5dc; }
-        .icon-btn svg  { width: 22px; height: 22px; stroke: #151811; fill: none; }
+        .icon-btn svg  { width: 18px; height: 18px; stroke: #151811; fill: none; }
         .notif-dot {
-            position: absolute; top: 8px; right: 8px;
-            width: 8px; height: 8px;
-            background: #ef4444; border: 1.5px solid #fff; border-radius: 50%;
+            position: absolute; top: 6px; right: 6px;
+            width: 7px; height: 7px;
+            background: #ef4444; border: 1px solid #fff; border-radius: 50%;
         }
         .avatar {
-            width: 44px; height: 44px; border-radius: 50%;
+            width: 36px; height: 36px; border-radius: 50%;
             background: linear-gradient(135deg, #10823c, #0d6e32);
             display: flex; align-items: center; justify-content: center;
-            color: #fff; font-size: 14px; font-weight: 700;
+            color: #fff; font-size: 12px; font-weight: 700;
             box-shadow: 0 0 0 2px rgba(16,130,60,.2); cursor: pointer;
         }
 
         /* ── PAGE CONTENT ── */
-        .page-content { flex: 1; overflow: auto; background: #f6f8f7; }
+        .page-content { flex: 1; overflow: auto; background: #ffffff; padding: 26px; }
+
+        /* ── NOTIFICATIONS DROPDOWN ── */
+        .notif-wrapper { position: relative; }
+        .notif-dropdown {
+            position: absolute; top: calc(100% + 10px); right: -10px; width: 340px;
+            background: #fff; border: 1px solid #e2e8f0; border-radius: 12px;
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15);
+            display: none; flex-direction: column; z-index: 100;
+            overflow: hidden; opacity: 0; transform: translateY(-5px);
+            transition: opacity 0.2s, transform 0.2s;
+        }
+        .notif-dropdown.open { display: flex; opacity: 1; transform: translateY(0); }
+        .notif-head {
+            padding: 14px 18px; border-bottom: 1px solid #f1f5f9;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .notif-head h4 { font-size: 14px; font-weight: 700; color: #0f172a; }
+        .notif-markall { font-size: 12px; font-weight: 600; color: #10823c; background: none; border: none; cursor: pointer; }
+        .notif-markall:hover { color: #0d6e32; text-decoration: underline; }
+        
+        .notif-body { max-height: 380px; overflow-y: auto; background: #f8fafc; }
+        .notif-empty { padding: 40px 20px; text-align: center; color: #94a3b8; font-size: 13px; font-weight: 600; }
+        .notif-item {
+            padding: 14px 18px; border-bottom: 1px solid #e2e8f0;
+            display: block; text-decoration: none; background: #fff; transition: background 0.15s;
+        }
+        .notif-item:hover { background: #f1f5f9; }
+        .notif-item-title { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .notif-item-msg { font-size: 12px; color: #64748b; line-height: 1.4; margin-bottom: 8px; }
+        .notif-item-time { font-size: 11px; font-weight: 700; color: #10823c; }
+
+        .notif-dot {
+            position: absolute; top: 4px; right: 4px;
+            min-width: 16px; height: 16px; padding: 0 4px;
+            background: #ef4444; color: #fff;
+            border: 2px solid #fff; border-radius: 999px;
+            font-size: 9px; font-weight: 800; font-family: sans-serif;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .notif-dot.hidden { display: none; }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -108,7 +149,14 @@
         <div class="sidebar-top">
             <div class="sidebar-brand">
                 <div class="sidebar-brand-title">Kanrich HRMS</div>
-                <div class="sidebar-brand-sub">Admin Portal</div>
+                <div class="sidebar-brand-sub">
+                    @if (User.IsInRole("Admin")) { <text>Admin Portal</text> }
+                    else if (User.IsInRole("HR Manager")) { <text>HR Manager Portal</text> }
+                    else if (User.IsInRole("Area Manager")) { <text>Area Manager Portal</text> }
+                    else if (User.IsInRole("Branch Manager")) { <text>Branch Manager Portal</text> }
+                    else if (User.IsInRole("Department Head")) { <text>Department Head Portal</text> }
+                    else { <text>Employee Portal</text> }
+                </div>
             </div>
             <nav>
                 <ul class="nav-list">
@@ -123,54 +171,115 @@
                             Dashboard
                         </a>
                     </li>
-                    <li class="nav-item @(activeNav == "Employees" ? "active" : "")">
-                        <a href="/Employees">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="9" cy="7" r="4"/>
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
-                                </svg>
-                            </span>
-                            Employees
-                        </a>
-                    </li>
-                    <li class="nav-item @(activeNav == "Training" ? "active" : "")">
+                    <li class="nav-item @(activeNav == "Calendar" ? "active" : "")">
                         <a href="#">
                             <span class="nav-icon">
                                 <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
-                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
                                 </svg>
                             </span>
-                            Training
+                            Calendar
                         </a>
                     </li>
+                    @if (!User.IsInRole("Admin"))
+                    {
+                    <li class="nav-item @(activeNav == "Separation" ? "active" : "")">
+                        @if (User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager"))
+                        {
+                            <a href="/Separation/Dashboard">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <polyline points="17 11 19 13 23 9"/>
+                                    </svg>
+                                </span>
+                                Separation
+                            </a>
+                        }
+                        else if (User.IsInRole("Department Head"))
+                        {
+                            <a href="/DepartmentHead/ReviewTransfers">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <polyline points="17 11 19 13 23 9"/>
+                                    </svg>
+                                </span>
+                                Separation
+                            </a>
+                        }
+                        else
+                        {
+                            <a href="/Transfer/Separation">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <polyline points="17 11 19 13 23 9"/>
+                                    </svg>
+                                </span>
+                                Separation
+                            </a>
+                        }
+                    </li>
+                    }
 
-                    <li class="nav-item @(activeNav == "Transfers" ? "active" : "")">
-                        <a href="#">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="17 1 21 5 17 9"/>
-                                    <path d="M3 11V9a4 4 0 0 1 4-4h14"/>
-                                    <polyline points="7 23 3 19 7 15"/>
-                                    <path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-                                </svg>
-                            </span>
-                            Transfers
-                        </a>
-                    </li>
-                    <li class="nav-item @(activeNav == "Welfare" ? "active" : "")">
-                        <a href="#">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                                </svg>
-                            </span>
-                            Welfare
-                        </a>
-                    </li>
-                    @if (User.IsInRole("Admin") || User.IsInRole("HR Manager"))
+                    @if (User.IsInRole("HR Manager") || User.IsInRole("Area Manager") || User.IsInRole("Branch Manager"))
+                    {
+                        <li class="nav-item @(activeNav == "Employees" ? "active" : "")">
+                            <a href="/Employees">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    </svg>
+                                </span>
+                                Employees
+                            </a>
+                        </li>
+                        <li class="nav-item @(activeNav == "Training" ? "active" : "")">
+                            <a href="#">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                    </svg>
+                                </span>
+                                Training
+                            </a>
+                        </li>
+                        <li class="nav-item @(activeNav == "CVBank" ? "active" : "")">
+                            <a href="#">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                        <polyline points="14 2 14 8 20 8"/>
+                                        <line x1="16" y1="13" x2="8" y2="13"/>
+                                        <line x1="16" y1="17" x2="8" y2="17"/>
+                                        <polyline points="10 9 9 9 8 9"/>
+                                    </svg>
+                                </span>
+                                CV Bank
+                            </a>
+                        </li>
+                        <li class="nav-item @(activeNav == "Welfare" ? "active" : "")">
+                            <a href="#">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                                    </svg>
+                                </span>
+                                Welfare
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Admin"))
                     {
                         <li class="nav-item @(activeNav == "Settings" ? "active" : "")">
                             <a href="/Settings">
@@ -203,14 +312,29 @@
             <img src="/images/logo.webp" alt="Kanrich Limited" class="topbar-logo" />
             <div class="topbar-title">@(ViewData["PageTitle"] ?? ViewData["Title"])</div>
             <div class="topbar-right">
-                <button class="icon-btn" title="Notifications">
-                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                    </svg>
-                    <span class="notif-dot"></span>
-                </button>
-                @if (User.IsInRole("Admin") || User.IsInRole("HR Manager"))
+                <div class="notif-wrapper" id="notifWrapper">
+                    <button class="icon-btn" title="Notifications" id="btnNotifications" onclick="toggleNotifDropdown(event)">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <span class="notif-dot hidden" id="notifBadge">0</span>
+                    </button>
+                    <!-- Dropdown -->
+                    <div class="notif-dropdown" id="notifDropdown" onclick="event.stopPropagation()">
+                        <div class="notif-head">
+                            <h4>Notifications</h4>
+                            <button class="notif-markall" id="notifMarkAll" onclick="markAllAsRead()">Mark all as read</button>
+                        </div>
+                        <div class="notif-body" id="notifList">
+                            <div class="notif-empty">Loading...</div>
+                        </div>
+                        <div style="padding: 10px; border-top: 1px solid #f1f5f9; text-align: center; background: #fff;">
+                            <a href="/Notifications" style="font-size: 13px; font-weight: 700; color: #10823c; text-decoration: none;">View all notifications</a>
+                        </div>
+                    </div>
+                </div>
+                @if (User.IsInRole("Admin"))
                 {
                     <a href="/Settings" class="icon-btn" title="Settings" style="color: inherit;">
                         <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -225,7 +349,7 @@
                                   User.IsInRole("HR Manager") ? "HR Manager" : "Employee";
                     var userInitial = User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U";
                 }
-                <div class="avatar" title="@roleText">@userInitial</div>
+                <a href="/Profile" class="avatar" style="text-decoration: none;" title="View My Profile (@roleText)">@userInitial</a>
             </div>
         </header>
 
@@ -236,6 +360,101 @@
 
     </div><!-- /main-col -->
 </div><!-- /app-shell -->
+
+<!-- Security Token for Javascript POSTs -->
+@Html.AntiForgeryToken()
+
+<script>
+    // --- Notification System ---
+    let notifDropdown = document.getElementById('notifDropdown');
+    let notifWrapper = document.getElementById('notifWrapper');
+    let dropIsOpen = false;
+
+    // Toggle panel
+    function toggleNotifDropdown(e) {
+        e.stopPropagation();
+        dropIsOpen = !dropIsOpen;
+        if (dropIsOpen) {
+            notifDropdown.classList.add('open');
+            fetchNotifications(); // Refresh on open
+        } else {
+            notifDropdown.classList.remove('open');
+        }
+    }
+
+    // Close on outside click
+    document.addEventListener('click', function(e) {
+        if (dropIsOpen && !notifWrapper.contains(e.target)) {
+            dropIsOpen = false;
+            notifDropdown.classList.remove('open');
+        }
+    });
+
+    // Fetch and render
+    async function fetchNotifications() {
+        try {
+            const resp = await fetch('/Api/Notifications');
+            if (!resp.ok) return;
+
+            const data = await resp.json();
+            
+            // Update Badge
+            const badge = document.getElementById('notifBadge');
+            if (data.unreadCount > 0) {
+                badge.textContent = data.unreadCount > 99 ? '99+' : data.unreadCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            // Update List
+            const list = document.getElementById('notifList');
+            if (data.items.length === 0) {
+                list.innerHTML = `<div class="notif-empty">You have no new notifications.</div>`;
+            } else {
+                let html = '';
+                data.items.forEach(n => {
+                    html += `
+                        <a href="javascript:void(0)" onclick="clickNotification(${n.id}, '${n.targetUrl}')" class="notif-item">
+                            <div class="notif-item-title">${n.title}</div>
+                            <div class="notif-item-msg">${n.message}</div>
+                            <div class="notif-item-time">${n.createdAt}</div>
+                        </a>
+                    `;
+                });
+                list.innerHTML = html;
+            }
+        } catch (e) { console.error('Error fetching notifications:', e); }
+    }
+
+    // Click Notification
+    async function clickNotification(id, targetUrl) {
+        // Mark as read in background, then navigate
+        try {
+            await fetch(`/Api/Notifications?handler=MarkAsRead&id=${id}`, { method: 'POST' });
+        } catch(e) {}
+        window.location.href = targetUrl;
+    }
+
+    // Mark all as read
+    async function markAllAsRead() {
+        try {
+            const btn = document.getElementById('notifMarkAll');
+            btn.textContent = "Marking...";
+            await fetch('/Api/Notifications?handler=MarkAllAsRead', { method: 'POST' });
+            btn.textContent = "Mark all as read";
+            fetchNotifications();
+            dropIsOpen = false;
+            notifDropdown.classList.remove('open');
+        } catch(e) {}
+    }
+
+    // Initialize polling every 45 secs
+    document.addEventListener('DOMContentLoaded', () => {
+        fetchNotifications();
+        setInterval(fetchNotifications, 45000);
+    });
+</script>
 
 @await RenderSectionAsync("Scripts", required: false)
 </body>

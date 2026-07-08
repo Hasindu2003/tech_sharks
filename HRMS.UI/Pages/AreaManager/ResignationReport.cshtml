@@ -1,0 +1,96 @@
+@page
+@model HRMS.UI.Pages.AreaManager.ResignationReportModel
+@{
+    ViewData["Title"] = "Resigned Employees";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Resigned Employees</h1>
+        <p class="page-subtitle">View and manage accounts of resigned employees.</p>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+}
+
+@if (!Model.CompletedResignations.Any())
+{
+    <div class="k-empty-state">
+        <i class="bi bi-people"></i>
+        <h3>No resigned employees</h3>
+        <p>No completed or approved resignations found.</p>
+    </div>
+}
+else
+{
+    <div class="k-card">
+        <div class="table-responsive">
+            <table class="k-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Employee</th>
+                        <th>Branch / Dept</th>
+                        <th>Last Working Day</th>
+                        <th>Status</th>
+                        <th>Account</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var req in Model.CompletedResignations)
+                    {
+                        <tr>
+                            <td>#@req.Id</td>
+                            <td>
+                                <div class="fw-semibold">@req.EmployeeName</div>
+                                <div class="text-muted small">@req.EpfNumber | @req.Designation</div>
+                            </td>
+                            <td>
+                                <div>@req.Branch</div>
+                                <div class="text-muted small">@req.Department</div>
+                            </td>
+                            <td>@req.EffectiveDate.ToString("dd MMM yyyy")</td>
+                            <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
+                            <td>
+                                @if (req.AccountDeactivated)
+                                {
+                                    <span class="k-badge k-badge-rejected" title="Deactivated on @req.AccountDeactivatedDate?.ToString("dd MMM yyyy")">Deactivated</span>
+                                }
+                                else
+                                {
+                                    <span class="k-badge k-badge-approved">Active</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a asp-page="/Resignation/Details" asp-route-id="@req.Id" class="btn-icon-sm" title="View Details"><i class="bi bi-eye"></i></a>
+
+                                    @if (req.AccountDeactivated)
+                                    {
+                                        <form method="post" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@req.Id" />
+                                            <button type="submit" asp-page-handler="Reactivate"
+                                                    class="btn-icon-sm text-success" title="Reactivate Account"
+                                                    onclick="return confirm('Reactivate @req.EmployeeName\'s account?')">
+                                                <i class="bi bi-person-check"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

@@ -1,0 +1,210 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager")]
+@model HRMS.UI.Pages.Termination.CreateRequestModel
+@{
+    ViewData["Title"] = "Employee Termination";
+}
+
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-create:hover { background: #0d6e32; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e5dc; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .text-danger.small { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+    .emp-info-panel { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    .override-block { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-top: 12px; }
+</style>
+
+<a asp-page="/Termination/Requests" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to List
+</a>
+<h2 class="page-h">New Termination Request</h2>
+<p class="page-s">Initiate an employee termination process</p>
+
+@if (TempData["ErrorMessage"] is string errorMsg)
+{
+    <div class="error-banner">@errorMsg</div>
+}
+
+<form method="post" enctype="multipart/form-data">
+    <div asp-validation-summary="ModelOnly" class="error-banner" style="display:none"></div>
+
+    <div class="form-section">
+        <div class="fst">Employee Selection</div>
+        <div class="fg" style="margin-bottom:0">
+            <label asp-for="Input.SelectedEmployeeEmail" class="fl">Select Employee <span class="req">*</span></label>
+            <select asp-for="Input.SelectedEmployeeEmail" class="fi" id="employeeSelect" onchange="populateEmployeeInfo()">
+                <option value="">-- Select an employee --</option>
+                @foreach (var emp in Model.Employees)
+                {
+                    <option value="@emp.Email"
+                            data-name="@emp.FullName"
+                            data-epf="@emp.EpfNumber"
+                            data-branch="@emp.Branch"
+                            data-dept="@emp.Department"
+                            data-desig="@emp.Designation">
+                        @emp.FullName (@emp.EpfNumber) — @emp.Branch
+                    </option>
+                }
+            </select>
+            <span asp-validation-for="Input.SelectedEmployeeEmail" class="text-danger small"></span>
+
+            <div id="employeeInfoPanel" style="display:none" class="emp-info-panel">
+                <div class="grid-3">
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Name</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoName">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">EPF Number</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoEpf">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Branch</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoBranch">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Department</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoDept">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Designation</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoDesig">—</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="fst">Termination Details</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="Input.TerminationType" class="fl">Termination Type <span class="req">*</span></label>
+                <select asp-for="Input.TerminationType" class="fi">
+                    <option value="0">Voluntary</option>
+                    <option value="1">Involuntary</option>
+                    <option value="2">Retirement</option>
+                    <option value="3">End of Contract</option>
+                    <option value="4">Probation</option>
+                    <option value="5">Death</option>
+                </select>
+                <span asp-validation-for="Input.TerminationType" class="text-danger small"></span>
+            </div>
+            <div class="fg">
+                <label asp-for="Input.InitiationDate" class="fl">Initiation Date <span class="req">*</span></label>
+                <input asp-for="Input.InitiationDate" type="date" class="fi" />
+                <span asp-validation-for="Input.InitiationDate" class="text-danger small"></span>
+            </div>
+            <div class="fg">
+                <label asp-for="Input.EffectiveTerminationDate" class="fl">Effective Termination Date <span class="req">*</span></label>
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" />
+                <span asp-validation-for="Input.EffectiveTerminationDate" class="text-danger small"></span>
+            </div>
+        </div>
+        <div class="fg">
+            <label asp-for="Input.ReasonForTermination" class="fl">Reason for Termination <span class="req">*</span></label>
+            <textarea asp-for="Input.ReasonForTermination" class="fi" rows="3" placeholder="Provide a detailed reason for the termination..."></textarea>
+            <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
+        </div>
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="Input.SupervisorRemarks" class="fl">Supervisor Remarks</label>
+                <textarea asp-for="Input.SupervisorRemarks" class="fi" rows="2" placeholder="Optional supervisor remarks..."></textarea>
+            </div>
+            <div class="fg">
+                <label asp-for="Input.SpecialRemarks" class="fl">Special Remarks / Notes</label>
+                <textarea asp-for="Input.SpecialRemarks" class="fi" rows="2" placeholder="Any special notes..."></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="fst">Employee Obligations</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="Input.DirectObligations" class="fl">Direct Obligations (e.g. outstanding loans)</label>
+                <textarea asp-for="Input.DirectObligations" class="fi" rows="2" placeholder="List any direct financial obligations..."></textarea>
+            </div>
+            <div class="fg">
+                <label asp-for="Input.IndirectObligations" class="fl">Indirect Obligations (e.g. loan guarantor)</label>
+                <textarea asp-for="Input.IndirectObligations" class="fi" rows="2" placeholder="List any indirect obligations..."></textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
+                Employee has outstanding loan balances
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
+                Employee is a loan guarantor
+            </label>
+        </div>
+        <div class="override-block">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#92400e">
+                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b" />
+                Senior Management Override (allows termination despite outstanding obligations)
+            </label>
+        </div>
+    </div>
+
+    <div class="form-section">
+        <div class="fst">Supporting Documents</div>
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="Input.DocumentType" class="fl">Document Type</label>
+                <select asp-for="Input.DocumentType" class="fi">
+                    <option value="TerminationLetter">Termination Letter</option>
+                    <option value="DisciplinaryReport">Disciplinary Investigation Report</option>
+                    <option value="WarningLetter">Warning Letter</option>
+                    <option value="Other" selected>Other</option>
+                </select>
+            </div>
+            <div class="fg">
+                <label asp-for="Input.Documents" class="fl">Upload Files</label>
+                <input asp-for="Input.Documents" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                <span class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</span>
+            </div>
+        </div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+        <a asp-page="/Termination/Requests" class="btn-outline">Cancel</a>
+        <button type="submit" asp-page-handler="SaveDraft" class="btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save as Draft
+        </button>
+        <button type="submit" asp-page-handler="Submit" class="btn-create">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit for Approval
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        function populateEmployeeInfo() {
+            var select = document.getElementById('employeeSelect');
+            var option = select.options[select.selectedIndex];
+            var panel = document.getElementById('employeeInfoPanel');
+            if (option.value) {
+                panel.style.display = 'block';
+                document.getElementById('infoName').textContent = option.getAttribute('data-name');
+                document.getElementById('infoEpf').textContent = option.getAttribute('data-epf');
+                document.getElementById('infoBranch').textContent = option.getAttribute('data-branch');
+                document.getElementById('infoDept').textContent = option.getAttribute('data-dept');
+                document.getElementById('infoDesig').textContent = option.getAttribute('data-desig');
+            } else {
+                panel.style.display = 'none';
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            var select = document.getElementById('employeeSelect');
+            if (select.value) populateEmployeeInfo();
+        });
+    </script>
+}

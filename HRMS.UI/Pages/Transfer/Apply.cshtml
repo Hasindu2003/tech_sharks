@@ -1,0 +1,153 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Employee,Branch Manager")]
+@model HRMS.UI.Pages.Transfer.ApplyModel
+@{
+    ViewData["Title"] = "Apply for Transfer";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi[readonly] { background: #f9fafb; color: #7a8863; }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .char-row { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: #7a8863; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; width: 100%; }
+    .btn-create:hover { background: #0d6e32; color: white; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #e2e5dc; width: 100%; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .text-danger.small { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+</style>
+
+<h2 class="page-h">Apply for Transfer</h2>
+<p class="page-s">Submit a new transfer request to another branch</p>
+
+<div asp-validation-summary="ModelOnly" class="error-banner" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")"></div>
+
+<form method="post" enctype="multipart/form-data">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+        <!-- Left Column -->
+        <div>
+            <div class="form-section">
+                <div class="fst">Employee Details (Auto-filled)</div>
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Full Name</label>
+                        <input asp-for="Input.EmployeeName" class="fi" readonly />
+                    </div>
+                    <div class="fg">
+                        <label class="fl">EPF Number</label>
+                        <input asp-for="Input.EpfNumber" class="fi" readonly />
+                    </div>
+                    <div class="fg">
+                        <label class="fl">Current Branch</label>
+                        <input asp-for="Input.CurrentBranch" class="fi" readonly />
+                    </div>
+                    <div class="fg">
+                        <label class="fl">Designation</label>
+                        <input asp-for="Input.CurrentDesignation" class="fi" readonly />
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <div class="fst">Supporting Document (Optional)</div>
+                <div class="fg" style="margin-bottom:0">
+                    <input asp-for="Input.Document" class="fi" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                    <span class="fi-hint">Allowed: PDF, DOC, DOCX, JPG, PNG. Max size: 5 MB.</span>
+                    <span asp-validation-for="Input.Document" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div>
+            <div class="form-section" style="margin-bottom:16px">
+                <div class="fst">Transfer Details</div>
+                <div class="fg">
+                    <label class="fl">Requested Branch <span class="req">*</span></label>
+                    <select asp-for="Input.RequestedBranch" class="fi">
+                        <option value="">-- Select Branch --</option>
+                        @foreach (var branch in Model.AvailableBranches)
+                        {
+                            <option value="@branch">@branch</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.RequestedBranch" class="text-danger small"></span>
+                </div>
+                <div class="fg">
+                    <label class="fl">Preferred Transfer Date <span class="req">*</span></label>
+                    <input asp-for="Input.PreferredDate" class="fi" type="date"
+                           min="@DateTime.Today.AddDays(7).ToString("yyyy-MM-dd")"
+                           max="@DateTime.Today.AddYears(1).ToString("yyyy-MM-dd")" />
+                    <span class="fi-hint">Must be at least 7 days from today and within 1 year.</span>
+                    <span asp-validation-for="Input.PreferredDate" class="text-danger small"></span>
+                </div>
+                <div class="fg" style="margin-bottom:0">
+                    <label class="fl">Reason for Transfer <span class="req">*</span></label>
+                    <textarea asp-for="Input.Reason" class="fi" rows="5" maxlength="500"
+                              placeholder="Please explain your reason for requesting this transfer (minimum 20 characters)"></textarea>
+                    <div class="char-row">
+                        <span><span id="charCount">0</span>/500 characters</span>
+                        <span>Min 20 characters</span>
+                    </div>
+                    <span asp-validation-for="Input.Reason" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+                <button type="submit" class="btn-create">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Submit Transfer Request
+                </button>
+                <a asp-page="/Transfer/MyRequests" class="btn-outline">View My Requests</a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const reasonField = document.getElementById('Input_Reason');
+        const charCount = document.getElementById('charCount');
+        if (reasonField && charCount) {
+            charCount.textContent = reasonField.value.length;
+            reasonField.addEventListener('input', function () {
+                charCount.textContent = this.value.length;
+            });
+        }
+        const dateField = document.getElementById('Input_PreferredDate');
+        if (dateField) {
+            dateField.addEventListener('change', function () {
+                const selected = new Date(this.value);
+                const minDate = new Date();
+                minDate.setDate(minDate.getDate() + 7);
+                minDate.setHours(0, 0, 0, 0);
+                if (selected < minDate) {
+                    alert('Preferred date must be at least 7 days from today.');
+                    this.value = '';
+                }
+            });
+        }
+        const fileInput = document.getElementById('Input_Document');
+        if (fileInput) {
+            fileInput.addEventListener('change', function () {
+                if (this.files.length > 0 && this.files[0].size > 5 * 1024 * 1024) {
+                    alert('File size must not exceed 5 MB.');
+                    this.value = '';
+                }
+            });
+        }
+    </script>
+}

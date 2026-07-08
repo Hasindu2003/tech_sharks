@@ -1,0 +1,25 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Employee,Branch Manager,Area Manager")]
+@model HRMS.UI.Pages.Employees.ProfileModel
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<h1>My Profile</h1>
+<p class="lead">View and manage your profile information</p>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="alert alert-success">
+            <h5>Coming Soon</h5>
+            <p>Employee profile features will be implemented here including:</p>
+            <ul>
+                <li>Personal information</li>
+                <li>Attendance records</li>
+                <li>Leave applications</li>
+                <li>Transfer requests</li>
+            </ul>
+        </div>
+    </div>
+</div>

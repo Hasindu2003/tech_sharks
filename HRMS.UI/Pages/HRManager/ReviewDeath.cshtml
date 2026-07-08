@@ -1,0 +1,210 @@
+@page
+@using HRMS.Domain.Entities.Death
+@model HRMS.UI.Pages.HRManager.ReviewDeathModel
+@{
+    ViewData["Title"] = "Death Request Details";
+    var req = Model.RequestModel;
+}
+
+<div style="margin-bottom:24px">
+    <a asp-page="./ReviewDeathRequests" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px">
+        <i class="bi bi-arrow-left"></i> Back to Review Queue
+    </a>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="k-alert k-alert-danger">@TempData["ErrorMessage"]</div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="k-alert k-alert-success">@TempData["SuccessMessage"]</div>
+}
+
+@if (req != null)
+{
+    <div class="transfer-detail-grid">
+        <div>
+            <div class="k-card" style="margin-bottom:20px">
+                <div class="k-card-header" style="display:flex;justify-content:space-between;align-items:center">
+                    <span>Employee & Death Details</span>
+                    <span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span>
+                </div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                    <div>
+                        <div class="detail-label">Employee Name</div>
+                        <div class="detail-value">@req.EmployeeName</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">EPF Number</div>
+                        <div class="detail-value">@req.EpfNumber</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Designation</div>
+                        <div class="detail-value">@req.Designation</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Department</div>
+                        <div class="detail-value">@req.Department</div>
+                    </div>
+                </div>
+
+                <hr style="margin:16px 0;border-color:#e5e7eb" />
+
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                    <div>
+                        <div class="detail-label">Date of Death</div>
+                        <div class="detail-value">@req.DateOfDeath.ToString("MMM dd, yyyy")</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Nature of Death</div>
+                        <div class="detail-value">@req.NatureOfDeath</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px">
+                    <div class="detail-label">Nominee Info</div>
+                    <div class="detail-value">@req.NomineeName (@req.NomineeRelation) - @req.NomineeContact</div>
+                </div>
+                
+                <hr style="margin:16px 0;border-color:#e5e7eb" />
+                <h6 style="font-weight:600;margin-bottom:12px">Obligations & Loans</h6>
+                <div>
+                    @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
+                    {
+                        <div class="k-alert k-alert-danger" style="padding:10px;margin-bottom:8px">
+                            <strong>Warning:</strong> Employee has outstanding loans or guarantor obligations.
+                        </div>
+                        @if (!string.IsNullOrEmpty(req.ObligationDetails))
+                        {
+                            <div class="detail-value" style="background:#fbf3f3;padding:12px;border-radius:6px">@req.ObligationDetails</div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="k-alert k-alert-success" style="padding:10px">No outstanding loans noted.</div>
+                    }
+                </div>
+            </div>
+
+            <div class="k-card">
+                <div class="k-card-header">Attached Proofs</div>
+                @if (req.Documents.Any())
+                {
+                    <ul style="list-style:none;padding:0;margin:0">
+                        @foreach(var doc in req.Documents)
+                        {
+                            <li style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee">
+                                <div><i class="bi bi-file-earmark-pdf" style="color:#d32f2f"></i> @doc.FileName (@doc.DocumentType)</div>
+                                <a href="/api/documents/download/@doc.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" target="_blank">View</a>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="text-muted">No documents found.</p>
+                }
+            </div>
+        </div>
+
+        <div>
+            @if (req.Status == DeathRequestStatus.HRApproved)
+            {
+                <div class="k-card" style="margin-bottom:20px;border-top:4px solid #f59e0b;background:#fffbeb">
+                    <div class="k-card-header" style="color:#b45309">Final Closure Required</div>
+                    <p style="font-size:0.85rem;margin-bottom:16px;color:#92400e">
+                        The request is HR Approved. You must complete the system closure to inactivate the employee, halt payroll, and trigger EPF/ETF gratuity payments via the finance system.
+                    </p>
+                    <form method="post" asp-page-handler="ProcessClosure">
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary" style="width:100%">
+                            <i class="bi bi-lightning-charge"></i> Process Final System Closure
+                        </button>
+                    </form>
+                </div>
+            }
+
+            @if (req.Status == DeathRequestStatus.Completed)
+            {
+                <div class="k-card" style="margin-bottom:20px;border-top:4px solid #1a7a3a">
+                    <div class="k-card-header" style="color:#1a7a3a"><i class="bi bi-check-circle-fill"></i> Closure Completed</div>
+                    <ul style="font-size:0.88rem;color:#4b5563;list-style:none;padding:0;margin:0" class="ep-check-list">
+                        <li><i class="bi bi-check2 text-success"></i> Nominee notified</li>
+                        <li><i class="bi bi-check2 text-success"></i> Employee account deactivated</li>
+                        <li><i class="bi bi-check2 text-success"></i> Payroll stopped from Date of Death</li>
+                        <li><i class="bi bi-check2 text-success"></i> Finance/Benefit processing triggered</li>
+                    </ul>
+                </div>
+            }
+
+            @if (req.Status == DeathRequestStatus.AMApproved)
+            {
+                <div class="k-card" style="margin-bottom:20px;border-top:4px solid #1a7a3a">
+                    <div class="k-card-header">HR Review</div>
+                    <form method="post">
+                        <div style="margin-bottom:16px">
+                            <label class="detail-label">Comments / Remarks *</label>
+                            <textarea name="comments" class="form-control" rows="4" required placeholder="Enter review notes..."></textarea>
+                        </div>
+                        <div style="display:flex;gap:12px">
+                            <button type="submit" name="action" value="approve" class="btn-kanrich btn-kanrich-primary" style="flex:1">
+                                <i class="bi bi-check-circle"></i> Approve Process
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn-kanrich btn-kanrich-danger" style="flex:1">
+                                <i class="bi bi-x-circle"></i> Reject
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            }
+            
+            <div class="k-card">
+                <div class="k-card-header">Approval Journey</div>
+                <div class="timeline">
+                    <!-- BM Stage -->
+                    <div style="display:flex;gap:16px;margin-bottom:16px">
+                        <div style="margin-top:4px"><i class="bi bi-check-circle-fill" style="color:@(req.BMReview == "Approved" ? "#10b981" : req.BMReview == "Rejected" ? "#ef4444" : "#e5e7eb")"></i></div>
+                        <div>
+                            <div style="font-weight:600;font-size:0.9rem">Branch Manager</div>
+                            @if (req.BMReviewDate.HasValue)
+                            {
+                                <div style="font-size:0.8rem;color:#6b7280">@req.BMReviewDate.Value.ToString("MMM dd, yyyy HH:mm")</div>
+                                <div style="font-size:0.85rem;margin-top:4px;background:#f9fafb;padding:8px;border-radius:4px">@req.BMComments</div>
+                            }
+                            else { <div style="font-size:0.8rem;color:#9ca3af">Pending</div> }
+                        </div>
+                    </div>
+                    
+                    <!-- AM Stage -->
+                    <div style="display:flex;gap:16px;margin-bottom:16px">
+                        <div style="margin-top:4px"><i class="bi bi-check-circle-fill" style="color:@(req.AMReview == "Approved" ? "#10b981" : req.AMReview == "Rejected" ? "#ef4444" : "#e5e7eb")"></i></div>
+                        <div>
+                            <div style="font-weight:600;font-size:0.9rem">Area Manager</div>
+                            @if (req.AMReviewDate.HasValue)
+                            {
+                                <div style="font-size:0.8rem;color:#6b7280">@req.AMReviewDate.Value.ToString("MMM dd, yyyy HH:mm")</div>
+                                <div style="font-size:0.85rem;margin-top:4px;background:#f9fafb;padding:8px;border-radius:4px">@req.AMComments</div>
+                            }
+                            else { <div style="font-size:0.8rem;color:#9ca3af">Pending</div> }
+                        </div>
+                    </div>
+
+                    <!-- HR Stage -->
+                    <div style="display:flex;gap:16px">
+                        <div style="margin-top:4px"><i class="bi bi-check-circle-fill" style="color:@(req.HRReview == "Approved" ? "#10b981" : req.HRReview == "Rejected" ? "#ef4444" : "#e5e7eb")"></i></div>
+                        <div>
+                            <div style="font-weight:600;font-size:0.9rem">HR Manager</div>
+                            @if (req.HRReviewDate.HasValue)
+                            {
+                                <div style="font-size:0.8rem;color:#6b7280">@req.HRReviewDate.Value.ToString("MMM dd, yyyy HH:mm")</div>
+                                <div style="font-size:0.85rem;margin-top:4px;background:#f9fafb;padding:8px;border-radius:4px">@req.HRComments</div>
+                            }
+                            else { <div style="font-size:0.8rem;color:#9ca3af">Pending</div> }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}

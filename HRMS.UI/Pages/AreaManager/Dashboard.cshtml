@@ -1,0 +1,25 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Area Manager")]
+@model HRMS.UI.Pages.AreaManager.DashboardModel
+@{
+    ViewData["Title"] = "Area Manager Dashboard";
+}
+
+<h1>Area Manager Dashboard</h1>
+<p class="lead">Full system access - Manage all HRMS operations</p>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="alert alert-info">
+            <h5>Coming Soon</h5>
+            <p>Area Manager features will be implemented here including:</p>
+            <ul>
+                <li>All employees management</li>
+                <li>Branch and department oversight</li>
+                <li>System-wide reports</li>
+                <li>Transfer approvals</li>
+            </ul>
+        </div>
+    </div>
+</div>

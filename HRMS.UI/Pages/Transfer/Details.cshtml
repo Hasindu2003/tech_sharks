@@ -1,0 +1,214 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.Transfer.DetailsModel
+@{
+    ViewData["Title"] = "Transfer Request Details";
+}
+
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .detail-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .dlt { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 14px 0; padding-bottom: 10px; border-bottom: 1px solid #e2e5dc; }
+    .dl-grid { display: grid; gap: 16px; }
+    .dl dt { font-size: 11px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+    .dl dd { font-size: 14px; font-weight: 500; color: #151811; margin: 0; }
+    .k-badge, .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .k-badge-pending  { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .k-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .k-badge-rejected { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .k-badge-info     { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+    .reason-box { background: #f9fafb; border: 1px solid #e2e5dc; border-radius: 8px; padding: 14px; font-size: 14px; color: #374151; line-height: 1.6; }
+    .tstep { display: flex; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f3f4f6; }
+    .tstep:last-child { border-bottom: none; }
+    .tstep-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+    .tstep-num.done    { background: #dcfce7; color: #16a34a; }
+    .tstep-num.rejected { background: #fee2e2; color: #dc2626; }
+    .tstep-num.pending { background: #f3f4f6; color: #9ca3af; }
+    .tstep-lbl { font-size: 13px; font-weight: 600; color: #151811; }
+    .tstep-meta { font-size: 12px; color: #7a8863; margin-top: 1px; }
+    .tstep-comment { font-size: 12px; color: #9ca3af; margin-top: 2px; }
+    .doc-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f9fafb; border: 1px solid #e2e5dc; border-radius: 8px; margin-bottom: 8px; }
+    .doc-name { font-size: 13px; font-weight: 600; color: #151811; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .avatar-header { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+    .avatar-lg { width: 48px; height: 48px; border-radius: 50%; background: #e8f3ec; color: #10823c; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .avatar-name { font-size: 17px; font-weight: 800; color: #151811; }
+    .avatar-meta { font-size: 12px; color: #7a8863; margin-top: 2px; }
+</style>
+
+@if (Model.TransferRequest == null)
+{
+    <div class="error-banner">Transfer request not found.</div>
+}
+else
+{
+    var req = Model.TransferRequest;
+    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+
+    <a asp-page="/Transfer/MyRequests" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to My Requests
+    </a>
+
+    <div class="avatar-header">
+        <div class="avatar-lg">@initials</div>
+        <div>
+            <div class="avatar-name">@req.EmployeeName</div>
+            <div class="avatar-meta">@req.EpfNumber &nbsp;·&nbsp; @req.EmployeeEmail &nbsp;·&nbsp; @req.Department &nbsp;·&nbsp; Request #@req.Id</div>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start">
+        <div>
+            <div class="detail-card">
+                <div class="dlt">Transfer Details</div>
+                <div class="dl-grid" style="grid-template-columns:1fr 1fr;margin-bottom:16px">
+                    <div class="dl"><dt>From Branch</dt><dd>@req.CurrentBranch</dd></div>
+                    <div class="dl"><dt>To Branch</dt><dd style="font-weight:700;color:#10823c">@req.RequestedBranch</dd></div>
+                    <div class="dl"><dt>Designation</dt><dd>@req.CurrentDesignation</dd></div>
+                    <div class="dl"><dt>Preferred Date</dt><dd>@req.PreferredDate?.ToString("MMM dd, yyyy")</dd></div>
+                </div>
+                <div class="dl" style="margin-bottom:16px">
+                    <dt>Current Status</dt>
+                    <dd style="margin-top:6px">
+                        @switch (req.Status)
+                        {
+                            case TransferStatus.Pending:
+                                <span class="k-badge k-badge-pending">Pending HR Review</span>
+                                break;
+                            case TransferStatus.DeptHeadApproved:
+                                <span class="k-badge k-badge-info">Dept Head Approved — Awaiting BMs</span>
+                                break;
+                            case TransferStatus.DeptHeadRejected:
+                                <span class="k-badge k-badge-rejected">Rejected by Dept Head</span>
+                                break;
+                            case TransferStatus.HRFinalRejected:
+                                <span class="k-badge k-badge-rejected">Rejected at HR Finalization</span>
+                                break;
+                            case TransferStatus.CurrentBMApproved:
+                                <span class="k-badge k-badge-info">Current BM Approved — Awaiting Target BM</span>
+                                break;
+                            case TransferStatus.TargetBMApproved:
+                                <span class="k-badge k-badge-info">Target BM Approved — Awaiting Current BM</span>
+                                break;
+                            case TransferStatus.CurrentBMRejected:
+                            case TransferStatus.TargetBMRejected:
+                                <span class="k-badge k-badge-rejected">Rejected by Branch Manager</span>
+                                break;
+                            case TransferStatus.BothBMsApproved:
+                                <span class="k-badge k-badge-info">Both BMs Approved — Awaiting Area Manager</span>
+                                break;
+                            case TransferStatus.AreaManagerApproved:
+                                <span class="k-badge k-badge-info">Area Manager Approved — Awaiting HR Finalization</span>
+                                break;
+                            case TransferStatus.AreaManagerRejected:
+                                <span class="k-badge k-badge-rejected">Rejected by Area Manager</span>
+                                break;
+                            case TransferStatus.FullyApproved:
+                                <span class="k-badge k-badge-approved">Transfer Fully Approved</span>
+                                break;
+                        }
+                    </dd>
+                </div>
+                <div class="dl"><dt>Reason</dt><dd><div class="reason-box" style="margin-top:6px">@req.Reason</div></dd></div>
+            </div>
+
+            @if (req.HasDocument)
+            {
+                <div class="detail-card">
+                    <div class="dlt">Attached Document</div>
+                    <div class="doc-row">
+                        <div class="doc-name">@req.DocumentFileName</div>
+                        <a asp-page="/Transfer/DownloadDocument" asp-route-id="@req.Id" class="btn-action">Download</a>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div>
+            <div class="detail-card">
+                <div class="dlt">Approval Timeline</div>
+
+                @{
+                    string StepState(string? review) =>
+                        review == "Approved" ? "done" : review == "Rejected" ? "rejected" : "pending";
+                }
+
+                <div class="tstep">
+                    <div class="tstep-num done">1</div>
+                    <div>
+                        <div class="tstep-lbl">Request Submitted</div>
+                        <div class="tstep-meta">@req.RequestedDate.ToString("MMM dd, yyyy") — by @req.RequestedByRole</div>
+                    </div>
+                </div>
+
+                <div class="tstep">
+                    <div class="tstep-num @StepState(req.DeptHeadReview)">2</div>
+                    <div>
+                        <div class="tstep-lbl">Department Head</div>
+                        @if (!string.IsNullOrEmpty(req.DeptHeadReview))
+                        {
+                            <div class="tstep-meta">@req.DeptHeadReview — @req.DeptHeadReviewDate?.ToString("MMM dd, yyyy")</div>
+                            if (!string.IsNullOrEmpty(req.DeptHeadComments)) { <div class="tstep-comment">@req.DeptHeadComments</div> }
+                        }
+                        else { <div class="tstep-meta">Awaiting review</div> }
+                    </div>
+                </div>
+
+                <div class="tstep">
+                    <div class="tstep-num @StepState(req.CurrentBMReview)">3a</div>
+                    <div>
+                        <div class="tstep-lbl">Current BM (@req.CurrentBranch)</div>
+                        @if (!string.IsNullOrEmpty(req.CurrentBMReview))
+                        {
+                            <div class="tstep-meta">@req.CurrentBMReview — @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy")</div>
+                            if (!string.IsNullOrEmpty(req.CurrentBMComments)) { <div class="tstep-comment">@req.CurrentBMComments</div> }
+                        }
+                        else { <div class="tstep-meta">Awaiting review</div> }
+                    </div>
+                </div>
+
+                <div class="tstep">
+                    <div class="tstep-num @StepState(req.TargetBMReview)">3b</div>
+                    <div>
+                        <div class="tstep-lbl">Target BM (@req.RequestedBranch)</div>
+                        @if (!string.IsNullOrEmpty(req.TargetBMReview))
+                        {
+                            <div class="tstep-meta">@req.TargetBMReview — @req.TargetBMReviewDate?.ToString("MMM dd, yyyy")</div>
+                            if (!string.IsNullOrEmpty(req.TargetBMComments)) { <div class="tstep-comment">@req.TargetBMComments</div> }
+                        }
+                        else { <div class="tstep-meta">Awaiting review</div> }
+                    </div>
+                </div>
+
+                <div class="tstep">
+                    <div class="tstep-num @StepState(req.AreaManagerReview)">4</div>
+                    <div>
+                        <div class="tstep-lbl">Area Manager</div>
+                        @if (!string.IsNullOrEmpty(req.AreaManagerReview))
+                        {
+                            <div class="tstep-meta">@req.AreaManagerReview — @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                            if (!string.IsNullOrEmpty(req.AreaManagerComments)) { <div class="tstep-comment">@req.AreaManagerComments</div> }
+                        }
+                        else { <div class="tstep-meta">Awaiting review</div> }
+                    </div>
+                </div>
+
+                <div class="tstep">
+                    <div class="tstep-num @StepState(req.HRManagerReview)">5</div>
+                    <div>
+                        <div class="tstep-lbl">HR Finalization</div>
+                        @if (!string.IsNullOrEmpty(req.HRManagerReview))
+                        {
+                            <div class="tstep-meta">@req.HRManagerReview — @req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                            if (!string.IsNullOrEmpty(req.HRManagerComments)) { <div class="tstep-comment">@req.HRManagerComments</div> }
+                        }
+                        else { <div class="tstep-meta">Awaiting review</div> }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
