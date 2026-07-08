@@ -1,0 +1,304 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.Employees.DetailsModel
+@{
+    ViewData["Title"] = "Employee Details";
+    ViewData["PageTitle"] = "Employees";
+    ViewData["ActiveNav"] = "Employees";
+    var emp = Model.Employee;
+
+    var nameParts = emp.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+    var avatarChars = nameParts.Length > 1
+        ? $"{nameParts[0][0]}{nameParts[^1][0]}"
+        : (nameParts.Length == 1 ? nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)) : "U");
+
+    string displayName = string.IsNullOrEmpty(emp.Initials) ? (emp.FullName ?? "Unknown") : emp.Initials;
+}
+
+<style>
+    .details-page { padding: 8px 24px; font-family: 'Manrope', sans-serif; }
+
+    .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .back-btn { color: #64748b; text-decoration: none; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; transition: background 0.2s; }
+    .back-btn:hover { background: #f1f5f9; color: #0f172a; }
+
+    .card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; margin-bottom: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .profile-card { padding: 16px 24px; }
+
+    .profile-header { display: flex; justify-content: space-between; align-items: flex-start; }
+    .profile-info-wrapper { display: flex; gap: 16px; align-items: center; }
+    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .profile-main-info h1 { margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: #0f172a; }
+    .profile-main-info .designation { font-size: 15px; color: #64748b; font-weight: 500; margin-bottom: 12px; display: block; }
+
+    .tags { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tag-emp { background: #f1f5f9; color: #3b82f6; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+    .tag-dept { background: #ebf5ee; color: #10823c; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+
+    .contact-info { display: flex; gap: 24px; color: #64748b; font-size: 13px; font-weight: 500; }
+    .contact-item { display: flex; align-items: center; gap: 6px; }
+    .contact-item svg { width: 14px; height: 14px; stroke-width: 2.5; }
+
+    .btn-edit { background: transparent; color: #10823c; border: none; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; padding: 8px 16px; border-radius: 6px; transition: background 0.2s; }
+    .btn-edit:hover { background: #ebf5ee; }
+
+    .details-tabs { display: flex; gap: 32px; border-bottom: 1px solid #e2e8f0; margin-bottom: 24px; }
+    .details-tab { padding: 12px 0; font-size: 14px; font-weight: 600; color: #64748b; cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px; }
+    .details-tab svg { width: 16px; height: 16px; }
+    .details-tab.active { color: #10823c; border-bottom-color: #10823c; }
+    .details-tab:hover:not(.active) { color: #0f172a; border-bottom-color: #cbd5e1; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .info-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    .section-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 20px 0; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+    .data-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; row-gap: 24px; column-gap: 16px; }
+    .data-grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px 16px; }
+    .data-item { display: flex; flex-direction: column; gap: 4px; }
+    .data-item-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700; color: #94a3b8; }
+    .data-item-value { font-size: 14px; font-weight: 600; color: #0f172a; word-break: break-word; }
+
+    .doc-list { display: flex; flex-direction: column; gap: 12px; }
+    .doc-item { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; }
+    .doc-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .doc-meta { font-size: 12px; color: #64748b; margin-top: 3px; }
+    .doc-status { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; }
+    .doc-status.pending { background: #fef3c7; color: #92400e; }
+    .doc-status.approved { background: #dcfce7; color: #166534; }
+    .doc-status.rejected { background: #fee2e2; color: #991b1b; }
+    .doc-link { font-size: 13px; font-weight: 700; color: #10823c; text-decoration: none; white-space: nowrap; }
+    .doc-link:hover { text-decoration: underline; }
+</style>
+
+<div class="details-page">
+    <div class="page-header">
+        <a asp-page="./Index" class="back-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5"></path><path d="M12 19l-7-7 7-7"></path></svg>
+        </a>
+    </div>
+
+    <div class="card profile-card">
+        <div class="profile-header">
+            <div class="profile-info-wrapper">
+                <div class="profile-avatar">@avatarChars.ToUpper()</div>
+                <div class="profile-main-info">
+                    <h1>@displayName</h1>
+                    <span class="designation">@(emp.Designation?.Title ?? "No Designation")</span>
+
+                    <div class="tags">
+                        <span class="tag-emp">EMP-@emp.Id.ToString("D5")</span>
+                        <span class="tag-dept">@(emp.Department?.Name ?? "No Department") Dept.</span>
+                    </div>
+
+                    <div class="contact-info">
+                        <div class="contact-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                            @emp.Email
+                        </div>
+                        <div class="contact-item">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                            @emp.PhoneNumber
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <a href="/Employees/Create?id=@emp.Id" class="btn-edit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                Edit Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="details-tabs">
+        <div class="details-tab active" data-tab="personal" onclick="switchTab('personal', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            Personal &amp; Employment Details
+        </div>
+        <div class="details-tab" data-tab="documents" onclick="switchTab('documents', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Documents
+        </div>
+        <div class="details-tab" data-tab="salary" onclick="switchTab('salary', this)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+            Salary &amp; Benefits
+        </div>
+    </div>
+
+    <div class="tab-panel active" id="tab-personal">
+        <div class="info-grid">
+            <div class="left-col" style="display:flex; flex-direction:column; gap:24px;">
+                <div class="card" style="margin-bottom:0;">
+                    <h3 class="section-title">Employment Information</h3>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <span class="data-item-label">Date of Joining</span>
+                            <span class="data-item-value">@(emp.DateJoined?.ToString("dd MMM, yyyy") ?? "-")</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Employment Type</span>
+                            <span class="data-item-value">@emp.EmployeeType</span>
+                        </div>
+                        @if (emp.EmployeeType == "Probationary" && emp.ProbationPeriodMonths > 0 && emp.DateJoined.HasValue)
+                        {
+                            var probEndDate = emp.DateJoined.Value.AddMonths(emp.ProbationPeriodMonths);
+                            var probDaysLeft = (probEndDate - DateTime.Today).TotalDays;
+                            <div class="data-item">
+                                <span class="data-item-label">Probation Period</span>
+                                <span class="data-item-value">@emp.ProbationPeriodMonths Months</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Probation End Date</span>
+                                <span class="data-item-value">
+                                    @probEndDate.ToString("dd MMM, yyyy")
+                                    @if (probDaysLeft > 0 && probDaysLeft <= 30)
+                                    {
+                                        <span style="display:inline-block; margin-left:6px; background:#fff3cd; color:#856404; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px;">Ending in @((int)probDaysLeft) days</span>
+                                    }
+                                    else if (probDaysLeft <= 0)
+                                    {
+                                        <span style="display:inline-block; margin-left:6px; background:#f1f5f9; color:#64748b; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px;">Completed</span>
+                                    }
+                                </span>
+                            </div>
+                        }
+                        else if (emp.EmployeeType == "Intern" && emp.InternPeriodMonths > 0 && emp.DateJoined.HasValue)
+                        {
+                            var internEndDate = emp.DateJoined.Value.AddMonths(emp.InternPeriodMonths);
+                            var internDaysLeft = (internEndDate - DateTime.Today).TotalDays;
+                            <div class="data-item">
+                                <span class="data-item-label">Internship Period</span>
+                                <span class="data-item-value">@emp.InternPeriodMonths Months</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Internship End Date</span>
+                                <span class="data-item-value">
+                                    @internEndDate.ToString("dd MMM, yyyy")
+                                    @if (internDaysLeft > 0 && internDaysLeft <= 30)
+                                    {
+                                        <span style="display:inline-block; margin-left:6px; background:#fff3cd; color:#856404; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px;">Ending in @((int)internDaysLeft) days</span>
+                                    }
+                                    else if (internDaysLeft <= 0)
+                                    {
+                                        <span style="display:inline-block; margin-left:6px; background:#f1f5f9; color:#64748b; font-size:10px; font-weight:700; padding:2px 7px; border-radius:9999px;">Completed</span>
+                                    }
+                                </span>
+                            </div>
+                        }
+                        <div class="data-item">
+                            <span class="data-item-label">Designation</span>
+                            <span class="data-item-value">@(emp.Designation?.Title ?? "-")</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Department</span>
+                            <span class="data-item-value">@(emp.Department?.Name ?? "-")</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Work Location</span>
+                            <span class="data-item-value">@(emp.Branch?.Name ?? "-")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:0;">
+                    <h3 class="section-title">Personal Details</h3>
+                    <div class="data-grid">
+                        <div class="data-item">
+                            <span class="data-item-label">Full Name</span>
+                            <span class="data-item-value">@emp.FullName</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">NIC Number</span>
+                            <span class="data-item-value">@emp.NIC</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Date of Birth</span>
+                            <span class="data-item-value">@emp.DateOfBirth.ToString("dd MMM, yyyy")</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Gender</span>
+                            <span class="data-item-value">@emp.Sex</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Marital Status</span>
+                            <span class="data-item-value">@(string.IsNullOrEmpty(emp.SpouseName) ? "Single" : "Married")</span>
+                        </div>
+                        <div class="data-item" style="grid-column: 1 / span 3;">
+                            <span class="data-item-label">Permanent Address</span>
+                            <span class="data-item-value">@emp.ResidentialAddress</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-col">
+                <div class="card" style="margin-bottom:0;">
+                    <h3 class="section-title">Statutory Information</h3>
+                    <div class="data-grid-2col">
+                        <div class="data-item">
+                            <span class="data-item-label">EPF Number</span>
+                            <span class="data-item-value">@emp.EPFNumber</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">ETF Number</span>
+                            <span class="data-item-value">@emp.ETFNumber</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-documents">
+        <div class="card" style="margin-bottom:0;">
+            <h3 class="section-title">Documents</h3>
+            @if (Model.Documents.Any())
+            {
+                <div class="doc-list">
+                    @foreach (var doc in Model.Documents)
+                    {
+                        <div class="doc-item">
+                            <div>
+                                <div class="doc-name">@doc.DocumentType</div>
+                                <div class="doc-meta">@doc.FileName · @doc.UploadedAt.ToString("dd MMM yyyy, hh:mm tt")</div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:12px;">
+                                <span class="doc-status @doc.Status.ToLowerInvariant()">@doc.Status</span>
+                                <a class="doc-link" href="/uploads/documents/@doc.StoredFileName" target="_blank">Open</a>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="data-item-value">No documents attached yet.</div>
+            }
+        </div>
+    </div>
+
+    <div class="tab-panel" id="tab-salary">
+        <div class="card">
+            <div style="text-align:center; padding: 40px 20px; color:#64748b;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" width="40" height="40" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                <p style="font-weight:700; color:#0f172a; margin-bottom:4px;">Salary & Benefits</p>
+                <p style="font-size:13px; margin:0;">This section is under development.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function switchTab(tabId, el) {
+            document.querySelectorAll('.details-tab').forEach(function (tab) {
+                tab.classList.remove('active');
+            });
+            el.classList.add('active');
+
+            document.querySelectorAll('.tab-panel').forEach(function (panel) {
+                panel.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+    </script>
+}

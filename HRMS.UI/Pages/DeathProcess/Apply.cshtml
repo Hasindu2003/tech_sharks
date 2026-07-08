@@ -1,0 +1,110 @@
+@page
+@model HRMS.UI.Pages.DeathProcess.ApplyModel
+@{
+    ViewData["Title"] = "Initiate Employee Death Process";
+}
+
+<div style="max-width:800px;margin:0 auto">
+    <div style="margin-bottom:24px">
+        <h2 style="font-weight:700;font-size:1.8rem;margin-bottom:8px">Initiate Employee Death Process</h2>
+        <p style="color:#6b7280;margin:0">Complete the form below and attach mandatory proofs to start the separation due to death workflow.</p>
+    </div>
+
+    @if (!ModelState.IsValid)
+    {
+        <div class="k-alert k-alert-danger">
+            <div asp-validation-summary="All" style="color:#b91c1c;"></div>
+        </div>
+    }
+
+    <form method="post" enctype="multipart/form-data" class="k-card">
+        <h5 class="section-title">Employee Details</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div>
+                <label asp-for="RequestModel.EmployeeName" class="detail-label" style="display:block;margin-bottom:4px"></label>
+                <input asp-for="RequestModel.EmployeeName" class="form-control" required placeholder="Full Name" />
+                <span asp-validation-for="RequestModel.EmployeeName" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="RequestModel.EpfNumber" class="detail-label" style="display:block;margin-bottom:4px"></label>
+                <input asp-for="RequestModel.EpfNumber" class="form-control" required placeholder="e.g. 12345" />
+            </div>
+            <div>
+                <label asp-for="RequestModel.EmployeeEmail" class="detail-label" style="display:block;margin-bottom:4px"></label>
+                <input asp-for="RequestModel.EmployeeEmail" type="email" class="form-control" required placeholder="User Email" />
+            </div>
+            <div>
+                <label asp-for="RequestModel.Branch" class="detail-label" style="display:block;margin-bottom:4px"></label>
+                <input asp-for="RequestModel.Branch" class="form-control" required />
+            </div>
+            <div>
+                <label asp-for="RequestModel.Department" class="detail-label" style="display:block;margin-bottom:4px"></label>
+                <input asp-for="RequestModel.Department" class="form-control" />
+            </div>
+            <div>
+                <label asp-for="RequestModel.Designation" class="detail-label" style="display:block;margin-bottom:4px"></label>
+                <input asp-for="RequestModel.Designation" class="form-control" required />
+            </div>
+        </div>
+
+        <hr style="margin:24px 0;border-color:#e5e7eb" />
+        <h5 class="section-title">Death & Nominee Details</h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div>
+                <label asp-for="RequestModel.DateOfDeath" class="detail-label" style="display:block;margin-bottom:4px">Date of Death *</label>
+                <input asp-for="RequestModel.DateOfDeath" type="date" class="form-control" required />
+            </div>
+            <div>
+                <label asp-for="RequestModel.NatureOfDeath" class="detail-label" style="display:block;margin-bottom:4px">Nature of Death *</label>
+                <input asp-for="RequestModel.NatureOfDeath" class="form-control" required placeholder="e.g., Natural, Accident" />
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+            <div>
+                <label asp-for="RequestModel.NomineeName" class="detail-label" style="display:block;margin-bottom:4px">Nominee Name *</label>
+                <input asp-for="RequestModel.NomineeName" class="form-control" required />
+            </div>
+            <div>
+                <label asp-for="RequestModel.NomineeRelation" class="detail-label" style="display:block;margin-bottom:4px">Relationship *</label>
+                <input asp-for="RequestModel.NomineeRelation" class="form-control" required />
+            </div>
+            <div>
+                <label asp-for="RequestModel.NomineeContact" class="detail-label" style="display:block;margin-bottom:4px">Nominee Contact</label>
+                <input asp-for="RequestModel.NomineeContact" class="form-control" placeholder="Phone/Email" />
+            </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+            <label asp-for="RequestModel.AdditionalRemarks" class="detail-label" style="display:block;margin-bottom:4px"></label>
+            <textarea asp-for="RequestModel.AdditionalRemarks" class="form-control" rows="2"></textarea>
+        </div>
+
+        <hr style="margin:24px 0;border-color:#e5e7eb" />
+        <h5 class="section-title">Financial Obligations</h5>
+        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px">Outstanding obligations do not block submission but must be flagged for the finance department.</p>
+        <div style="display:flex;gap:32px;margin-bottom:16px">
+            <label style="display:flex;align-items:center;gap:8px">
+                <input asp-for="RequestModel.HasOutstandingLoans" type="checkbox" /> Outstanding Loans?
+            </label>
+            <label style="display:flex;align-items:center;gap:8px">
+                <input asp-for="RequestModel.IsLoanGuarantor" type="checkbox" /> Loan Guarantor?
+            </label>
+        </div>
+        <div style="margin-bottom:16px">
+            <label asp-for="RequestModel.ObligationDetails" class="detail-label" style="display:block;margin-bottom:4px">Obligation Details</label>
+            <textarea asp-for="RequestModel.ObligationDetails" class="form-control" rows="2" placeholder="Describe any loans or obligations..."></textarea>
+        </div>
+
+        <hr style="margin:24px 0;border-color:#e5e7eb" />
+        <h5 class="section-title">Mandatory Documents *</h5>
+        <div style="margin-bottom:24px">
+            <input type="file" name="documents" class="form-control" multiple required accept=".pdf,.png,.jpg,.jpeg" />
+            <div style="font-size:0.8rem;color:#6b7280;margin-top:4px">Please upload Death Certificate and relevant proofs (PDF, JPG, PNG). At least one document is required.</div>
+        </div>
+
+        <div style="display:flex;justify-content:flex-end;gap:12px">
+            <a href="javascript:history.back()" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+            <button type="submit" class="btn-kanrich btn-kanrich-primary">Process Death Request</button>
+        </div>
+    </form>
+</div>

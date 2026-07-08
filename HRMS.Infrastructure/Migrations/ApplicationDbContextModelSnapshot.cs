@@ -115,9 +115,6 @@ namespace HRMS.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<int>("Capacity")
-                        .HasColumnType("int");
-
                     b.Property<string>("Location")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -131,7 +128,7 @@ namespace HRMS.Infrastructure.Migrations
                     b.ToTable("Branches");
                 });
 
-            modelBuilder.Entity("HRMS.Domain.Entities.Core.Department", b =>
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.BranchDepartment", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -140,11 +137,23 @@ namespace HRMS.Infrastructure.Migrations
                     b.Property<int>("BranchId")
                         .HasColumnType("int");
 
-                    b.Property<int>("Capacity")
+                    b.Property<int>("DepartmentId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.ToTable("BranchDepartments");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.Department", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -152,9 +161,28 @@ namespace HRMS.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.ToTable("Departments");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.DepartmentDesignation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<int>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("DesignationId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("DesignationId");
+
+                    b.ToTable("DepartmentDesignations");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Core.Designation", b =>
@@ -163,9 +191,6 @@ namespace HRMS.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("longtext");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -173,6 +198,98 @@ namespace HRMS.Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Designations");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.DraftEmployee", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("BankAccountName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("BankAccountNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DateConfirmed")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DateJoined")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DateOfBirth")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("DepartmentId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DesignationId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("EPFNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ETFNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("EmployeeType")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FullName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Initials")
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("InternPeriodMonths")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdated")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NIC")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("PreviousExperienceYears")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int?>("ProbationPeriodMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResidentialAddress")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Sex")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SpouseContactNo")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SpouseName")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .HasColumnType("longtext");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("DepartmentId");
+
+                    b.HasIndex("DesignationId");
+
+                    b.ToTable("DraftEmployees");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Core.Employee", b =>
@@ -192,19 +309,26 @@ namespace HRMS.Infrastructure.Migrations
                     b.Property<int>("BranchId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DateJoined")
+                    b.Property<DateTime?>("DateConfirmed")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("DateJoined")
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime>("DateOfBirth")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<int>("DepartmentId")
+                    b.Property<int?>("DepartmentId")
                         .HasColumnType("int");
 
-                    b.Property<int>("DesignationId")
+                    b.Property<int?>("DesignationId")
                         .HasColumnType("int");
 
                     b.Property<string>("EPFNumber")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ETFNumber")
                         .IsRequired()
                         .HasColumnType("longtext");
 
@@ -212,16 +336,20 @@ namespace HRMS.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("FirstName")
+                    b.Property<string>("EmployeeType")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("LastName")
+                    b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("MiddleName")
+                    b.Property<string>("Initials")
+                        .IsRequired()
                         .HasColumnType("longtext");
+
+                    b.Property<int>("InternPeriodMonths")
+                        .HasColumnType("int");
 
                     b.Property<string>("NIC")
                         .IsRequired()
@@ -229,6 +357,29 @@ namespace HRMS.Infrastructure.Migrations
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("PreviousExperienceYears")
+                        .HasColumnType("decimal(65,30)");
+
+                    b.Property<int>("ProbationPeriodMonths")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReportingOfficerId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ResidentialAddress")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Sex")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SpouseContactNo")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("SpouseName")
                         .HasColumnType("longtext");
 
                     b.Property<string>("Status")
@@ -243,7 +394,299 @@ namespace HRMS.Infrastructure.Migrations
 
                     b.HasIndex("DesignationId");
 
+                    b.HasIndex("ReportingOfficerId");
+
                     b.ToTable("Employees");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.EmployeeDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("EmployeeId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReviewedByUserId")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ReviewerNotes")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime>("UploadedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeDocuments");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.Notification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("TargetUrl")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<int?>("TransferRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAt");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Death.DeathDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<byte[]>("Content")
+                        .IsRequired()
+                        .HasColumnType("longblob");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<int>("DeathRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DeathRequestId");
+
+                    b.ToTable("DeathDocuments");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Death.DeathRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AMComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("AMEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("AMReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("AMReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("AccountDeactivated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("AccountDeactivatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<DateTime?>("AccountDeactivatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("AdditionalRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("BMComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("BMEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("BMReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("BMReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Branch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("DateOfDeath")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("EmployeeEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("EmployeeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EpfNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("FinanceClearanceTriggered")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("HRComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("HREmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("HRReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("HRReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("HasOutstandingLoans")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("InitiatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<bool>("IsLoanGuarantor")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("NatureOfDeath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("NomineeContact")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("NomineeName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("NomineeRelation")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("ObligationDetails")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<bool>("PayrollStopped")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("EpfNumber");
+
+                    b.HasIndex("InitiatedBy");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("DeathRequests");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Leave.Leave", b =>
@@ -432,6 +875,362 @@ namespace HRMS.Infrastructure.Migrations
                         .IsUnique();
 
                     b.ToTable("OverseasLeaves");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Resignation.ResignationDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<byte[]>("DocumentData")
+                        .IsRequired()
+                        .HasColumnType("longblob");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int>("ResignationRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ResignationRequestId");
+
+                    b.ToTable("ResignationDocuments");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Resignation.ResignationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AMComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("AMEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("AMReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("AMReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("AcceptanceLetterDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("AcceptanceLetterGenerated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("AccountDeactivated")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("AccountDeactivatedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<DateTime?>("AccountDeactivatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("AdditionalRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("BMComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("BMEmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("BMReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("BMReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Branch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EmployeeEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("EmployeeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EpfNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("HRComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("HREmail")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("HRReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("HRReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("HasOutstandingLoans")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("HasOverridePermission")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("InitiatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<bool>("IsLoanGuarantor")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("NoticePeriodDays")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ObligationDetails")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("ReasonForResignation")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTime>("ResignationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("EpfNumber");
+
+                    b.HasIndex("InitiatedBy");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("ResignationRequests");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Termination.TerminationDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<byte[]>("DocumentData")
+                        .IsRequired()
+                        .HasColumnType("longblob");
+
+                    b.Property<int>("DocumentType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<int>("TerminationRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UploadedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TerminationRequestId");
+
+                    b.ToTable("TerminationDocuments");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Termination.TerminationRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("ApprovedBy")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("ApproverComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("ApproverReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("ApproverReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Branch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("DirectObligations")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<DateTime>("EffectiveTerminationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("EmployeeEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("EmployeeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EpfNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<bool>("FinanceClearanceCompleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("FinanceClearanceDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("FinanceClearanceNotes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<bool>("HasOutstandingLoans")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("HasOverridePermission")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("IndirectObligations")
+                        .HasMaxLength(2000)
+                        .HasColumnType("varchar(2000)");
+
+                    b.Property<string>("InitiatedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("InitiatedByRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("InitiationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsLoanGuarantor")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime>("LastModifiedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ReasonForTermination")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("SpecialRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SupervisorRemarks")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<int>("TerminationType")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("EpfNumber");
+
+                    b.HasIndex("InitiatedBy");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("TerminationRequests");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Training.EmployeeTraining", b =>
@@ -796,6 +1595,142 @@ namespace HRMS.Infrastructure.Migrations
                     b.ToTable("TransferApprovals");
                 });
 
+            modelBuilder.Entity("HRMS.Domain.Entities.Transfer.TransferRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    b.Property<string>("AreaManagerComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("AreaManagerReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("AreaManagerReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CurrentBMComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("CurrentBMReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("CurrentBMReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CurrentBranch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("CurrentDesignation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("DocumentContentType")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<byte[]>("DocumentData")
+                        .HasColumnType("longblob");
+
+                    b.Property<string>("DocumentFileName")
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("EmployeeEmail")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("EmployeeName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("EpfNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("HRManagerComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("HRManagerReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("HRManagerReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("PreferredDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("RequestedBranch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
+                    b.Property<string>("RequestedBy")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varchar(256)");
+
+                    b.Property<string>("RequestedByRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime>("RequestedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TargetBMComments")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<string>("TargetBMReview")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTime?>("TargetBMReviewDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("YearsOfService")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EpfNumber");
+
+                    b.HasIndex("RequestedBy");
+
+                    b.HasIndex("RequestedDate");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("TransferRequests");
+                });
+
             modelBuilder.Entity("HRMS.Infrastructure.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -804,9 +1739,26 @@ namespace HRMS.Infrastructure.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
+                    b.Property<string>("Branch")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
+
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("longtext");
+
+                    b.Property<DateTime>("DateOfJoining")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Department")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Designation")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
@@ -818,11 +1770,24 @@ namespace HRMS.Infrastructure.Migrations
                     b.Property<int?>("EmployeeId")
                         .HasColumnType("int");
 
+                    b.Property<string>("EpfNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ManagedBranches")
+                        .HasColumnType("longtext");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
@@ -1026,15 +1991,63 @@ namespace HRMS.Infrastructure.Migrations
                     b.Navigation("Employee");
                 });
 
-            modelBuilder.Entity("HRMS.Domain.Entities.Core.Department", b =>
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.BranchDepartment", b =>
                 {
                     b.HasOne("HRMS.Domain.Entities.Core.Branch", "Branch")
-                        .WithMany("Departments")
+                        .WithMany("BranchDepartments")
                         .HasForeignKey("BranchId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("HRMS.Domain.Entities.Core.Department", "Department")
+                        .WithMany("BranchDepartments")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("Branch");
+
+                    b.Navigation("Department");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.DepartmentDesignation", b =>
+                {
+                    b.HasOne("HRMS.Domain.Entities.Core.Department", "Department")
+                        .WithMany("DepartmentDesignations")
+                        .HasForeignKey("DepartmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HRMS.Domain.Entities.Core.Designation", "Designation")
+                        .WithMany("DepartmentDesignations")
+                        .HasForeignKey("DesignationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Designation");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.DraftEmployee", b =>
+                {
+                    b.HasOne("HRMS.Domain.Entities.Core.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId");
+
+                    b.HasOne("HRMS.Domain.Entities.Core.Department", "Department")
+                        .WithMany()
+                        .HasForeignKey("DepartmentId");
+
+                    b.HasOne("HRMS.Domain.Entities.Core.Designation", "Designation")
+                        .WithMany()
+                        .HasForeignKey("DesignationId");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Department");
+
+                    b.Navigation("Designation");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Core.Employee", b =>
@@ -1047,21 +2060,45 @@ namespace HRMS.Infrastructure.Migrations
 
                     b.HasOne("HRMS.Domain.Entities.Core.Department", "Department")
                         .WithMany("Employees")
-                        .HasForeignKey("DepartmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DepartmentId");
 
                     b.HasOne("HRMS.Domain.Entities.Core.Designation", "Designation")
                         .WithMany("Employees")
-                        .HasForeignKey("DesignationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DesignationId");
+
+                    b.HasOne("HRMS.Domain.Entities.Core.Employee", "ReportingOfficer")
+                        .WithMany()
+                        .HasForeignKey("ReportingOfficerId");
 
                     b.Navigation("Branch");
 
                     b.Navigation("Department");
 
                     b.Navigation("Designation");
+
+                    b.Navigation("ReportingOfficer");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Core.EmployeeDocument", b =>
+                {
+                    b.HasOne("HRMS.Domain.Entities.Core.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Death.DeathDocument", b =>
+                {
+                    b.HasOne("HRMS.Domain.Entities.Death.DeathRequest", "DeathRequest")
+                        .WithMany("Documents")
+                        .HasForeignKey("DeathRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("DeathRequest");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Leave.Leave", b =>
@@ -1144,6 +2181,28 @@ namespace HRMS.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Leave");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Resignation.ResignationDocument", b =>
+                {
+                    b.HasOne("HRMS.Domain.Entities.Resignation.ResignationRequest", "ResignationRequest")
+                        .WithMany("Documents")
+                        .HasForeignKey("ResignationRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ResignationRequest");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Termination.TerminationDocument", b =>
+                {
+                    b.HasOne("HRMS.Domain.Entities.Termination.TerminationRequest", "TerminationRequest")
+                        .WithMany("Documents")
+                        .HasForeignKey("TerminationRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TerminationRequest");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Training.EmployeeTraining", b =>
@@ -1392,19 +2451,30 @@ namespace HRMS.Infrastructure.Migrations
 
             modelBuilder.Entity("HRMS.Domain.Entities.Core.Branch", b =>
                 {
-                    b.Navigation("Departments");
+                    b.Navigation("BranchDepartments");
 
                     b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Core.Department", b =>
                 {
+                    b.Navigation("BranchDepartments");
+
+                    b.Navigation("DepartmentDesignations");
+
                     b.Navigation("Employees");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Core.Designation", b =>
                 {
+                    b.Navigation("DepartmentDesignations");
+
                     b.Navigation("Employees");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Death.DeathRequest", b =>
+                {
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Leave.Leave", b =>
@@ -1414,6 +2484,16 @@ namespace HRMS.Infrastructure.Migrations
                     b.Navigation("MaternityPayment");
 
                     b.Navigation("OverseasLeave");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Resignation.ResignationRequest", b =>
+                {
+                    b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("HRMS.Domain.Entities.Termination.TerminationRequest", b =>
+                {
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("HRMS.Domain.Entities.Training.InternProgram", b =>

@@ -1,41 +1,41 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using HRMS.Domain.Entities.Core;
-using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Designations.Commands;
+using HRMS.Application.Common;
+using HRMS.Application.Entity.Commands;
 
 namespace HRMS.UI.Pages.Settings.Designations
 {
     [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICommandHandler<CreateDesignationCommand, Result> _handler;
 
-        public CreateModel(ApplicationDbContext context)
+        public CreateModel(ICommandHandler<CreateDesignationCommand, Result> handler)
         {
-            _context = context;
+            _handler = handler;
         }
 
         [BindProperty]
-        public Designation NewDesignation { get; set; } = new();
+        public CreateDesignationCommand NewDesignation { get; set; } = new();
 
-        public IActionResult OnGet()
-        {
-            return Page();
-        }
+        public IActionResult OnGet() => Page();
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
+                return Page();
+
+            var result = await _handler.HandleAsync(NewDesignation);
+
+            if (!result.Succeeded)
             {
+                ModelState.AddModelError("NewDesignation.Title", result.Error!);
                 return Page();
             }
 
-            _context.Designations.Add(NewDesignation);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = $"Designation '{NewDesignation.Title}' created successfully.";
+            TempData["SuccessMessage"] = $"Designation '{NewDesignation.Title}' created. You can now assign it to departments.";
             return RedirectToPage("./Index");
         }
     }

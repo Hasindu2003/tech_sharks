@@ -11,23 +11,22 @@
     .form-group { margin-bottom: 16px; }
     .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
     .form-control { width: 100%; padding: 10px; border: 1px solid #e2e5dc; border-radius: 6px; font-family: inherit; }
+    .form-control:focus { border-color: #10823c; outline: none; box-shadow: 0 0 0 1px rgba(16,130,60,0.2); }
     .btn-primary { background: #10823c; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
     .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
 </style>
 
 <div style="padding: 24px;">
     <div class="form-container">
-        <h2 style="margin-bottom: 24px;">Add New Designation</h2>
-        
+        <h2 style="margin-bottom: 8px;">Add Designation Type</h2>
+        <p style="color:#7a8863; font-size:13px; margin-bottom:24px;">Create a global designation type (e.g. Software Engineer, Manager). Then assign it to departments.</p>
+
         <form method="post">
+            <div asp-validation-summary="All"></div>
             <div class="form-group">
-                <label>Job Title</label>
+                <label>Job Title <span style="color:#ef4444">*</span></label>
                 <input type="text" asp-for="NewDesignation.Title" class="form-control" required placeholder="e.g. Software Engineer" />
-            </div>
-            
-            <div class="form-group">
-                <label>Description (Optional)</label>
-                <textarea asp-for="NewDesignation.Description" class="form-control" rows="3" placeholder="Brief summary of responsibilities..."></textarea>
+                <span asp-validation-for="NewDesignation.Title" style="color:#dc3545; font-size:12px;"></span>
             </div>
 
             <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">

@@ -1,0 +1,938 @@
+@page
+@model HRMS.UI.Pages.Admin.DutyAccounts.CreateDutyAccountModel
+@{
+    ViewData["Title"] = "Create Duty Account";
+    ViewData["PageTitle"] = "Settings / Duty Accounts";
+    ViewData["ActiveNav"] = "DutyAccounts";
+}
+
+<style>
+    .page-content { background: #ffffffff !important; }
+
+    .duty-shell {
+        padding: 26px;
+    }
+
+    /* ── Page Header ── */
+    .duty-header { margin-bottom: 28px; }
+    .duty-title {
+        font-size: 20px; font-weight: 800; color: #151811; margin: 0 0 5px;
+    }
+    .duty-subtitle { font-size: 13px; color: #7a8863; margin: 0; }
+
+    /* ── Role Cards ── */
+    .role-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 32px;
+    }
+    .role-card {
+        background: #ffffff;
+        border: 2px solid #e2e5dc;
+        border-radius: 12px;
+        padding: 20px 16px;
+        cursor: pointer;
+        transition: border-color 0.18s, box-shadow 0.18s, transform 0.12s;
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+        user-select: none;
+    }
+    .role-card:hover {
+        border-color: #10823c;
+        box-shadow: 0 4px 16px rgba(16,130,60,.12);
+        transform: translateY(-2px);
+    }
+    .role-card.selected {
+        border-color: #10823c;
+        background: rgba(16,130,60,.05);
+        box-shadow: 0 4px 20px rgba(16,130,60,.18);
+    }
+    .role-card-icon {
+        width: 46px; height: 46px; border-radius: 12px;
+        background: #f0faf4;
+        display: flex; align-items: center; justify-content: center;
+        transition: background 0.18s;
+    }
+    .role-card.selected .role-card-icon { background: rgba(16,130,60,.15); }
+    .role-card-icon svg { width: 24px; height: 24px; stroke: #10823c; fill: none; }
+    .role-card-label { font-size: 13px; font-weight: 700; color: #151811; text-align: center; }
+    .role-card-desc  { font-size: 11px; color: #7a8863; text-align: center; line-height: 1.4; }
+    .role-card-check {
+        width: 18px; height: 18px; border-radius: 50%;
+        border: 2px solid #e2e5dc; background: #fff;
+        display: flex; align-items: center; justify-content: center;
+        transition: border-color 0.18s, background 0.18s;
+    }
+    .role-card.selected .role-card-check {
+        border-color: #10823c; background: #10823c;
+    }
+    .role-card-check svg { width: 10px; height: 10px; stroke: #fff; display: none; }
+    .role-card.selected .role-card-check svg { display: block; }
+
+    /* ── Form Panel ── */
+    .form-panel {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 14px;
+        display: none;
+        animation: fadeSlideIn 0.22s ease;
+    }
+    .form-panel.visible { display: block; }
+
+    @@keyframes fadeSlideIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .form-panel-header {
+        background: linear-gradient(135deg, #10823c 0%, #0d6e32 100%);
+        padding: 18px 24px;
+        display: flex; align-items: center; gap: 12px;
+        border-radius: 13px 13px 0 0;
+    }
+    .form-panel-header svg { width: 20px; height: 20px; stroke: #fff; fill: none; flex-shrink: 0; }
+    .form-panel-header-text h3 {
+        font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 2px;
+    }
+    .form-panel-header-text p { font-size: 12px; color: rgba(255,255,255,0.75); margin: 0; }
+
+    .form-panel-body { padding: 24px; }
+
+    /* ── Form Grid ── */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 20px;
+    }
+    .col-span-2 { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-label { font-size: 12px; font-weight: 700; color: #151811; }
+    .required-mark { color: #dc3545; }
+
+    .form-control {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid #e2e5dc;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px; color: #151811;
+        background: #fff;
+        transition: border-color 0.15s, box-shadow 0.15s;
+        outline: none;
+    }
+    .form-control:focus {
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16,130,60,.1);
+    }
+    /* ── Custom Dropdown ── */
+    .custom-dropdown { position: relative; }
+    .custom-dropdown-trigger {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 9px 12px; border: 1px solid #e2e5dc; border-radius: 7px;
+        background: #fff; cursor: pointer;
+        font-family: 'Manrope', sans-serif; font-size: 13px; color: #151811;
+        user-select: none; transition: border-color 0.15s, box-shadow 0.15s; min-height: 38px;
+    }
+    .custom-dropdown-trigger:hover { border-color: #10823c; }
+    .custom-dropdown-trigger.open { border-color: #10823c; box-shadow: 0 0 0 3px rgba(16,130,60,.1); }
+    .custom-dropdown-chevron { transition: transform 0.2s; color: #7a8863; width: 14px; height: 14px; flex-shrink: 0; }
+    .custom-dropdown-trigger.open .custom-dropdown-chevron { transform: rotate(180deg); }
+    .custom-dropdown-list {
+        display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+        background: #fff; border: 1px solid #e2e5dc; border-radius: 7px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12); max-height: calc(6 * 2.5rem); overflow-y: auto; z-index: 999;
+    }
+    .custom-dropdown-list.open { display: block; }
+    .custom-dropdown-option {
+        padding: 9px 12px; cursor: pointer;
+        font-family: 'Manrope', sans-serif; font-size: 13px; color: #151811; transition: background 0.1s;
+    }
+    .custom-dropdown-option:hover { background: #f0faf4; color: #10823c; }
+    .custom-dropdown-option.selected { background: #e6f4ec; color: #10823c; font-weight: 700; }
+    .custom-dropdown-option[data-value=""] { color: #7a8863; }
+    /* ── Dept Head drill-down rows ── */
+    .dh-sticky-header { position: sticky; top: 0; z-index: 2; background: #fff; }
+    .dh-search-box {
+        position: sticky; top: 0; z-index: 1; background: #fff;
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px; border-bottom: 1px solid #e2e5dc;
+    }
+    .dh-search-icon { width: 13px; height: 13px; flex-shrink: 0; fill: none; stroke: #7a8863; }
+    .dh-search-input {
+        border: none; outline: none; flex: 1;
+        font-family: 'Manrope', sans-serif; font-size: 13px; color: #151811; background: transparent;
+    }
+    .dh-search-input::placeholder { color: #b0b8aa; }
+    .dh-branch-row {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 9px 12px; cursor: pointer;
+        font-family: 'Manrope', sans-serif; font-size: 13px; color: #151811; transition: background 0.1s;
+    }
+    .dh-branch-row:hover { background: #f0faf4; color: #10823c; }
+    .dh-branch-row:hover .dh-arrow-right { color: #10823c; }
+    .dh-arrow-right { width: 14px; height: 14px; flex-shrink: 0; color: #b0b8aa; }
+    .dh-back-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 9px 12px; cursor: pointer;
+        font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 700; color: #10823c;
+        border-bottom: 1px solid #e2e5dc; background: #f0faf4;
+    }
+    .dh-back-row:hover { background: #e6f4ec; }
+    .dh-back-row svg { width: 14px; height: 14px; flex-shrink: 0; }
+    .dh-no-results { padding: 12px; color: #7a8863; font-size: 12px; text-align: center; }
+
+    /* ── Managed Branches Checklist ── */
+    .branch-checklist {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        max-height: 160px;
+        overflow-y: auto;
+        padding: 10px 12px;
+        border: 1px solid #e2e5dc;
+        border-radius: 7px;
+        background: #fafbfa;
+    }
+    .branch-check-item {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 13px; color: #151811; cursor: pointer;
+        padding: 4px 6px; border-radius: 5px;
+        transition: background 0.12s;
+    }
+    .branch-check-item:hover { background: #f0faf4; }
+    .branch-check-item input[type="checkbox"] {
+        width: 14px; height: 14px; accent-color: #10823c; cursor: pointer;
+    }
+
+    /* ── Divider ── */
+    .form-divider {
+        border: none; border-top: 1px solid #f0f0f0; margin: 18px 0;
+    }
+
+    /* ── Info Banner ── */
+    .info-banner {
+        background: #f0faf4;
+        border: 1px solid rgba(16,130,60,.25);
+        border-radius: 8px;
+        padding: 12px 14px;
+        display: flex; align-items: flex-start; gap: 10px;
+        margin-bottom: 18px;
+    }
+    .info-banner svg { width: 16px; height: 16px; stroke: #10823c; fill: none; flex-shrink: 0; margin-top: 1px; }
+    .info-banner p { font-size: 12px; color: #0d6e32; margin: 0; line-height: 1.5; }
+
+    /* ── Actions ── */
+    .form-actions {
+        display: flex; justify-content: flex-end; gap: 10px;
+        padding: 16px 24px;
+        border-top: 1px solid #f0f0f0;
+        background: #fafbfa;
+    }
+    .btn-cancel {
+        padding: 9px 20px;
+        border: 1px solid #e2e5dc; border-radius: 7px;
+        background: #fff; font-family: 'Manrope', sans-serif;
+        font-size: 13px; font-weight: 700; color: #151811;
+        text-decoration: none; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-cancel:hover { background: #f6f8f7; }
+    .btn-create {
+        padding: 9px 22px;
+        border: none; border-radius: 7px;
+        background: #10823c; font-family: 'Manrope', sans-serif;
+        font-size: 13px; font-weight: 700; color: #fff;
+        cursor: pointer; transition: background 0.15s;
+        display: flex; align-items: center; gap: 7px;
+    }
+    .btn-create:hover { background: #0d6e32; }
+
+    /* ── Success/Error Messages ── */
+    .alert-success {
+        padding: 12px 16px; border-radius: 8px;
+        background: #f0faf4; border: 1px solid rgba(16,130,60,.3);
+        color: #0d6e32; font-size: 13px; font-weight: 600; margin-bottom: 18px;
+    }
+    .alert-error {
+        padding: 12px 16px; border-radius: 8px;
+        background: #fff5f5; border: 1px solid rgba(220,53,69,.3);
+        color: #dc3545; font-size: 13px; font-weight: 600; margin-bottom: 18px;
+    }
+    .field-error { font-size: 11px; color: #dc3545; font-weight: 500; }
+</style>
+
+<div class="duty-shell">
+
+    <!-- Header -->
+    <div class="duty-header">
+        <h1 class="duty-title">Create Duty / Position Account</h1>
+        <p class="duty-subtitle">Select a role to provision a new duty account with the appropriate access.</p>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-success">✓ @TempData["SuccessMessage"]</div>
+    }
+    @if (!ModelState.IsValid && ModelState.ErrorCount > 0)
+    {
+        <div class="alert-error">
+            @foreach (var err in ModelState.Values.SelectMany(v => v.Errors))
+            { <div>• @err.ErrorMessage</div> }
+        </div>
+    }
+
+    <!-- Step 1: Role Selection -->
+    <div class="role-cards">
+
+        <!-- HR Manager -->
+        <div class="role-card @(Model.SelectedRole == "HR Manager" ? "selected" : "")"
+             onclick="selectRole('HR Manager', this)">
+            <div class="role-card-icon">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+            </div>
+            <div class="role-card-label">HR Manager</div>
+            <div class="role-card-desc">Manages HR workflows, resignations, and transfers for a branch</div>
+            <div class="role-card-check">
+                <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Area Manager -->
+        <div class="role-card @(Model.SelectedRole == "Area Manager" ? "selected" : "")"
+             onclick="selectRole('Area Manager', this)">
+            <div class="role-card-icon">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+            </div>
+            <div class="role-card-label">Area Manager</div>
+            <div class="role-card-desc">Oversees multiple branches within a geographic area</div>
+            <div class="role-card-check">
+                <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Branch Manager -->
+        <div class="role-card @(Model.SelectedRole == "Branch Manager" ? "selected" : "")"
+             onclick="selectRole('Branch Manager', this)">
+            <div class="role-card-icon">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+            </div>
+            <div class="role-card-label">Branch Manager</div>
+            <div class="role-card-desc">Manages day-to-day operations and approvals for a single branch</div>
+            <div class="role-card-check">
+                <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Department Head -->
+        <div class="role-card @(Model.SelectedRole == "Department Head" ? "selected" : "")"
+             onclick="selectRole('Department Head', this)">
+            <div class="role-card-icon">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="19" y1="8" x2="23" y2="8"/>
+                    <line x1="19" y1="12" x2="23" y2="12"/>
+                    <line x1="19" y1="16" x2="23" y2="16"/>
+                </svg>
+            </div>
+            <div class="role-card-label">Department Head</div>
+            <div class="role-card-desc">Approves transfer requests for a department within a branch</div>
+            <div class="role-card-check">
+                <svg viewBox="0 0 24 24" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Step 2: Dynamic Form (shown after role selection) -->
+    <form method="post" id="dutyForm">
+        <div asp-validation-summary="All"></div>
+        <input type="hidden" id="selectedRoleInput" name="SelectedRole" value="@Model.SelectedRole" />
+
+        <!-- Common: Date of Joining -->
+        <div style="margin-bottom:20px;background:#fff;border:1px solid #e2e5dc;border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px">
+            <div style="flex:1">
+                <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:6px">
+                    Date of Joining <span style="color:#ef4444">*</span>
+                </label>
+                <input type="date" name="DateOfJoining"
+                       value="@Model.DateOfJoining.ToString("yyyy-MM-dd")"
+                       max="@DateTime.Today.ToString("yyyy-MM-dd")"
+                       required
+                       style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#374151;width:200px" />
+                <div style="font-size:11px;color:#9ca3af;margin-top:4px">The employee's actual hire / joining date — used to calculate years of service.</div>
+            </div>
+        </div>
+
+        <!-- HR Manager Panel -->
+        <div class="form-panel @(Model.SelectedRole == "HR Manager" ? "visible" : "")" id="panel-HR Manager">
+            <div class="form-panel-header">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+                <div class="form-panel-header-text">
+                    <h3>HR Manager Account</h3>
+                    <p>Assign a branch and department. All other details are auto-generated.</p>
+                </div>
+            </div>
+            <div class="form-panel-body">
+                <div class="info-banner">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p>A login email and temporary password will be generated automatically and sent as a notification.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Branch <span class="required-mark">*</span></label>
+                        @if (Model.HRManagerBranchList.Count == 0)
+                        {
+                            <p style="color:#7a8863; font-size:13px; padding: 8px 0;">All branches already have an HR Manager assigned.</p>
+                        }
+                        else
+                        {
+                        <select name="BranchId" id="branchSelectHR" style="display:none">
+                            <option value="">Select Branch</option>
+                            @foreach (var b in Model.HRManagerBranchList)
+                            {
+                                if (Model.BranchId.HasValue && Model.BranchId.Value.ToString() == b.Value)
+                                { <option value="@b.Value" selected>@b.Text</option> }
+                                else
+                                { <option value="@b.Value">@b.Text</option> }
+                            }
+                        </select>
+                        <div class="custom-dropdown" id="branchDropdownHR">
+                            <div class="custom-dropdown-trigger" id="branchTriggerHR">
+                                <span id="branchTriggerTextHR">Select Branch</span>
+                                <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div class="custom-dropdown-list" id="branchListHR">
+                                <div class="dh-search-box">
+                                    <svg class="dh-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    <input type="text" id="branchSearchHR" class="dh-search-input" placeholder="Search branch…" autocomplete="off" />
+                                </div>
+                                <div class="custom-dropdown-option" data-value="">Select Branch</div>
+                                @foreach (var b in Model.HRManagerBranchList)
+                                {
+                                    <div class="custom-dropdown-option" data-value="@b.Value">@b.Text</div>
+                                }
+                                <div class="dh-no-results" id="branchNoResultsHR" style="display:none">No branches found.</div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Employees" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-create">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    Create HR Manager Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Area Manager Panel -->
+        <div class="form-panel @(Model.SelectedRole == "Area Manager" ? "visible" : "")" id="panel-Area Manager">
+            <div class="form-panel-header">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
+                <div class="form-panel-header-text">
+                    <h3>Area Manager Account</h3>
+                    <p>Assign the branches this area manager will oversee.</p>
+                </div>
+            </div>
+            <div class="form-panel-body">
+                <div class="info-banner">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p>Area Managers span multiple branches. Select all branches under this account's responsibility.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Area Name <span class="required-mark">*</span></label>
+                        <input type="text" name="AreaName" value="@Model.AreaName"
+                               class="form-control" placeholder="e.g. Central Province" />
+                        <span class="field-error">@Html.ValidationMessage("AreaName")</span>
+                    </div>
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Managed Branches <span class="required-mark">*</span></label>
+                        <div class="branch-checklist">
+                            @if (Model.AreaManagerBranchList.Count == 0)
+                            {
+                                <p style="color:#7a8863; font-size:13px; padding: 8px 0;">All branches are already assigned to area managers.</p>
+                            }
+                            @foreach (var b in Model.AreaManagerBranchList)
+                            {
+                                <label class="branch-check-item">
+                                    <input type="checkbox" name="ManagedBranchIds" value="@b.Value"
+                                           @(Model.ManagedBranchIds.Contains(int.Parse(b.Value)) ? "checked" : "") />
+                                    @b.Text
+                                </label>
+                            }
+                        </div>
+                        <span style="font-size:11px; color:#7a8863; margin-top:4px;">Select one or more branches.</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Employees" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-create">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    Create Area Manager Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Branch Manager Panel -->
+        <div class="form-panel @(Model.SelectedRole == "Branch Manager" ? "visible" : "")" id="panel-Branch Manager">
+            <div class="form-panel-header">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="3" y1="9" x2="21" y2="9"/>
+                    <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+                <div class="form-panel-header-text">
+                    <h3>Branch Manager Account</h3>
+                    <p>Assign the branch this manager is responsible for.</p>
+                </div>
+            </div>
+            <div class="form-panel-body">
+                <div class="info-banner">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p>This account will have approval authority for resignations, transfers, and more within the assigned branch.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Branch <span class="required-mark">*</span></label>
+                        @if (Model.BranchManagerBranchList.Count == 0)
+                        {
+                            <p style="color:#7a8863; font-size:13px; padding: 8px 0;">All branches already have a Branch Manager assigned.</p>
+                        }
+                        else
+                        {
+                        <select name="BranchId" id="branchSelectBM" style="display:none">
+                            <option value="">Select Branch</option>
+                            @foreach (var b in Model.BranchManagerBranchList)
+                            {
+                                if (Model.BranchId.HasValue && Model.BranchId.Value.ToString() == b.Value)
+                                { <option value="@b.Value" selected>@b.Text</option> }
+                                else
+                                { <option value="@b.Value">@b.Text</option> }
+                            }
+                        </select>
+                        <div class="custom-dropdown" id="branchDropdownBM">
+                            <div class="custom-dropdown-trigger" id="branchTriggerBM">
+                                <span id="branchTriggerTextBM">Select Branch</span>
+                                <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div class="custom-dropdown-list" id="branchListBM">
+                                <div class="dh-search-box">
+                                    <svg class="dh-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                    <input type="text" id="branchSearchBM" class="dh-search-input" placeholder="Search branch…" autocomplete="off" />
+                                </div>
+                                <div class="custom-dropdown-option" data-value="">Select Branch</div>
+                                @foreach (var b in Model.BranchManagerBranchList)
+                                {
+                                    <div class="custom-dropdown-option" data-value="@b.Value">@b.Text</div>
+                                }
+                                <div class="dh-no-results" id="branchNoResultsBM" style="display:none">No branches found.</div>
+                            </div>
+                        </div>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Employees" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-create">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    Create Branch Manager Account
+                </button>
+            </div>
+        </div>
+
+        <!-- Department Head Panel -->
+        <div class="form-panel @(Model.SelectedRole == "Department Head" ? "visible" : "")" id="panel-Department Head">
+            <div class="form-panel-header">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                    <circle cx="9" cy="7" r="4"/>
+                    <line x1="19" y1="8" x2="23" y2="8"/>
+                    <line x1="19" y1="12" x2="23" y2="12"/>
+                    <line x1="19" y1="16" x2="23" y2="16"/>
+                </svg>
+                <div class="form-panel-header-text">
+                    <h3>Department Head Account</h3>
+                    <p>Assign a branch and department. This account approves transfers at the departmental level.</p>
+                </div>
+            </div>
+            <div class="form-panel-body">
+                <div class="info-banner">
+                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <p>One Department Head is allowed per branch-department combination. Login credentials will be generated automatically.</p>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group col-span-2">
+                        <label class="form-label">Branch &amp; Department <span class="required-mark">*</span></label>
+                        @if (Model.DeptHeadBranchGroups.Count == 0)
+                        {
+                            <p style="color:#7a8863; font-size:13px; padding: 8px 0;">All branch-department combinations already have a Department Head assigned.</p>
+                        }
+                        else
+                        {
+                        <select name="DeptHeadBranchDeptId" id="deptHeadSelect" style="display:none">
+                            <option value="">Select Branch &amp; Department</option>
+                            @foreach (var item in Model.DeptHeadBranchDeptList)
+                            {
+                                if (Model.DeptHeadBranchDeptId.HasValue && Model.DeptHeadBranchDeptId.Value.ToString() == item.Value)
+                                { <option value="@item.Value" selected>@item.Text</option> }
+                                else
+                                { <option value="@item.Value">@item.Text</option> }
+                            }
+                        </select>
+                        <div class="custom-dropdown" id="deptHeadDropdown">
+                            <div class="custom-dropdown-trigger" id="deptHeadTrigger">
+                                <span id="deptHeadTriggerText">Select Branch &amp; Department</span>
+                                <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div class="custom-dropdown-list" id="deptHeadList">
+                                <!-- Sticky header: search + back row -->
+                                <div class="dh-sticky-header">
+                                    <div class="dh-search-box">
+                                        <svg class="dh-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                        <input type="text" id="deptHeadSearch" class="dh-search-input" placeholder="Search branch or department…" autocomplete="off" />
+                                    </div>
+                                    <div class="dh-back-row" id="deptHeadBackRow" style="display:none">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                                        <span id="deptHeadActiveBranch"></span>
+                                    </div>
+                                </div>
+                                <!-- Level 1: Branch list -->
+                                <div id="deptHeadBranchPanel">
+                                    @foreach (var group in Model.DeptHeadBranchGroups)
+                                    {
+                                        <div class="dh-branch-row" data-branch="@group.BranchName" data-search="@group.BranchName.ToLower()">
+                                            <span>@group.BranchName</span>
+                                            <svg class="dh-arrow-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                                        </div>
+                                    }
+                                    <div class="dh-no-results" id="deptHeadBranchNoResults" style="display:none">No branches found.</div>
+                                </div>
+                                <!-- Level 2: Department list (JS-populated) -->
+                                <div id="deptHeadDeptPanel" style="display:none">
+                                    <div id="deptHeadDeptItems"></div>
+                                    <div class="dh-no-results" id="deptHeadDeptNoResults" style="display:none">No departments found.</div>
+                                </div>
+                            </div>
+                        </div>
+                        }
+                        <span class="field-error">@Html.ValidationMessage("DeptHeadBranchDeptId")</span>
+                    </div>
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="/Employees" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-create">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/>
+                        <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+                    </svg>
+                    Create Department Head Account
+                </button>
+            </div>
+        </div>
+
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder, searchInputId, noResultsId }) {
+        const select      = document.getElementById(selectId);
+        const trigger     = document.getElementById(triggerId);
+        const list        = document.getElementById(listId);
+        const triggerText = document.getElementById(triggerTextId);
+        const options     = list.querySelectorAll('.custom-dropdown-option');
+        const groupHdrs   = list.querySelectorAll('.custom-dropdown-group-header');
+        const searchInput = searchInputId ? document.getElementById(searchInputId) : null;
+        const noResults   = noResultsId   ? document.getElementById(noResultsId)   : null;
+
+        function closeDropdown() {
+            list.classList.remove('open');
+            trigger.classList.remove('open');
+            if (searchInput) {
+                searchInput.value = '';
+                options.forEach(o => o.style.display = '');
+                groupHdrs.forEach(h => h.style.display = '');
+                if (noResults) noResults.style.display = 'none';
+            }
+        }
+
+        trigger.addEventListener('click', function () {
+            document.querySelectorAll('.custom-dropdown-list.open').forEach(function (l) {
+                if (l !== list) { l.classList.remove('open'); l.previousElementSibling.classList.remove('open'); }
+            });
+            const isOpen = list.classList.contains('open');
+            list.classList.toggle('open', !isOpen);
+            trigger.classList.toggle('open', !isOpen);
+            if (!isOpen && searchInput) setTimeout(() => searchInput.focus(), 50);
+        });
+
+        if (searchInput) {
+            searchInput.addEventListener('click', e => e.stopPropagation());
+            searchInput.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                let anyVisible = false;
+                if (groupHdrs.length > 0) {
+                    groupHdrs.forEach(function (hdr) {
+                        const branchMatch = !q || hdr.dataset.branch.includes(q);
+                        let hasVis = false;
+                        let sib = hdr.nextElementSibling;
+                        while (sib && !sib.classList.contains('custom-dropdown-group-header')) {
+                            if (sib.classList.contains('custom-dropdown-option') && sib.dataset.value) {
+                                const show = branchMatch || sib.dataset.dept.includes(q);
+                                sib.style.display = show ? '' : 'none';
+                                if (show) { hasVis = true; anyVisible = true; }
+                            }
+                            sib = sib.nextElementSibling;
+                        }
+                        hdr.style.display = hasVis ? '' : 'none';
+                    });
+                    options.forEach(o => { if (!o.dataset.value) o.style.display = q ? 'none' : ''; });
+                } else {
+                    options.forEach(function (opt) {
+                        if (!opt.dataset.value) { opt.style.display = 'none'; return; }
+                        const match = !q || opt.textContent.toLowerCase().includes(q);
+                        opt.style.display = match ? '' : 'none';
+                        if (match) anyVisible = true;
+                    });
+                }
+                if (noResults) noResults.style.display = anyVisible ? 'none' : '';
+            });
+        }
+
+        options.forEach(function (opt) {
+            opt.addEventListener('click', function () {
+                const value = this.dataset.value;
+                select.value = value;
+                triggerText.textContent = value ? this.textContent.trim() : placeholder;
+                options.forEach(o => o.classList.remove('selected'));
+                if (value) this.classList.add('selected');
+                closeDropdown();
+                select.dispatchEvent(new Event('change'));
+            });
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById(dropdownId).contains(e.target)) closeDropdown();
+        });
+
+        if (select.value) {
+            const pre = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
+            if (pre) { triggerText.textContent = pre.textContent.trim(); pre.classList.add('selected'); }
+        }
+    }
+
+    function setHiddenPanelInputsDisabled() {
+        document.querySelectorAll('.form-panel').forEach(p => {
+            const isVisible = p.classList.contains('visible');
+            p.querySelectorAll('input, select').forEach(el => { el.disabled = !isVisible; });
+        });
+    }
+
+    function selectRole(role, card) {
+        document.querySelectorAll('.custom-dropdown-list.open').forEach(l => {
+            l.classList.remove('open'); l.previousElementSibling.classList.remove('open');
+        });
+        document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        document.getElementById('selectedRoleInput').value = role;
+        document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('visible'));
+        const panel = document.getElementById('panel-' + role);
+        if (panel) {
+            panel.classList.add('visible');
+            setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+        }
+        setHiddenPanelInputsDisabled();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        setHiddenPanelInputsDisabled();
+
+        if (document.getElementById('branchSelectHR'))
+            initCustomDropdown({ selectId: 'branchSelectHR', triggerId: 'branchTriggerHR', listId: 'branchListHR', triggerTextId: 'branchTriggerTextHR', dropdownId: 'branchDropdownHR', placeholder: 'Select Branch', searchInputId: 'branchSearchHR', noResultsId: 'branchNoResultsHR' });
+
+        if (document.getElementById('branchSelectBM'))
+            initCustomDropdown({ selectId: 'branchSelectBM', triggerId: 'branchTriggerBM', listId: 'branchListBM', triggerTextId: 'branchTriggerTextBM', dropdownId: 'branchDropdownBM', placeholder: 'Select Branch', searchInputId: 'branchSearchBM', noResultsId: 'branchNoResultsBM' });
+
+        if (document.getElementById('deptHeadSelect'))
+            initDeptHeadDropdown();
+    });
+
+    document.getElementById('dutyForm').addEventListener('submit', setHiddenPanelInputsDisabled);
+
+    var deptHeadGroups = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+        Model.DeptHeadBranchGroups.Select(g => new {
+            branchName = g.BranchName,
+            departments = g.Departments.Select(d => new { value = d.Value, text = d.Text })
+        })
+    ));
+
+    function initDeptHeadDropdown() {
+        var select          = document.getElementById('deptHeadSelect');
+        var trigger         = document.getElementById('deptHeadTrigger');
+        var list            = document.getElementById('deptHeadList');
+        var triggerText     = document.getElementById('deptHeadTriggerText');
+        var branchPanel     = document.getElementById('deptHeadBranchPanel');
+        var deptPanel       = document.getElementById('deptHeadDeptPanel');
+        var branchLabel     = document.getElementById('deptHeadActiveBranch');
+        var deptItems       = document.getElementById('deptHeadDeptItems');
+        var backRow         = document.getElementById('deptHeadBackRow');
+        var searchInput     = document.getElementById('deptHeadSearch');
+        var branchNoResults = document.getElementById('deptHeadBranchNoResults');
+        var deptNoResults   = document.getElementById('deptHeadDeptNoResults');
+
+        function filterBranches(q) {
+            var any = false;
+            branchPanel.querySelectorAll('.dh-branch-row').forEach(function (row) {
+                var match = !q || row.dataset.search.includes(q);
+                row.style.display = match ? '' : 'none';
+                if (match) any = true;
+            });
+            branchNoResults.style.display = any ? 'none' : '';
+        }
+
+        function filterDepts(q) {
+            var any = false;
+            deptItems.querySelectorAll('.custom-dropdown-option').forEach(function (opt) {
+                var match = !q || opt.textContent.toLowerCase().includes(q);
+                opt.style.display = match ? '' : 'none';
+                if (match) any = true;
+            });
+            deptNoResults.style.display = any ? 'none' : '';
+        }
+
+        function resetToLevel1() {
+            searchInput.value = '';
+            filterBranches('');
+            backRow.style.display = 'none';
+            branchPanel.style.display = '';
+            deptPanel.style.display = 'none';
+            deptItems.innerHTML = '';
+        }
+
+        function closeDropdown() {
+            list.classList.remove('open');
+            trigger.classList.remove('open');
+            resetToLevel1();
+        }
+
+        trigger.addEventListener('click', function () {
+            document.querySelectorAll('.custom-dropdown-list.open').forEach(function (l) {
+                if (l !== list) { l.classList.remove('open'); l.previousElementSibling.classList.remove('open'); }
+            });
+            var isOpen = list.classList.contains('open');
+            list.classList.toggle('open', !isOpen);
+            trigger.classList.toggle('open', !isOpen);
+            if (!isOpen) setTimeout(function () { searchInput.focus(); }, 50);
+        });
+
+        searchInput.addEventListener('click', function (e) { e.stopPropagation(); });
+        searchInput.addEventListener('input', function () {
+            var q = this.value.trim().toLowerCase();
+            if (deptPanel.style.display === 'none') {
+                filterBranches(q);
+            } else {
+                filterDepts(q);
+            }
+        });
+
+        document.querySelectorAll('#deptHeadBranchPanel .dh-branch-row').forEach(function (row) {
+            row.addEventListener('click', function () {
+                var branchName = this.dataset.branch;
+                var group = deptHeadGroups.find(function (g) { return g.branchName === branchName; });
+                if (!group) return;
+                branchLabel.textContent = branchName;
+                searchInput.value = '';
+                deptItems.innerHTML = '';
+                group.departments.forEach(function (dept) {
+                    var div = document.createElement('div');
+                    div.className = 'custom-dropdown-option' + (select.value === dept.value ? ' selected' : '');
+                    div.dataset.value = dept.value;
+                    div.textContent = dept.text;
+                    div.addEventListener('click', function () {
+                        select.value = dept.value;
+                        triggerText.textContent = branchName + ' — ' + dept.text;
+                        closeDropdown();
+                        select.dispatchEvent(new Event('change'));
+                    });
+                    deptItems.appendChild(div);
+                });
+                deptNoResults.style.display = 'none';
+                backRow.style.display = '';
+                branchPanel.style.display = 'none';
+                deptPanel.style.display = '';
+                setTimeout(function () { searchInput.focus(); }, 50);
+            });
+        });
+
+        backRow.addEventListener('click', function () {
+            resetToLevel1();
+            setTimeout(function () { searchInput.focus(); }, 50);
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!document.getElementById('deptHeadDropdown').contains(e.target)) closeDropdown();
+        });
+
+        if (select.value) {
+            deptHeadGroups.forEach(function (g) {
+                g.departments.forEach(function (d) {
+                    if (d.value === select.value)
+                        triggerText.textContent = g.branchName + ' — ' + d.text;
+                });
+            });
+        }
+    }
+</script>
+}

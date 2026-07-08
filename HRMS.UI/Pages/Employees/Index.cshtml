@@ -6,56 +6,689 @@
     ViewData["ActiveNav"] = "Employees";
 }
 
-<style>
-    .emp-container { padding: 24px; }
-    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .btn-primary { 
-        background: #10823c; color: white; padding: 10px 16px; 
-        border: none; border-radius: 8px; text-decoration: none; 
-        font-weight: 600; font-size: 14px; 
-    }
-    .emp-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .emp-table th, .emp-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e2e5dc; }
-    .emp-table th { background: #f6f8f7; color: #7a8863; font-size: 13px; text-transform: uppercase; }
-    .emp-table tr:hover { background: #fafafa; }
-</style>
+@section Styles {
+    <style>
+        :root {
+            --primary-green: #10823c;
+            --bg-light: #f6f8f7;
+            --border-color: #e2e5dc;
+            --text-main: #151811;
+            --text-muted: #7a8863;
+        }
 
-<div class="emp-container">
-    <div class="header-row">
-        <h2>Employee Directory</h2>
-        <a href="/Employees/Create" class="btn-primary">+ Add New Employee</a>
+        .dashboard-container {
+            /* Now full width to prevent gaps on zoom out */
+            position: relative; /* Context for absolute positioning if needed */
+        }
+
+        .main-content {
+            background-color: white;
+            padding: 26px;
+            min-height: calc(100vh - 62px); /* Ensure it stretches to the bottom */
+        }
+
+        .btn-create {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 9px 17px;
+            border-radius: 6px;
+            font-family: 'Manrope', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+            transition: background 0.2s;
+        }
+
+        .btn-create:hover {
+            background-color: #0d6e32;
+            color: white;
+        }
+
+        /* Tabs Container */
+        .tabs-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 19px;
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 5;
+        }
+
+        .tabs-list {
+            display: flex;
+            gap: 26px;
+        }
+
+        .tab {
+            padding: 10px 0 11px 0;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 2px solid transparent;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            color: var(--primary-green);
+            border-bottom-color: var(--primary-green);
+        }
+
+        .tab-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 9999px;
+        }
+
+        .tab-badge.grey { background: #e5e7eb; color: var(--text-main); }
+        .tab-badge.yellow { background: #fef3c7; color: #b45309; }
+        .tab-badge.red { background: #fee2e2; color: #b91c1c; }
+        .tab-badge.blue { background: #dbeafe; color: #1d4ed8; }
+
+        /* Table Card */
+        .table-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 19px;
+        }
+
+        .emp-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .emp-table th {
+            background: #f9fafb;
+            padding: 13px 19px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-muted);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .emp-table td {
+            padding: 13px 19px;
+            vertical-align: center;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        .emp-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Employee Cell */
+        .employee-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #e8f3ec;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary-green);
+            flex-shrink: 0;
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .emp-info .name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: block;
+        }
+
+        .emp-info .email {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .emp-id {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .emp-dept {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        /* Status Badges */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2px 9px;
+            border-radius: 9999px;
+            font-size: 11.5px;
+            font-weight: 700;
+            border: 1px solid transparent;
+        }
+
+        .status-badge .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .badge-active {
+            background: #dbeafe; /* As per Figma context line 416 */
+            border-color: #bbf7d0;
+            color: #10823c;
+        }
+        .badge-active .dot { background: #22c55e; }
+
+        .badge-leave {
+            background: #fef3c7;
+            border-color: #fde68a;
+            color: #b45309;
+        }
+        .badge-leave .dot { background: #f59e0b; }
+
+        .badge-inactive {
+            background: #fffbeb;
+            border-color: #e5e7eb;
+            color: #374151;
+        }
+        .badge-inactive .dot { background: #9ca3af; }
+
+        .badge-draft {
+            background: #fef3c7;
+            border-color: #fde68a;
+            color: #b45309;
+        }
+        .badge-draft .dot { background: #f59e0b; }
+
+        .btn-resume {
+            color: var(--primary-green);
+            font-size: 12px;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 4px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .btn-resume:hover { background: #e8f3ec; }
+
+        .btn-delete-draft {
+            color: #b91c1c;
+            font-size: 12px;
+            font-weight: 700;
+            background: none;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Manrope', sans-serif;
+            transition: background 0.2s;
+        }
+        .btn-delete-draft:hover { background: #fee2e2; }
+
+        .draft-info {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Document Approval Table */
+        .doc-appr-table { width: 100%; border-collapse: collapse; }
+        .doc-appr-table th { background: #f9fafb; padding: 12px 16px; text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.4px; }
+        .doc-appr-table td { padding: 13px 16px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 13px; }
+        .doc-appr-table tbody tr:last-child td { border-bottom: none; }
+        .doc-appr-table tbody tr:hover { background: #fafafa; }
+
+        .doc-type-pill { display: inline-block; padding: 2px 9px; border-radius: 6px; font-size: 11px; font-weight: 700; background: #f1f5f9; color: #475569; }
+        .doc-date-txt { font-size: 12px; color: var(--text-muted); }
+        .doc-fname { font-weight: 600; color: var(--text-main); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+
+        .btn-review {
+            color: var(--primary-green);
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+        .btn-review:hover {
+            background: #e8f3ec;
+        }
+
+
+        /* Action Buttons */
+        .btn-view {
+            color: var(--primary-green);
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            transition: background 0.2s;
+        }
+
+        .btn-view:hover {
+            background: #e8f3ec;
+        }
+
+        /* Pagination */
+        .pagination-container {
+            background: #f9fafb;
+            padding: 13px 19px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .pagination-info {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 6px;
+        }
+
+        .pg-btn {
+            padding: 4px 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background: white;
+            font-size: 13px;
+            color: var(--text-main);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .pg-btn.active {
+            background: var(--primary-green);
+            color: white;
+            border-color: var(--primary-green);
+            box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .pg-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+}
+
+<div class="dashboard-container">
+    <div class="main-content">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div id="successBanner" style="background: #ecfdf5; color: #065f46; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #10b981; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1); display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: #10b981; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+                <button type="button" onclick="document.getElementById('successBanner').style.display='none'" style="background: rgba(16, 185, 129, 0.1); border: none; color: #047857; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s;" onmouseover="this.style.background='rgba(16, 185, 129, 0.2)'" onmouseout="this.style.background='rgba(16, 185, 129, 0.1)'">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        }
+        <div class="tabs-container">
+            <div class="tabs-list">
+                <a class="tab @(Model.Tab == "directory" ? "active" : "")" href="?tab=directory">
+                    Employee Directory
+                    <span class="tab-badge grey">@Model.TotalEmployees</span>
+                </a>
+                @if (!User.IsInRole("Area Manager") && !User.IsInRole("Branch Manager"))
+                {
+                <a class="tab @(Model.Tab == "drafts" ? "active" : "")" href="?tab=drafts">
+                    Drafted Records
+                    <span class="tab-badge yellow">@Model.DraftCount</span>
+                </a>
+                }
+                <a class="tab @(Model.Tab == "documents" ? "active" : "")" href="?tab=documents">
+                    Pending Document Approvals
+                    <span class="tab-badge red">@Model.PendingApprovals</span>
+                </a>
+                <a class="tab">
+                    Employee Requests
+                    <span class="tab-badge blue">@Model.RequestCount</span>
+                </a>
+            </div>
+            
+            @if (User.IsInRole("HR Manager"))
+            {
+            <a href="/Employees/Create" class="btn-create">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Create Employee
+            </a>
+            }
+        </div>
+
+    <!-- ── EMPLOYEE DIRECTORY TAB ── -->
+    <div class="tab-panel @(Model.Tab == "directory" ? "active" : "")">
+        <div class="table-card">
+            <table class="emp-table" style="table-layout:fixed;">
+                <colgroup>
+                    <col style="width:32%;" />  <!-- Employee name + avatar -->
+                    <col style="width:16%;" />  <!-- ID -->
+                    <col style="width:22%;" />  <!-- Department -->
+                    <col style="width:18%;" />  <!-- Employee Type -->
+                    <col style="width:12%;" />  <!-- Actions -->
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>ID</th>
+                        <th>Department</th>
+                        <th>Employee Type</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var emp in Model.EmployeeList)
+                    {
+                        <tr>
+                            <td>
+                                <div class="employee-cell">
+                                    <div class="avatar-circle">
+                                        @{
+                                            var nameParts = emp.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                            var avatarChars = nameParts.Length > 1 
+                                                ? $"{nameParts[0][0]}{nameParts[^1][0]}" 
+                                                : (nameParts.Length == 1 ? nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)) : "U");
+                                        }
+                                        @avatarChars.ToUpper()
+                                    </div>
+                                    <div class="emp-info">
+                                        <span class="name">@(string.IsNullOrEmpty(emp.Initials) ? emp.FullName : emp.Initials)</span>
+                                        <span class="email">@emp.Email</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="emp-id">EMP-@emp.Id.ToString("D5")</span>
+                            </td>
+                            <td>
+                                <span class="emp-dept">@(emp.Department?.Name ?? "-")</span>
+                            </td>
+                            <td>
+                                @{
+                                    var typeClass = emp.EmployeeType switch
+                                    {
+                                        "Permanent" => "badge-active",
+                                        "Probationary" => "badge-leave",
+                                        "Intern" => "badge-draft",
+                                        _ => "badge-active"
+                                    };
+                                }
+                                <div class="status-badge @typeClass">
+                                    <span class="dot"></span>
+                                    @(string.IsNullOrEmpty(emp.EmployeeType) ? "Unknown" : emp.EmployeeType)
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                <a href="/Employees/Details/@emp.Id" class="btn-view">View Profile</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <div class="pagination-container">
+                <div class="pagination-info">
+                    Showing @((Model.PageNumber - 1) * IndexModel.PageSize + 1)–@(Math.Min(Model.PageNumber * IndexModel.PageSize, Model.TotalEmployees)) of @Model.TotalEmployees employees
+                </div>
+                <div class="pagination-buttons">
+                    @{
+                        var prevPage = Model.PageNumber - 1;
+                        var nextPage = Model.PageNumber + 1;
+                        int startPage = Math.Max(1, Model.PageNumber - 2);
+                        int endPage   = Math.Min(Model.TotalPages, startPage + 4);
+                        if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
+                    }
+                    @if (Model.PageNumber <= 1)
+                    {
+                        <span class="pg-btn disabled">← Prev</span>
+                    }
+                    else
+                    {
+                        <a class="pg-btn" href="?tab=directory&pageNumber=@prevPage">← Prev</a>
+                    }
+
+                    @for (int p = startPage; p <= endPage; p++)
+                    {
+                        if (p == Model.PageNumber)
+                        {
+                            <span class="pg-btn active">@p</span>
+                        }
+                        else
+                        {
+                            <a class="pg-btn" href="?tab=directory&pageNumber=@p">@p</a>
+                        }
+                    }
+
+                    @if (Model.PageNumber >= Model.TotalPages)
+                    {
+                        <span class="pg-btn disabled">Next →</span>
+                    }
+                    else
+                    {
+                        <a class="pg-btn" href="?tab=directory&pageNumber=@nextPage">Next →</a>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
 
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div style="background: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: 600;">
-            @TempData["SuccessMessage"]
-        </div>
-    }
+    <!-- ── DRAFTED RECORDS TAB ── -->
+    <div class="tab-panel @(Model.Tab == "drafts" ? "active" : "")">
+        @if (Model.DraftList.Count == 0)
+        {
+            <div style="text-align:center; padding:48px 0;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e5dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <p style="font-size:14px; font-weight:600; color:var(--text-main); margin-bottom:4px;">No drafted records</p>
+                <p style="font-size:12px; color:var(--text-muted);">Drafted employee profiles will appear here when you save a form without completing it.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-card">
+                <table class="emp-table" id="tbl-drafts" style="table-layout:fixed;">
+                    <colgroup>
+                        <col style="width:32%;" />  <!-- Employee name + avatar -->
+                        <col style="width:16%;" />  <!-- Temporary ID -->
+                        <col style="width:22%;" />  <!-- Last Updated -->
+                        <col style="width:18%;" />  <!-- Completion Status -->
+                        <col style="width:12%;" />  <!-- Actions -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Temporary ID</th>
+                            <th>Last Updated</th>
+                            <th>Completion Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var draft in Model.DraftList)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle" style="background:#fef3c7; color:#b45309;">
+                                            @{
+                                                var dParts = draft.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+                                                var dChars = dParts.Length > 1 
+                                                    ? $"{dParts[0][0]}{dParts[^1][0]}" 
+                                                    : (dParts.Length == 1 ? dParts[0].Substring(0, Math.Min(2, dParts[0].Length)) : "?");
+                                            }
+                                            @dChars.ToUpper()
+                                        </div>
+                                        <div class="emp-info">
+                                            <span class="name">@(string.IsNullOrEmpty(draft.Initials) ? "Unknown Draft" : draft.Initials)</span>
+                                            <span class="draft-info">@(draft.EmployeeType ?? "No type") · @(draft.NIC ?? "No NIC")</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="emp-id" style="color:var(--text-muted);">TEMP-@draft.Id.ToString("D4")</span>
+                                </td>
+                                <td>
+                                    <span class="draft-info">@(draft.LastUpdated?.ToString("dd MMM yyyy, hh:mm tt") ?? "-")</span>
+                                </td>
+                                <td>
+                                    @{
+                                        int filled = 0;
+                                        int total = 17; // Adjust based on required fields in final form
+                                        if (!string.IsNullOrEmpty(draft.FullName)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.Initials)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.Sex)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.EmployeeType)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.NIC)) filled++;
+                                        if (draft.DateOfBirth.HasValue) filled++;
+                                        if (draft.DateJoined.HasValue) filled++;
+                                        if (!string.IsNullOrEmpty(draft.Email)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.PhoneNumber)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.ResidentialAddress)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.EPFNumber)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.ETFNumber)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.BankAccountName)) filled++;
+                                        if (!string.IsNullOrEmpty(draft.BankAccountNumber)) filled++;
+                                        if (draft.DesignationId.HasValue) filled++;
+                                        if (draft.DepartmentId.HasValue) filled++;
+                                        if (draft.BranchId.HasValue) filled++;
+                                        
+                                        int percentage = (int)Math.Round((double)filled / total * 100);
+                                        string color = percentage < 50 ? "#dc2626" : percentage < 80 ? "#d97706" : "#16a34a";
+                                    }
+                                    <div style="display:flex; align-items:center; gap:8px;">
+                                        <div style="width: 80px; height: 6px; background: #e5e7eb; border-radius: 4px; overflow: hidden;">
+                                            <div style="width: @percentage%; height: 100%; background: @color;"></div>
+                                        </div>
+                                        <span style="font-size:12px; font-weight:600; color:@color;">@percentage%</span>
+                                    </div>
+                                </td>
+                                <td style="text-align: right; white-space:nowrap;">
+                                    <a href="/Employees/Create?draftId=@draft.Id" class="btn-resume">Resume</a>
+                                    <form method="post" asp-page-handler="DeleteDraft" style="display:inline;">
+                                        <input type="hidden" name="id" value="@draft.Id" />
+                                        <button type="submit" class="btn-delete-draft" onclick="return confirm('Delete this draft?');">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
 
-    <table class="emp-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Department</th>
-                <th>Designation</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var emp in Model.EmployeeList)
-            {
-                <tr>
-                    <td>@emp.Id</td>
-                    <td>@emp.FirstName @emp.LastName</td>
-                    <td>@emp.Email</td>
-                    <td>@(emp.Department?.Name ?? "-")</td>
-                    <td>@(emp.Designation?.Title ?? "-")</td>
-                    <td>@emp.Status</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        @Model.DraftList.Count drafted record(s)
+                    </div>
+                    <div class="pagination-buttons"></div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- ── PENDING DOCUMENT APPROVALS TAB ── -->
+    <div class="tab-panel @(Model.Tab == "documents" ? "active" : "")">
+        @if (Model.PendingDocumentList.Count == 0)
+        {
+            <div style="text-align:center; padding:48px 0;">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e5dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                <p style="font-size:14px; font-weight:600; color:var(--text-main); margin-bottom:4px;">No pending documents</p>
+                <p style="font-size:12px; color:var(--text-muted);">All employee document submissions have been reviewed.</p>
+            </div>
+        }
+        else
+        {
+            <div class="table-card">
+                <table class="emp-table" id="tbl-docs" style="table-layout:fixed;">
+                    <colgroup>
+                        <col style="width:28%;" />  <!-- Employee -->
+                        <col style="width:18%;" />  <!-- Document Type -->
+                        <col style="width:24%;" />  <!-- File Name -->
+                        <col style="width:20%;" />  <!-- Submitted -->
+                        <col style="width:10%;" />  <!-- Actions -->
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Document Type</th>
+                            <th>File Name</th>
+                            <th>Submitted</th>
+                            <th style="text-align:right;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in Model.PendingDocumentList)
+                        {
+                            var initials = doc.EmployeeName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var av = initials.Length > 1 ? $"{initials[0][0]}{initials[^1][0]}" : (initials.Length == 1 ? initials[0].Substring(0, Math.Min(2, initials[0].Length)) : "?");
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">@av.ToUpper()</div>
+                                        <div class="emp-info">
+                                            <span class="name">@doc.EmployeeName</span>
+                                            <span class="email">EMP-@doc.EmployeeId.ToString("D5")</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td><span class="doc-type-pill">@doc.DocumentType</span></td>
+                                <td><span class="doc-fname" title="@doc.FileName">@doc.FileName</span></td>
+                                <td><span class="doc-date-txt">@doc.UploadedAt.ToString("dd MMM yyyy, hh:mm tt")</span></td>
+                                <td style="text-align:right;">
+                                    <a href="/Employees/ReviewDocument/@doc.DocumentId" class="btn-review">Review</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+                <div style="background:#f9fafb; padding:12px 16px; border-top:1px solid var(--border-color); font-size:12px; color:var(--text-muted);">
+                    @Model.PendingDocumentList.Count pending document(s) awaiting review
+                </div>
+            </div>
+        }
+    </div>
+
+  </div> <!-- End main-content -->
 </div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-drafts', 8);
+    initTablePagination('tbl-docs', 8);
+});
+</script>
+}

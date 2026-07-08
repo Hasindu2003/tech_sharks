@@ -1,0 +1,84 @@
+@page
+@using HRMS.Domain.Entities.Death
+@model HRMS.UI.Pages.HRManager.ReviewDeathRequestsModel
+@{
+    ViewData["Title"] = "Review Death Requests (HR)";
+}
+
+<div style="margin-bottom:24px">
+    <a asp-page="/Separation/Dashboard" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px">
+        <i class="bi bi-arrow-left"></i> Back to Separation
+    </a>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Death Process Approvals</h2>
+            <p style="color:#6b7280;margin:0">Final Stage: Process final compliance and finalize death separations.</p>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="k-alert k-alert-success"><i class="bi bi-check-circle"></i> @TempData["SuccessMessage"]</div>
+}
+
+<div class="k-card" style="padding:0;overflow:hidden">
+    <table class="k-table" id="tbl-hr-death">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Employee</th>
+                <th>EPF</th>
+                <th>Date of Death</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Requests.Any())
+            {
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:32px;color:#9ca3af">
+                        <i class="bi bi-inbox" style="font-size:2rem;display:block;margin-bottom:8px"></i>
+                        No pending death requests for HR review.
+                    </td>
+                </tr>
+            }
+            else
+            {
+                foreach (var req in Model.Requests)
+                {
+                    <tr>
+                        <td style="font-weight:600">#@req.Id</td>
+                        <td>@req.EmployeeName</td>
+                        <td>@req.EpfNumber</td>
+                        <td>@req.DateOfDeath.ToString("MMM dd, yyyy")</td>
+                        <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
+                        <td>
+                            @if (req.Status == DeathRequestStatus.HRApproved)
+                            {
+                                <a asp-page="./ReviewDeath" asp-route-id="@req.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                    <i class="bi bi-gear"></i> Finalize Closure
+                                </a>
+                            }
+                            else
+                            {
+                                <a asp-page="./ReviewDeath" asp-route-id="@req.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                                    <i class="bi bi-eye"></i> Review
+                                </a>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-hr-death', 8);
+});
+</script>
+}

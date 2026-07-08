@@ -1,0 +1,106 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+@model HRMS.UI.Pages.Termination.ApprovalQueueModel
+@{
+    ViewData["Title"] = "Termination Approvals";
+}
+
+<div style="margin-bottom:24px">
+    <a asp-page="/Separation/Dashboard" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px">
+        <i class="bi bi-arrow-left"></i> Back to Separation
+    </a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Termination Approval Queue</h2>
+            <p style="color:#6b7280;font-size:0.9rem;margin:0">Review and approve or reject pending termination requests</p>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success">
+        <i class="bi bi-check-circle"></i> @successMsg
+    </div>
+}
+
+@if (Model.PendingRequests.Any())
+{
+    <div class="k-card" style="padding:0;overflow:hidden">
+        <table class="k-table" id="tbl-approval-queue">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Employee</th>
+                    <th>Type</th>
+                    <th>Effective Date</th>
+                    <th>Obligations</th>
+                    <th>Documents</th>
+                    <th>Submitted</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var req in Model.PendingRequests)
+                {
+                    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td style="font-weight:600;color:var(--text-secondary)">#@req.Id</td>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="emp-avatar">@initials</div>
+                                <div class="emp-details">
+                                    <div class="emp-name">@req.EmployeeName</div>
+                                    <div class="emp-dept">@req.EpfNumber · @req.Branch</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@req.TerminationTypeDisplay</td>
+                        <td>@req.EffectiveTerminationDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
+                            {
+                                <span class="k-badge k-badge-pending"><i class="bi bi-exclamation-triangle"></i> Has Obligations</span>
+                                @if (req.HasOverridePermission)
+                                {
+                                    <br /><span class="k-badge k-badge-info" style="margin-top:4px"><i class="bi bi-shield"></i> Override</span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="k-badge k-badge-approved"><i class="bi bi-check-circle"></i> Clear</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="k-badge k-badge-info">@req.DocumentCount file(s)</span>
+                        </td>
+                        <td>@req.CreatedDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <a asp-page="/Termination/ReviewTermination" asp-route-id="@req.Id"
+                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                <i class="bi bi-clipboard-check"></i> Review
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No pending approvals</div>
+        <div style="font-size:0.88rem">All termination requests have been reviewed</div>
+    </div>
+}
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-approval-queue', 8);
+});
+</script>
+}

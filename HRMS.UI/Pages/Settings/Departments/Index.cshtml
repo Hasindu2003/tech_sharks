@@ -6,65 +6,120 @@
     ViewData["ActiveNav"] = "Settings";
 }
 
-<style>
-    .set-container { padding: 24px; max-width: 1000px; margin: 0 auto; }
-    .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .btn-primary { background: #10823c; color: white; padding: 10px 16px; border: none; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 14px; }
-    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 16px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; font-size: 14px; }
-    .data-table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .data-table th, .data-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #e2e5dc; }
-    .data-table th { background: #f6f8f7; color: #7a8863; font-size: 13px; text-transform: uppercase; }
-    .data-table tr:hover { background: #fafafa; }
-    .action-links a { color: #10823c; text-decoration: none; font-weight: 600; margin-right: 12px; }
-    .action-links a:hover { text-decoration: underline; }
-</style>
+@section Styles {
+    <style>
+        :root {
+            --primary-green: #10823c;
+            --bg-light: #f6f8f7;
+            --border-color: #e2e5dc;
+            --text-main: #151811;
+            --text-muted: #7a8863;
+        }
+        .main-content { background-color: white; padding: 26px; min-height: calc(100vh - 62px); }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .page-header h2 { font-size: 20px; font-weight: 800; color: var(--text-main); margin-bottom: 4px; }
+        .btn-primary { background-color: var(--primary-green); color: white; padding: 9px 17px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0px 1px 2px rgba(0,0,0,0.05); transition: background 0.2s; }
+        .btn-primary:hover { background-color: #0d6e32; color: white; }
+        .btn-secondary { display: inline-flex; align-items: center; background: white; border: 1px solid var(--border-color); padding: 7px 14px; border-radius: 6px; color: var(--text-main); font-size: 13px; font-weight: 600; text-decoration: none; transition: background 0.2s; margin-bottom: 16px; }
+        .btn-secondary:hover { background: #f9fafb; color: var(--text-main); }
+        .table-card { background: white; border: 1px solid var(--border-color); border-radius: 10px; box-shadow: 0px 1px 2px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 19px; }
+        .emp-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
+        .emp-table td { padding: 13px 19px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); }
+        .emp-table tr:last-child td { border-bottom: none; }
+        .emp-table tbody tr:hover { background: #fafafa; }
+        .emp-table col.col-id      { width: 120px; }
+        .emp-table col.col-name    { width: 150px; }
+        .emp-table col.col-badges  { width: auto; }
+        .emp-table col.col-actions { width: 210px; }
+        .btn-view { color: var(--primary-green); font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
+        .btn-view:hover { background: #e8f3ec; }
+        .badge-branch { display: inline-block; background: #e8f3ec; color: #10823c; border-radius: 12px; padding: 2px 9px; font-size: 12px; font-weight: 600; margin: 2px; white-space: nowrap; }
+    </style>
+}
 
-<div class="set-container">
-    <div style="margin-bottom: 20px;">
-        <a href="/Settings" class="btn-secondary" style="margin-bottom: 16px; display: inline-block;">&larr; Back to Settings</a>
-    </div>
+<div class="dashboard-container">
+    <div class="main-content">
+        <a href="/Settings" class="btn-secondary">&larr; Back to Settings</a>
 
-    <div class="header-row">
-        <h2>Departments</h2>
-        <a href="/Settings/Departments/Create" class="btn-primary">+ Add New Department</a>
-    </div>
-
-    @if (TempData["SuccessMessage"] != null)
-    {
-        <div style="background: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 16px; font-weight: 600;">
-            @TempData["SuccessMessage"]
+        <div class="page-header">
+            <h2>Manage Departments</h2>
+            <a href="/Settings/Departments/Create" class="btn-primary">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                Add Department
+            </a>
         </div>
-    }
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Capacity</th>
-                <th>Branch</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @if (Model.Departments.Count == 0)
-            {
-                <tr><td colspan="6" style="text-align:center; color:#7a8863;">No departments found.</td></tr>
-            }
-            @foreach (var item in Model.Departments)
-            {
-                <tr>
-                    <td>@item.Id</td>
-                    <td>@item.Name</td>
-                    <td>@item.Description</td>
-                    <td>@item.Capacity</td>
-                    <td>@(item.Branch?.Name ?? "-")</td>
-                    <td class="action-links">
-                        <a href="/Settings/Departments/Edit?id=@item.Id">Edit</a>
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div id="successBanner" style="background: #ecfdf5; color: #065f46; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #10b981; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: #10b981; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    </div>
+                    <span>@TempData["SuccessMessage"]</span>
+                </div>
+                <button type="button" onclick="document.getElementById('successBanner').style.display='none'" style="background:none;border:none;color:#047857;cursor:pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        }
+
+        <div class="table-card">
+            <table class="emp-table" id="tbl-departments">
+                <colgroup>
+                    <col class="col-id" />
+                    <col class="col-name" />
+                    <col class="col-badges" />
+                    <col class="col-actions" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Assigned Branches</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Departments.Count == 0)
+                    {
+                        <tr><td colspan="4" style="text-align:center; color:#7a8863; padding: 32px 0;">No department types found.</td></tr>
+                    }
+                    @foreach (var item in Model.Departments)
+                    {
+                        <tr>
+                            <td style="font-weight: 600;">DEP-@item.Id.ToString("D4")</td>
+                            <td>@item.Name</td>
+                            <td>
+                                @if (item.BranchDepartments.Count == 0)
+                                {
+                                    <span style="color:#7a8863; font-size:12px;">Not assigned</span>
+                                }
+                                else
+                                {
+                                    @foreach (var bd in item.BranchDepartments)
+                                    {
+                                        <span class="badge-branch">@bd.Branch.Name</span>
+                                    }
+                                }
+                            </td>
+                            <td style="text-align: right; white-space: nowrap;">
+                                <a href="/Settings/Departments/Assign?id=@item.Id" class="btn-view">Assign Branches</a>
+                                <a href="/Settings/Departments/Edit?id=@item.Id" class="btn-view">Edit</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-departments', 8);
+});
+</script>
+}

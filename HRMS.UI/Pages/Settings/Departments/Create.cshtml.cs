@@ -1,96 +1,42 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using HRMS.Domain.Entities.Core;
-using HRMS.Infrastructure.Identity;
-using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Departments.Commands;
+using HRMS.Application.Common;
+using HRMS.Application.Entity.Commands;
 
 namespace HRMS.UI.Pages.Settings.Departments
 {
-    [Authorize(Roles = "Admin,HR Manager")]
+    [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ICommandHandler<CreateDepartmentCommand, Result> _handler;
 
-        public CreateModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public CreateModel(ICommandHandler<CreateDepartmentCommand, Result> handler)
         {
-            _context = context;
-            _userManager = userManager;
+            _handler = handler;
         }
 
         [BindProperty]
-        public Department NewDepartment { get; set; } = new();
+        public CreateDepartmentCommand NewDepartment { get; set; } = new();
 
-        public SelectList BranchList { get; set; } = default!;
-        public bool IsAdmin { get; set; }
-
-        public async Task<IActionResult> OnGetAsync()
-        {
-            await SetupPageDataAsync();
-            return Page();
-        }
+        public IActionResult OnGet() => Page();
 
         public async Task<IActionResult> OnPostAsync()
         {
-            await SetupPageDataAsync();
-
-            ModelState.Remove("NewDepartment.Branch");
-            ModelState.Remove("NewDepartment.Employees");
-
             if (!ModelState.IsValid)
+                return Page();
+
+            var result = await _handler.HandleAsync(NewDepartment);
+
+            if (!result.Succeeded)
             {
+                ModelState.AddModelError("NewDepartment.Name", result.Error!);
                 return Page();
             }
 
-            var user = await _userManager.GetUserAsync(User);
-            
-            if (!IsAdmin)
-            {
-                // HR Manager forces their own branch
-                if (user?.EmployeeId != null)
-                {
-                    var emp = await _context.Employees.FindAsync(user.EmployeeId);
-                    if (emp != null)
-                    {
-                        NewDepartment.BranchId = emp.BranchId;
-                    }
-                    else
-                    {
-                        ModelState.AddModelError("", "Your HR profile does not have an assigned branch. Cannot create department.");
-                        return Page();
-                    }
-                }
-                else
-                {
-                    ModelState.AddModelError("", "Your account is not linked to an HR profile. Cannot create department.");
-                    return Page();
-                }
-            }
-
-            _context.Departments.Add(NewDepartment);
-            await _context.SaveChangesAsync();
-
-            TempData["SuccessMessage"] = $"Department '{NewDepartment.Name}' created successfully.";
+            TempData["SuccessMessage"] = $"Department '{NewDepartment.Name}' created. You can now assign it to branches.";
             return RedirectToPage("./Index");
-        }
-
-        private async Task SetupPageDataAsync()
-        {
-            var user = await _userManager.GetUserAsync(User);
-            IsAdmin = await _userManager.IsInRoleAsync(user, "Admin");
-
-            if (IsAdmin)
-            {
-                var branches = await _context.Branches.ToListAsync();
-                BranchList = new SelectList(branches, "Id", "Name");
-            }
         }
     }
 }

@@ -17,41 +17,16 @@
 
 <div style="padding: 24px;">
     <div class="form-container">
-        <h2 style="margin-bottom: 24px;">Add New Department</h2>
-        
+        <h2 style="margin-bottom: 8px;">Add Department Type</h2>
+        <p style="color:#7a8863; font-size:13px; margin-bottom:24px;">Create a global department type (e.g. IT, Finance). Then assign it to branches from the departments list.</p>
+
         <form method="post">
-            <div asp-validation-summary="ModelOnly" style="color: red; margin-bottom: 16px;"></div>
-            
+            <div asp-validation-summary="All"></div>
             <div class="form-group">
                 <label>Department Name</label>
                 <input type="text" asp-for="NewDepartment.Name" class="form-control" required placeholder="e.g. Finance" />
+                <span asp-validation-for="NewDepartment.Name" style="color:#dc3545; font-size:12px;"></span>
             </div>
-            
-            <div class="form-group">
-                <label>Description (Optional)</label>
-                <textarea asp-for="NewDepartment.Description" class="form-control" rows="3"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Capacity</label>
-                <input type="number" asp-for="NewDepartment.Capacity" class="form-control" required min="1" value="20" />
-            </div>
-            
-            @if (Model.IsAdmin)
-            {
-                <div class="form-group">
-                    <label>Assigned Branch</label>
-                    <select asp-for="NewDepartment.BranchId" asp-items="Model.BranchList" class="form-control" required>
-                        <option value="">-- Select Branch --</option>
-                    </select>
-                </div>
-            }
-            else
-            {
-                <div class="form-group" style="padding: 12px; background: #e0f2fe; color: #0369a1; border-radius: 6px; font-size: 13px;">
-                    <strong>Note:</strong> You are adding this department to your assigned branch.
-                </div>
-            }
 
             <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
                 <a href="/Settings/Departments" class="btn-secondary">Cancel</a>

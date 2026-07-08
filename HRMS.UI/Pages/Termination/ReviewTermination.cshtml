@@ -1,0 +1,235 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+@model HRMS.UI.Pages.Termination.ReviewTerminationModel
+@{
+    ViewData["Title"] = "Review Termination";
+    var req = Model.Request!;
+}
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Review Termination Request #@req.Id</h2>
+        <p style="color:#6b7280;font-size:0.9rem;margin:0">Review the termination details and make your decision</p>
+    </div>
+    <a asp-page="/Termination/ApprovalQueue" class="btn-kanrich btn-kanrich-outline">
+        <i class="bi bi-arrow-left"></i> Back to Queue
+    </a>
+</div>
+
+<div class="transfer-detail-grid">
+    <div>
+        <!-- Employee Information -->
+        <div class="k-fieldset" style="background:#f0fdf4;border-color:#bbf7d0">
+            <div class="k-fieldset-title"><i class="bi bi-person-badge" style="margin-right:8px;color:var(--primary)"></i>Employee Information</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+                <div>
+                    <div class="detail-label">Employee Name</div>
+                    <div class="detail-value">@req.EmployeeName</div>
+                </div>
+                <div>
+                    <div class="detail-label">EPF Number</div>
+                    <div class="detail-value">@req.EpfNumber</div>
+                </div>
+                <div>
+                    <div class="detail-label">Email</div>
+                    <div class="detail-value" style="font-size:0.85rem">@req.EmployeeEmail</div>
+                </div>
+                <div>
+                    <div class="detail-label">Branch</div>
+                    <div class="detail-value">@req.Branch</div>
+                </div>
+                <div>
+                    <div class="detail-label">Department</div>
+                    <div class="detail-value">@req.Department</div>
+                </div>
+                <div>
+                    <div class="detail-label">Designation</div>
+                    <div class="detail-value">@req.Designation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Termination Details -->
+        <div class="k-fieldset">
+            <div class="k-fieldset-title"><i class="bi bi-clipboard-x" style="margin-right:8px;color:var(--accent-red)"></i>Termination Details</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+                <div>
+                    <div class="detail-label">Termination Type</div>
+                    <div class="detail-value">@req.TerminationTypeDisplay</div>
+                </div>
+                <div>
+                    <div class="detail-label">Initiation Date</div>
+                    <div class="detail-value">@req.InitiationDate.ToString("MMM dd, yyyy")</div>
+                </div>
+                <div>
+                    <div class="detail-label">Effective Date</div>
+                    <div class="detail-value" style="font-weight:700;color:var(--accent-red)">@req.EffectiveTerminationDate.ToString("MMM dd, yyyy")</div>
+                </div>
+            </div>
+            <div style="margin-bottom:16px">
+                <div class="detail-label">Reason for Termination</div>
+                <div class="detail-value" style="margin-top:4px;line-height:1.5">@req.ReasonForTermination</div>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(req.SupervisorRemarks))
+            {
+                <div style="margin-bottom:16px">
+                    <div class="detail-label">Supervisor Remarks</div>
+                    <div class="detail-value" style="margin-top:4px">@req.SupervisorRemarks</div>
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(req.SpecialRemarks))
+            {
+                <div>
+                    <div class="detail-label">Special Remarks</div>
+                    <div class="detail-value" style="margin-top:4px">@req.SpecialRemarks</div>
+                </div>
+            }
+        </div>
+
+        <!-- Obligations -->
+        <div class="k-fieldset">
+            <div class="k-fieldset-title"><i class="bi bi-exclamation-triangle" style="margin-right:8px;color:var(--accent-orange)"></i>Employee Obligations</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px">
+                <div>
+                    <div class="detail-label">Direct Obligations</div>
+                    <div class="detail-value">@(string.IsNullOrWhiteSpace(req.DirectObligations) ? "None" : req.DirectObligations)</div>
+                </div>
+                <div>
+                    <div class="detail-label">Indirect Obligations</div>
+                    <div class="detail-value">@(string.IsNullOrWhiteSpace(req.IndirectObligations) ? "None" : req.IndirectObligations)</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;flex-wrap:wrap">
+                @if (req.HasOutstandingLoans)
+                {
+                    <span class="k-badge k-badge-rejected"><i class="bi bi-exclamation-triangle"></i> Outstanding Loans</span>
+                }
+                @if (req.IsLoanGuarantor)
+                {
+                    <span class="k-badge k-badge-rejected"><i class="bi bi-exclamation-triangle"></i> Loan Guarantor</span>
+                }
+                @if (req.HasOverridePermission)
+                {
+                    <span class="k-badge k-badge-pending"><i class="bi bi-shield-exclamation"></i> Override Granted</span>
+                }
+                @if (!req.HasOutstandingLoans && !req.IsLoanGuarantor)
+                {
+                    <span class="k-badge k-badge-approved"><i class="bi bi-check-circle"></i> No Outstanding Obligations</span>
+                }
+            </div>
+        </div>
+
+        <!-- Documents -->
+        <div class="k-fieldset">
+            <div class="k-fieldset-title"><i class="bi bi-file-earmark" style="margin-right:8px;color:var(--accent-blue)"></i>Supporting Documents (@req.Documents.Count)</div>
+            @if (req.Documents.Any())
+            {
+                @foreach (var doc in req.Documents)
+                {
+                    <div class="doc-item">
+                        <div class="doc-info">
+                            <div class="doc-icon @(doc.ContentType.Contains("pdf") ? "pdf" : "doc")">
+                                <i class="bi @(doc.ContentType.Contains("pdf") ? "bi-file-pdf" : doc.ContentType.Contains("image") ? "bi-file-image" : "bi-file-word")"></i>
+                            </div>
+                            <div>
+                                <div class="doc-name">@doc.FileName</div>
+                                <div class="doc-size">@doc.DocumentType · @doc.UploadedDate.ToString("MMM dd, yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                        <a asp-page="/Termination/DownloadDocument" asp-route-id="@doc.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                            <i class="bi bi-download"></i> Download
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="color:var(--text-muted);font-size:0.88rem">No documents attached.</p>
+            }
+        </div>
+    </div>
+
+    <!-- Sidebar: Approval Panel -->
+    <div>
+        <div class="eligibility-panel">
+            <h5><i class="bi bi-clipboard-check"></i> Make Your Decision</h5>
+            <p class="ep-subtitle">Review the details and approve or reject this termination request</p>
+
+            <div class="ep-check-item">
+                <div class="ep-check-circle" style="@(req.Documents.Any() ? "background:#fff;border-color:#fff" : "")"></div>
+                <div>
+                    <div class="ep-check-label">Documents Attached</div>
+                    <div class="ep-check-desc">@req.Documents.Count document(s) provided</div>
+                </div>
+            </div>
+
+            <div class="ep-check-item">
+                <div class="ep-check-circle" style="@(!req.HasOutstandingLoans && !req.IsLoanGuarantor || req.HasOverridePermission ? "background:#fff;border-color:#fff" : "")"></div>
+                <div>
+                    <div class="ep-check-label">Obligations Check</div>
+                    <div class="ep-check-desc">
+                        @if (!req.HasOutstandingLoans && !req.IsLoanGuarantor)
+                        {
+                            <text>No outstanding obligations</text>
+                        }
+                        else if (req.HasOverridePermission)
+                        {
+                            <text>Override permission granted</text>
+                        }
+                        else
+                        {
+                            <text>Has pending obligations</text>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="ep-check-item">
+                <div class="ep-check-circle"></div>
+                <div>
+                    <div class="ep-check-label">Approval Decision</div>
+                    <div class="ep-check-desc">Awaiting your review</div>
+                </div>
+            </div>
+
+            <form method="post" style="margin-top:16px">
+                <div style="margin-bottom:14px">
+                    <label style="font-weight:600;font-size:0.85rem;color:rgba(255,255,255,0.9);margin-bottom:6px;display:block">Comments</label>
+                    <textarea asp-for="Comments" rows="3"
+                              style="width:100%;padding:10px 12px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-family:var(--font-family);font-size:0.88rem;resize:vertical"
+                              placeholder="Enter your review comments..."></textarea>
+                    <span asp-validation-for="Comments" style="font-size:0.78rem;color:#fca5a5"></span>
+                </div>
+
+                <div class="ep-actions">
+                    <button type="submit" asp-page-handler="Approve" asp-route-id="@req.Id" class="btn-ep-approve"
+                            onclick="return confirm('Are you sure you want to approve this termination request?')">
+                        <i class="bi bi-check-circle"></i> Approve Termination
+                    </button>
+                    <button type="submit" asp-page-handler="Reject" asp-route-id="@req.Id" class="btn-ep-reject"
+                            onclick="return confirm('Are you sure you want to reject this termination request?')">
+                        <i class="bi bi-x-circle"></i> Reject
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Request Info -->
+        <div class="k-card" style="margin-top:16px;padding:16px">
+            <div style="font-weight:600;font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">Request Info</div>
+            <div style="margin-bottom:8px">
+                <div style="font-size:0.78rem;color:var(--text-muted)">Initiated By</div>
+                <div style="font-weight:600;font-size:0.9rem">@req.InitiatedBy</div>
+            </div>
+            <div style="margin-bottom:8px">
+                <div style="font-size:0.78rem;color:var(--text-muted)">Role</div>
+                <div style="font-weight:500;font-size:0.9rem">@req.InitiatedByRole</div>
+            </div>
+            <div>
+                <div style="font-size:0.78rem;color:var(--text-muted)">Created</div>
+                <div style="font-weight:500;font-size:0.9rem">@req.CreatedDate.ToString("MMM dd, yyyy HH:mm")</div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,7 +1,13 @@
-using HRMS.Infrastructure.Identity;
+﻿using HRMS.Infrastructure.Identity;
 using HRMS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using HRMS.Application.Services;
+using HRMS.Application.Branches.Commands;
+using HRMS.Application.Departments.Commands;
+using HRMS.Application.Designations.Commands;
+using HRMS.Application.Common;
+using HRMS.Application.Entity.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,8 +48,38 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy =>
+        policy.RequireRole("Admin"));
+    options.AddPolicy("RequireAdminOrHR", policy =>
+        policy.RequireRole("Admin", "HR Manager"));
+    options.AddPolicy("RequireManagers", policy =>
+        policy.RequireRole("HR Manager", "Area Manager", "Branch Manager"));
+});
+
+// Register command handlers
+builder.Services.AddScoped<ICommandHandler<CreateBranchCommand, Result>, CreateBranchCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<EditBranchCommand, Result>, EditBranchCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<CreateDepartmentCommand, Result>, CreateDepartmentCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<EditDepartmentCommand, Result>, EditDepartmentCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<CreateDesignationCommand, Result>, CreateDesignationCommandHandler>();
+builder.Services.AddScoped<ICommandHandler<EditDesignationCommand, Result>, EditDesignationCommandHandler>();
+
+// Register services for Separation & Transfer
+builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<ITransferRequestService, TransferRequestService>();
+builder.Services.AddScoped<ITerminationService, TerminationService>();
+builder.Services.AddScoped<IResignationService, ResignationService>();
+builder.Services.AddScoped<IDeathService, DeathService>();
+
 // Add Razor Pages
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+{
+    options.Conventions.AuthorizeFolder("/Settings", "RequireAdmin");
+    options.Conventions.AuthorizeFolder("/Employees", "RequireManagers");
+    options.Conventions.AuthorizeFolder("/Documents", "RequireAdminOrHR");
+});
 
 
 
@@ -56,7 +92,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
     // Seed roles
-    string[] roles = ["Admin", "HR Manager", "Employee"];
+    string[] roles = ["Admin", "HR Manager", "Employee", "Area Manager", "Branch Manager", "Department Head"];
     foreach (var role in roles)
     {
         if (!await roleManager.RoleExistsAsync(role))
@@ -95,6 +131,53 @@ using (var scope = app.Services.CreateScope())
         var hrResult = await userManager.CreateAsync(hrUser, hrPassword);
         if (hrResult.Succeeded)
             await userManager.AddToRoleAsync(hrUser, "HR Manager");
+    }
+
+    // Seed default Employee user
+    const string employeeEmail = "employee@hrms.local";
+    const string employeePassword = "Employee@123";
+
+    if (await userManager.FindByEmailAsync(employeeEmail) is null)
+    {
+        var employeeUser = new ApplicationUser
+        {
+            UserName = employeeEmail,
+            Email = employeeEmail,
+            EmailConfirmed = true
+        };
+        var employeeResult = await userManager.CreateAsync(employeeUser, employeePassword);
+        if (employeeResult.Succeeded)
+            await userManager.AddToRoleAsync(employeeUser, "Employee");
+    }
+
+    // Seed default Area Manager user
+    const string areaManagerEmail = "area@hrms.local";
+    const string areaManagerPassword = "AreaManager@123";
+
+    if (await userManager.FindByEmailAsync(areaManagerEmail) is null)
+    {
+        var areaUser = new ApplicationUser
+        {
+            UserName = areaManagerEmail, Email = areaManagerEmail, EmailConfirmed = true
+        };
+        var areaResult = await userManager.CreateAsync(areaUser, areaManagerPassword);
+        if (areaResult.Succeeded)
+            await userManager.AddToRoleAsync(areaUser, "Area Manager");
+    }
+
+    // Seed default Branch Manager user
+    const string branchManagerEmail = "branch@hrms.local";
+    const string branchManagerPassword = "BranchManager@123";
+
+    if (await userManager.FindByEmailAsync(branchManagerEmail) is null)
+    {
+        var branchUser = new ApplicationUser
+        {
+            UserName = branchManagerEmail, Email = branchManagerEmail, EmailConfirmed = true
+        };
+        var branchResult = await userManager.CreateAsync(branchUser, branchManagerPassword);
+        if (branchResult.Succeeded)
+            await userManager.AddToRoleAsync(branchUser, "Branch Manager");
     }
 }
 

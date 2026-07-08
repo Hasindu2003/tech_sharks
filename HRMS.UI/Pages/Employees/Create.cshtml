@@ -7,98 +7,746 @@
 }
 
 <style>
-    .form-container { padding: 24px; max-width: 800px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-    .form-control { width: 100%; padding: 10px; border: 1px solid #e2e5dc; border-radius: 6px; font-family: inherit; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .btn-primary { background: #10823c; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
+    /* Natively Scaled Create Employee Form (~80%) */
+    .page-content { background: #ffffff !important; }
+
+    .field-error {
+        display: none; font-size: 11px; color: #dc3545; margin-top: 3px;
+        font-weight: 500;
+    }
+    
+    .create-page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 26px;
+    }
+
+    .create-page-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 19px;
+        font-weight: 700;
+        color: #151811;
+        margin: 0 0 4px 0;
+    }
+
+    .create-page-subtitle {
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        font-weight: 400;
+        color: #7a8863;
+        margin: 0;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-cancel {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 17px;
+        border: 1px solid #e2e5dc;
+        border-radius: 6px;
+        background: transparent;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #151811;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .btn-draft {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 9px 17px;
+        border: 1px solid #10823c;
+        border-radius: 6px;
+        background: transparent;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #10823c;
+        cursor: pointer;
+    }
+
+    .btn-save {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 9px 17px;
+        border: none;
+        border-radius: 6px;
+        background: #10823c;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+        color: #ffffff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
+    }
+
+    /* Form Section Card */
+    .form-section {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
+
+    .form-section-header {
+        background: #f9fafb;
+        border-bottom: 1px solid #e2e5dc;
+        padding: 13px 19px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .form-section-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 14px;
+        font-weight: 700;
+        color: #151811;
+        margin: 0;
+    }
+
+    .form-section-body {
+        padding: 19px;
+    }
+
+    /* 4-Column Grid */
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 20px 24px;
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+    }
+
+    .form-group.col-span-2 {
+        grid-column: span 2;
+    }
+
+    .form-label {
+        font-family: 'Manrope', sans-serif;
+        font-size: 11px;
+        font-weight: 500;
+        color: #7a8863;
+        margin: 0;
+    }
+
+    .required-mark {
+        color: #ef4444;
+    }
+
+    .form-control, .form-select {
+        width: 100%;
+        height: 38px;
+        padding: 8px 14px;
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 6px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        font-weight: 400;
+        color: #151811;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        appearance: none;
+    }
+
+    .form-control::placeholder {
+        color: #6b7280;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #10823c;
+        box-shadow: 0 0 0 1px rgba(16, 130, 60, 0.2);
+    }
+    
+    .select-wrapper {
+        position: relative;
+        width: 100%;
+    }
+    
+    .select-wrapper::after {
+        content: "";
+        position: absolute;
+        right: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 14px;
+        height: 14px;
+        background-image: url('data:image/svg+xml;utf8,<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9L12 15L18 9" stroke="%23151811" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>');
+        background-size: contain;
+        background-repeat: no-repeat;
+        pointer-events: none;
+    }
+
+    textarea.form-control {
+        height: 114px;
+        resize: none;
+    }
+
+    /* Spouse Sub-section */
+    .spouse-box {
+        background: #f9fafb;
+        border: 1px dashed #e2e5dc;
+        border-radius: 6px;
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 13px;
+    }
+
+    .spouse-box-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 7px;
+    }
+
+    .spouse-box-title {
+        font-family: 'Manrope', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        color: #151811;
+        margin: 0;
+    }
 </style>
 
-<div style="padding: 24px;">
-    <div class="form-container">
-        <h2 style="margin-bottom: 24px;">Add New Employee</h2>
+<div style="padding: 26px;">
+    
+    <form method="post" enctype="multipart/form-data" novalidate>
+        <input type="hidden" asp-for="DraftId" />
+        <input type="hidden" asp-for="EmployeeId" />
         
-        <form method="post">
-            <div class="form-row">
-                <div class="form-group">
-                    <label>First Name</label>
-                    <input type="text" asp-for="NewEmployee.FirstName" class="form-control" required />
-                </div>
-                <div class="form-group">
-                    <label>Last Name</label>
-                    <input type="text" asp-for="NewEmployee.LastName" class="form-control" required />
-                </div>
+        <!-- Header -->
+        <div class="create-page-header">
+            <div>
+                <h2 class="create-page-title">@(Model.EmployeeId.HasValue ? "Edit Employee Profile" : "New Employee Profile")</h2>
+                <p class="create-page-subtitle">@(Model.EmployeeId.HasValue ? "Modify the details of an existing employee record." : "Fill in the required details to create a new employee record.")</p>
             </div>
+            <div class="form-actions">
+                <a href="/Employees" class="btn-cancel">Cancel</a>
+                
+                @if (!Model.EmployeeId.HasValue)
+                {
+                    <button type="submit" asp-page-handler="Draft" formnovalidate class="btn-draft">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Save as Draft
+                    </button>
+                }
+                
+                <button type="submit" class="btn-save">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+                    @(Model.EmployeeId.HasValue ? "Update Employee" : "Save Employee")
+                </button>
+            </div>
+        </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" asp-for="NewEmployee.Email" class="form-control" required />
-                </div>
-                <div class="form-group">
-                    <label>Phone Number</label>
-                    <input type="text" asp-for="NewEmployee.PhoneNumber" class="form-control" required />
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>NIC</label>
-                    <input type="text" asp-for="NewEmployee.NIC" class="form-control" required />
-                </div>
-                <div class="form-group">
-                    <label>Date of Birth</label>
-                    <input type="date" asp-for="NewEmployee.DateOfBirth" class="form-control" required />
-                </div>
-            </div>
+        @if (!ModelState.IsValid)
+        {
+            <div style="color:red; margin-bottom: 16px; font-size:13px;" asp-validation-summary="All"></div>
+        }
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Department</label>
-                    <select asp-for="NewEmployee.DepartmentId" asp-items="Model.DepartmentList" class="form-control" required>
-                        <option value="">-- Select Department --</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Designation</label>
-                    <select asp-for="NewEmployee.DesignationId" asp-items="Model.DesignationList" class="form-control" required>
-                        <option value="">-- Select Designation --</option>
-                    </select>
-                </div>
+        <!-- PERSONAL INFORMATION -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#151811" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                <h3 class="form-section-title">Personal Information</h3>
             </div>
+            <div class="form-section-body form-grid">
+                
+                <!-- Row 1 -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Full Name <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.FullName" class="form-control" placeholder="e.g. Johnathan David Cooper" id="fullNameInput" required />
+                </div>
+                <div class="form-group col-span-2">
+                    <label class="form-label">Name with Initials <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.Initials" class="form-control" placeholder="e.g. J.D. Cooper" id="initialsInput" required />
+                </div>
 
-            <div class="form-row">
+                <!-- Row 2 -->
                 <div class="form-group">
-                    <label>Branch</label>
-                    <select asp-for="NewEmployee.BranchId" asp-items="Model.BranchList" class="form-control" required>
-                        <option value="">-- Select Branch --</option>
-                    </select>
+                    <label class="form-label">NIC Number <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.NIC" class="form-control" placeholder="e.g. 199012345678" id="nicInput" />
+                    <span asp-validation-for="NewEmployee.NIC" id="nicError" class="field-error"></span>
                 </div>
-            </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Birth <span class="required-mark">*</span></label>
+                    <input type="date" name="NewEmployee.DateOfBirth" value="@(Model.NewEmployee.DateOfBirth == default ? "" : Model.NewEmployee.DateOfBirth.ToString("yyyy-MM-dd"))" class="form-control" id="dobInput" />
+                    <span asp-validation-for="NewEmployee.DateOfBirth" id="dobError" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Sex <span class="required-mark">*</span></label>
+                    <div class="select-wrapper">
+                        <select asp-for="NewEmployee.Sex" asp-items="Model.SexList" class="form-select" required>
+                            <option value="">Select Gender</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone Number <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.PhoneNumber" class="form-control" placeholder="e.g. 0771234567" id="phoneInput" />
+                    <span asp-validation-for="NewEmployee.PhoneNumber" id="phoneError" class="field-error"></span>
+                </div>
 
-            <hr style="margin: 20px 0; border: none; border-top: 1px solid #e2e5dc;" />
-            <h4>Bank Details</h4>
-            <div class="form-row" style="margin-top: 16px;">
-                <div class="form-group">
-                    <label>EPF Number</label>
-                    <input type="text" asp-for="NewEmployee.EPFNumber" class="form-control" required />
-                </div>
-                <div class="form-group">
-                    <label>Bank Account Name</label>
-                    <input type="text" asp-for="NewEmployee.BankAccountName" class="form-control" required />
-                </div>
-            </div>
-            <div class="form-group">
-                <label>Bank Account Number</label>
-                <input type="text" asp-for="NewEmployee.BankAccountNumber" class="form-control" required />
-            </div>
 
-            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
-                <a href="/Employees" class="btn-secondary">Cancel</a>
-                <button type="submit" class="btn-primary">Save Employee</button>
+                <!-- Row 3 -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Residential Address <span class="required-mark">*</span></label>
+                    <textarea asp-for="NewEmployee.ResidentialAddress" class="form-control" placeholder="Enter full residential address..." required></textarea>
+                </div>
+                <div class="form-group col-span-2 spouse-box">
+                    <div class="spouse-box-header">
+                        <input type="checkbox" style="width:13px; height:13px; accent-color: #10823c;" />
+                        <span class="spouse-box-title">Spouse Details (If Married)</span>
+                    </div>
+                    <div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label class="form-label">Spouse Name</label>
+                            <input asp-for="NewEmployee.SpouseName" class="form-control" placeholder="Full name of spouse" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Spouse Contact No</label>
+                            <input asp-for="NewEmployee.SpouseContactNo" class="form-control" placeholder="e.g. 0771234567" id="spousePhoneInput" />
+                            <span asp-validation-for="NewEmployee.SpouseContactNo" id="spousePhoneError" class="field-error"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </form>
-    </div>
+        </div>
+
+        <!-- EMPLOYMENT DETAILS -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#151811" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                <h3 class="form-section-title">Employment Details</h3>
+            </div>
+            <div class="form-section-body form-grid">
+                
+                <!-- Row 1 -->
+                <div class="form-group">
+                    <label class="form-label">System Role <span class="required-mark">*</span></label>
+                    <div class="select-wrapper">
+                        <select asp-for="SelectedRole" asp-items="Model.RoleList" class="form-select" required>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Employee Type <span class="required-mark">*</span></label>
+                    <div class="select-wrapper">
+                        <select asp-for="NewEmployee.EmployeeType" asp-items="Model.EmployeeTypeList" class="form-select" id="employeeTypeSelect" required>
+                            <option value="">Select Type</option>
+                        </select>
+                    </div>
+                </div>
+                @if (User.IsInRole("HR Manager"))
+                {
+                <div class="form-group">
+                    <label class="form-label">Branch</label>
+                    <input type="hidden" name="NewEmployee.BranchId" value="@Model.NewEmployee.BranchId" />
+                    <div class="form-control" style="background:#f9fafb; color:#555; cursor:default;">@Model.HrManagerBranchName</div>
+                </div>
+                }
+                else
+                {
+                <div class="form-group">
+                    <label class="form-label">Branch <span class="required-mark">*</span></label>
+                    <div class="select-wrapper">
+                        <select asp-for="NewEmployee.BranchId" asp-items="Model.BranchList" class="form-select" id="branchSelect">
+                            <option value="">Select Branch</option>
+                        </select>
+                    </div>
+                </div>
+                }
+                <div class="form-group">
+                    <label class="form-label">Department <span class="required-mark">*</span></label>
+                    <div class="select-wrapper">
+                        <select asp-for="NewEmployee.DepartmentId" class="form-select" id="departmentSelect" required>
+                            <option value="">Select Branch First</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Current Designation <span class="required-mark">*</span></label>
+                    <div class="select-wrapper">
+                        <select asp-for="NewEmployee.DesignationId" class="form-select" id="designationSelect" required>
+                            <option value="">Select Department First</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date Joined <span class="required-mark">*</span></label>
+                    <input type="date" asp-for="NewEmployee.DateJoined" class="form-control" id="dateJoinedInput" />
+                    <span asp-validation-for="NewEmployee.DateJoined" id="dateJoinedError" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date Confirmed</label>
+                    <input type="date" asp-for="NewEmployee.DateConfirmed" class="form-control" id="dateConfirmedInput" />
+                    <span asp-validation-for="NewEmployee.DateConfirmed" id="dateConfirmedError" class="field-error"></span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date of Designation <span class="required-mark">*</span></label>
+                    <input type="date" class="form-control" id="dateDesignationInput" />
+                    <span class="field-error" id="dateDesignationError"></span>
+                </div>
+
+                <!-- Row 3: Conditional Period -->
+                <div class="form-group" id="probationPeriodGroup" style="display:none;">
+                    <label class="form-label">Probation Period (Months)</label>
+                    <input type="number" asp-for="NewEmployee.ProbationPeriodMonths" class="form-control" placeholder="e.g. 6" />
+                </div>
+                <div class="form-group" id="internPeriodGroup" style="display:none;">
+                    <label class="form-label">Intern Period (Months)</label>
+                    <input type="number" asp-for="NewEmployee.InternPeriodMonths" class="form-control" placeholder="e.g. 3" id="internPeriodInput" />
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Previous Experience (Years)</label>
+                    <input type="number" step="0.5" name="NewEmployee.PreviousExperienceYears" id="NewEmployee_PreviousExperienceYears" value="@(Model.NewEmployee.PreviousExperienceYears == 0 ? "" : Model.NewEmployee.PreviousExperienceYears.ToString("0.##"))" class="form-control" placeholder="e.g. 2.5" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">EPF Number <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.EPFNumber" class="form-control" placeholder="e.g. 10452" required />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ETF Number <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.ETFNumber" class="form-control" placeholder="e.g. 10452" required />
+                </div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#151811" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><path d="M9 15h6"></path><path d="M12 12v6"></path></svg>
+                <h3 class="form-section-title">Supporting Documents</h3>
+            </div>
+            <div class="form-section-body form-grid">
+                <div class="form-group col-span-2">
+                    <label class="form-label">Scanned ID Card</label>
+                    <input asp-for="IdCardScan" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />
+                    <span asp-validation-for="IdCardScan" class="field-error" style="display:block;"></span>
+                </div>
+                <div class="form-group col-span-2">
+                    <label class="form-label">Police Clearance Document</label>
+                    <input asp-for="PoliceClearanceScan" type="file" class="form-control" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" />
+                    <span asp-validation-for="PoliceClearanceScan" class="field-error" style="display:block;"></span>
+                </div>
+                <div class="form-group col-span-2">
+                    <p class="form-label" style="margin-top:6px;">Accepted formats: PDF, JPG, PNG. Maximum file size: 10 MB each.</p>
+                </div>
+            </div>
+        </div>
+
+    </form>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const fullNameInput = document.getElementById('fullNameInput');
+            const initialsInput = document.getElementById('initialsInput');
+            const nicInput = document.getElementById('nicInput');
+            const phoneInput = document.getElementById('phoneInput');
+            const dobInput = document.getElementById('dobInput');
+            const dateJoinedInput = document.getElementById('dateJoinedInput');
+            const dateConfirmedInput = document.getElementById('dateConfirmedInput');
+            const dateDesignationInput = document.getElementById('dateDesignationInput');
+            const spousePhoneInput = document.getElementById('spousePhoneInput');
+
+            // --- Error helpers ---
+            function showError(id, msg) {
+                const el = document.getElementById(id);
+                if (el) { el.textContent = msg; el.style.display = 'block'; }
+            }
+            function clearError(id) {
+                const el = document.getElementById(id);
+                if (el) { el.textContent = ''; el.style.display = 'none'; }
+            }
+
+            // --- Full Name → Initials auto-fill ---
+            if (fullNameInput) {
+                fullNameInput.addEventListener('input', function () {
+                    const fullName = this.value.trim();
+                    if (!fullName) { initialsInput.value = ''; return; }
+                    const parts = fullName.split(/\s+/).filter(p => p.length > 0);
+                    if (parts.length === 1) {
+                        initialsInput.value = parts[0];
+                    } else {
+                        const surname = parts[parts.length - 1];
+                        const initials = parts.slice(0, parts.length - 1).map(p => p.charAt(0).toUpperCase() + '.').join(' ');
+                        initialsInput.value = initials + ' ' + surname;
+                    }
+                });
+            }
+
+            // --- NIC Validation ---
+            // Old: 9 digits + V/X — first 2 digits = birth year (19xx)
+            // New: 12 digits      — first 4 digits = full birth year
+            function validateNIC() {
+                const val = nicInput.value.trim();
+                if (!val) { clearError('nicError'); return true; }
+                const oldFormat = /^\d{9}[VvXx]$/;
+                const newFormat = /^\d{12}$/;
+                if (!oldFormat.test(val) && !newFormat.test(val)) {
+                    showError('nicError', 'Invalid NIC. Use 9 digits + V/X or 12 digits.');
+                    return false;
+                }
+                // Cross-check birth year with DOB
+                if (dobInput && dobInput.value) {
+                    const dobYear = new Date(dobInput.value).getFullYear();
+                    const nicYear = oldFormat.test(val)
+                        ? 1900 + parseInt(val.substring(0, 2), 10)
+                        : parseInt(val.substring(0, 4), 10);
+                    if (dobYear !== nicYear) {
+                        showError('nicError', `Birth year in NIC (${nicYear}) does not match Date of Birth year (${dobYear}).`);
+                        return false;
+                    }
+                }
+                clearError('nicError');
+                return true;
+            }
+            if (nicInput) nicInput.addEventListener('input', validateNIC);
+
+            // --- Phone Validation ---
+            // Must start with 0, exactly 10 digits
+            function validatePhone() {
+                const val = phoneInput.value.trim();
+                if (!val) { clearError('phoneError'); return true; }
+                const phoneRegex = /^0\d{9}$/;
+                if (!phoneRegex.test(val)) {
+                    showError('phoneError', 'Phone must start with 0 and have exactly 10 digits.');
+                    return false;
+                }
+                clearError('phoneError');
+                return true;
+            }
+            if (phoneInput) phoneInput.addEventListener('input', validatePhone);
+
+            // --- Spouse Phone Validation ---
+            // Optional, but if provided must start with 0 and be exactly 10 digits
+            function validateSpousePhone() {
+                if (!spousePhoneInput) return true;
+                const val = spousePhoneInput.value.trim();
+                if (!val) { clearError('spousePhoneError'); return true; } // Optional
+                const phoneRegex = /^0\d{9}$/;
+                if (!phoneRegex.test(val)) {
+                    showError('spousePhoneError', 'Spouse Phone must start with 0 and have exactly 10 digits.');
+                    return false;
+                }
+                clearError('spousePhoneError');
+                return true;
+            }
+            if (spousePhoneInput) spousePhoneInput.addEventListener('input', validateSpousePhone);
+
+            // --- DOB Validation ---
+            function validateDOB() {
+                if (!dobInput || !dobInput.value) { clearError('dobError'); return true; }
+                const dob = new Date(dobInput.value);
+                const today = new Date(); today.setHours(0,0,0,0);
+                if (dob >= today) {
+                    showError('dobError', 'Date of Birth must be in the past.');
+                    return false;
+                }
+                // Must be at least 18 years old
+                const minAge = new Date(today);
+                minAge.setFullYear(minAge.getFullYear() - 18);
+                if (dob > minAge) {
+                    showError('dobError', 'Employee must be at least 18 years old.');
+                    return false;
+                }
+                clearError('dobError');
+                // Re-check NIC birth year whenever DOB changes
+                if (nicInput && nicInput.value) validateNIC();
+                return true;
+            }
+            if (dobInput) dobInput.addEventListener('change', validateDOB);
+
+            // --- Date Joined Validation ---
+            function validateDateJoined() {
+                if (!dateJoinedInput || !dateJoinedInput.value) { clearError('dateJoinedError'); return true; }
+                const dj = new Date(dateJoinedInput.value);
+                const today = new Date(); today.setHours(0,0,0,0);
+                if (dj > today) {
+                    showError('dateJoinedError', 'Date Joined cannot be in the future.');
+                    return false;
+                }
+                if (dobInput && dobInput.value) {
+                    const dob = new Date(dobInput.value);
+                    if (dj <= dob) {
+                        showError('dateJoinedError', 'Date Joined must be after Date of Birth.');
+                        return false;
+                    }
+                }
+                clearError('dateJoinedError');
+                // Re-validate dependent dates
+                validateDateConfirmed();
+                validateDateDesignation();
+                return true;
+            }
+            if (dateJoinedInput) dateJoinedInput.addEventListener('change', validateDateJoined);
+
+            // --- Date Confirmed Validation ---
+            function validateDateConfirmed() {
+                if (!dateConfirmedInput || !dateConfirmedInput.value) { clearError('dateConfirmedError'); return true; }
+                const dc = new Date(dateConfirmedInput.value);
+                if (dateJoinedInput && dateJoinedInput.value) {
+                    const dj = new Date(dateJoinedInput.value);
+                    if (dc < dj) {
+                        showError('dateConfirmedError', 'Date Confirmed must be on or after Date Joined.');
+                        return false;
+                    }
+                }
+                clearError('dateConfirmedError');
+                return true;
+            }
+            if (dateConfirmedInput) dateConfirmedInput.addEventListener('change', validateDateConfirmed);
+
+            // --- Date of Designation Validation ---
+            function validateDateDesignation() {
+                if (!dateDesignationInput || !dateDesignationInput.value) { clearError('dateDesignationError'); return true; }
+                const dd = new Date(dateDesignationInput.value);
+                if (dateJoinedInput && dateJoinedInput.value) {
+                    const dj = new Date(dateJoinedInput.value);
+                    if (dd < dj) {
+                        showError('dateDesignationError', 'Date of Designation must be on or after Date Joined.');
+                        return false;
+                    }
+                }
+                clearError('dateDesignationError');
+                return true;
+            }
+            if (dateDesignationInput) dateDesignationInput.addEventListener('change', validateDateDesignation);
+
+            // --- Employee Type Toggle (Intern vs Probationary vs Permanent) ---
+            const empTypeSelect = document.getElementById('employeeTypeSelect');
+            const probationGroup = document.getElementById('probationPeriodGroup');
+            const internGroup = document.getElementById('internPeriodGroup');
+            function togglePeriodFields() {
+                const val = empTypeSelect ? empTypeSelect.value : '';
+                if (val === 'Intern') {
+                    if (probationGroup) probationGroup.style.display = 'none';
+                    if (internGroup) internGroup.style.display = '';
+                } else if (val === 'Probationary') {
+                    if (probationGroup) probationGroup.style.display = '';
+                    if (internGroup) internGroup.style.display = 'none';
+                } else {
+                    if (probationGroup) probationGroup.style.display = 'none';
+                    if (internGroup) internGroup.style.display = 'none';
+                }
+            }
+            if (empTypeSelect) {
+                empTypeSelect.addEventListener('change', togglePeriodFields);
+                togglePeriodFields(); // run on page load
+            }
+
+            // --- Block form submit if any validation fails ---
+            const form = document.querySelector('form');
+            if (form) {
+                form.addEventListener('submit', function (e) {
+                    // Bypass custom validation if saving as draft
+                    if (e.submitter && e.submitter.classList.contains('btn-draft')) {
+                        return; // Let the form submit without custom validation
+                    }
+
+                    const nicOk = validateNIC();
+                    const phoneOk = validatePhone();
+                    const dobOk = validateDOB();
+                    const djOk = validateDateJoined();
+                    const dcOk = validateDateConfirmed();
+                    const ddOk = validateDateDesignation();
+                    const spOk = validateSpousePhone();
+                    if (!nicOk || !phoneOk || !dobOk || !djOk || !dcOk || !ddOk || !spOk) {
+                        e.preventDefault();
+                        // Scroll to first error
+                        const firstErr = document.querySelector('.field-error[style*="block"]');
+                        if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
+            // --- Branch → Department → Designation cascade ---
+            const branchSelect = document.getElementById('branchSelect');
+            const deptSelect   = document.getElementById('departmentSelect');
+            const desigSelect  = document.getElementById('designationSelect');
+            const initialBranchId = @(Model.NewEmployee.BranchId);
+            const initialDeptId   = @(Model.NewEmployee.DepartmentId ?? 0);
+            const initialDesigId  = @(Model.NewEmployee.DesignationId ?? 0);
+
+            async function loadDepartments(branchId, preselectDeptId) {
+                if (!deptSelect) return;
+                deptSelect.innerHTML = '<option value="">Select Department</option>';
+                desigSelect.innerHTML = '<option value="">Select Department First</option>';
+                if (!branchId) { deptSelect.innerHTML = '<option value="">Select Branch First</option>'; return; }
+                try {
+                    const resp = await fetch(`?handler=DepartmentsByBranch&branchId=${branchId}`);
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    data.forEach(function(d) {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = d.name;
+                        if (preselectDeptId && d.id === preselectDeptId) opt.selected = true;
+                        deptSelect.appendChild(opt);
+                    });
+                    // If a dept was preselected, load its designations too
+                    if (preselectDeptId) loadDesignations(preselectDeptId, initialDesigId);
+                } catch (e) { /* no-op */ }
+            }
+
+            async function loadDesignations(deptId, preselectDesigId) {
+                if (!desigSelect) return;
+                desigSelect.innerHTML = '<option value="">Select Designation</option>';
+                if (!deptId) { desigSelect.innerHTML = '<option value="">Select Department First</option>'; return; }
+                try {
+                    const resp = await fetch(`?handler=DesignationsByDepartment&departmentId=${deptId}`);
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+                    data.forEach(function(d) {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = d.title;
+                        if (preselectDesigId && d.id === preselectDesigId) opt.selected = true;
+                        desigSelect.appendChild(opt);
+                    });
+                } catch (e) { /* no-op */ }
+            }
+
+            if (branchSelect) {
+                branchSelect.addEventListener('change', function() {
+                    loadDepartments(this.value, null);
+                });
+                // On page load: if branch already selected (edit/draft), restore chain
+                if (branchSelect.value) {
+                    loadDepartments(branchSelect.value, initialDeptId || null);
+                }
+            } else if (initialBranchId) {
+                // Branch is fixed (HR Manager) — load departments on page load
+                loadDepartments(initialBranchId, initialDeptId || null);
+            }
+
+            if (deptSelect) {
+                deptSelect.addEventListener('change', function() {
+                    loadDesignations(this.value, null);
+                });
+            }
+        });
+    </script>
+}
+

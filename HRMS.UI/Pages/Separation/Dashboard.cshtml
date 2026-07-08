@@ -1,0 +1,105 @@
+@page
+@model HRMS.UI.Pages.Separation.DashboardModel
+@{
+    ViewData["Title"] = "Separation Management Hub";
+}
+
+<div class="k-card" style="margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:16px">
+        <div style="width:48px;height:48px;border-radius:12px;background:#eef2ff;color:#4f46e5;display:flex;align-items:center;justify-content:center;font-size:1.5rem">
+            <i class="bi bi-door-open"></i>
+        </div>
+        <div>
+            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Separation Management</h2>
+            <p style="color:#6b7280;margin:0">Central hub for reviewing transfers, resignations, terminations, and death processes.</p>
+        </div>
+    </div>
+</div>
+
+<h5 class="section-title">Process Queues</h5>
+<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:20px;margin-bottom:32px">
+
+    @if (User.IsInRole("Branch Manager"))
+    {
+        <a asp-page="/BranchManager/ReviewTransfers" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-arrow-left-right" style="font-size:2rem;color:#0284c7;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Transfers</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Review employee transfer requests in your branch.</p>
+        </a>
+        <a asp-page="/BranchManager/ReviewResignations" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-box-arrow-right" style="font-size:2rem;color:#ea580c;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Resignations</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Acknowledge submitted resignations.</p>
+        </a>
+        <a asp-page="/BranchManager/ReviewDeathRequests" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-heartbreak" style="font-size:2rem;color:#be123c;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Death Process</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Review pending employee death applications.</p>
+        </a>
+        <a asp-page="/DeathProcess/Apply" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s;background:#fff1f2;border-color:#fecdd3">
+            <i class="bi bi-plus-circle" style="font-size:2rem;color:#e11d48;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Initiate Death Request</h6>
+            <p style="font-size:0.85rem;color:#e11d48;margin:0">Start a death separation process for an employee.</p>
+        </a>
+    }
+    
+    @if (User.IsInRole("Area Manager"))
+    {
+        <a asp-page="/AreaManager/ReviewTransfers" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-arrow-left-right" style="font-size:2rem;color:#0284c7;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Transfers</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Approve branch-cleared transfer requests.</p>
+        </a>
+        <a asp-page="/Termination/ApprovalQueue" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-person-x" style="font-size:2rem;color:#dc2626;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Terminations</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Review HR-initiated terminations.</p>
+        </a>
+        <a asp-page="/AreaManager/ReviewResignations" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-box-arrow-right" style="font-size:2rem;color:#ea580c;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Resignations</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Provide operations approval for resignations.</p>
+        </a>
+        <a asp-page="/AreaManager/ReviewDeathRequests" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-heartbreak" style="font-size:2rem;color:#be123c;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Death Process</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Review branch-approved death applications.</p>
+        </a>
+    }
+
+    @if (User.IsInRole("HR Manager"))
+    {
+        <a asp-page="/HRManager/ReviewTransfers" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-arrow-left-right" style="font-size:2rem;color:#0284c7;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Transfers</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Manage transfer eligibility and allocations.</p>
+        </a>
+        <a asp-page="/Termination/Requests" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-person-x" style="font-size:2rem;color:#dc2626;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Terminations</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Initiate or finalize employee terminations.</p>
+        </a>
+        <a asp-page="/HRManager/ReviewResignations" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-box-arrow-right" style="font-size:2rem;color:#ea580c;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Resignations</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Final HR approval and offboarding.</p>
+        </a>
+        <a asp-page="/HRManager/ReviewDeathRequests" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s">
+            <i class="bi bi-heartbreak" style="font-size:2rem;color:#be123c;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Death Process</h6>
+            <p style="font-size:0.85rem;color:#6b7280;margin:0">Perform system closure and finalize payouts.</p>
+        </a>
+        <a asp-page="/DeathProcess/Apply" class="k-card" style="text-decoration:none;color:inherit;transition:transform 0.2s;background:#fff1f2;border-color:#fecdd3">
+            <i class="bi bi-plus-circle" style="font-size:2rem;color:#e11d48;margin-bottom:12px;display:block"></i>
+            <h6 style="font-weight:600">Initiate Death Request</h6>
+            <p style="font-size:0.85rem;color:#e11d48;margin:0">Start a death separation process for an employee.</p>
+        </a>
+    }
+</div>
+
+<style>
+    .k-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+</style>

@@ -1,0 +1,113 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,HR Manager,Area Manager,Branch Manager,Employee")]
+@model HRMS.UI.Pages.Transfer.MyRequestsModel
+@{
+    ViewData["Title"] = "My Transfer Requests";
+}
+
+<div class="page-header">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+            <h2>My Transfer Requests</h2>
+            <p class="page-subtitle">View the status of your transfer applications</p>
+        </div>
+        <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary">
+            <i class="bi bi-plus-circle"></i> New Transfer Request
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success">
+        <i class="bi bi-check-circle"></i> @successMsg
+    </div>
+}
+
+@if (Model.Requests.Any())
+{
+    <div class="k-card" style="padding:0;overflow:hidden">
+        <table class="k-table" id="tbl-my-transfers">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Preferred Date</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var request in Model.Requests)
+                {
+                    <tr>
+                        <td style="font-weight:600">#@request.Id</td>
+                        <td>@request.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td>@request.CurrentBranch</td>
+                        <td>@request.RequestedBranch</td>
+                        <td>@request.PreferredDate?.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            @switch (request.Status)
+                            {
+                                case TransferStatus.Pending:
+                                    <span class="k-badge k-badge-pending"><i class="bi bi-clock"></i> Pending HR</span>
+                                    break;
+                                case TransferStatus.HRManagerApproved:
+                                    <span class="k-badge k-badge-info"><i class="bi bi-check"></i> HR Approved</span>
+                                    break;
+                                case TransferStatus.HRManagerRejected:
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> HR Rejected</span>
+                                    break;
+                                case TransferStatus.CurrentBMApproved:
+                                case TransferStatus.TargetBMApproved:
+                                    <span class="k-badge k-badge-info"><i class="bi bi-clock"></i> BM Review</span>
+                                    break;
+                                case TransferStatus.CurrentBMRejected:
+                                case TransferStatus.TargetBMRejected:
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> BM Rejected</span>
+                                    break;
+                                case TransferStatus.BothBMsApproved:
+                                    <span class="k-badge k-badge-info"><i class="bi bi-check-all"></i> Awaiting AM</span>
+                                    break;
+                                case TransferStatus.AreaManagerApproved:
+                                    <span class="k-badge k-badge-approved"><i class="bi bi-check-circle"></i> Approved</span>
+                                    break;
+                                case TransferStatus.AreaManagerRejected:
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x-circle"></i> Rejected</span>
+                                    break;
+                            }
+                        </td>
+                        <td>
+                            <a asp-page="/Transfer/Details" asp-route-id="@request.Id"
+                               class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                                <i class="bi bi-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1rem;margin-bottom:8px">No transfer requests yet</div>
+        <div style="font-size:0.88rem;margin-bottom:16px">Submit a transfer request to get started</div>
+        <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary">
+            <i class="bi bi-plus-circle"></i> Submit a Transfer Request
+        </a>
+    </div>
+}
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-my-transfers', 8);
+});
+</script>
+}

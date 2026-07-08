@@ -22,7 +22,11 @@ namespace HRMS.UI.Pages.Settings.Designations
 
         public async Task OnGetAsync()
         {
-            Designations = await _context.Designations.ToListAsync();
+            Designations = await _context.Designations
+                .Include(d => d.DepartmentDesignations)
+                    .ThenInclude(dd => dd.Department)
+                .OrderBy(d => d.Title)
+                .ToListAsync();
         }
     }
 }

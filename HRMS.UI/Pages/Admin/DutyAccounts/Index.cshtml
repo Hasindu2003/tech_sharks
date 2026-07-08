@@ -1,0 +1,284 @@
+@page
+@model HRMS.UI.Pages.Admin.DutyAccounts.IndexModel
+@{
+    ViewData["Title"] = "Duty Accounts";
+    ViewData["PageTitle"] = "Settings / Duty Accounts";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+@section Styles {
+<style>
+    :root {
+        --primary-green: #10823c;
+        --border-color: #e2e5dc;
+        --text-main: #151811;
+        --text-muted: #7a8863;
+    }
+    .main-content { background: white; padding: 26px; min-height: calc(100vh - 62px); }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-header h2 { font-size: 20px; font-weight: 800; color: var(--text-main); margin: 0; }
+
+    .btn-primary {
+        background: var(--primary-green); color: white; padding: 9px 17px; border-radius: 6px;
+        font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 700;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #0d6e32; color: white; }
+    .btn-secondary {
+        display: inline-flex; align-items: center; background: white;
+        border: 1px solid var(--border-color); padding: 7px 14px; border-radius: 6px;
+        color: var(--text-main); font-size: 13px; font-weight: 600;
+        text-decoration: none; transition: background 0.2s; margin-bottom: 16px;
+    }
+    .btn-secondary:hover { background: #f9fafb; color: var(--text-main); }
+
+    .section-label {
+        font-size: 12px; font-weight: 700; color: var(--text-muted);
+        text-transform: uppercase; letter-spacing: 0.6px;
+        margin: 28px 0 10px;
+    }
+    .section-label:first-of-type { margin-top: 0; }
+
+    .table-card {
+        background: white; border: 1px solid var(--border-color);
+        border-radius: 10px; overflow: hidden; margin-bottom: 8px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th {
+        background: #f9fafb; padding: 12px 18px; text-align: left;
+        font-size: 12px; font-weight: 700; color: var(--text-muted);
+        border-bottom: 1px solid var(--border-color);
+    }
+    .emp-table td {
+        padding: 13px 18px; vertical-align: middle;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 13px; color: var(--text-main);
+    }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+
+    .role-badge {
+        display: inline-flex; align-items: center;
+        padding: 3px 9px; border-radius: 999px;
+        font-size: 11px; font-weight: 700;
+    }
+    .badge-hr   { background: #e8f3ec; color: #10823c; }
+    .badge-am   { background: #fff7e6; color: #b45309; }
+    .badge-bm   { background: #e8f0fc; color: #1d4ed8; }
+    .badge-dh   { background: #f3e8ff; color: #7c3aed; }
+
+    .action-link {
+        color: var(--primary-green); font-size: 13px; font-weight: 700;
+        text-decoration: none; padding: 5px 10px; border-radius: 5px;
+        transition: background 0.15s;
+    }
+    .action-link:hover { background: #e8f3ec; }
+    .action-del {
+        color: #dc3545; font-size: 13px; font-weight: 700;
+        background: none; border: none; cursor: pointer;
+        padding: 5px 10px; border-radius: 5px; font-family: 'Manrope', sans-serif;
+        transition: background 0.15s;
+    }
+    .action-del:hover { background: #fff0f0; }
+
+    .empty-row td { text-align: center; color: var(--text-muted); padding: 28px 0 !important; }
+</style>
+}
+
+<div class="main-content">
+    <a href="/Settings" class="btn-secondary">&larr; Back to Settings</a>
+
+    <div class="page-header">
+        <h2>Duty Accounts</h2>
+        <a href="/Admin/DutyAccounts/Create" class="btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Create Account
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div id="successBanner" style="background:#ecfdf5;color:#065f46;padding:14px 20px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:600;border:1px solid #10b981;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="background:#10b981;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                </div>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+            <button onclick="document.getElementById('successBanner').style.display='none'" style="background:none;border:none;color:#047857;cursor:pointer;padding:4px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    }
+
+    <!-- HR Managers -->
+    <div class="section-label">HR Managers</div>
+    <div class="table-card">
+        <table class="emp-table" id="tbl-hr-mgr">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Branch</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.HRManagers.Any())
+                {
+                    <tr class="empty-row"><td colspan="4">No HR Manager accounts yet.</td></tr>
+                }
+                @foreach (var item in Model.HRManagers)
+                {
+                    <tr>
+                        <td style="font-weight:700;">@item.FullName</td>
+                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td>@item.BranchOrArea</td>
+                        <td style="text-align:right;">
+                            <a href="/Admin/DutyAccounts/Edit?userId=@item.UserId" class="action-link">Edit</a>
+                            <form method="post" asp-page-handler="Delete" style="display:inline;"
+                                  onsubmit="return confirm('Delete duty account \'@item.FullName\'? This cannot be undone.');">
+                                <input type="hidden" name="userId" value="@item.UserId" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="action-del">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Area Managers -->
+    <div class="section-label">Area Managers</div>
+    <div class="table-card">
+        <table class="emp-table" id="tbl-area-mgr">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Area</th>
+                    <th>Managed Branches</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.AreaManagers.Any())
+                {
+                    <tr class="empty-row"><td colspan="5">No Area Manager accounts yet.</td></tr>
+                }
+                @foreach (var item in Model.AreaManagers)
+                {
+                    <tr>
+                        <td style="font-weight:700;">@item.FullName</td>
+                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td>@item.BranchOrArea</td>
+                        <td style="color:var(--text-muted);font-size:12px;">@(string.IsNullOrEmpty(item.ManagedBranchNames) ? "-" : item.ManagedBranchNames)</td>
+                        <td style="text-align:right;">
+                            <a href="/Admin/DutyAccounts/Edit?userId=@item.UserId" class="action-link">Edit</a>
+                            <form method="post" asp-page-handler="Delete" style="display:inline;"
+                                  onsubmit="return confirm('Delete duty account \'@item.FullName\'? This cannot be undone.');">
+                                <input type="hidden" name="userId" value="@item.UserId" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="action-del">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Department Heads -->
+    <div class="section-label">Department Heads</div>
+    <div class="table-card">
+        <table class="emp-table" id="tbl-dept-heads">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Branch</th>
+                    <th>Department</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.DepartmentHeads.Any())
+                {
+                    <tr class="empty-row"><td colspan="5">No Department Head accounts yet.</td></tr>
+                }
+                @foreach (var item in Model.DepartmentHeads)
+                {
+                    <tr>
+                        <td style="font-weight:700;">@item.FullName</td>
+                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td>@item.BranchOrArea</td>
+                        <td>@item.Department</td>
+                        <td style="text-align:right;">
+                            <a href="/Admin/DutyAccounts/Edit?userId=@item.UserId" class="action-link">Edit</a>
+                            <form method="post" asp-page-handler="Delete" style="display:inline;"
+                                  onsubmit="return confirm('Delete duty account \'@item.FullName\'? This cannot be undone.');">
+                                <input type="hidden" name="userId" value="@item.UserId" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="action-del">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Branch Managers -->
+    <div class="section-label">Branch Managers</div>
+    <div class="table-card">
+        <table class="emp-table" id="tbl-branch-mgr">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Branch</th>
+                    <th style="text-align:right;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.BranchManagers.Any())
+                {
+                    <tr class="empty-row"><td colspan="4">No Branch Manager accounts yet.</td></tr>
+                }
+                @foreach (var item in Model.BranchManagers)
+                {
+                    <tr>
+                        <td style="font-weight:700;">@item.FullName</td>
+                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td>@item.BranchOrArea</td>
+                        <td style="text-align:right;">
+                            <a href="/Admin/DutyAccounts/Edit?userId=@item.UserId" class="action-link">Edit</a>
+                            <form method="post" asp-page-handler="Delete" style="display:inline;"
+                                  onsubmit="return confirm('Delete duty account \'@item.FullName\'? This cannot be undone.');">
+                                <input type="hidden" name="userId" value="@item.UserId" />
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="action-del">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-hr-mgr', 8);
+    initTablePagination('tbl-area-mgr', 8);
+    initTablePagination('tbl-dept-heads', 8);
+    initTablePagination('tbl-branch-mgr', 8);
+});
+</script>
+}

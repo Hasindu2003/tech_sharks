@@ -1,0 +1,78 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Branch Manager")]
+@model HRMS.UI.Pages.BranchManager.ReviewTransfersModel
+@{
+    ViewData["Title"] = "Separation";
+}
+
+<div style="margin-bottom:24px">
+    <a asp-page="/Separation/Dashboard" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px">
+        <i class="bi bi-arrow-left"></i> Back to Separation
+    </a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <div>
+            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Review Transfers</h2>
+            <p style="color:#6b7280;font-size:0.9rem;margin:0">Manage employee Transfer processes</p>
+        </div>
+    </div>
+</div>
+
+@if (Model.PendingRequests.Any())
+{
+    <!-- New Requests -->
+    <h5 class="section-title">New Requests</h5>
+    <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
+        <table class="k-table" id="tbl-bm-transfers">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Submission Date</th>
+                    <th>Review</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var request in Model.PendingRequests.Take(5))
+                {
+                    var initials = string.Join("", request.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="emp-avatar">@initials</div>
+                                <div class="emp-details">
+                                    <div class="emp-name">@request.EmployeeName</div>
+                                    <div class="emp-dept">@request.CurrentDesignation</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>@request.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <a asp-page="/BranchManager/ReviewTransfer" asp-route-id="@request.Id"
+                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    @if (Model.PendingRequests.Count > 5)
+    {
+        <div class="see-more">see more</div>
+    }
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
+        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
+        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No pending requests</div>
+        <div style="font-size:0.88rem">All separation requests have been reviewed</div>
+    </div>
+}
+
+@section Scripts {
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    initTablePagination('tbl-bm-transfers', 8);
+});
+</script>
+}

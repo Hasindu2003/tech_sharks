@@ -1,0 +1,259 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@model HRMS.UI.Pages.Termination.TerminationReportModel
+@{
+    ViewData["Title"] = "Termination Report";
+    var req = Model.Request!;
+}
+
+<div style="max-width:900px;margin:0 auto">
+    <!-- Header -->
+    <div class="k-card" style="padding:28px 32px;margin-bottom:20px;background:linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);color:#fff;border:none">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:2px;color:#c7d2fe;margin-bottom:6px;font-weight:600">
+                    Official Termination Report
+                </div>
+                <h2 style="font-weight:700;font-size:1.5rem;margin:0 0 4px 0">@req.EmployeeName</h2>
+                <div style="font-size:0.9rem;color:#c7d2fe">
+                    EPF: @req.EpfNumber &nbsp;·&nbsp; @req.Designation &nbsp;·&nbsp; @req.Branch
+                </div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:2rem;font-weight:800;color:#c7d2fe">#@req.Id</div>
+                <span class="k-badge @req.StatusBadgeClass" style="font-size:0.78rem">@req.StatusDisplay</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Termination Summary -->
+    <div class="k-card" style="padding:24px 28px;margin-bottom:16px">
+        <h5 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+            <i class="bi bi-clipboard-x" style="color:var(--accent-red)"></i> Termination Summary
+        </h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:16px">
+            <div>
+                <div class="detail-label">Termination Type</div>
+                <div class="detail-value" style="font-weight:600;font-size:1rem">@req.TerminationTypeDisplay</div>
+            </div>
+            <div>
+                <div class="detail-label">Initiation Date</div>
+                <div class="detail-value">@req.InitiationDate.ToString("MMMM dd, yyyy")</div>
+            </div>
+            <div>
+                <div class="detail-label">Effective Termination Date</div>
+                <div class="detail-value" style="font-weight:700;color:var(--accent-red);font-size:1rem">@req.EffectiveTerminationDate.ToString("MMMM dd, yyyy")</div>
+            </div>
+        </div>
+        <div style="margin-bottom:16px">
+            <div class="detail-label">Reason for Termination</div>
+            <div style="margin-top:4px;padding:12px 16px;background:#f9fafb;border-radius:8px;line-height:1.6;font-size:0.9rem">
+                @req.ReasonForTermination
+            </div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(req.SupervisorRemarks))
+        {
+            <div style="margin-bottom:16px">
+                <div class="detail-label">Supervisor Remarks</div>
+                <div style="margin-top:4px;padding:12px 16px;background:#f9fafb;border-radius:8px;line-height:1.5;font-size:0.88rem">
+                    @req.SupervisorRemarks
+                </div>
+            </div>
+        }
+        @if (!string.IsNullOrWhiteSpace(req.SpecialRemarks))
+        {
+            <div>
+                <div class="detail-label">Special Remarks</div>
+                <div style="margin-top:4px;padding:12px 16px;background:#f9fafb;border-radius:8px;line-height:1.5;font-size:0.88rem">
+                    @req.SpecialRemarks
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Employee Details -->
+    <div class="k-card" style="padding:24px 28px;margin-bottom:16px">
+        <h5 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+            <i class="bi bi-person-badge" style="color:var(--primary)"></i> Employee Details
+        </h5>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+            <div>
+                <div class="detail-label">Full Name</div>
+                <div class="detail-value">@req.EmployeeName</div>
+            </div>
+            <div>
+                <div class="detail-label">EPF Number</div>
+                <div class="detail-value">@req.EpfNumber</div>
+            </div>
+            <div>
+                <div class="detail-label">Email</div>
+                <div class="detail-value" style="font-size:0.85rem">@req.EmployeeEmail</div>
+            </div>
+            <div>
+                <div class="detail-label">Branch</div>
+                <div class="detail-value">@req.Branch</div>
+            </div>
+            <div>
+                <div class="detail-label">Department</div>
+                <div class="detail-value">@req.Department</div>
+            </div>
+            <div>
+                <div class="detail-label">Designation</div>
+                <div class="detail-value">@req.Designation</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Obligations & Clearance -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <!-- Financial Obligations -->
+        <div class="k-card" style="padding:24px 28px">
+            <h5 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+                <i class="bi bi-exclamation-triangle" style="color:var(--accent-orange)"></i> Obligations
+            </h5>
+            <div style="margin-bottom:12px">
+                <div class="detail-label">Direct Obligations</div>
+                <div class="detail-value" style="font-size:0.88rem">@(string.IsNullOrWhiteSpace(req.DirectObligations) ? "None" : req.DirectObligations)</div>
+            </div>
+            <div style="margin-bottom:12px">
+                <div class="detail-label">Indirect Obligations</div>
+                <div class="detail-value" style="font-size:0.88rem">@(string.IsNullOrWhiteSpace(req.IndirectObligations) ? "None" : req.IndirectObligations)</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                @if (req.HasOutstandingLoans)
+                {
+                    <span class="k-badge k-badge-rejected"><i class="bi bi-exclamation-triangle"></i> Outstanding Loans</span>
+                }
+                @if (req.IsLoanGuarantor)
+                {
+                    <span class="k-badge k-badge-rejected"><i class="bi bi-exclamation-triangle"></i> Loan Guarantor</span>
+                }
+                @if (req.HasOverridePermission)
+                {
+                    <span class="k-badge k-badge-pending"><i class="bi bi-shield-exclamation"></i> Override</span>
+                }
+                @if (!req.HasOutstandingLoans && !req.IsLoanGuarantor)
+                {
+                    <span class="k-badge k-badge-approved"><i class="bi bi-check-circle"></i> Clear</span>
+                }
+            </div>
+        </div>
+
+        <!-- Finance Clearance -->
+        <div class="k-card" style="padding:24px 28px;@(req.FinanceClearanceCompleted ? "background:#f0fdf4;border-color:#bbf7d0" : "")">
+            <h5 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+                <i class="bi bi-cash-coin" style="color:var(--primary)"></i> Finance Clearance
+            </h5>
+            @if (req.FinanceClearanceCompleted)
+            {
+                <div style="margin-bottom:12px">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value" style="color:var(--primary);font-weight:700">Completed ✅</div>
+                </div>
+                <div style="margin-bottom:12px">
+                    <div class="detail-label">Clearance Date</div>
+                    <div class="detail-value">@req.FinanceClearanceDate?.ToString("MMMM dd, yyyy")</div>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(req.FinanceClearanceNotes))
+                {
+                    <div>
+                        <div class="detail-label">Notes</div>
+                        <div class="detail-value" style="font-size:0.85rem;line-height:1.5">@req.FinanceClearanceNotes</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div style="text-align:center;padding:16px;color:#9ca3af">
+                    <i class="bi bi-hourglass-split" style="font-size:1.5rem;display:block;margin-bottom:8px"></i>
+                    <div style="font-size:0.88rem">Pending clearance</div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Approval Decision -->
+    @if (req.ApproverReview != null)
+    {
+        <div class="k-card" style="padding:24px 28px;margin-bottom:16px">
+            <h5 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+                <i class="bi bi-clipboard-check" style="color:var(--primary)"></i> Approval Decision
+            </h5>
+            <div class="review-card @(req.ApproverReview == "Approved" ? "approved" : "rejected")">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                    <i class="bi @(req.ApproverReview == "Approved" ? "bi-check-circle-fill" : "bi-x-circle-fill")"
+                       style="font-size:1.2rem;color:@(req.ApproverReview == "Approved" ? "var(--primary)" : "var(--accent-red)")"></i>
+                    <span style="font-weight:700;font-size:1rem">@req.ApproverReview</span>
+                </div>
+                <div style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px">
+                    Reviewed by @req.ApprovedBy · @req.ApproverReviewDate?.ToString("MMMM dd, yyyy HH:mm")
+                </div>
+                @if (!string.IsNullOrWhiteSpace(req.ApproverComments))
+                {
+                    <div style="font-size:0.9rem;line-height:1.5;padding:12px 16px;background:#f9fafb;border-radius:6px;margin-top:8px">
+                        @req.ApproverComments
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Documents -->
+    @if (req.Documents.Any())
+    {
+        <div class="k-card" style="padding:24px 28px;margin-bottom:16px">
+            <h5 style="font-weight:700;font-size:1rem;margin-bottom:16px;color:var(--text-primary);display:flex;align-items:center;gap:8px">
+                <i class="bi bi-file-earmark" style="color:var(--accent-blue)"></i> Supporting Documents (@req.Documents.Count)
+            </h5>
+            @foreach (var doc in req.Documents)
+            {
+                <div class="doc-item">
+                    <div class="doc-info">
+                        <div class="doc-icon @(doc.ContentType.Contains("pdf") ? "pdf" : "doc")">
+                            <i class="bi @(doc.ContentType.Contains("pdf") ? "bi-file-pdf" : doc.ContentType.Contains("image") ? "bi-file-image" : "bi-file-word")"></i>
+                        </div>
+                        <div>
+                            <div class="doc-name">@doc.FileName</div>
+                            <div class="doc-size">@doc.DocumentType · @doc.UploadedDate.ToString("MMM dd, yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                    <a asp-page="/Termination/DownloadDocument" asp-route-id="@doc.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                        <i class="bi bi-download"></i> Download
+                    </a>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Footer: Process Info -->
+    <div class="k-card" style="padding:20px 28px;margin-bottom:24px;background:#f9fafb">
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.82rem;color:var(--text-muted)">
+            <div>
+                <strong>Initiated by:</strong> @req.InitiatedBy (@req.InitiatedByRole) · @req.CreatedDate.ToString("MMMM dd, yyyy HH:mm")
+            </div>
+            <div>
+                <strong>Last Updated:</strong> @req.LastModifiedDate.ToString("MMMM dd, yyyy HH:mm")
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        @if (User.IsInRole("Employee"))
+        {
+            <a asp-page="/Transfer/Separation" asp-route-ActiveTab="Termination" class="btn-kanrich btn-kanrich-outline">
+                <i class="bi bi-arrow-left"></i> Back to My Separation
+            </a>
+        }
+        else
+        {
+            <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline">
+                <i class="bi bi-arrow-left"></i> Back to Requests
+            </a>
+        }
+        <button onclick="window.print()" class="btn-kanrich btn-kanrich-primary">
+            <i class="bi bi-printer"></i> Print Report
+        </button>
+    </div>
+</div>

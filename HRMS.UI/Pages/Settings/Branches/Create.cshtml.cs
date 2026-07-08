@@ -1,39 +1,39 @@
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using HRMS.Domain.Entities.Core;
-using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Branches.Commands;
+using HRMS.Application.Common;
+using HRMS.Application.Entity.Commands;
 
 namespace HRMS.UI.Pages.Settings.Branches
 {
     [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly ICommandHandler<CreateBranchCommand, Result> _handler;
 
-        public CreateModel(ApplicationDbContext context)
+        public CreateModel(ICommandHandler<CreateBranchCommand, Result> handler)
         {
-            _context = context;
+            _handler = handler;
         }
 
         [BindProperty]
-        public Branch NewBranch { get; set; } = new();
+        public CreateBranchCommand NewBranch { get; set; } = new();
 
-        public IActionResult OnGet()
-        {
-            return Page();
-        }
+        public IActionResult OnGet() => Page();
 
         public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
+                return Page();
+
+            var result = await _handler.HandleAsync(NewBranch);
+
+            if (!result.Succeeded)
             {
+                ModelState.AddModelError("NewBranch.Name", result.Error!);
                 return Page();
             }
-
-            _context.Branches.Add(NewBranch);
-            await _context.SaveChangesAsync();
 
             TempData["SuccessMessage"] = $"Branch '{NewBranch.Name}' created successfully.";
             return RedirectToPage("./Index");

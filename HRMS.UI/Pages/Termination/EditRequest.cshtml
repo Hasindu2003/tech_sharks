@@ -1,0 +1,200 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager")]
+@model HRMS.UI.Pages.Termination.EditRequestModel
+@{
+    ViewData["Title"] = "Employee Termination";
+}
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+    <div>
+        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Edit Termination Request #@Model.CurrentRequest?.Id</h2>
+        <p style="color:#6b7280;font-size:0.9rem;margin:0">
+            @Model.CurrentRequest?.EmployeeName — @Model.CurrentRequest?.EpfNumber
+        </p>
+    </div>
+    <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline">
+        <i class="bi bi-arrow-left"></i> Back to List
+    </a>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success">
+        <i class="bi bi-check-circle"></i> @successMsg
+    </div>
+}
+@if (TempData["ErrorMessage"] is string errorMsg)
+{
+    <div class="k-alert k-alert-danger">
+        <i class="bi bi-exclamation-triangle"></i> @errorMsg
+    </div>
+}
+
+<!-- Employee Info (read-only) -->
+<div class="k-fieldset" style="background:#f0fdf4;border-color:#bbf7d0">
+    <div class="k-fieldset-title"><i class="bi bi-person-badge" style="margin-right:8px;color:var(--primary)"></i>Employee Information</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+        <div>
+            <div class="detail-label">Employee Name</div>
+            <div class="detail-value">@Model.CurrentRequest?.EmployeeName</div>
+        </div>
+        <div>
+            <div class="detail-label">EPF Number</div>
+            <div class="detail-value">@Model.CurrentRequest?.EpfNumber</div>
+        </div>
+        <div>
+            <div class="detail-label">Branch</div>
+            <div class="detail-value">@Model.CurrentRequest?.Branch</div>
+        </div>
+        <div>
+            <div class="detail-label">Department</div>
+            <div class="detail-value">@Model.CurrentRequest?.Department</div>
+        </div>
+        <div>
+            <div class="detail-label">Designation</div>
+            <div class="detail-value">@Model.CurrentRequest?.Designation</div>
+        </div>
+        <div>
+            <div class="detail-label">Email</div>
+            <div class="detail-value">@Model.CurrentRequest?.EmployeeEmail</div>
+        </div>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Input.Id" />
+
+    <!-- Termination Details -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-clipboard-x" style="margin-right:8px;color:var(--accent-red)"></i>Termination Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.TerminationType">Termination Type <span style="color:var(--accent-red)">*</span></label>
+                <select asp-for="Input.TerminationType" class="k-form-control">
+                    <option value="0">Voluntary</option>
+                    <option value="1">Involuntary</option>
+                    <option value="2">Retirement</option>
+                    <option value="3">End of Contract</option>
+                    <option value="4">Probation</option>
+                    <option value="5">Death</option>
+                </select>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.InitiationDate">Initiation Date <span style="color:var(--accent-red)">*</span></label>
+                <input asp-for="Input.InitiationDate" type="date" class="k-form-control" />
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.EffectiveTerminationDate">Effective Termination Date <span style="color:var(--accent-red)">*</span></label>
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="k-form-control" />
+            </div>
+        </div>
+        <div class="k-form-group">
+            <label asp-for="Input.ReasonForTermination">Reason for Termination <span style="color:var(--accent-red)">*</span></label>
+            <textarea asp-for="Input.ReasonForTermination" class="k-form-control" rows="3"></textarea>
+            <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.SupervisorRemarks">Supervisor Remarks</label>
+                <textarea asp-for="Input.SupervisorRemarks" class="k-form-control" rows="2"></textarea>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.SpecialRemarks">Special Remarks / Notes</label>
+                <textarea asp-for="Input.SpecialRemarks" class="k-form-control" rows="2"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Obligations -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-exclamation-triangle" style="margin-right:8px;color:var(--accent-orange)"></i>Employee Obligations</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.DirectObligations">Direct Obligations</label>
+                <textarea asp-for="Input.DirectObligations" class="k-form-control" rows="2"></textarea>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.IndirectObligations">Indirect Obligations</label>
+                <textarea asp-for="Input.IndirectObligations" class="k-form-control" rows="2"></textarea>
+            </div>
+        </div>
+        <div style="display:flex;gap:32px;margin-top:12px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
+                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+                Employee has outstanding loan balances
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
+                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+                Employee is a loan guarantor
+            </label>
+        </div>
+        <div style="margin-top:16px;padding:14px 18px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;font-weight:600;color:#92400e">
+                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:18px;height:18px;accent-color:var(--accent-orange)" />
+                <i class="bi bi-shield-exclamation"></i> Senior Management Override
+            </label>
+        </div>
+    </div>
+
+    <!-- Existing Documents -->
+    <div class="k-fieldset">
+        <div class="k-fieldset-title"><i class="bi bi-file-earmark-arrow-up" style="margin-right:8px;color:var(--accent-blue)"></i>Documents</div>
+        @if (Model.ExistingDocuments.Any())
+        {
+            <div style="margin-bottom:16px">
+                @foreach (var doc in Model.ExistingDocuments)
+                {
+                    <div class="doc-item">
+                        <div class="doc-info">
+                            <div class="doc-icon @(doc.ContentType.Contains("pdf") ? "pdf" : "doc")">
+                                <i class="bi @(doc.ContentType.Contains("pdf") ? "bi-file-pdf" : doc.ContentType.Contains("image") ? "bi-file-image" : "bi-file-word")"></i>
+                            </div>
+                            <div>
+                                <div class="doc-name">@doc.FileName</div>
+                                <div class="doc-size">@doc.DocumentType · @doc.UploadedDate.ToString("MMM dd, yyyy HH:mm")</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px">
+                            <a asp-page="/Termination/DownloadDocument" asp-route-id="@doc.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                                <i class="bi bi-download"></i>
+                            </a>
+                            <button type="submit" asp-page-handler="RemoveDocument" asp-route-documentId="@doc.Id" asp-route-requestId="@Model.Input.Id"
+                                    class="btn-kanrich btn-kanrich-danger btn-kanrich-sm"
+                                    onclick="return confirm('Remove this document?')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+            <div class="k-form-group">
+                <label asp-for="Input.DocumentType">Document Type</label>
+                <select asp-for="Input.DocumentType" class="k-form-control">
+                    <option value="TerminationLetter">Termination Letter</option>
+                    <option value="DisciplinaryReport">Disciplinary Report</option>
+                    <option value="WarningLetter">Warning Letter</option>
+                    <option value="Other" selected>Other</option>
+                </select>
+            </div>
+            <div class="k-form-group">
+                <label asp-for="Input.Documents">Add More Files</label>
+                <input asp-for="Input.Documents" type="file" class="k-form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action buttons -->
+    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
+        <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">Cancel</a>
+        <button type="submit" asp-page-handler="Save" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">
+            <i class="bi bi-save"></i> Save Changes
+        </button>
+        <button type="submit" asp-page-handler="Submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-lg">
+            <i class="bi bi-send"></i> Submit for Approval
+        </button>
+    </div>
+</form>

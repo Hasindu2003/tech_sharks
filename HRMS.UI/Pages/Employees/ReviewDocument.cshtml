@@ -1,0 +1,276 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.Employees.ReviewDocumentModel
+@{
+    ViewData["Title"] = "Review Document";
+    ViewData["PageTitle"] = "Document Review";
+    ViewData["ActiveNav"] = "Employees";
+
+    var doc  = Model.Document!;
+    var emp  = Model.Employee!;
+    var isImage = doc.ContentType.StartsWith("image/");
+    var isPdf   = doc.ContentType == "application/pdf";
+    var fileUrl = $"/uploads/documents/{doc.StoredFileName}";
+
+    var nameParts    = emp.FullName?.Split(' ', System.StringSplitOptions.RemoveEmptyEntries) ?? System.Array.Empty<string>();
+    var avatarChars  = nameParts.Length > 1
+        ? $"{nameParts[0][0]}{nameParts[^1][0]}"
+        : (nameParts.Length == 1 ? emp.FullName!.Substring(0, Math.Min(2, emp.FullName.Length)) : "?");
+}
+
+<style>
+    /* ── Page shell ── */
+    .rv-page { display: flex; height: calc(100vh - 62px); overflow: hidden; background: #f6f8f7; }
+
+    /* ── Left: Preview pane ── */
+    .rv-preview-pane {
+        flex: 1; display: flex; flex-direction: column;
+        background: #1e293b; overflow: hidden;
+    }
+    .rv-preview-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 10px 18px; background: #0f172a; flex-shrink: 0;
+    }
+    .rv-preview-bar-left { display: flex; align-items: center; gap: 10px; }
+    .rv-back-link {
+        display: inline-flex; align-items: center; gap: 6px;
+        color: #94a3b8; font-size: 13px; font-weight: 600; text-decoration: none;
+        padding: 5px 10px; border-radius: 6px; transition: color 0.15s, background 0.15s;
+    }
+    .rv-back-link:hover { color: #fff; background: rgba(255,255,255,0.07); }
+    .rv-back-link svg { width: 15px; height: 15px; stroke: currentColor; fill: none; }
+    .rv-bar-fname { font-size: 13px; font-weight: 700; color: #e2e8f0; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rv-bar-type  { font-size: 11px; padding: 2px 9px; border-radius: 6px; background: rgba(255,255,255,0.1); color: #94a3b8; font-weight: 700; }
+    .rv-open-link {
+        display: inline-flex; align-items: center; gap: 5px;
+        color: #94a3b8; font-size: 12px; font-weight: 600; text-decoration: none;
+        padding: 5px 10px; border-radius: 6px; transition: color 0.15s;
+    }
+    .rv-open-link:hover { color: #fff; }
+    .rv-open-link svg { width: 14px; height: 14px; stroke: currentColor; fill: none; }
+
+    .rv-preview-body { flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .rv-preview-body img  { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; box-shadow: 0 8px 40px rgba(0,0,0,0.5); }
+    .rv-preview-body iframe { width: 100%; height: 100%; border: none; border-radius: 4px; }
+    .rv-nopreview { text-align: center; color: #475569; }
+    .rv-nopreview svg { margin-bottom: 12px; }
+    .rv-nopreview p { font-size: 13px; margin: 0 0 12px 0; }
+    .rv-nopreview a { color: #38bdf8; font-weight: 700; font-size: 13px; }
+
+    /* ── Right: Review panel ── */
+    .rv-panel {
+        width: 340px; flex-shrink: 0;
+        background: #fff; border-left: 1px solid #e2e8f0;
+        display: flex; flex-direction: column; overflow-y: auto;
+    }
+
+    .rv-panel-section { padding: 20px; border-bottom: 1px solid #f1f5f9; }
+    .rv-panel-section:last-child { border-bottom: none; }
+    .rv-section-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 12px 0; }
+
+    /* Employee card */
+    .rv-emp-card { display: flex; align-items: center; gap: 12px; }
+    .rv-emp-avatar {
+        width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+        background: #e8f3ec; color: #10823c;
+        font-size: 16px; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .rv-emp-name  { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .rv-emp-id    { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+    .rv-emp-dept  { font-size: 11px; color: #64748b; margin-top: 2px; }
+
+    /* Data rows */
+    .rv-data-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .rv-data-row:last-child { margin-bottom: 0; }
+    .rv-data-label { font-size: 12px; color: #94a3b8; font-weight: 500; }
+    .rv-data-value { font-size: 12px; font-weight: 700; color: #0f172a; text-align: right; }
+    .rv-status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; }
+    .rv-status-pill.pending  { background: #fef3c7; color: #92400e; }
+    .rv-status-pill.approved { background: #dcfce7; color: #166534; }
+    .rv-status-pill.rejected { background: #fee2e2; color: #991b1b; }
+
+    /* Action buttons */
+    .rv-actions { display: flex; flex-direction: column; gap: 10px; padding: 20px; }
+    .btn-rv-approve {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: #166534; color: #fff; border: none;
+        font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 700;
+        padding: 12px; border-radius: 8px; cursor: pointer; transition: background 0.15s;
+    }
+    .btn-rv-approve:hover { background: #14532d; }
+    .btn-rv-approve svg { width: 16px; height: 16px; stroke: #fff; fill: none; }
+
+    .btn-rv-reject {
+        width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;
+        background: #fff; color: #991b1b; border: 2px solid #fecaca;
+        font-family: 'Manrope', sans-serif; font-size: 14px; font-weight: 700;
+        padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
+    }
+    .btn-rv-reject:hover { background: #fee2e2; border-color: #f87171; }
+    .btn-rv-reject svg { width: 16px; height: 16px; stroke: currentColor; fill: none; }
+
+    /* Reject notes form */
+    .rv-reject-panel { padding: 0 20px 20px; display: none; }
+    .rv-reject-panel.open { display: block; }
+    .rv-reject-label { font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 7px; }
+    .rv-reject-textarea {
+        width: 100%; min-height: 80px;
+        border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px;
+        font-family: 'Manrope', sans-serif; font-size: 13px; color: #0f172a;
+        resize: vertical; outline: none; transition: border-color 0.15s;
+    }
+    .rv-reject-textarea:focus { border-color: #10823c; box-shadow: 0 0 0 3px rgba(16,130,60,0.1); }
+    .rv-reject-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .btn-rp-cancel { flex: 1; background: #f1f5f9; color: #64748b; border: none; border-radius: 7px; padding: 9px; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-rp-confirm { flex: 1; background: #b91c1c; color: #fff; border: none; border-radius: 7px; padding: 9px; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+    /* Already reviewed banner */
+    .rv-reviewed-banner {
+        margin: 16px; border-radius: 10px; padding: 14px 16px;
+        font-size: 13px; font-weight: 600;
+    }
+    .rv-reviewed-banner.approved { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .rv-reviewed-banner.rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .rv-reviewed-banner p { margin: 0 0 4px 0; }
+    .rv-reviewed-banner small { font-weight: 400; opacity: 0.8; }
+</style>
+
+<div class="rv-page">
+
+    <!-- ── LEFT: Document Preview ── -->
+    <div class="rv-preview-pane">
+        <div class="rv-preview-bar">
+            <div class="rv-preview-bar-left">
+                <a href="/Employees?tab=documents" class="rv-back-link">
+                    <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    Back
+                </a>
+                <span class="rv-bar-fname" title="@doc.FileName">@doc.FileName</span>
+                <span class="rv-bar-type">@doc.DocumentType</span>
+            </div>
+            <a href="@fileUrl" target="_blank" class="rv-open-link">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                Open in new tab
+            </a>
+        </div>
+        <div class="rv-preview-body">
+            @if (isImage)
+            {
+                <img src="@fileUrl" alt="@doc.FileName" />
+            }
+            else if (isPdf)
+            {
+                <iframe src="@fileUrl" title="@doc.FileName"></iframe>
+            }
+            else
+            {
+                <div class="rv-nopreview">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#475569" stroke-width="1.5" width="56" height="56"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <p>Preview not available for this file type.</p>
+                    <a href="@fileUrl" target="_blank">Download / Open file ↗</a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ── RIGHT: Review Panel ── -->
+    <aside class="rv-panel">
+
+        <!-- Employee Info -->
+        <div class="rv-panel-section">
+            <p class="rv-section-label">Employee</p>
+            <div class="rv-emp-card">
+                <div class="rv-emp-avatar">@avatarChars.ToUpper()</div>
+                <div>
+                    <div class="rv-emp-name">@(string.IsNullOrEmpty(emp.Initials) ? emp.FullName : emp.Initials)</div>
+                    <div class="rv-emp-id">EMP-@emp.Id.ToString("D5")</div>
+                    <div class="rv-emp-dept">@(emp.Department?.Name ?? "—") · @(emp.Designation?.Title ?? "—")</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Document Details -->
+        <div class="rv-panel-section">
+            <p class="rv-section-label">Document Details</p>
+            <div class="rv-data-row">
+                <span class="rv-data-label">Type</span>
+                <span class="rv-data-value">@doc.DocumentType</span>
+            </div>
+            <div class="rv-data-row">
+                <span class="rv-data-label">File name</span>
+                <span class="rv-data-value" style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="@doc.FileName">@doc.FileName</span>
+            </div>
+            <div class="rv-data-row">
+                <span class="rv-data-label">Submitted</span>
+                <span class="rv-data-value">@doc.UploadedAt.ToString("dd MMM yyyy, hh:mm tt")</span>
+            </div>
+            <div class="rv-data-row">
+                <span class="rv-data-label">Status</span>
+                <span class="rv-status-pill @doc.Status.ToLower()">@doc.Status</span>
+            </div>
+        </div>
+
+        @if (doc.Status == "Pending")
+        {
+            <!-- Approve Action -->
+            <div class="rv-actions">
+                <form method="post" asp-page-handler="Approve">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@doc.Id" />
+                    <button type="submit" class="btn-rv-approve">
+                        <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Approve Document
+                    </button>
+                </form>
+                <button type="button" class="btn-rv-reject" id="rejectToggleBtn" onclick="toggleRejectPanel()">
+                    <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    Reject Document
+                </button>
+            </div>
+
+            <!-- Reject Notes Sub-form -->
+            <div class="rv-reject-panel" id="rejectPanel">
+                <form method="post" asp-page-handler="Reject">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@doc.Id" />
+                    <label class="rv-reject-label" for="RejectionNotes">Reason for rejection <span style="font-weight:400; text-transform:none;">(optional)</span></label>
+                    <textarea id="RejectionNotes" name="RejectionNotes" class="rv-reject-textarea"
+                              placeholder="e.g. Document is blurry, expired, or incorrect type."></textarea>
+                    <div class="rv-reject-actions">
+                        <button type="button" class="btn-rp-cancel" onclick="toggleRejectPanel()">Cancel</button>
+                        <button type="submit" class="btn-rp-confirm">Confirm Rejection</button>
+                    </div>
+                </form>
+            </div>
+        }
+        else
+        {
+            var bannerClass = doc.Status == "Approved" ? "approved" : "rejected";
+            var bannerIcon  = doc.Status == "Approved" ? "✓" : "✕";
+            var reviewedOn  = doc.ReviewedAt?.ToString("dd MMM yyyy, hh:mm tt") ?? "—";
+            <div class="rv-reviewed-banner @bannerClass">
+                <p>@bannerIcon This document has been <strong>@doc.Status.ToLower()</strong>.</p>
+                <small>Reviewed on @reviewedOn</small>
+                @if (!string.IsNullOrEmpty(doc.ReviewerNotes))
+                {
+                    <p style="margin-top:8px; font-size:12px;">Reason: @doc.ReviewerNotes</p>
+                }
+            </div>
+            <div style="padding:0 20px;">
+                <a href="/Employees?tab=documents" style="display:block; text-align:center; padding:10px; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-weight:700; color:#10823c; text-decoration:none;">← Back to Pending Documents</a>
+            </div>
+        }
+
+    </aside>
+</div>
+
+@section Scripts {
+    <script>
+        function toggleRejectPanel() {
+            var panel = document.getElementById('rejectPanel');
+            var btn   = document.getElementById('rejectToggleBtn');
+            var isOpen = panel.classList.toggle('open');
+            btn.style.opacity = isOpen ? '0.6' : '1';
+        }
+    </script>
+}

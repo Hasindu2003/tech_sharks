@@ -12,21 +12,19 @@
     <title>Sign in to HRMS</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         html, body {
             height: 100%;
             font-family: 'Manrope', sans-serif;
-            background: #f6f8f7;
+            background: #ffffff;
         }
 
         .login-wrapper {
             display: flex;
             height: 100vh;
-            min-height: 600px;
         }
 
         /* ── LEFT PANEL ── */
@@ -36,95 +34,61 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 35%;
-            min-width: 360px;
-            max-width: 672px;
+            width: 38%;
+            min-width: 320px;
+            max-width: 520px;
             background: #ffffff;
-            padding: 48px 80px;
+            padding: 32px 48px;
             overflow: hidden;
         }
 
         .logo-wrap {
             position: absolute;
-            top: 33px;
+            top: 24px;
             left: 50%;
             transform: translateX(-50%);
-            width: 312px;
             text-align: center;
         }
 
         .logo-wrap img {
-            height: 60px;
-            width: auto;
-        }
-
-        /* Fallback text logo */
-        .logo-text {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .logo-text .logo-leaf {
-            width: 44px;
             height: 44px;
-        }
-        .logo-text .logo-name {
-            display: flex;
-            flex-direction: column;
-            line-height: 1.1;
-        }
-        .logo-text .logo-name strong {
-            font-size: 18px;
-            font-weight: 700;
-            color: #10823c;
-            letter-spacing: 1px;
-        }
-        .logo-text .logo-name span {
-            font-size: 11px;
-            font-weight: 600;
-            color: #111814;
-            letter-spacing: 2px;
-        }
-        .logo-sub {
-            font-size: 10px;
-            color: #638871;
-            margin-top: 2px;
+            width: auto;
         }
 
         .form-container {
             width: 100%;
-            max-width: 460px;
+            max-width: 340px;
         }
 
         .form-heading {
-            font-size: 36px;
-            font-weight: 700;
-            color: #111814;
-            letter-spacing: -0.9px;
-            line-height: 40px;
-            margin-bottom: 8px;
+            font-size: 22px;
+            font-weight: 800;
+            color: #151811;
+            letter-spacing: -0.5px;
+            line-height: 28px;
+            margin-bottom: 4px;
         }
 
         .form-subtitle {
-            font-size: 16px;
+            font-size: 12px;
             font-weight: 400;
-            color: #638871;
-            line-height: 24px;
-            margin-bottom: 32px;
+            color: #7a8863;
+            line-height: 18px;
+            margin-bottom: 22px;
         }
 
         .field-label {
             display: block;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 600;
-            color: #111814;
-            line-height: 21px;
-            margin-bottom: 8px;
+            color: #151811;
+            line-height: 18px;
+            margin-bottom: 5px;
         }
 
         .input-wrap {
             position: relative;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .input-field {
@@ -133,26 +97,26 @@
 
         .form-input {
             width: 100%;
-            height: 56px;
-            padding: 17px 48px 17px 17px;
-            border: 1px solid #dce5df;
-            border-radius: 8px;
+            height: 40px;
+            padding: 10px 36px 10px 12px;
+            border: 1px solid #e2e5dc;
+            border-radius: 6px;
             background: #ffffff;
             font-family: 'Manrope', sans-serif;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 400;
-            color: #111814;
+            color: #151811;
             outline: none;
             transition: border-color 0.2s, box-shadow 0.2s;
         }
 
         .form-input::placeholder {
-            color: #638871;
+            color: #7a8863;
         }
 
         .form-input:focus {
             border-color: #10823c;
-            box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.12);
+            box-shadow: 0 0 0 2px rgba(16, 130, 60, 0.1);
         }
 
         .form-input.is-invalid {
@@ -161,23 +125,23 @@
 
         .input-icon {
             position: absolute;
-            right: 16px;
+            right: 10px;
             top: 50%;
             transform: translateY(-50%);
-            color: #638871;
+            color: #7a8863;
             pointer-events: none;
         }
 
         .eye-toggle {
             position: absolute;
-            right: 16px;
+            right: 10px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
             border: none;
             cursor: pointer;
             padding: 0;
-            color: #638871;
+            color: #7a8863;
             display: flex;
             align-items: center;
         }
@@ -186,38 +150,38 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
         .checkbox-label {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
             cursor: pointer;
         }
 
         .checkbox-label input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            border: 1px solid #dce5df;
-            border-radius: 4px;
+            width: 14px;
+            height: 14px;
+            border: 1px solid #e2e5dc;
+            border-radius: 3px;
             accent-color: #10823c;
             cursor: pointer;
         }
 
         .checkbox-label span {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 500;
-            color: #638871;
-            line-height: 20px;
+            color: #7a8863;
+            line-height: 16px;
         }
 
         .forgot-link {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 600;
             color: #10823c;
             text-decoration: none;
-            line-height: 20px;
+            line-height: 16px;
         }
 
         .forgot-link:hover {
@@ -228,51 +192,51 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 6px;
             width: 100%;
-            height: 56px;
+            height: 40px;
             background: #10823c;
             color: #ffffff;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-family: 'Manrope', sans-serif;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: 700;
-            line-height: 24px;
+            line-height: 20px;
             cursor: pointer;
             box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
             transition: background 0.2s, box-shadow 0.2s;
-            margin-top: 12px;
+            margin-top: 6px;
         }
 
         .btn-signin:hover {
             background: #0d6e32;
-            box-shadow: 0 4px 12px rgba(16, 130, 60, 0.3);
+            box-shadow: 0 3px 8px rgba(16, 130, 60, 0.25);
         }
 
         .btn-signin svg {
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
         }
 
         .support-row {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            margin-top: 24px;
+            gap: 3px;
+            margin-top: 18px;
         }
 
         .support-row p {
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 400;
-            color: #638871;
+            color: #7a8863;
             margin: 0;
         }
 
         .support-link {
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 11px;
+            font-weight: 600;
             color: #10823c;
             text-decoration: none;
         }
@@ -281,46 +245,46 @@
 
         .copyright {
             position: absolute;
-            bottom: 32px;
+            bottom: 20px;
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 12px;
+            font-size: 10px;
             font-weight: 400;
-            color: rgba(99, 136, 113, 0.5);
+            color: rgba(122, 136, 99, 0.45);
         }
 
         .validation-message {
             color: #dc3545;
-            font-size: 12px;
-            margin-top: 4px;
+            font-size: 10px;
+            margin-top: 3px;
         }
 
         .alert-error {
             background: #fef2f2;
             border: 1px solid #fecaca;
-            border-radius: 8px;
+            border-radius: 6px;
             color: #dc3545;
-            font-size: 14px;
-            padding: 12px 16px;
-            margin-bottom: 20px;
+            font-size: 12px;
+            padding: 8px 12px;
+            margin-bottom: 14px;
         }
 
         /* ── RIGHT PANEL ── */
         .right-panel {
             flex: 1;
             position: relative;
-            background: #f6f8f7;
-            padding: 32px;
+            background: #ffffff;
+            padding: 20px;
             overflow: hidden;
         }
 
         .right-inner {
             position: relative;
             height: 100%;
-            border-radius: 24px;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.2);
         }
 
         .right-bg {
@@ -336,8 +300,8 @@
             inset: 0;
             background: linear-gradient(
                 to top,
-                rgba(16, 130, 60, 0.9) 0%,
-                rgba(16, 130, 60, 0.4) 50%,
+                rgba(16, 130, 60, 0.88) 0%,
+                rgba(16, 130, 60, 0.35) 50%,
                 rgba(16, 130, 60, 0) 100%
             );
             mix-blend-mode: multiply;
@@ -346,7 +310,7 @@
         .right-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.1);
+            background: rgba(0, 0, 0, 0.08);
         }
 
         .right-content {
@@ -354,87 +318,69 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 373px;
-            padding: 0 64px;
+            padding: 0 40px 40px;
         }
 
         .slide-indicator {
-            width: 64px;
-            height: 4px;
-            background: rgba(255, 255, 255, 0.5);
+            width: 48px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.45);
             border-radius: 9999px;
-            margin-top: 64px;
-            margin-bottom: 20px;
+            margin-bottom: 14px;
         }
 
         .slide-heading {
-            font-size: 36px;    
-            font-weight: 700;
+            font-size: 24px;
+            font-weight: 800;
             color: #ffffff;
-            line-height: 45px;
-            margin-bottom: 16px;
+            line-height: 32px;
+            margin-bottom: 10px;
         }
 
         .slide-desc {
-            font-size: 20px;
+            font-size: 13px;
             font-weight: 300;
             color: rgba(255, 255, 255, 0.8);
-            line-height: 32.5px;
-            max-width: 576px;
+            line-height: 22px;
+            max-width: 440px;
         }
 
         .slide-dots {
             display: flex;
-            gap: 10px;
-            margin-top: 32px;
+            gap: 7px;
+            margin-top: 20px;
         }
 
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
         }
 
         .dot.active { background: #ffffff; }
-        .dot.inactive { background: rgba(255, 255, 255, 0.4); }
+        .dot.inactive { background: rgba(255, 255, 255, 0.35); }
 
-        /* ── Tablet (≤ 1024px) ── */
-        @@media (max-width: 1024px) {
-            .left-panel { padding: 48px 48px; min-width: 320px; }
-        }
-
-        /* ── Hide right panel on smaller screens (≤ 900px) ── */
+        /* ── Responsive ── */
         @@media (max-width: 900px) {
             .right-panel { display: none; }
             .left-panel {
                 width: 100%;
                 max-width: 100%;
-                padding: 48px 48px;
+                padding: 32px 32px;
             }
             .logo-wrap {
                 position: static;
                 transform: none;
                 width: auto;
                 text-align: left;
-                margin-bottom: 32px;
+                margin-bottom: 24px;
             }
             .form-container { max-width: 100%; }
         }
 
-        /* ── Mobile (≤ 600px) ── */
         @@media (max-width: 600px) {
-            .left-panel { padding: 32px 24px; }
-            .form-heading { font-size: 28px; line-height: 34px; }
-            .form-subtitle { font-size: 14px; }
-            .logo-wrap img { height: 50px; }
-        }
-
-        /* ── Small mobile (≤ 400px) ── */
-        @@media (max-width: 400px) {
-            .left-panel { padding: 24px 16px; }
-            .form-heading { font-size: 24px; }
-            .btn-signin { height: 48px; font-size: 15px; }
-            .form-input { height: 48px; font-size: 15px; }
+            .left-panel { padding: 24px 20px; }
+            .form-heading { font-size: 18px; line-height: 24px; }
         }
     </style>
 </head>
@@ -444,12 +390,12 @@
     <!-- ── LEFT PANEL ── -->
     <div class="left-panel">
 
-        <!-- Kanrich Limited Logo -->
+        <!-- Logo -->
         <div class="logo-wrap">
-            <img src="/images/logo.webp" alt="Kanrich Limited" style="height:65px; width:auto;" />
+            <img src="/images/logo.webp" alt="Kanrich Limited" style="height:44px; width:auto;" />
         </div>
 
-        <!-- Form Container -->
+        <!-- Form -->
         <div class="form-container">
             <h1 class="form-heading">Sign in to HRMS</h1>
             <p class="form-subtitle">Welcome back! Please enter your details.</p>
@@ -464,7 +410,7 @@
                     </div>
                 }
 
-                <!-- Username / Email -->
+                <!-- Email -->
                 <div class="input-wrap">
                     <label asp-for="Input.Email" class="field-label">Username or Email</label>
                     <div class="input-field">
@@ -473,7 +419,7 @@
                                placeholder="Enter your username"
                                autocomplete="email" />
                         <span class="input-icon">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
                                 <circle cx="12" cy="7" r="4"/>
                             </svg>
@@ -492,7 +438,7 @@
                                placeholder="Enter your password"
                                autocomplete="current-password" />
                         <button type="button" class="eye-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
-                            <svg id="eyeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <svg id="eyeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
                                 <line x1="1" y1="1" x2="23" y2="23"/>
                             </svg>
@@ -510,7 +456,7 @@
                     <a href="#" class="forgot-link">Forgot password?</a>
                 </div>
 
-                <!-- Sign In Button -->
+                <!-- Sign In -->
                 <button type="submit" class="btn-signin">
                     Sign In
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -520,14 +466,13 @@
                 </button>
             </form>
 
-            <!-- Support -->
             <div class="support-row">
                 <p>Having trouble logging in?</p>
                 <a href="#" class="support-link">Contact Support</a>
             </div>
         </div>
 
-        <div class="copyright">© 2026 Kanrich Limited. All rights reserved.</div>
+        <div class="copyright">&copy; 2026 Kanrich Limited. All rights reserved.</div>
     </div>
 
     <!-- ── RIGHT PANEL ── -->
@@ -542,7 +487,7 @@
                     Streamline your workforce<br />management.
                 </h2>
                 <p class="slide-desc">
-                    Experience the next generation of HR tools designed for<br />
+                    Experience the next generation of HR tools designed for
                     efficiency, clarity, and growth at Kanrich Limited.
                 </p>
                 <div class="slide-dots">
