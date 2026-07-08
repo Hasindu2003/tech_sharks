@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace HRMS.UI.Pages.HRManager
 {
-    [Authorize(Roles = "Admin,HR Manager")]
+    [Authorize(Roles = "HR Manager")]
     public class ReviewDeathModel : PageModel
     {
         private readonly IDeathService _deathService;

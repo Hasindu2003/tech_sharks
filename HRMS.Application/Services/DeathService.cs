@@ -1,8 +1,8 @@
-using HRMS.Application.Models;
-using HRMS.Domain.Entities.Death;
-using HRMS.Domain.Entities.Core;
+﻿using HRMS.Domain.Entities.Death;
+using HRMS.Domain.Entities.Transfer;
 using HRMS.Infrastructure.Identity;
 using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,17 +15,27 @@ namespace HRMS.Application.Services
         Task<List<DeathRequestViewModel>> GetAllPendingForBMAsync(string branch);
         Task<List<DeathRequestViewModel>> GetAllPendingForAMAsync();
         Task<List<DeathRequestViewModel>> GetAllPendingForHRAsync();
+        
         Task<int> SubmitRequestAsync(DeathRequestViewModel model, List<IFormFile> documents, string initiatedByEmail);
+
         Task<bool> BMApproveAsync(int id, string comments, string bmEmail);
         Task<bool> BMRejectAsync(int id, string comments, string bmEmail);
+
         Task<bool> AMApproveAsync(int id, string comments, string amEmail);
         Task<bool> AMRejectAsync(int id, string comments, string amEmail);
+
         Task<bool> HRManagerApproveAsync(int id, string comments, string hrEmail);
         Task<bool> HRManagerRejectAsync(int id, string comments, string hrEmail);
+
         Task<(byte[] Content, string ContentType, string FileName)?> DownloadDocumentAsync(int documentId);
+        
         Task<(bool Success, string ErrorMessage)> ProcessClosureAsync(int id, string hrEmail, UserManager<ApplicationUser> userManager);
     }
 
+    /// <summary>
+    /// Service responsible for managing the process following an employee's death.
+    /// Handles document submission, multi-stage approvals, and final account/payroll closure.
+    /// </summary>
     public class DeathService : IDeathService
     {
         private readonly ApplicationDbContext _context;
@@ -94,8 +104,10 @@ namespace HRMS.Application.Services
 
         public async Task<List<DeathRequestViewModel>> GetAllPendingForBMAsync(string branch)
         {
+            var branchLower = branch.Trim().ToLower();
             var data = await _context.DeathRequests
-                .Where(r => r.Branch == branch && r.Status == DeathRequestStatus.SubmittedForApproval)
+                .Where(r => r.Status == DeathRequestStatus.SubmittedForApproval && 
+                            r.Branch.Trim().ToLower() == branchLower)
                 .OrderBy(r => r.CreatedDate)
                 .ToListAsync();
             return MapToVMList(data);
@@ -119,6 +131,10 @@ namespace HRMS.Application.Services
             return MapToVMList(data);
         }
 
+        /// <summary>
+        /// Submits a new death request with supporting documentation.
+        /// Initiated by a manager and moves the request to the BM review queue.
+        /// </summary>
         public async Task<int> SubmitRequestAsync(DeathRequestViewModel model, List<IFormFile> documents, string initiatedByEmail)
         {
             var entity = new DeathRequest
@@ -161,16 +177,22 @@ namespace HRMS.Application.Services
             _context.DeathRequests.Add(entity);
             await _context.SaveChangesAsync();
 
+            // Notify BM
             await _notificationService.CreateNotificationAsync(
-                "BM_ROLE",
+                "BM_ROLE", // Simplified logic for role broadcast
                 "New Employee Death Request",
                 $"A death request for {entity.EmployeeName} requires your review.",
-                CoreNotificationType.Info,
-                entity.Id);
+                NotificationType.Info,
+                entity.Id,
+                "/Separation/Dashboard"
+            );
 
             return entity.Id;
         }
 
+        /// <summary>
+        /// Processes the Branch Manager's review of the death claim.
+        /// </summary>
         public async Task<bool> BMApproveAsync(int id, string comments, string bmEmail)
         {
             var req = await _context.DeathRequests.FindAsync(id);
@@ -201,12 +223,15 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
+            // notify HR or Initiator
             await _notificationService.CreateNotificationAsync(
                 req.InitiatedBy,
                 "Death Request Rejected",
                 $"Your request for {req.EmployeeName} was rejected by BM.",
-                CoreNotificationType.Rejected,
-                req.Id);
+                NotificationType.Rejected,
+                req.Id,
+                "/Separation/Dashboard"
+            );
 
             return true;
         }
@@ -243,6 +268,9 @@ namespace HRMS.Application.Services
             return true;
         }
 
+        /// <summary>
+        /// Processes the final HR Manager review for the death claim.
+        /// </summary>
         public async Task<bool> HRManagerApproveAsync(int id, string comments, string hrEmail)
         {
             var req = await _context.DeathRequests.FindAsync(id);
@@ -282,6 +310,9 @@ namespace HRMS.Application.Services
             return (doc.Content, doc.ContentType, doc.FileName);
         }
 
+        /// <summary>
+        /// Finalizes the death claim by deactivating the employee account and stopping payroll.
+        /// </summary>
         public async Task<(bool Success, string ErrorMessage)> ProcessClosureAsync(int id, string hrEmail, UserManager<ApplicationUser> userManager)
         {
             var req = await _context.DeathRequests.FindAsync(id);
@@ -292,10 +323,11 @@ namespace HRMS.Application.Services
             if (user != null)
             {
                 user.LockoutEnabled = true;
-                user.LockoutEnd = DateTimeOffset.MaxValue;
+                user.LockoutEnd = DateTimeOffset.MaxValue; // inactivate user account
                 await userManager.UpdateAsync(user);
             }
 
+            // Stop payroll, trigger finance manually by updating entity state
             req.AccountDeactivated = true;
             req.AccountDeactivatedDate = DateTime.UtcNow;
             req.AccountDeactivatedBy = hrEmail;
@@ -305,10 +337,13 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
+            // Emulate notifying nominee
+            // _emailService.SendEmail(req.NomineeContact, "...", "...") etc.
+
             return (true, string.Empty);
         }
 
-        private static List<DeathRequestViewModel> MapToVMList(List<DeathRequest> data)
+        private List<DeathRequestViewModel> MapToVMList(List<DeathRequest> data)
         {
             return data.Select(req => new DeathRequestViewModel
             {

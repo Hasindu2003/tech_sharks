@@ -5,7 +5,11 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Transfer
 {
-    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager,Employee")]
+    [Authorize(Roles = "Employee,Branch Manager,HR Manager")]
+    /// <summary>
+    /// Page model for the "My Requests" page.
+    /// Retrieves and displays all transfer requests initiated by the logged-in user.
+    /// </summary>
     public class MyRequestsModel : PageModel
     {
         private readonly ITransferRequestService _transferService;

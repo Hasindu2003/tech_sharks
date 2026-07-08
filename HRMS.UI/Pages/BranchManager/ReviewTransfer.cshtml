@@ -16,7 +16,7 @@ else
 
     <div style="margin-bottom:20px">
         <a asp-page="/BranchManager/ReviewTransfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
-            <i class="bi bi-arrow-left"></i> Back to Separation
+            <i class="bi bi-arrow-left"></i> Back to Review Transfers
         </a>
         <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
         <span class="k-badge @(isCurrentBM ? "k-badge-info" : "k-badge-approved")" style="margin-left:8px">
@@ -56,14 +56,18 @@ else
                         <div class="detail-value">@req.Department</div>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px;margin-bottom:20px">
                     <div>
                         <div class="detail-label">Position</div>
                         <div class="detail-value">@req.CurrentDesignation</div>
                     </div>
                     <div>
                         <div class="detail-label">Years of Service</div>
-                        <div class="detail-value">@req.YearsOfService years</div>
+                        <div class="detail-value">@ServiceDurationHelper.Format(req.JoinDate, req.YearsOfService)</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Preferred Date</div>
+                        <div class="detail-value">@(req.PreferredDate?.ToString("MMM dd, yyyy") ?? "—")</div>
                     </div>
                     <div>
                         <div class="detail-label">Submission Date</div>
@@ -78,16 +82,29 @@ else
                 </div>
             </div>
 
-            <!-- HR Manager Review -->
+            <!-- HR Finalization -->
             @if (!string.IsNullOrEmpty(req.HRManagerReview))
             {
                 <div class="review-card approved" style="margin-bottom:20px">
-                    <h6 style="font-weight:700;margin-bottom:8px"><i class="bi bi-clipboard-check"></i> HR Manager Review</h6>
+                    <h6 style="font-weight:700;margin-bottom:8px"><i class="bi bi-clipboard-check"></i> HR Finalization</h6>
                     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.88rem">
                         <div><strong>Decision:</strong> @req.HRManagerReview</div>
                         <div><strong>Date:</strong> @req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
                     </div>
                     <div style="margin-top:8px;font-size:0.88rem"><strong>Comments:</strong> @req.HRManagerComments</div>
+                </div>
+            }
+
+            <!-- Area Manager Review (for HR-initiated) -->
+            @if (!string.IsNullOrEmpty(req.AreaManagerReview))
+            {
+                <div class="review-card approved" style="margin-bottom:20px">
+                    <h6 style="font-weight:700;margin-bottom:8px"><i class="bi bi-person-badge"></i> Area Manager Review</h6>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.88rem">
+                        <div><strong>Decision:</strong> @req.AreaManagerReview</div>
+                        <div><strong>Date:</strong> @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                    </div>
+                    <div style="margin-top:8px;font-size:0.88rem"><strong>Comments:</strong> @req.AreaManagerComments</div>
                 </div>
             }
 
@@ -133,10 +150,10 @@ else
             @{
                 bool canReview = false;
                 if (isCurrentBM && req.CurrentBMReview == null &&
-                    (req.Status == TransferStatus.HRManagerApproved || req.Status == TransferStatus.TargetBMApproved))
+                    (req.Status == TransferStatus.DeptHeadApproved || req.Status == TransferStatus.TargetBMApproved))
                     canReview = true;
                 if (!isCurrentBM && req.TargetBMReview == null &&
-                    (req.Status == TransferStatus.HRManagerApproved || req.Status == TransferStatus.CurrentBMApproved))
+                    (req.Status == TransferStatus.DeptHeadApproved || req.Status == TransferStatus.CurrentBMApproved))
                     canReview = true;
             }
 
@@ -150,7 +167,7 @@ else
                         <div class="ep-check-circle"></div>
                         <div>
                             <div class="ep-check-label">Service Period Check</div>
-                            <div class="ep-check-desc">Current: @req.YearsOfService years</div>
+                            <div class="ep-check-desc">Current: @ServiceDurationHelper.Format(req.JoinDate, req.YearsOfService)</div>
                         </div>
                     </div>
                     <div class="ep-check-item">
@@ -167,6 +184,10 @@ else
                             <textarea name="comments" placeholder="Add your review comments..." required minlength="10"
                                       style="width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-family:inherit;resize:vertical;min-height:80px"></textarea>
                         </div>
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div asp-validation-summary="All" style="color:#fecaca;font-size:0.82rem;margin-bottom:8px;font-weight:600"></div>
+                        }
                         <button type="submit" name="action" value="approve" class="btn-ep-approve">
                             <i class="bi bi-check-circle"></i> Approve Transfer
                         </button>

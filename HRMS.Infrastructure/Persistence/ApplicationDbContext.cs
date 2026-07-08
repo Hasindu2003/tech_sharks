@@ -31,6 +31,10 @@ using HRMS.Domain.Entities.Death;
 
 namespace HRMS.Infrastructure.Persistence
 {
+    /// <summary>
+    /// The primary database context for the HRMS application.
+    /// Integrates ASP.NET Core Identity for user management and registers all domain entities for EF Core.
+    /// </summary>
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
@@ -90,6 +94,9 @@ namespace HRMS.Infrastructure.Persistence
         public DbSet<DeathRequest> DeathRequests { get; set; } = null!;
         public DbSet<DeathDocument> DeathDocuments { get; set; } = null!;
 
+        /// <summary>
+        /// Configures the database schema and defines entity relationships, indexes, and constraints.
+        /// </summary>
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

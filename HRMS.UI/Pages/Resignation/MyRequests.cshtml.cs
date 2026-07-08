@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Resignation
 {
-    [Authorize(Roles = "Admin,HR Manager,Area Manager,Branch Manager,Employee")]
+    [Authorize(Roles = "Employee")]
     public class MyRequestsModel : PageModel
     {
         private readonly IResignationService _resignationService;

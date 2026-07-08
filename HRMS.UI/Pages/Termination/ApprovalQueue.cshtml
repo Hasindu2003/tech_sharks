@@ -6,39 +6,59 @@
     ViewData["Title"] = "Termination Approvals";
 }
 
-<div style="margin-bottom:24px">
-    <a asp-page="/Separation/Dashboard" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px">
-        <i class="bi bi-arrow-left"></i> Back to Separation
-    </a>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Termination Approval Queue</h2>
-            <p style="color:#6b7280;font-size:0.9rem;margin:0">Review and approve or reject pending termination requests</p>
-        </div>
-    </div>
-</div>
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 19px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .employee-cell { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .emp-info .name { font-size: 14px; font-weight: 700; color: #151811; display: block; }
+    .emp-info .sub  { font-size: 12px; color: #7a8863; }
+    .k-badge, .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .k-badge-pending  { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .k-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .k-badge-rejected { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .k-badge-info     { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+    .btn-action-primary { background: #10823c; color: white; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 12px; border-radius: 5px; }
+    .btn-action-primary:hover { background: #0d6e32; color: white; }
+    .success-banner { background: #ecfdf5; color: #065f46; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #10b981; display: flex; align-items: center; gap: 8px; }
+</style>
+
+<h2 class="page-h">Termination Approval Queue</h2>
+<p class="page-s">Review and approve or reject pending termination requests</p>
 
 @if (TempData["SuccessMessage"] is string successMsg)
 {
-    <div class="k-alert k-alert-success">
-        <i class="bi bi-check-circle"></i> @successMsg
+    <div class="success-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        @successMsg
     </div>
 }
 
 @if (Model.PendingRequests.Any())
 {
-    <div class="k-card" style="padding:0;overflow:hidden">
-        <table class="k-table" id="tbl-approval-queue">
+    <div class="table-card">
+        <table class="emp-table">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th style="width:70px">ID</th>
                     <th>Employee</th>
                     <th>Type</th>
                     <th>Effective Date</th>
                     <th>Obligations</th>
                     <th>Documents</th>
                     <th>Submitted</th>
-                    <th>Action</th>
+                    <th style="text-align:right"></th>
                 </tr>
             </thead>
             <tbody>
@@ -46,41 +66,36 @@
                 {
                     var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
                     <tr>
-                        <td style="font-weight:600;color:var(--text-secondary)">#@req.Id</td>
+                        <td style="font-weight:600;color:#7a8863">#@req.Id</td>
                         <td>
                             <div class="employee-cell">
-                                <div class="emp-avatar">@initials</div>
-                                <div class="emp-details">
-                                    <div class="emp-name">@req.EmployeeName</div>
-                                    <div class="emp-dept">@req.EpfNumber · @req.Branch</div>
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@req.EmployeeName</span>
+                                    <span class="sub">@req.EpfNumber · @req.Branch</span>
                                 </div>
                             </div>
                         </td>
-                        <td>@req.TerminationTypeDisplay</td>
-                        <td>@req.EffectiveTerminationDate.ToString("MMM dd, yyyy")</td>
+                        <td style="color:#7a8863">@req.TerminationTypeDisplay</td>
+                        <td style="font-weight:600;color:#10823c">@req.EffectiveTerminationDate.ToString("MMM dd, yyyy")</td>
                         <td>
                             @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
                             {
-                                <span class="k-badge k-badge-pending"><i class="bi bi-exclamation-triangle"></i> Has Obligations</span>
+                                <span class="k-badge k-badge-pending">Has Obligations</span>
                                 @if (req.HasOverridePermission)
                                 {
-                                    <br /><span class="k-badge k-badge-info" style="margin-top:4px"><i class="bi bi-shield"></i> Override</span>
+                                    <br /><span class="k-badge k-badge-info" style="margin-top:4px">Override</span>
                                 }
                             }
                             else
                             {
-                                <span class="k-badge k-badge-approved"><i class="bi bi-check-circle"></i> Clear</span>
+                                <span class="k-badge k-badge-approved">Clear</span>
                             }
                         </td>
-                        <td>
-                            <span class="k-badge k-badge-info">@req.DocumentCount file(s)</span>
-                        </td>
-                        <td>@req.CreatedDate.ToString("MMM dd, yyyy")</td>
-                        <td>
-                            <a asp-page="/Termination/ReviewTermination" asp-route-id="@req.Id"
-                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
-                                <i class="bi bi-clipboard-check"></i> Review
-                            </a>
+                        <td><span class="k-badge k-badge-info">@req.DocumentCount file(s)</span></td>
+                        <td style="color:#7a8863">@req.CreatedDate.ToString("MMM dd, yyyy")</td>
+                        <td style="text-align:right">
+                            <a asp-page="/Termination/ReviewTermination" asp-route-id="@req.Id" class="btn-action-primary">Review</a>
                         </td>
                     </tr>
                 }
@@ -90,17 +105,9 @@
 }
 else
 {
-    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
-        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
-        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No pending approvals</div>
-        <div style="font-size:0.88rem">All termination requests have been reviewed</div>
+    <div class="table-card" style="text-align:center;padding:48px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e5dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 12px"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <p style="font-size:14px;font-weight:600;color:#151811;margin-bottom:4px">No pending approvals</p>
+        <span style="font-size:12px;color:#7a8863">All termination requests have been reviewed</span>
     </div>
-}
-
-@section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-approval-queue', 8);
-});
-</script>
 }

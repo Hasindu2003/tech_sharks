@@ -4,7 +4,7 @@ namespace HRMS.Domain.Entities.Core
 {
     public class Employee
     {
-        public int Id { get; set; }   // Primary Key
+        public int Id { get; set; }
 
         // Basic Information
         public string FullName { get; set; } = null!;

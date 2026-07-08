@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using HRMS.Domain.Entities.Death;
 
 namespace HRMS.Application.Models
@@ -7,6 +7,7 @@ namespace HRMS.Application.Models
     {
         public int Id { get; set; }
 
+        // ── Employee Details ──
         [Display(Name = "Employee Name")]
         public string EmployeeName { get; set; } = string.Empty;
 
@@ -25,11 +26,12 @@ namespace HRMS.Application.Models
         [Display(Name = "Designation")]
         public string Designation { get; set; } = string.Empty;
 
+        // ── Death & Nominee Details ──
         [Required(ErrorMessage = "Date of Death is required.")]
         [DataType(DataType.Date)]
         [Display(Name = "Date of Death")]
         public DateTime DateOfDeath { get; set; }
-
+        
         [Required(ErrorMessage = "Nature of Death is required.")]
         [StringLength(500, MinimumLength = 10, ErrorMessage = "Reason must be between 10 and 500 characters.")]
         [Display(Name = "Nature/Cause of Death")]
@@ -49,15 +51,18 @@ namespace HRMS.Application.Models
         [Display(Name = "Additional Remarks")]
         public string? AdditionalRemarks { get; set; }
 
+        // ── Obligations ──
         public bool HasOutstandingLoans { get; set; }
         public bool IsLoanGuarantor { get; set; }
         public string? ObligationDetails { get; set; }
 
+        // ── Workflow ──
         public DeathRequestStatus Status { get; set; }
         public string InitiatedBy { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         public DateTime LastModifiedDate { get; set; }
 
+        // ── Approvals ──
         public string? BMReview { get; set; }
         public DateTime? BMReviewDate { get; set; }
         public string? BMComments { get; set; }
@@ -70,13 +75,16 @@ namespace HRMS.Application.Models
         public DateTime? HRReviewDate { get; set; }
         public string? HRComments { get; set; }
 
+        // ── Post Approval ──
         public bool AccountDeactivated { get; set; }
         public bool PayrollStopped { get; set; }
         public bool FinanceClearanceTriggered { get; set; }
 
+        // ── Documents ──
         public List<DeathDocumentViewModel> Documents { get; set; } = new();
         public int DocumentCount { get; set; }
 
+        // ── Helpers ──
         public string StatusDisplay => Status switch
         {
             DeathRequestStatus.Draft => "Draft",

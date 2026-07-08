@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Application.Models
 {
@@ -6,6 +6,7 @@ namespace HRMS.Application.Models
     {
         public int Id { get; set; }
 
+        // ── Employee Details ──
         [Display(Name = "Employee Name")]
         public string EmployeeName { get; set; } = string.Empty;
 
@@ -24,6 +25,7 @@ namespace HRMS.Application.Models
         [Display(Name = "Designation")]
         public string Designation { get; set; } = string.Empty;
 
+        // ── Termination Details ──
         [Required(ErrorMessage = "Termination type is required.")]
         [Display(Name = "Termination Type")]
         public TerminationTypeEnum TerminationType { get; set; }
@@ -51,6 +53,7 @@ namespace HRMS.Application.Models
         [Display(Name = "Special Remarks / Notes")]
         public string? SpecialRemarks { get; set; }
 
+        // ── Obligations ──
         [StringLength(2000)]
         [Display(Name = "Direct Obligations (e.g. outstanding loans)")]
         public string? DirectObligations { get; set; }
@@ -63,24 +66,29 @@ namespace HRMS.Application.Models
         public bool IsLoanGuarantor { get; set; }
         public bool HasOverridePermission { get; set; }
 
+        // ── Workflow ──
         public TerminationStatusEnum Status { get; set; }
         public string InitiatedBy { get; set; } = string.Empty;
         public string InitiatedByRole { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         public DateTime LastModifiedDate { get; set; }
 
+        // ── Approval ──
         public string? ApproverReview { get; set; }
         public DateTime? ApproverReviewDate { get; set; }
         public string? ApproverComments { get; set; }
         public string? ApprovedBy { get; set; }
 
+        // ── Finance Clearance ──
         public bool FinanceClearanceCompleted { get; set; }
         public DateTime? FinanceClearanceDate { get; set; }
         public string? FinanceClearanceNotes { get; set; }
 
+        // ── Documents ──
         public List<TerminationDocumentViewModel> Documents { get; set; } = new();
         public int DocumentCount { get; set; }
 
+        // ── Helpers ──
         public string StatusDisplay => Status switch
         {
             TerminationStatusEnum.New => "New",

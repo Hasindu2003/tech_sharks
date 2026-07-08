@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.BranchManager
 {
-    [Authorize(Roles = "Admin,Branch Manager")]
+    [Authorize(Roles = "Branch Manager")]
     public class ReviewTransfersModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
@@ -20,12 +20,15 @@ namespace HRMS.UI.Pages.BranchManager
         }
 
         public List<TransferRequestViewModel> PendingRequests { get; set; } = new();
+        public List<TransferRequestViewModel> ReviewedRequests { get; set; } = new();
+        public string BranchManagerBranch { get; set; } = string.Empty;
 
         public async Task OnGetAsync()
         {
             var user = await _userManager.GetUserAsync(User);
-            var branch = user?.Branch ?? "";
-            PendingRequests = await _transferService.GetPendingRequestsForBranchManagerAsync(branch);
+            BranchManagerBranch = user?.Branch ?? "";
+            PendingRequests  = await _transferService.GetPendingRequestsForBranchManagerAsync(BranchManagerBranch);
+            ReviewedRequests = await _transferService.GetReviewedByBranchManagerAsync(BranchManagerBranch);
         }
     }
 }

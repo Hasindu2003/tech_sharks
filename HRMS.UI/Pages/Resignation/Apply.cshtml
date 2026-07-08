@@ -4,128 +4,131 @@
     ViewData["Title"] = "Submit Resignation";
 }
 
-<div class="page-header">
-    <h1 class="page-title">Submit Resignation</h1>
-    <p class="page-subtitle">Complete this form to initiate your resignation process.</p>
-</div>
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; display: block; }
+    .ir { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+    .ir:last-child { border-bottom: none; padding-bottom: 0; }
+    .ik { font-size: 12px; font-weight: 600; color: #7a8863; }
+    .iv { font-weight: 600; color: #151811; }
+    .divider-label { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 16px 0 10px 0; padding-top: 14px; border-top: 1px solid #e2e5dc; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: none; cursor: pointer; }
+    .btn-create:hover { background: #0d6e32; color: white; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e5dc; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .notice-item { font-size: 13px; color: #7a8863; padding: 6px 0; display: flex; gap: 10px; align-items: flex-start; }
+    .notice-num { width: 20px; height: 20px; border-radius: 50%; background: #e8f3ec; color: #10823c; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+    .warn-note { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; font-size: 13px; color: #92400e; font-weight: 600; }
+</style>
+
+<h2 class="page-h">Submit Resignation</h2>
+<p class="page-s">Complete this form to initiate your resignation process.</p>
 
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
+    <div class="error-banner">@TempData["ErrorMessage"]</div>
 }
 
-<div class="row g-4">
-    <!-- Employee Info Card -->
-    <div class="col-lg-4">
-        <div class="k-card">
-            <div class="k-card-header"><i class="bi bi-person-badge me-2"></i>Your Details</div>
-            <div class="k-card-body">
-                <div class="info-row"><span class="info-label">Name</span><span class="info-value">@Model.CurrentUser?.FullName</span></div>
-                <div class="info-row"><span class="info-label">EPF No.</span><span class="info-value">@Model.CurrentUser?.EpfNumber</span></div>
-                <div class="info-row"><span class="info-label">Branch</span><span class="info-value">@Model.CurrentUser?.Branch</span></div>
-                <div class="info-row"><span class="info-label">Department</span><span class="info-value">@Model.CurrentUser?.Department</span></div>
-                <div class="info-row"><span class="info-label">Designation</span><span class="info-value">@Model.CurrentUser?.Designation</span></div>
-                <div class="info-row"><span class="info-label">Joined</span><span class="info-value">@Model.CurrentUser?.DateOfJoining.ToString("MMMM dd, yyyy")</span></div>
-            </div>
+<div style="display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start">
+    <!-- Left: Employee info + flow -->
+    <div>
+        <div class="form-section">
+            <div class="fst">Your Details</div>
+            <div class="ir"><span class="ik">Name</span><span class="iv">@Model.CurrentUser?.FullName</span></div>
+            <div class="ir"><span class="ik">EPF No.</span><span class="iv">@Model.CurrentUser?.EpfNumber</span></div>
+            <div class="ir"><span class="ik">Branch</span><span class="iv">@Model.CurrentUser?.Branch</span></div>
+            <div class="ir"><span class="ik">Department</span><span class="iv">@Model.CurrentUser?.Department</span></div>
+            <div class="ir"><span class="ik">Designation</span><span class="iv">@Model.CurrentUser?.Designation</span></div>
+            <div class="ir"><span class="ik">Joined</span><span class="iv">@Model.CurrentUser?.DateOfJoining.ToString("MMM dd, yyyy")</span></div>
         </div>
 
-        <div class="k-card mt-3" style="border-left: 4px solid #f59e0b;">
-            <div class="k-card-body">
-                <p class="mb-1 fw-semibold" style="color:#f59e0b;"><i class="bi bi-info-circle me-1"></i> Approval Flow</p>
-                <ol class="ps-3 mb-0" style="font-size:0.85rem; color: var(--text-secondary);">
-                    <li class="mb-1">Branch Manager — Acknowledges</li>
-                    <li class="mb-1">Area Manager — Reviews &amp; Approves</li>
-                    <li>HR Manager — Final Approval</li>
-                </ol>
-            </div>
+        <div class="form-section">
+            <div class="fst">Approval Flow</div>
+            <div class="notice-item"><div class="notice-num">1</div><div>Branch Manager — Acknowledges</div></div>
+            <div class="notice-item"><div class="notice-num">2</div><div>Area Manager — Reviews &amp; Approves</div></div>
+            <div class="notice-item"><div class="notice-num">3</div><div>HR Manager — Final Approval</div></div>
         </div>
     </div>
 
-    <!-- Form -->
-    <div class="col-lg-8">
-        <div class="k-card">
-            <div class="k-card-header"><i class="bi bi-pencil-square me-2"></i>Resignation Details</div>
-            <div class="k-card-body">
-                <form method="post" enctype="multipart/form-data" id="resignationForm">
-                    @Html.AntiForgeryToken()
-                    <div asp-validation-summary="ModelOnly" class="alert alert-danger" style="display:none"></div>
+    <!-- Right: Form -->
+    <div>
+        <div class="form-section">
+            <div class="fst">Resignation Details</div>
+            <form method="post" enctype="multipart/form-data" id="resignationForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="error-banner" style="display:none"></div>
 
-                    <!-- Reason -->
-                    <div class="mb-4">
-                        <label asp-for="Input.ReasonForResignation" class="form-label fw-semibold">Reason for Resignation <span class="text-danger">*</span></label>
-                        <textarea asp-for="Input.ReasonForResignation" class="form-control" rows="4"
-                            placeholder="Please provide a detailed reason (minimum 20 characters)..."></textarea>
-                        <span asp-validation-for="Input.ReasonForResignation" class="text-danger small"></span>
-                    </div>
+                <div class="fg">
+                    <label asp-for="Input.ReasonForResignation" class="fl">Reason for Resignation <span class="req">*</span></label>
+                    <textarea asp-for="Input.ReasonForResignation" class="fi" rows="4"
+                        placeholder="Please provide a detailed reason (minimum 20 characters)..."></textarea>
+                    <span asp-validation-for="Input.ReasonForResignation" class="fi-hint" style="color:#ef4444"></span>
+                </div>
 
-                    <!-- Effective Date -->
-                    <div class="mb-4">
-                        <label asp-for="Input.EffectiveDate" class="form-label fw-semibold">Last Working Day <span class="text-danger">*</span></label>
-                        <input asp-for="Input.EffectiveDate" type="date" class="form-control"
-                               min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")" id="effectiveDateInput" />
-                        <span asp-validation-for="Input.EffectiveDate" class="text-danger small"></span>
-                        <div class="form-text">Minimum 14 days notice required. Notice period: <strong id="noticeDaysDisplay">—</strong></div>
-                    </div>
+                <div class="fg">
+                    <label asp-for="Input.EffectiveDate" class="fl">Last Working Day <span class="req">*</span></label>
+                    <input asp-for="Input.EffectiveDate" type="date" class="fi"
+                           min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")" id="effectiveDateInput" />
+                    <span asp-validation-for="Input.EffectiveDate" class="fi-hint" style="color:#ef4444"></span>
+                    <span class="fi-hint">Minimum 14 days notice required. Notice period: <strong id="noticeDaysDisplay">—</strong></span>
+                </div>
 
-                    <!-- Additional Remarks -->
-                    <div class="mb-4">
-                        <label asp-for="Input.AdditionalRemarks" class="form-label fw-semibold">Additional Remarks</label>
-                        <textarea asp-for="Input.AdditionalRemarks" class="form-control" rows="2"
-                            placeholder="Any additional information..."></textarea>
-                    </div>
+                <div class="fg">
+                    <label asp-for="Input.AdditionalRemarks" class="fl">Additional Remarks</label>
+                    <textarea asp-for="Input.AdditionalRemarks" class="fi" rows="2"
+                        placeholder="Any additional information..."></textarea>
+                </div>
 
-                    <!-- Obligations -->
-                    <div class="k-section-divider mb-3">
-                        <span>Financial Obligations</span>
+                <div class="divider-label">Financial Obligations</div>
+                <div class="fg">
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px">
+                        <input asp-for="Input.HasOutstandingLoans" class="form-check-input" type="checkbox" id="loansCheck" style="width:16px;height:16px;accent-color:#10823c" />
+                        I have outstanding loan balances
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:8px">
+                        <input asp-for="Input.IsLoanGuarantor" class="form-check-input" type="checkbox" id="guarantorCheck" style="width:16px;height:16px;accent-color:#10823c" />
+                        I am a guarantor for another employee's loan
+                    </label>
+                    <div id="overrideRow" style="display:none;">
+                        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;color:#b45309">
+                            <input asp-for="Input.HasOverridePermission" class="form-check-input" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b" />
+                            Senior management override granted
+                        </label>
                     </div>
-                    <div class="mb-3">
-                        <div class="form-check mb-2">
-                            <input asp-for="Input.HasOutstandingLoans" class="form-check-input" type="checkbox" id="loansCheck" />
-                            <label asp-for="Input.HasOutstandingLoans" class="form-check-label">I have outstanding loan balances</label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input asp-for="Input.IsLoanGuarantor" class="form-check-input" type="checkbox" id="guarantorCheck" />
-                            <label asp-for="Input.IsLoanGuarantor" class="form-check-label">I am a guarantor for another employee's loan</label>
-                        </div>
-                        <div class="form-check mb-2" id="overrideRow" style="display:none;">
-                            <input asp-for="Input.HasOverridePermission" class="form-check-input" type="checkbox" />
-                            <label asp-for="Input.HasOverridePermission" class="form-check-label text-warning">Senior management override granted</label>
-                        </div>
-                    </div>
-                    <div class="mb-4" id="obligationDetailsRow" style="display:none;">
-                        <label asp-for="Input.ObligationDetails" class="form-label fw-semibold">Obligation Details</label>
-                        <textarea asp-for="Input.ObligationDetails" class="form-control" rows="2"
-                            placeholder="Describe the obligations..."></textarea>
-                    </div>
+                </div>
+                <div class="fg" id="obligationDetailsRow" style="display:none;">
+                    <label asp-for="Input.ObligationDetails" class="fl">Obligation Details</label>
+                    <textarea asp-for="Input.ObligationDetails" class="fi" rows="2"
+                        placeholder="Describe the obligations..."></textarea>
+                </div>
 
-                    <!-- Documents -->
-                    <div class="k-section-divider mb-3">
-                        <span>Supporting Documents</span>
-                    </div>
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Attach Documents <span class="text-danger">*</span></label>
-                        <input asp-for="Input.Documents" type="file" class="form-control" multiple
-                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                        <div class="form-text">Accepted: PDF, DOC, DOCX, JPG, PNG. Max 5MB per file. At least one document required for submission.</div>
-                    </div>
+                <div class="divider-label">Supporting Documents</div>
+                <div class="fg" style="margin-bottom:20px">
+                    <label class="fl">Attach Documents <span class="req">*</span></label>
+                    <input asp-for="Input.Documents" type="file" class="fi" multiple
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                    <span class="fi-hint">Accepted: PDF, DOC, DOCX, JPG, PNG. Max 5MB per file. At least one document required for submission.</span>
+                </div>
 
-                    <!-- Actions -->
-                    <div class="d-flex gap-3 flex-wrap">
-                        <button type="submit" asp-page-handler="Submit" class="btn-primary-action" id="submitBtn">
-                            <i class="bi bi-send me-2"></i>Submit Resignation
-                        </button>
-                        <button type="submit" asp-page-handler="SaveDraft" class="btn-secondary-action">
-                            <i class="bi bi-floppy me-2"></i>Save as Draft
-                        </button>
-                        <a asp-page="/Resignation/MyRequests" class="btn-secondary-action">
-                            <i class="bi bi-x-lg me-2"></i>Cancel
-                        </a>
-                    </div>
-                </form>
-            </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap">
+                    <button type="submit" asp-page-handler="Submit" class="btn-create" id="submitBtn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                        Submit Resignation
+                    </button>
+                    <button type="submit" asp-page-handler="SaveDraft" class="btn-outline">Save as Draft</button>
+                    <a asp-page="/Resignation/MyRequests" class="btn-outline">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -133,7 +136,6 @@
 @section Scripts {
 <partial name="_ValidationScriptsPartial" />
 <script>
-    // Notice period auto-calculator
     const effectiveDateInput = document.getElementById('effectiveDateInput');
     const noticeDaysDisplay = document.getElementById('noticeDaysDisplay');
     effectiveDateInput?.addEventListener('change', function () {
@@ -145,7 +147,6 @@
         }
     });
 
-    // Show obligation details when checkboxes ticked
     const loansCheck = document.getElementById('loansCheck');
     const guarantorCheck = document.getElementById('guarantorCheck');
     const overrideRow = document.getElementById('overrideRow');

@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Domain.Entities.Resignation
 {
+    /// <summary>
+    /// Represents an employee's formal request to resign from the organization.
+    /// Tracks the request through Branch Manager, Area Manager, and HR approval stages.
+    /// </summary>
     public class ResignationRequest
     {
         [Key]
@@ -102,6 +106,9 @@ namespace HRMS.Domain.Entities.Resignation
         public ICollection<ResignationDocument> Documents { get; set; } = new List<ResignationDocument>();
     }
 
+    /// <summary>
+    /// Defines the possible states of a resignation request during its lifecycle.
+    /// </summary>
     public enum ResignationStatus
     {
         Draft = 0,

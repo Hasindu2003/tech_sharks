@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Termination
 {
-    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager,Employee")]
     public class DetailsModel : PageModel
     {
         private readonly ITerminationService _terminationService;
@@ -22,6 +22,13 @@ namespace HRMS.UI.Pages.Termination
         {
             Request = await _terminationService.GetTerminationByIdAsync(id);
             if (Request == null) return NotFound();
+
+            // Authorization check for Employees: can only view their own termination
+            if (User.IsInRole("Employee") && Request.EmployeeEmail != User.Identity!.Name)
+            {
+                return Forbid();
+            }
+
             return Page();
         }
     }

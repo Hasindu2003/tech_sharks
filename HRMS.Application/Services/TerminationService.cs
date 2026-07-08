@@ -1,7 +1,7 @@
-using HRMS.Application.Models;
-using HRMS.Domain.Entities.Termination;
-using HRMS.Domain.Entities.Core;
+﻿using HRMS.Domain.Entities.Termination;
+using HRMS.Domain.Entities.Transfer;
 using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.Application.Services
@@ -12,7 +12,7 @@ namespace HRMS.Application.Services
         Task<bool> UpdateTerminationRequestAsync(TerminationRequestViewModel request);
         Task<(bool Success, string? ErrorMessage)> ValidateAndSubmitAsync(int id);
         Task<List<TerminationRequestViewModel>> GetTerminationRequestsAsync(string? statusFilter = null, string? search = null);
-        Task<List<TerminationRequestViewModel>> GetPendingApprovalsAsync(string? branch = null);
+        Task<List<TerminationRequestViewModel>> GetPendingApprovalsAsync();
         Task<TerminationRequestViewModel?> GetTerminationByIdAsync(int id);
         Task<bool> ApproveTerminationAsync(int id, string comments, string approverEmail);
         Task<bool> RejectTerminationAsync(int id, string comments, string approverEmail);
@@ -22,9 +22,12 @@ namespace HRMS.Application.Services
         Task<(byte[]? Data, string? FileName, string? ContentType)> GetDocumentAsync(int documentId);
         Task<List<TerminationDocumentViewModel>> GetDocumentsForRequestAsync(int terminationRequestId);
         Task<List<TerminationRequestViewModel>> GetTerminationsByEmployeeEmailAsync(string employeeEmail);
-        (bool Valid, string? Error) ValidateTerminationDates(DateTime? initiationDate, DateTime? effectiveDate);
     }
 
+    /// <summary>
+    /// Service responsible for managing the employee termination process.
+    /// Handles everything from request initiation, approval, and financial clearance tracking.
+    /// </summary>
     public class TerminationService : ITerminationService
     {
         private readonly ApplicationDbContext _context;
@@ -36,16 +39,9 @@ namespace HRMS.Application.Services
             _notificationService = notificationService;
         }
 
-        public (bool Valid, string? Error) ValidateTerminationDates(DateTime? initiationDate, DateTime? effectiveDate)
-        {
-            if (effectiveDate.HasValue && initiationDate.HasValue)
-            {
-                if (effectiveDate.Value < initiationDate.Value)
-                    return (false, "Effective termination date cannot be before the initiation date.");
-            }
-            return (true, null);
-        }
-
+        /// <summary>
+        /// Initiates a new termination request.
+        /// </summary>
         public async Task<int> CreateTerminationRequestAsync(TerminationRequestViewModel request)
         {
             var entity = new TerminationRequest
@@ -102,6 +98,10 @@ namespace HRMS.Application.Services
             return true;
         }
 
+        /// <summary>
+        /// Validates the termination request for mandatory documents and financial obligations 
+        /// before submitting it for final approval.
+        /// </summary>
         public async Task<(bool Success, string? ErrorMessage)> ValidateAndSubmitAsync(int id)
         {
             var entity = await _context.TerminationRequests
@@ -114,15 +114,18 @@ namespace HRMS.Application.Services
             if (entity.Status != TerminationRequestStatus.New)
                 return (false, "Only requests in 'New' status can be submitted.");
 
+            // Validation: mandatory documents
             if (!entity.Documents.Any())
                 return (false, "At least one supporting document must be attached before submission.");
 
+            // Validation: financial obligations check
             if (entity.HasOutstandingLoans && !entity.HasOverridePermission)
                 return (false, "Employee has outstanding loan balances. The termination cannot proceed until obligations are cleared, or a senior management override is provided.");
 
             if (entity.IsLoanGuarantor && !entity.HasOverridePermission)
                 return (false, "Employee is listed as a loan guarantor for another employee. The termination cannot proceed until the guarantee is released, or a senior management override is provided.");
 
+            // All validations passed — submit
             entity.Status = TerminationRequestStatus.SubmittedForApproval;
             entity.LastModifiedDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -137,7 +140,9 @@ namespace HRMS.Application.Services
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(statusFilter) && Enum.TryParse<TerminationRequestStatus>(statusFilter, out var status))
+            {
                 query = query.Where(t => t.Status == status);
+            }
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -152,16 +157,14 @@ namespace HRMS.Application.Services
             return entities.Select(MapToViewModel).ToList();
         }
 
-        public async Task<List<TerminationRequestViewModel>> GetPendingApprovalsAsync(string? branch = null)
+        public async Task<List<TerminationRequestViewModel>> GetPendingApprovalsAsync()
         {
-            var query = _context.TerminationRequests
+            var entities = await _context.TerminationRequests
                 .Include(t => t.Documents)
-                .Where(t => t.Status == TerminationRequestStatus.SubmittedForApproval);
+                .Where(t => t.Status == TerminationRequestStatus.SubmittedForApproval)
+                .OrderByDescending(t => t.CreatedDate)
+                .ToListAsync();
 
-            if (!string.IsNullOrWhiteSpace(branch))
-                query = query.Where(t => t.Branch == branch);
-
-            var entities = await query.OrderByDescending(t => t.CreatedDate).ToListAsync();
             return entities.Select(MapToViewModel).ToList();
         }
 
@@ -174,6 +177,9 @@ namespace HRMS.Application.Services
             return entity == null ? null : MapToViewModel(entity);
         }
 
+        /// <summary>
+        /// Approves the termination request and triggers the automatic finance clearance process.
+        /// </summary>
         public async Task<bool> ApproveTerminationAsync(int id, string comments, string approverEmail)
         {
             var entity = await _context.TerminationRequests.FindAsync(id);
@@ -189,13 +195,17 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
+            // Notify initiator
             await _notificationService.CreateNotificationAsync(
                 entity.InitiatedBy,
                 "Termination Request Approved",
                 $"Termination request #{entity.Id} for {entity.EmployeeName} ({entity.EpfNumber}) has been approved. Proceeding to financial clearance stage.",
-                CoreNotificationType.Approved,
-                entity.Id);
+                NotificationType.Approved,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Termination"
+            );
 
+            // Auto-trigger finance clearance
             await ProcessFinanceClearanceAsync(id);
 
             return true;
@@ -216,26 +226,34 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
+            // Notify initiator
             await _notificationService.CreateNotificationAsync(
                 entity.InitiatedBy,
                 "Termination Request Rejected",
                 $"Termination request #{entity.Id} for {entity.EmployeeName} ({entity.EpfNumber}) has been rejected. Comments: {comments}",
-                CoreNotificationType.Rejected,
-                entity.Id);
+                NotificationType.Rejected,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Termination"
+            );
 
             return true;
         }
 
+        /// <summary>
+        /// Simulates the financial clearance process, including settlement of loans, salary, and deactivation.
+        /// </summary>
         public async Task<bool> ProcessFinanceClearanceAsync(int id)
         {
             var entity = await _context.TerminationRequests.FindAsync(id);
             if (entity == null || entity.Status != TerminationRequestStatus.Approved)
                 return false;
 
+            // Simulate finance module processing
             entity.Status = TerminationRequestStatus.FinanceClearance;
             entity.LastModifiedDate = DateTime.Now;
             await _context.SaveChangesAsync();
 
+            // Simulate: final salary, leave settlement, loan deductions, etc.
             entity.FinanceClearanceCompleted = true;
             entity.FinanceClearanceDate = DateTime.Now;
             entity.FinanceClearanceNotes = "Financial clearance completed. Final salary calculated, outstanding loans settled, unused leave payments processed, all organizational assets returned.";
@@ -244,23 +262,30 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
+            // Notify employee
             await _notificationService.CreateNotificationAsync(
                 entity.EmployeeEmail,
                 "Employment Termination Finalized",
                 $"Your employment termination has been finalized effective {entity.EffectiveTerminationDate:MMMM dd, yyyy}. All financial settlements have been processed. Please contact HR for any further information.",
-                CoreNotificationType.Info,
-                entity.Id);
+                NotificationType.Info,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Termination"
+            );
 
+            // Notify initiator
             await _notificationService.CreateNotificationAsync(
                 entity.InitiatedBy,
                 "Termination Process Completed",
                 $"Termination request #{entity.Id} for {entity.EmployeeName} ({entity.EpfNumber}) has been fully processed. Employee status updated to Terminated.",
-                CoreNotificationType.Approved,
-                entity.Id);
+                NotificationType.Approved,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Termination"
+            );
 
             return true;
         }
 
+        // ── Document Management ──
         public async Task<int> AddDocumentAsync(int terminationRequestId, string fileName, string contentType, byte[] data, TerminationDocumentType docType)
         {
             var doc = new TerminationDocument
@@ -283,6 +308,7 @@ namespace HRMS.Application.Services
             var doc = await _context.TerminationDocuments.FindAsync(documentId);
             if (doc == null) return false;
 
+            // Only allow removal if the parent request is still in New status
             var request = await _context.TerminationRequests.FindAsync(doc.TerminationRequestId);
             if (request == null || request.Status != TerminationRequestStatus.New)
                 return false;
@@ -326,6 +352,7 @@ namespace HRMS.Application.Services
             return entities.Select(MapToViewModel).ToList();
         }
 
+        // ── Mapper ──
         private static TerminationRequestViewModel MapToViewModel(TerminationRequest entity)
         {
             return new TerminationRequestViewModel

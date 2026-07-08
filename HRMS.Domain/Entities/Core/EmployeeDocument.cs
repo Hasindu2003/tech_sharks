@@ -6,23 +6,19 @@ namespace HRMS.Domain.Entities.Core
     {
         public int Id { get; set; }
 
-        // FK to Employee
         public int EmployeeId { get; set; }
         public Employee Employee { get; set; } = null!;
 
-        // Document Info
-        public string DocumentType { get; set; } = null!;   // e.g. NIC, Passport, Bank Slip
-        public string FileName { get; set; } = null!;         // Original display name
-        public string StoredFileName { get; set; } = null!;   // GUID-based name on disk
-        public string ContentType { get; set; } = null!;      // MIME type
+        public string DocumentType { get; set; } = null!;
+        public string FileName { get; set; } = null!;
+        public string StoredFileName { get; set; } = null!;
+        public string ContentType { get; set; } = null!;
 
-        // Audit
         public DateTime UploadedAt { get; set; } = DateTime.Now;
 
-        // Review
-        public string Status { get; set; } = "Pending";       // Pending | Approved | Rejected
+        public string Status { get; set; } = "Pending";
         public DateTime? ReviewedAt { get; set; }
-        public string? ReviewedByUserId { get; set; }          // Identity user id
+        public string? ReviewedByUserId { get; set; }
         public string? ReviewerNotes { get; set; }
     }
 }

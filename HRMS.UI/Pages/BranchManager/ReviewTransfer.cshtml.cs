@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.BranchManager
 {
-    [Authorize(Roles = "Admin,Branch Manager")]
+    [Authorize(Roles = "Branch Manager")]
     public class ReviewTransferModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
@@ -54,7 +54,13 @@ namespace HRMS.UI.Pages.BranchManager
             var user = await _userManager.GetUserAsync(User);
             var branch = user?.Branch ?? "";
             bool approved = action == "approve";
-            await _transferService.BranchManagerReviewAsync(id, approved, comments.Trim(), branch);
+            var ok = await _transferService.BranchManagerReviewAsync(id, approved, comments.Trim(), branch);
+
+            if (!ok)
+            {
+                TempData["ErrorMessage"] = "Unable to process review. The request may already be at a different stage.";
+                return RedirectToPage("/BranchManager/ReviewTransfers");
+            }
 
             TempData["SuccessMessage"] = approved
                 ? "Transfer request approved."

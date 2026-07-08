@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace HRMS.UI.Pages.AreaManager
 {
-    [Authorize(Roles = "Admin,Area Manager")]
+    [Authorize(Roles = "Area Manager")]
     public class ReviewDeathModel : PageModel
     {
         private readonly IDeathService _deathService;

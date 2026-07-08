@@ -6,72 +6,82 @@
     ViewData["Title"] = "Employee Termination";
 }
 
-<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-    <div>
-        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Edit Termination Request #@Model.CurrentRequest?.Id</h2>
-        <p style="color:#6b7280;font-size:0.9rem;margin:0">
-            @Model.CurrentRequest?.EmployeeName — @Model.CurrentRequest?.EpfNumber
-        </p>
-    </div>
-    <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline">
-        <i class="bi bi-arrow-left"></i> Back to List
-    </a>
-</div>
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .form-section.green-bg { background: #f0fdf4; border-color: #bbf7d0; }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .form-section.green-bg .fst { border-bottom-color: #bbf7d0; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .dl-row { display: grid; gap: 16px; }
+    .dl dt { font-size: 11px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+    .dl dd { font-size: 14px; font-weight: 600; color: #151811; margin: 0; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-create:hover { background: #0d6e32; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e5dc; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .btn-danger { background: white; color: #b91c1c; padding: 5px 10px; border-radius: 5px; font-size: 13px; font-weight: 700; border: 1px solid #fecaca; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-danger:hover { background: #fee2e2; }
+    .success-banner { background: #ecfdf5; color: #065f46; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #10b981; display: flex; align-items: center; gap: 8px; }
+    .error-banner  { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .text-danger.small { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+    .doc-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f9fafb; border: 1px solid #e2e5dc; border-radius: 8px; margin-bottom: 8px; }
+    .doc-name { font-size: 13px; font-weight: 600; color: #151811; }
+    .doc-meta { font-size: 11px; color: #7a8863; }
+    .override-block { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-top: 12px; }
+</style>
+
+<a asp-page="/Termination/Requests" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to List
+</a>
+<h2 class="page-h">Edit Termination Request #@Model.CurrentRequest?.Id</h2>
+<p class="page-s">@Model.CurrentRequest?.EmployeeName — @Model.CurrentRequest?.EpfNumber</p>
 
 @if (TempData["SuccessMessage"] is string successMsg)
 {
-    <div class="k-alert k-alert-success">
-        <i class="bi bi-check-circle"></i> @successMsg
+    <div class="success-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        @successMsg
     </div>
 }
 @if (TempData["ErrorMessage"] is string errorMsg)
 {
-    <div class="k-alert k-alert-danger">
-        <i class="bi bi-exclamation-triangle"></i> @errorMsg
-    </div>
+    <div class="error-banner">@errorMsg</div>
 }
 
-<!-- Employee Info (read-only) -->
-<div class="k-fieldset" style="background:#f0fdf4;border-color:#bbf7d0">
-    <div class="k-fieldset-title"><i class="bi bi-person-badge" style="margin-right:8px;color:var(--primary)"></i>Employee Information</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
-        <div>
-            <div class="detail-label">Employee Name</div>
-            <div class="detail-value">@Model.CurrentRequest?.EmployeeName</div>
-        </div>
-        <div>
-            <div class="detail-label">EPF Number</div>
-            <div class="detail-value">@Model.CurrentRequest?.EpfNumber</div>
-        </div>
-        <div>
-            <div class="detail-label">Branch</div>
-            <div class="detail-value">@Model.CurrentRequest?.Branch</div>
-        </div>
-        <div>
-            <div class="detail-label">Department</div>
-            <div class="detail-value">@Model.CurrentRequest?.Department</div>
-        </div>
-        <div>
-            <div class="detail-label">Designation</div>
-            <div class="detail-value">@Model.CurrentRequest?.Designation</div>
-        </div>
-        <div>
-            <div class="detail-label">Email</div>
-            <div class="detail-value">@Model.CurrentRequest?.EmployeeEmail</div>
-        </div>
+<div class="form-section green-bg">
+    <div class="fst">Employee Information</div>
+    <div class="grid-3">
+        <div class="dl"><dt>Employee Name</dt><dd>@Model.CurrentRequest?.EmployeeName</dd></div>
+        <div class="dl"><dt>EPF Number</dt><dd>@Model.CurrentRequest?.EpfNumber</dd></div>
+        <div class="dl"><dt>Branch</dt><dd>@Model.CurrentRequest?.Branch</dd></div>
+        <div class="dl"><dt>Department</dt><dd>@Model.CurrentRequest?.Department</dd></div>
+        <div class="dl"><dt>Designation</dt><dd>@Model.CurrentRequest?.Designation</dd></div>
+        <div class="dl"><dt>Email</dt><dd style="font-size:13px">@Model.CurrentRequest?.EmployeeEmail</dd></div>
     </div>
 </div>
 
 <form method="post" enctype="multipart/form-data">
     <input type="hidden" asp-for="Input.Id" />
 
-    <!-- Termination Details -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-clipboard-x" style="margin-right:8px;color:var(--accent-red)"></i>Termination Details</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.TerminationType">Termination Type <span style="color:var(--accent-red)">*</span></label>
-                <select asp-for="Input.TerminationType" class="k-form-control">
+    <div class="form-section">
+        <div class="fst">Termination Details</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="Input.TerminationType" class="fl">Termination Type <span class="req">*</span></label>
+                <select asp-for="Input.TerminationType" class="fi">
                     <option value="0">Voluntary</option>
                     <option value="1">Involuntary</option>
                     <option value="2">Retirement</option>
@@ -80,121 +90,114 @@
                     <option value="5">Death</option>
                 </select>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.InitiationDate">Initiation Date <span style="color:var(--accent-red)">*</span></label>
-                <input asp-for="Input.InitiationDate" type="date" class="k-form-control" />
+            <div class="fg">
+                <label asp-for="Input.InitiationDate" class="fl">Initiation Date <span class="req">*</span></label>
+                <input asp-for="Input.InitiationDate" type="date" class="fi" />
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.EffectiveTerminationDate">Effective Termination Date <span style="color:var(--accent-red)">*</span></label>
-                <input asp-for="Input.EffectiveTerminationDate" type="date" class="k-form-control" />
+            <div class="fg">
+                <label asp-for="Input.EffectiveTerminationDate" class="fl">Effective Termination Date <span class="req">*</span></label>
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" />
             </div>
         </div>
-        <div class="k-form-group">
-            <label asp-for="Input.ReasonForTermination">Reason for Termination <span style="color:var(--accent-red)">*</span></label>
-            <textarea asp-for="Input.ReasonForTermination" class="k-form-control" rows="3"></textarea>
+        <div class="fg">
+            <label asp-for="Input.ReasonForTermination" class="fl">Reason for Termination <span class="req">*</span></label>
+            <textarea asp-for="Input.ReasonForTermination" class="fi" rows="3"></textarea>
             <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.SupervisorRemarks">Supervisor Remarks</label>
-                <textarea asp-for="Input.SupervisorRemarks" class="k-form-control" rows="2"></textarea>
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="Input.SupervisorRemarks" class="fl">Supervisor Remarks</label>
+                <textarea asp-for="Input.SupervisorRemarks" class="fi" rows="2"></textarea>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.SpecialRemarks">Special Remarks / Notes</label>
-                <textarea asp-for="Input.SpecialRemarks" class="k-form-control" rows="2"></textarea>
+            <div class="fg">
+                <label asp-for="Input.SpecialRemarks" class="fl">Special Remarks / Notes</label>
+                <textarea asp-for="Input.SpecialRemarks" class="fi" rows="2"></textarea>
             </div>
         </div>
     </div>
 
-    <!-- Obligations -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-exclamation-triangle" style="margin-right:8px;color:var(--accent-orange)"></i>Employee Obligations</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.DirectObligations">Direct Obligations</label>
-                <textarea asp-for="Input.DirectObligations" class="k-form-control" rows="2"></textarea>
+    <div class="form-section">
+        <div class="fst">Employee Obligations</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="Input.DirectObligations" class="fl">Direct Obligations</label>
+                <textarea asp-for="Input.DirectObligations" class="fi" rows="2"></textarea>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.IndirectObligations">Indirect Obligations</label>
-                <textarea asp-for="Input.IndirectObligations" class="k-form-control" rows="2"></textarea>
+            <div class="fg">
+                <label asp-for="Input.IndirectObligations" class="fl">Indirect Obligations</label>
+                <textarea asp-for="Input.IndirectObligations" class="fi" rows="2"></textarea>
             </div>
         </div>
-        <div style="display:flex;gap:32px;margin-top:12px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
-                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+        <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
                 Employee has outstanding loan balances
             </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
-                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
                 Employee is a loan guarantor
             </label>
         </div>
-        <div style="margin-top:16px;padding:14px 18px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;font-weight:600;color:#92400e">
-                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:18px;height:18px;accent-color:var(--accent-orange)" />
-                <i class="bi bi-shield-exclamation"></i> Senior Management Override
+        <div class="override-block">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#92400e">
+                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b" />
+                Senior Management Override
             </label>
         </div>
     </div>
 
-    <!-- Existing Documents -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-file-earmark-arrow-up" style="margin-right:8px;color:var(--accent-blue)"></i>Documents</div>
+    <div class="form-section">
+        <div class="fst">Documents</div>
         @if (Model.ExistingDocuments.Any())
         {
             <div style="margin-bottom:16px">
                 @foreach (var doc in Model.ExistingDocuments)
                 {
-                    <div class="doc-item">
-                        <div class="doc-info">
-                            <div class="doc-icon @(doc.ContentType.Contains("pdf") ? "pdf" : "doc")">
-                                <i class="bi @(doc.ContentType.Contains("pdf") ? "bi-file-pdf" : doc.ContentType.Contains("image") ? "bi-file-image" : "bi-file-word")"></i>
-                            </div>
-                            <div>
-                                <div class="doc-name">@doc.FileName</div>
-                                <div class="doc-size">@doc.DocumentType · @doc.UploadedDate.ToString("MMM dd, yyyy HH:mm")</div>
-                            </div>
+                    <div class="doc-row">
+                        <div>
+                            <div class="doc-name">@doc.FileName</div>
+                            <div class="doc-meta">@doc.DocumentType · @doc.UploadedDate.ToString("MMM dd, yyyy HH:mm")</div>
                         </div>
                         <div style="display:flex;gap:8px">
-                            <a asp-page="/Termination/DownloadDocument" asp-route-id="@doc.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
-                                <i class="bi bi-download"></i>
+                            <a asp-page="/Termination/DownloadDocument" asp-route-id="@doc.Id" class="btn-outline" style="padding:5px 10px">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                             </a>
                             <button type="submit" asp-page-handler="RemoveDocument" asp-route-documentId="@doc.Id" asp-route-requestId="@Model.Input.Id"
-                                    class="btn-kanrich btn-kanrich-danger btn-kanrich-sm"
-                                    onclick="return confirm('Remove this document?')">
-                                <i class="bi bi-trash"></i>
+                                    class="btn-danger" onclick="return confirm('Remove this document?')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                             </button>
                         </div>
                     </div>
                 }
             </div>
         }
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.DocumentType">Document Type</label>
-                <select asp-for="Input.DocumentType" class="k-form-control">
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="Input.DocumentType" class="fl">Document Type</label>
+                <select asp-for="Input.DocumentType" class="fi">
                     <option value="TerminationLetter">Termination Letter</option>
                     <option value="DisciplinaryReport">Disciplinary Report</option>
                     <option value="WarningLetter">Warning Letter</option>
                     <option value="Other" selected>Other</option>
                 </select>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.Documents">Add More Files</label>
-                <input asp-for="Input.Documents" type="file" class="k-form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</div>
+            <div class="fg">
+                <label asp-for="Input.Documents" class="fl">Add More Files</label>
+                <input asp-for="Input.Documents" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                <span class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</span>
             </div>
         </div>
     </div>
 
-    <!-- Action buttons -->
-    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
-        <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">Cancel</a>
-        <button type="submit" asp-page-handler="Save" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">
-            <i class="bi bi-save"></i> Save Changes
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+        <a asp-page="/Termination/Requests" class="btn-outline">Cancel</a>
+        <button type="submit" asp-page-handler="Save" class="btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Changes
         </button>
-        <button type="submit" asp-page-handler="Submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-lg">
-            <i class="bi bi-send"></i> Submit for Approval
+        <button type="submit" asp-page-handler="Submit" class="btn-create">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit for Approval
         </button>
     </div>
 </form>

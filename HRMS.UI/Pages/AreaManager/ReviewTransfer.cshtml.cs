@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.AreaManager
 {
-    [Authorize(Roles = "Admin,Area Manager")]
+    [Authorize(Roles = "Area Manager")]
     public class ReviewTransferModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
@@ -38,7 +38,13 @@ namespace HRMS.UI.Pages.AreaManager
             }
 
             bool approved = action == "approve";
-            await _transferService.AreaManagerReviewAsync(id, approved, comments.Trim());
+            var ok = await _transferService.AreaManagerReviewAsync(id, approved, comments.Trim());
+
+            if (!ok)
+            {
+                TempData["ErrorMessage"] = "Unable to process review. The request may already be at a different stage.";
+                return RedirectToPage("/AreaManager/ReviewTransfers");
+            }
 
             TempData["SuccessMessage"] = approved
                 ? "Transfer request approved successfully!"

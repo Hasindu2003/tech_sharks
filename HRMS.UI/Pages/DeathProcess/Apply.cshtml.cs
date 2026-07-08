@@ -1,8 +1,10 @@
 ﻿using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace HRMS.UI.Pages.DeathProcess
@@ -11,17 +13,23 @@ namespace HRMS.UI.Pages.DeathProcess
     public class ApplyModel : PageModel
     {
         private readonly IDeathService _deathService;
+        private readonly ApplicationDbContext _context;
 
-        public ApplyModel(IDeathService deathService)
+        public ApplyModel(IDeathService deathService, ApplicationDbContext context)
         {
             _deathService = deathService;
+            _context = context;
         }
 
         [BindProperty]
         public DeathRequestViewModel RequestModel { get; set; } = new();
 
-        public void OnGet(string? employeeName, string? epfNumber, string? email, string? branch, string? dept, string? designation)
+        public List<string> Branches { get; set; } = new();
+
+        public async Task OnGetAsync(string? employeeName, string? epfNumber, string? email, string? branch, string? dept, string? designation)
         {
+            Branches = await _context.Branches.Select(b => b.Name).OrderBy(n => n).ToListAsync();
+
             // Auto fill these if coming from an employee directory list
             RequestModel.EmployeeName = employeeName ?? "";
             RequestModel.EpfNumber = epfNumber ?? "";

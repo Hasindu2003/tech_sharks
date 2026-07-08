@@ -1,9 +1,10 @@
-namespace HRMS.Application.Models
+﻿namespace HRMS.Application.Models
 {
     public class ResignationRequestViewModel
     {
         public int Id { get; set; }
 
+        // ── Employee Details ──
         public string EmployeeName { get; set; } = string.Empty;
         public string EpfNumber { get; set; } = string.Empty;
         public string EmployeeEmail { get; set; } = string.Empty;
@@ -11,46 +12,55 @@ namespace HRMS.Application.Models
         public string Department { get; set; } = string.Empty;
         public string Designation { get; set; } = string.Empty;
 
+        // ── Resignation Details ──
         public string ReasonForResignation { get; set; } = string.Empty;
         public DateTime ResignationDate { get; set; }
         public DateTime EffectiveDate { get; set; }
         public int NoticePeriodDays { get; set; }
         public string? AdditionalRemarks { get; set; }
 
+        // ── Obligations ──
         public bool HasOutstandingLoans { get; set; }
         public bool IsLoanGuarantor { get; set; }
         public bool HasOverridePermission { get; set; }
         public string? ObligationDetails { get; set; }
 
+        // ── Workflow ──
         public ResignationStatusEnum Status { get; set; }
         public string InitiatedBy { get; set; } = string.Empty;
         public DateTime CreatedDate { get; set; }
         public DateTime LastModifiedDate { get; set; }
 
+        // ── Stage 1: Branch Manager ──
         public string? BMReview { get; set; }
         public DateTime? BMReviewDate { get; set; }
         public string? BMComments { get; set; }
         public string? BMEmail { get; set; }
 
+        // ── Stage 2: Area Manager ──
         public string? AMReview { get; set; }
         public DateTime? AMReviewDate { get; set; }
         public string? AMComments { get; set; }
         public string? AMEmail { get; set; }
 
+        // ── Stage 3: HR Manager ──
         public string? HRReview { get; set; }
         public DateTime? HRReviewDate { get; set; }
         public string? HRComments { get; set; }
         public string? HREmail { get; set; }
 
+        // ── Post-Approval ──
         public bool AcceptanceLetterGenerated { get; set; }
         public DateTime? AcceptanceLetterDate { get; set; }
         public bool AccountDeactivated { get; set; }
         public DateTime? AccountDeactivatedDate { get; set; }
         public string? AccountDeactivatedBy { get; set; }
 
+        // ── Documents ──
         public List<ResignationDocumentViewModel> Documents { get; set; } = new();
         public int DocumentCount { get; set; }
 
+        // ── Helpers ──
         public string StatusDisplay => Status switch
         {
             ResignationStatusEnum.Draft => "Draft",

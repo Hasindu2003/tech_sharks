@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.AreaManager
 {
-    [Authorize(Roles = "Admin,Area Manager")]
+    [Authorize(Roles = "Area Manager")]
     public class ReviewDeathRequestsModel : PageModel
     {
         private readonly IDeathService _deathService;

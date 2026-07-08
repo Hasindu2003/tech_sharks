@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using HRMS.Infrastructure.Identity;
 using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Services;
 
 namespace HRMS.UI.Pages
 {
@@ -16,11 +17,13 @@ namespace HRMS.UI.Pages
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ITransferRequestService _transferService;
 
-        public IndexModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
+        public IndexModel(ApplicationDbContext context, UserManager<ApplicationUser> userManager, ITransferRequestService transferService)
         {
             _context = context;
             _userManager = userManager;
+            _transferService = transferService;
         }
 
         // Stats
@@ -30,10 +33,10 @@ namespace HRMS.UI.Pages
         public int OpenPositions { get; set; }
 
         // Greeting
-        public string GreetingName { get; set; } = "Admin";
+        public string GreetingName { get; set; } = "User";
         public string GreetingTime { get; set; } = "Good Morning";
 
-        // Pending Approvals
+        // Pending Approvals (real data from transfer service)
         public List<PendingApprovalItem> PendingApprovals { get; set; } = new();
 
         // Upcoming Events
@@ -41,10 +44,26 @@ namespace HRMS.UI.Pages
 
         public async Task OnGetAsync()
         {
+            var currentUser = await _userManager.GetUserAsync(User);
+
+            // Greeting
+            var hour = DateTime.Now.Hour;
+            GreetingTime = hour < 12 ? "Good Morning" : hour < 17 ? "Good Afternoon" : "Good Evening";
+
+            var email = User.Identity?.Name;
+            if (!string.IsNullOrEmpty(email))
+            {
+                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == email);
+                GreetingName = employee?.FullName ?? currentUser?.FullName ?? email;
+            }
+            else
+            {
+                GreetingName = "Admin";
+            }
+
             // Determine branch scope by role
             int? scopedBranchId = null;
             List<int>? amBranchIds = null;
-            var currentUser = await _userManager.GetUserAsync(User);
 
             if (User.IsInRole("HR Manager") && currentUser?.EmployeeId != null)
             {
@@ -72,34 +91,30 @@ namespace HRMS.UI.Pages
                 countQuery = countQuery.Where(e => amBranchIds.Contains(e.BranchId));
             TotalEmployees = await countQuery.CountAsync();
 
-            // Greeting based on time
-            var hour = DateTime.Now.Hour;
-            if (hour < 12) GreetingTime = "Good Morning";
-            else if (hour < 17) GreetingTime = "Good Afternoon";
-            else GreetingTime = "Good Evening";
-
-            var email = User.Identity?.Name;
-            if (!string.IsNullOrEmpty(email))
-            {
-                var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == email);
-                GreetingName = employee?.FullName ?? email;
-            }
-            else
-            {
-                GreetingName = "Admin";
-            }
-
-            // Sample data for demo purposes (replace with real queries later)
             OnLeaveToday = 8;
-            PendingRequests = 12;
             OpenPositions = 4;
 
-            PendingApprovals = new List<PendingApprovalItem>
+            // Pending approvals from transfer service
+            List<Application.Models.TransferRequestViewModel> pending = new();
+            if (User.IsInRole("Area Manager"))
+                pending = await _transferService.GetRequestsForAreaManagerAsync();
+            else if (User.IsInRole("HR Manager"))
+                pending = await _transferService.GetRequestsForHRManagerAsync(currentUser?.Branch ?? "");
+            else if (User.IsInRole("Branch Manager"))
+                pending = await _transferService.GetPendingRequestsForBranchManagerAsync(currentUser?.Branch ?? "");
+            else if (User.IsInRole("Employee"))
+                pending = await _transferService.GetRequestsByUserAsync(email ?? "");
+
+            PendingRequests = pending.Count;
+
+            PendingApprovals = pending.Take(5).Select(r => new PendingApprovalItem
             {
-                new() { EmployeeName = "Ruwan Deshapriya", RequestType = "Sick Leave", DateRange = "Aug 24 - Aug 25", Status = "Pending" },
-                new() { EmployeeName = "Pabani Senarath", RequestType = "Expense Claim", DateRange = "Aug 22", Status = "Pending" },
-                new() { EmployeeName = "Harshana Senevirathne", RequestType = "Vacation", DateRange = "Sep 01 - Sep 10", Status = "Pending" },
-            };
+                EmployeeName = r.EmployeeName,
+                RequestType = "Transfer Request",
+                DateRange = r.RequestedDate.ToString("MMM dd, yyyy"),
+                Status = "Pending",
+                RequestId = r.Id
+            }).ToList();
 
             UpcomingEvents = new List<UpcomingEventItem>
             {
@@ -111,6 +126,7 @@ namespace HRMS.UI.Pages
 
         public class PendingApprovalItem
         {
+            public int RequestId { get; set; }
             public string EmployeeName { get; set; } = "";
             public string RequestType { get; set; } = "";
             public string DateRange { get; set; } = "";

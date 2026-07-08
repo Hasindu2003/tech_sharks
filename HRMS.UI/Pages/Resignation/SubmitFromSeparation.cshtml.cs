@@ -12,7 +12,7 @@ namespace HRMS.UI.Pages.Resignation
     /// Handles form submission from the Resignation tab inside /Transfer/Separation.
     /// Redirects back to the Separation page after processing.
     /// </summary>
-    [Authorize(Roles = "Admin,HR Manager,Area Manager,Branch Manager,Employee")]
+    [Authorize(Roles = "Employee")]
     public class SubmitFromSeparationModel : PageModel
     {
         private readonly IResignationService _resignationService;

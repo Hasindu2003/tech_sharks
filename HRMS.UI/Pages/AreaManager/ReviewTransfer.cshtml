@@ -1,7 +1,7 @@
 @page "{id:int}"
 @model HRMS.UI.Pages.AreaManager.ReviewTransferModel
 @{
-    ViewData["Title"] = "Transfer Request Review — Final Decision";
+    ViewData["Title"] = "Transfer Request Review";
 }
 
 @if (Model.TransferRequest == null)
@@ -12,10 +12,11 @@ else
 {
     var req = Model.TransferRequest;
     var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    bool canReview = req.Status == TransferStatus.BothBMsApproved;
 
     <div style="margin-bottom:20px">
         <a asp-page="/AreaManager/ReviewTransfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
-            <i class="bi bi-arrow-left"></i> Back to Separation
+            <i class="bi bi-arrow-left"></i> Back to Review Transfers
         </a>
         <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
     </div>
@@ -52,14 +53,18 @@ else
                         <div class="detail-value">@req.Department</div>
                     </div>
                 </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px;margin-bottom:20px">
+                <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:20px;margin-bottom:20px">
                     <div>
                         <div class="detail-label">Position</div>
                         <div class="detail-value">@req.CurrentDesignation</div>
                     </div>
                     <div>
                         <div class="detail-label">Years of Service</div>
-                        <div class="detail-value">@req.YearsOfService years</div>
+                        <div class="detail-value">@ServiceDurationHelper.Format(req.JoinDate, req.YearsOfService)</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Preferred Date</div>
+                        <div class="detail-value">@(req.PreferredDate?.ToString("MMM dd, yyyy") ?? "—")</div>
                     </div>
                     <div>
                         <div class="detail-label">Submission Date</div>
@@ -74,25 +79,30 @@ else
                 </div>
             </div>
 
-            <!-- Prior Reviews Chain -->
-            @if (!string.IsNullOrEmpty(req.HRManagerReview))
+            <!-- Approval Chain So Far -->
+            <div class="review-card approved" style="margin-bottom:12px">
+                <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-check"></i> Step 1 — Employee Submission</h6>
+                <div style="font-size:0.88rem">Submitted by <strong>@req.RequestedByRole</strong> on @req.RequestedDate.ToString("MMM dd, yyyy")</div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(req.DeptHeadReview))
             {
-                <div class="review-card @(req.HRManagerReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-badge"></i> Step 1 — HR Manager</h6>
-                    <div style="font-size:0.88rem"><strong>@req.HRManagerReview</strong> on @req.HRManagerReviewDate?.ToString("MMM dd, yyyy") — @req.HRManagerComments</div>
+                <div class="review-card @(req.DeptHeadReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-workspace"></i> Step 2 — Department Head</h6>
+                    <div style="font-size:0.88rem"><strong>@req.DeptHeadReview</strong> on @req.DeptHeadReviewDate?.ToString("MMM dd, yyyy") — @req.DeptHeadComments</div>
                 </div>
             }
             @if (!string.IsNullOrEmpty(req.CurrentBMReview))
             {
                 <div class="review-card @(req.CurrentBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 2a — Current Branch Manager (@req.CurrentBranch)</h6>
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 3a — Current Branch Manager (@req.CurrentBranch)</h6>
                     <div style="font-size:0.88rem"><strong>@req.CurrentBMReview</strong> on @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy") — @req.CurrentBMComments</div>
                 </div>
             }
             @if (!string.IsNullOrEmpty(req.TargetBMReview))
             {
                 <div class="review-card @(req.TargetBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 2b — Target Branch Manager (@req.RequestedBranch)</h6>
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 3b — Target Branch Manager (@req.RequestedBranch)</h6>
                     <div style="font-size:0.88rem"><strong>@req.TargetBMReview</strong> on @req.TargetBMReviewDate?.ToString("MMM dd, yyyy") — @req.TargetBMComments</div>
                 </div>
             }
@@ -118,16 +128,16 @@ else
         </div>
 
         <div>
-            @if (req.Status == TransferStatus.BothBMsApproved)
+            @if (canReview)
             {
                 <div class="eligibility-panel">
-                    <h5><i class="bi bi-shield-check"></i> Final Decision</h5>
-                    <p class="ep-subtitle">All prior approvals completed. Make the final decision.</p>
+                    <h5><i class="bi bi-shield-check"></i> Area Manager Approval</h5>
+                    <p class="ep-subtitle">Both Branch Managers have approved. Your decision forwards this to HR for final sign-off.</p>
 
                     <div class="ep-check-item">
                         <div class="ep-check-circle" style="border-color:#22c55e;background:#22c55e"></div>
                         <div>
-                            <div class="ep-check-label">HR Manager ✓</div>
+                            <div class="ep-check-label">Department Head ✓</div>
                             <div class="ep-check-desc">Approved</div>
                         </div>
                     </div>
@@ -145,13 +155,24 @@ else
                             <div class="ep-check-desc">Approved</div>
                         </div>
                     </div>
+                    <div class="ep-check-item" style="opacity:0.6">
+                        <div class="ep-check-circle" style="border-color:#94a3b8;background:transparent"></div>
+                        <div>
+                            <div class="ep-check-label">HR Finalization</div>
+                            <div class="ep-check-desc">Pending your approval</div>
+                        </div>
+                    </div>
 
                     <form method="post" class="ep-actions">
                         <input type="hidden" name="id" value="@req.Id" />
                         <div style="margin-bottom:10px">
-                            <textarea name="comments" placeholder="Add your final decision comments..." required minlength="10"
+                            <textarea name="comments" placeholder="Add your decision comments..." required minlength="10"
                                       style="width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-family:inherit;resize:vertical;min-height:80px"></textarea>
                         </div>
+                        @if (!ViewData.ModelState.IsValid)
+                        {
+                            <div asp-validation-summary="All" style="color:#fecaca;font-size:0.82rem;margin-bottom:8px;font-weight:600"></div>
+                        }
                         <button type="submit" name="action" value="approve" class="btn-ep-approve">
                             <i class="bi bi-check-circle"></i> Approve Transfer
                         </button>
@@ -165,7 +186,7 @@ else
             {
                 <div class="k-card">
                     <div class="k-alert k-alert-info" style="margin-bottom:0">
-                        <i class="bi bi-info-circle"></i> This request has already been finalized.
+                        <i class="bi bi-info-circle"></i> This request has already been reviewed or is not yet at the Area Manager stage.
                     </div>
                 </div>
             }

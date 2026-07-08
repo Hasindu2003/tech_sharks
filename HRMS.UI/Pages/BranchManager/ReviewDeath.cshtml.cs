@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace HRMS.UI.Pages.BranchManager
 {
-    [Authorize(Roles = "Admin,Branch Manager")]
+    [Authorize(Roles = "Branch Manager")]
     public class ReviewDeathModel : PageModel
     {
         private readonly IDeathService _deathService;

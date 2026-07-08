@@ -1,27 +1,20 @@
-using HRMS.Application.Models;
-using HRMS.Domain.Entities.Resignation;
-using HRMS.Domain.Entities.Core;
-using HRMS.Infrastructure.Identity;
+﻿using HRMS.Domain.Entities.Resignation;
+using HRMS.Domain.Entities.Transfer;
 using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Models;
 using Microsoft.AspNetCore.Identity;
+using HRMS.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.Application.Services
 {
     public interface IResignationService
     {
-        Task<(bool Success, string? Error, int Id)> CreateResignationAsync(
-            string employeeEmail, string? employeeName, string? epfNumber,
-            string? branch, string? department, string? designation,
-            string reason, DateTime? effectiveDate, string? additionalRemarks,
-            bool hasOutstandingLoans, bool isLoanGuarantor, bool hasOverridePermission,
-            string? obligationDetails, bool submitNow);
-
         Task<int> CreateResignationRequestAsync(ResignationRequestViewModel vm);
         Task<(bool Success, string? Error)> ValidateAndSubmitAsync(int id);
         Task<ResignationRequestViewModel?> GetByIdAsync(int id);
         Task<List<ResignationRequestViewModel>> GetMyResignationsAsync(string employeeEmail);
-        Task<List<ResignationRequestViewModel>> GetPendingForBranchManagerAsync(string? branch = null);
+        Task<List<ResignationRequestViewModel>> GetPendingForBranchManagerAsync();
         Task<List<ResignationRequestViewModel>> GetPendingForAreaManagerAsync();
         Task<List<ResignationRequestViewModel>> GetPendingForHRManagerAsync();
         Task<List<ResignationRequestViewModel>> GetAllAsync(string? statusFilter = null, string? search = null);
@@ -37,13 +30,14 @@ namespace HRMS.Application.Services
         Task<(byte[]? Data, string? FileName, string? ContentType)> GetDocumentAsync(int documentId);
     }
 
+    /// <summary>
+    /// Service responsible for managing employee resignations.
+    /// Handles the end-to-end workflow from submission, manager approvals, to account deactivation.
+    /// </summary>
     public class ResignationService : IResignationService
     {
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
-
-        private static readonly string[] AllowedDocumentExtensions = { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
-        private const long MaxDocumentSizeBytes = 5 * 1024 * 1024;
 
         public ResignationService(ApplicationDbContext context, INotificationService notificationService)
         {
@@ -51,79 +45,33 @@ namespace HRMS.Application.Services
             _notificationService = notificationService;
         }
 
-        public async Task<(bool Success, string? Error, int Id)> CreateResignationAsync(
-            string employeeEmail, string? employeeName, string? epfNumber,
-            string? branch, string? department, string? designation,
-            string reason, DateTime? effectiveDate, string? additionalRemarks,
-            bool hasOutstandingLoans, bool isLoanGuarantor, bool hasOverridePermission,
-            string? obligationDetails, bool submitNow)
-        {
-            if (submitNow && effectiveDate.HasValue)
-            {
-                var minDate = DateTime.Today.AddDays(14);
-                if (effectiveDate.Value.Date < minDate)
-                    return (false, "Effective date must be at least 14 days from today (minimum notice period).", 0);
-            }
-
-            var today = DateTime.Today;
-            var resolvedEffectiveDate = effectiveDate ?? today.AddDays(30);
-            var noticeDays = (resolvedEffectiveDate - today).Days;
-
-            var vm = new ResignationRequestViewModel
-            {
-                EmployeeName         = employeeName ?? "",
-                EpfNumber            = epfNumber ?? "",
-                EmployeeEmail        = employeeEmail,
-                Branch               = branch ?? "",
-                Department           = department ?? "",
-                Designation          = designation ?? "",
-                ReasonForResignation = reason,
-                ResignationDate      = today,
-                EffectiveDate        = resolvedEffectiveDate,
-                NoticePeriodDays     = noticeDays,
-                AdditionalRemarks    = additionalRemarks,
-                HasOutstandingLoans  = hasOutstandingLoans,
-                IsLoanGuarantor      = isLoanGuarantor,
-                HasOverridePermission = hasOverridePermission,
-                ObligationDetails    = obligationDetails,
-                InitiatedBy          = employeeEmail
-            };
-
-            var id = await CreateResignationRequestAsync(vm);
-
-            if (submitNow)
-            {
-                var (success, error) = await ValidateAndSubmitAsync(id);
-                if (!success)
-                    return (false, error, id);
-            }
-
-            return (true, null, id);
-        }
-
+        // ── Create ──
+        /// <summary>
+        /// Creates a new resignation request in Draft status.
+        /// </summary>
         public async Task<int> CreateResignationRequestAsync(ResignationRequestViewModel vm)
         {
             var entity = new ResignationRequest
             {
-                EmployeeName          = vm.EmployeeName,
-                EpfNumber             = vm.EpfNumber,
-                EmployeeEmail         = vm.EmployeeEmail,
-                Branch                = vm.Branch,
-                Department            = vm.Department,
-                Designation           = vm.Designation,
-                ReasonForResignation  = vm.ReasonForResignation,
-                ResignationDate       = vm.ResignationDate,
-                EffectiveDate         = vm.EffectiveDate,
-                NoticePeriodDays      = vm.NoticePeriodDays,
-                AdditionalRemarks     = vm.AdditionalRemarks,
-                HasOutstandingLoans   = vm.HasOutstandingLoans,
-                IsLoanGuarantor       = vm.IsLoanGuarantor,
+                EmployeeName       = vm.EmployeeName,
+                EpfNumber          = vm.EpfNumber,
+                EmployeeEmail      = vm.EmployeeEmail,
+                Branch             = vm.Branch,
+                Department         = vm.Department,
+                Designation        = vm.Designation,
+                ReasonForResignation = vm.ReasonForResignation,
+                ResignationDate    = vm.ResignationDate,
+                EffectiveDate      = vm.EffectiveDate,
+                NoticePeriodDays   = vm.NoticePeriodDays,
+                AdditionalRemarks  = vm.AdditionalRemarks,
+                HasOutstandingLoans = vm.HasOutstandingLoans,
+                IsLoanGuarantor    = vm.IsLoanGuarantor,
                 HasOverridePermission = vm.HasOverridePermission,
-                ObligationDetails     = vm.ObligationDetails,
-                Status                = ResignationStatus.Draft,
-                InitiatedBy           = vm.InitiatedBy,
-                CreatedDate           = DateTime.Now,
-                LastModifiedDate      = DateTime.Now
+                ObligationDetails  = vm.ObligationDetails,
+                Status             = ResignationStatus.Draft,
+                InitiatedBy        = vm.InitiatedBy,
+                CreatedDate        = DateTime.Now,
+                LastModifiedDate   = DateTime.Now
             };
 
             _context.ResignationRequests.Add(entity);
@@ -131,6 +79,11 @@ namespace HRMS.Application.Services
             return entity.Id;
         }
 
+        // ── Validate & Submit ──
+        /// <summary>
+        /// Validates that a draft request is ready for submission (e.g., has documents attached)
+        /// and moves it to the SubmittedForApproval status.
+        /// </summary>
         public async Task<(bool Success, string? Error)> ValidateAndSubmitAsync(int id)
         {
             var entity = await _context.ResignationRequests
@@ -146,6 +99,7 @@ namespace HRMS.Application.Services
             if (!entity.Documents.Any())
                 return (false, "At least one supporting document must be attached before submission.");
 
+            // All validations passed — submit
             entity.Status = ResignationStatus.SubmittedForApproval;
             entity.LastModifiedDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -153,6 +107,7 @@ namespace HRMS.Application.Services
             return (true, null);
         }
 
+        // ── Queries ──
         public async Task<ResignationRequestViewModel?> GetByIdAsync(int id)
         {
             var entity = await _context.ResignationRequests
@@ -171,16 +126,13 @@ namespace HRMS.Application.Services
             return list.Select(Map).ToList();
         }
 
-        public async Task<List<ResignationRequestViewModel>> GetPendingForBranchManagerAsync(string? branch = null)
+        public async Task<List<ResignationRequestViewModel>> GetPendingForBranchManagerAsync()
         {
-            var query = _context.ResignationRequests
+            var list = await _context.ResignationRequests
                 .Include(r => r.Documents)
-                .Where(r => r.Status == ResignationStatus.SubmittedForApproval);
-
-            if (!string.IsNullOrWhiteSpace(branch))
-                query = query.Where(r => r.Branch == branch);
-
-            var list = await query.OrderByDescending(r => r.CreatedDate).ToListAsync();
+                .Where(r => r.Status == ResignationStatus.SubmittedForApproval)
+                .OrderByDescending(r => r.CreatedDate)
+                .ToListAsync();
             return list.Select(Map).ToList();
         }
 
@@ -206,7 +158,9 @@ namespace HRMS.Application.Services
 
         public async Task<List<ResignationRequestViewModel>> GetAllAsync(string? statusFilter = null, string? search = null)
         {
-            var query = _context.ResignationRequests.Include(r => r.Documents).AsQueryable();
+            var query = _context.ResignationRequests
+                .Include(r => r.Documents)
+                .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(statusFilter) &&
                 Enum.TryParse<ResignationStatus>(statusFilter, out var status))
@@ -225,22 +179,32 @@ namespace HRMS.Application.Services
             return list.Select(Map).ToList();
         }
 
+        // ── Stage 1: Branch Manager ──
+        /// <summary>
+        /// Approves the resignation at the Branch Manager level.
+        /// </summary>
         public async Task<bool> BranchManagerApproveAsync(int id, string comments, string reviewerEmail)
         {
             var entity = await _context.ResignationRequests.FindAsync(id);
             if (entity == null || entity.Status != ResignationStatus.SubmittedForApproval)
                 return false;
 
-            entity.BMReview = "Approved"; entity.BMReviewDate = DateTime.Now;
-            entity.BMComments = comments; entity.BMEmail = reviewerEmail;
-            entity.Status = ResignationStatus.BMApproved;
+            entity.BMReview     = "Approved";
+            entity.BMReviewDate = DateTime.Now;
+            entity.BMComments   = comments;
+            entity.BMEmail      = reviewerEmail;
+            entity.Status       = ResignationStatus.BMApproved;
             entity.LastModifiedDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Resignation Acknowledged by Branch Manager",
-                $"Your resignation request has been acknowledged by your Branch Manager. Effective date: {entity.EffectiveDate:MMMM dd, yyyy}.",
-                CoreNotificationType.Approved, entity.Id);
+                $"Your resignation request has been acknowledged by your Branch Manager. It is now pending Area Manager review. Effective date: {entity.EffectiveDate:MMMM dd, yyyy}.",
+                NotificationType.Approved,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
@@ -251,36 +215,52 @@ namespace HRMS.Application.Services
             if (entity == null || entity.Status != ResignationStatus.SubmittedForApproval)
                 return false;
 
-            entity.BMReview = "Rejected"; entity.BMReviewDate = DateTime.Now;
-            entity.BMComments = comments; entity.BMEmail = reviewerEmail;
-            entity.Status = ResignationStatus.BMRejected;
+            entity.BMReview     = "Rejected";
+            entity.BMReviewDate = DateTime.Now;
+            entity.BMComments   = comments;
+            entity.BMEmail      = reviewerEmail;
+            entity.Status       = ResignationStatus.BMRejected;
             entity.LastModifiedDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Resignation Request Rejected",
                 $"Your resignation request has been rejected by your Branch Manager. Reason: {comments}",
-                CoreNotificationType.Rejected, entity.Id);
+                NotificationType.Rejected,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
 
+        // ── Stage 2: Area Manager ──
+        /// <summary>
+        /// Approves the resignation at the Area Manager level.
+        /// </summary>
         public async Task<bool> AreaManagerApproveAsync(int id, string comments, string reviewerEmail)
         {
             var entity = await _context.ResignationRequests.FindAsync(id);
             if (entity == null || entity.Status != ResignationStatus.BMApproved)
                 return false;
 
-            entity.AMReview = "Approved"; entity.AMReviewDate = DateTime.Now;
-            entity.AMComments = comments; entity.AMEmail = reviewerEmail;
-            entity.Status = ResignationStatus.AMApproved;
+            entity.AMReview     = "Approved";
+            entity.AMReviewDate = DateTime.Now;
+            entity.AMComments   = comments;
+            entity.AMEmail      = reviewerEmail;
+            entity.Status       = ResignationStatus.AMApproved;
             entity.LastModifiedDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Resignation Approved by Area Manager",
-                $"Your resignation request has been approved by the Area Manager. Effective date: {entity.EffectiveDate:MMMM dd, yyyy}.",
-                CoreNotificationType.Approved, entity.Id);
+                $"Your resignation request has been approved by the Area Manager. It is now pending final HR Manager approval. Effective date: {entity.EffectiveDate:MMMM dd, yyyy}.",
+                NotificationType.Approved,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
@@ -291,43 +271,65 @@ namespace HRMS.Application.Services
             if (entity == null || entity.Status != ResignationStatus.BMApproved)
                 return false;
 
-            entity.AMReview = "Rejected"; entity.AMReviewDate = DateTime.Now;
-            entity.AMComments = comments; entity.AMEmail = reviewerEmail;
-            entity.Status = ResignationStatus.AMRejected;
+            entity.AMReview     = "Rejected";
+            entity.AMReviewDate = DateTime.Now;
+            entity.AMComments   = comments;
+            entity.AMEmail      = reviewerEmail;
+            entity.Status       = ResignationStatus.AMRejected;
             entity.LastModifiedDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Resignation Request Rejected",
                 $"Your resignation request has been rejected by the Area Manager. Reason: {comments}",
-                CoreNotificationType.Rejected, entity.Id);
+                NotificationType.Rejected,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
 
+        // ── Stage 3: HR Manager ──
+        /// <summary>
+        /// Approves the resignation at the HR Manager level (Final approval).
+        /// Generates the acceptance letter and prepares for account deactivation.
+        /// </summary>
         public async Task<bool> HRManagerApproveAsync(int id, string comments, string reviewerEmail)
         {
             var entity = await _context.ResignationRequests.FindAsync(id);
             if (entity == null || entity.Status != ResignationStatus.AMApproved)
                 return false;
 
-            entity.HRReview = "Approved"; entity.HRReviewDate = DateTime.Now;
-            entity.HRComments = comments; entity.HREmail = reviewerEmail;
-            entity.Status = ResignationStatus.HRApproved;
+            entity.HRReview     = "Approved";
+            entity.HRReviewDate = DateTime.Now;
+            entity.HRComments   = comments;
+            entity.HREmail      = reviewerEmail;
+            entity.Status       = ResignationStatus.HRApproved;
             entity.AcceptanceLetterGenerated = true;
-            entity.AcceptanceLetterDate = DateTime.Now;
-            entity.LastModifiedDate = DateTime.Now;
+            entity.AcceptanceLetterDate      = DateTime.Now;
+            entity.LastModifiedDate          = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            // Notify employee — acceptance letter ready
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Resignation Accepted — Letter Available",
-                $"Your resignation has been officially approved by HR. Your last working day is {entity.EffectiveDate:MMMM dd, yyyy}.",
-                CoreNotificationType.Approved, entity.Id);
+                $"Your resignation has been officially approved by HR. Your acceptance letter is now available. Your last working day is {entity.EffectiveDate:MMMM dd, yyyy}. Please ensure all handover tasks are completed.",
+                NotificationType.Approved,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
-            await _notificationService.CreateNotificationAsync(reviewerEmail,
+            // Notify HR themselves as a reminder to process on effective date
+            await _notificationService.CreateNotificationAsync(
+                reviewerEmail,
                 $"Reminder: Process Account Deactivation on {entity.EffectiveDate:dd MMM yyyy}",
-                $"Resignation of {entity.EmployeeName} ({entity.EpfNumber}) approved. Process deactivation on {entity.EffectiveDate:MMMM dd, yyyy}.",
-                CoreNotificationType.Info, entity.Id);
+                $"Resignation of {entity.EmployeeName} ({entity.EpfNumber}) has been approved. Please remember to process account deactivation on the effective date: {entity.EffectiveDate:MMMM dd, yyyy}. Use the 'Process Effective Date' action on the resignation details page.",
+                NotificationType.Info,
+                entity.Id,
+                "/HRManager/ReviewResignations");
 
             return true;
         }
@@ -338,83 +340,119 @@ namespace HRMS.Application.Services
             if (entity == null || entity.Status != ResignationStatus.AMApproved)
                 return false;
 
-            entity.HRReview = "Rejected"; entity.HRReviewDate = DateTime.Now;
-            entity.HRComments = comments; entity.HREmail = reviewerEmail;
-            entity.Status = ResignationStatus.HRRejected;
+            entity.HRReview     = "Rejected";
+            entity.HRReviewDate = DateTime.Now;
+            entity.HRComments   = comments;
+            entity.HREmail      = reviewerEmail;
+            entity.Status       = ResignationStatus.HRRejected;
             entity.LastModifiedDate = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Resignation Request Rejected by HR",
-                $"Your resignation request has been rejected by the HR Manager. Reason: {comments}.",
-                CoreNotificationType.Rejected, entity.Id);
+                $"Your resignation request has been rejected by the HR Manager. Reason: {comments}. Please contact HR for further clarification.",
+                NotificationType.Rejected,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
 
-        public async Task<(bool Success, string? Error)> ProcessEffectiveDateAsync(int id, string processedBy, UserManager<ApplicationUser> userManager)
+        // ── Process Effective Date (account deactivation) ──
+        public async Task<(bool Success, string? Error)> ProcessEffectiveDateAsync(
+            int id, string processedBy, UserManager<ApplicationUser> userManager)
         {
             var entity = await _context.ResignationRequests.FindAsync(id);
-            if (entity == null) return (false, "Request not found.");
-            if (entity.Status != ResignationStatus.HRApproved) return (false, "Only HR-approved resignations can be processed.");
-            if (entity.AccountDeactivated) return (false, "Account has already been deactivated.");
-            if (DateTime.Today < entity.EffectiveDate.Date) return (false, $"Effective date is {entity.EffectiveDate:MMMM dd, yyyy}. Cannot process before that date.");
+            if (entity == null)
+                return (false, "Request not found.");
 
+            if (entity.Status != ResignationStatus.HRApproved)
+                return (false, "Only HR-approved resignations can be processed.");
+
+            if (entity.AccountDeactivated)
+                return (false, "Account has already been deactivated.");
+
+            if (DateTime.Today < entity.EffectiveDate.Date)
+                return (false, $"Effective date is {entity.EffectiveDate:MMMM dd, yyyy}. Cannot process before that date.");
+
+            // Deactivate: lock the account without deleting it
             var user = await userManager.FindByEmailAsync(entity.EmployeeEmail);
-            if (user == null) return (false, "Employee account not found.");
+            if (user == null)
+                return (false, "Employee account not found.");
 
+            // Lock out the account permanently (until re-activated)
             user.LockoutEnabled = true;
             user.LockoutEnd = DateTimeOffset.MaxValue;
             await userManager.UpdateAsync(user);
 
-            entity.AccountDeactivated = true;
+            entity.AccountDeactivated    = true;
             entity.AccountDeactivatedDate = DateTime.Now;
-            entity.AccountDeactivatedBy = processedBy;
-            entity.Status = ResignationStatus.Completed;
-            entity.LastModifiedDate = DateTime.Now;
+            entity.AccountDeactivatedBy  = processedBy;
+            entity.Status                = ResignationStatus.Completed;
+            entity.LastModifiedDate      = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            // Notify employee
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Employment Ended — Account Deactivated",
-                $"Your employment has officially ended on {entity.EffectiveDate:MMMM dd, yyyy}. Your account has been deactivated.",
-                CoreNotificationType.Info, entity.Id);
+                $"Your employment has officially ended on {entity.EffectiveDate:MMMM dd, yyyy}. Your account has been deactivated. Please contact HR if you need any assistance.",
+                NotificationType.Info,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return (true, null);
         }
 
-        public async Task<(bool Success, string? Error)> ReactivateAccountAsync(int id, string reactivatedBy, UserManager<ApplicationUser> userManager)
+        // ── Reactivate Account ──
+        public async Task<(bool Success, string? Error)> ReactivateAccountAsync(
+            int id, string reactivatedBy, UserManager<ApplicationUser> userManager)
         {
             var entity = await _context.ResignationRequests.FindAsync(id);
-            if (entity == null) return (false, "Request not found.");
-            if (!entity.AccountDeactivated) return (false, "Account is not deactivated.");
+            if (entity == null)
+                return (false, "Request not found.");
+
+            if (!entity.AccountDeactivated)
+                return (false, "Account is not deactivated.");
 
             var user = await userManager.FindByEmailAsync(entity.EmployeeEmail);
-            if (user == null) return (false, "Employee account not found.");
+            if (user == null)
+                return (false, "Employee account not found.");
 
+            // Remove lockout
             user.LockoutEnd = null;
             user.LockoutEnabled = false;
             await userManager.UpdateAsync(user);
 
-            entity.AccountDeactivated = false;
+            entity.AccountDeactivated    = false;
             entity.AccountDeactivatedDate = null;
-            entity.AccountDeactivatedBy = null;
-            entity.LastModifiedDate = DateTime.Now;
+            entity.AccountDeactivatedBy  = null;
+            entity.LastModifiedDate      = DateTime.Now;
+
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(entity.EmployeeEmail,
+            // Notify employee
+            await _notificationService.CreateNotificationAsync(
+                entity.EmployeeEmail,
                 "Account Reactivated",
-                $"Your account has been reactivated by {reactivatedBy}.",
-                CoreNotificationType.Approved, entity.Id);
+                $"Your account has been reactivated by {reactivatedBy}. You can now log in to the HRMS portal.",
+                NotificationType.Approved,
+                entity.Id,
+                "/Transfer/Separation?ActiveTab=Resignation");
 
             return (true, null);
         }
 
+        // ── Documents ──
         public async Task<int> AddDocumentAsync(int resignationRequestId, string fileName, string contentType, byte[] data)
         {
             var doc = new ResignationDocument
             {
                 ResignationRequestId = resignationRequestId,
-                FileName = fileName,
+                FileName    = fileName,
                 ContentType = contentType,
                 DocumentData = data,
                 UploadedDate = DateTime.Now
@@ -430,26 +468,53 @@ namespace HRMS.Application.Services
             return doc == null ? (null, null, null) : (doc.DocumentData, doc.FileName, doc.ContentType);
         }
 
+        // ── Mapper ──
         private static ResignationRequestViewModel Map(ResignationRequest e) => new()
         {
-            Id = e.Id, EmployeeName = e.EmployeeName, EpfNumber = e.EpfNumber,
-            EmployeeEmail = e.EmployeeEmail, Branch = e.Branch, Department = e.Department,
-            Designation = e.Designation, ReasonForResignation = e.ReasonForResignation,
-            ResignationDate = e.ResignationDate, EffectiveDate = e.EffectiveDate,
-            NoticePeriodDays = e.NoticePeriodDays, AdditionalRemarks = e.AdditionalRemarks,
-            HasOutstandingLoans = e.HasOutstandingLoans, IsLoanGuarantor = e.IsLoanGuarantor,
-            HasOverridePermission = e.HasOverridePermission, ObligationDetails = e.ObligationDetails,
-            Status = (ResignationStatusEnum)(int)e.Status, InitiatedBy = e.InitiatedBy,
-            CreatedDate = e.CreatedDate, LastModifiedDate = e.LastModifiedDate,
-            BMReview = e.BMReview, BMReviewDate = e.BMReviewDate, BMComments = e.BMComments, BMEmail = e.BMEmail,
-            AMReview = e.AMReview, AMReviewDate = e.AMReviewDate, AMComments = e.AMComments, AMEmail = e.AMEmail,
-            HRReview = e.HRReview, HRReviewDate = e.HRReviewDate, HRComments = e.HRComments, HREmail = e.HREmail,
-            AcceptanceLetterGenerated = e.AcceptanceLetterGenerated, AcceptanceLetterDate = e.AcceptanceLetterDate,
-            AccountDeactivated = e.AccountDeactivated, AccountDeactivatedDate = e.AccountDeactivatedDate,
-            AccountDeactivatedBy = e.AccountDeactivatedBy, DocumentCount = e.Documents.Count,
+            Id                        = e.Id,
+            EmployeeName              = e.EmployeeName,
+            EpfNumber                 = e.EpfNumber,
+            EmployeeEmail             = e.EmployeeEmail,
+            Branch                    = e.Branch,
+            Department                = e.Department,
+            Designation               = e.Designation,
+            ReasonForResignation      = e.ReasonForResignation,
+            ResignationDate           = e.ResignationDate,
+            EffectiveDate             = e.EffectiveDate,
+            NoticePeriodDays          = e.NoticePeriodDays,
+            AdditionalRemarks         = e.AdditionalRemarks,
+            HasOutstandingLoans       = e.HasOutstandingLoans,
+            IsLoanGuarantor           = e.IsLoanGuarantor,
+            HasOverridePermission     = e.HasOverridePermission,
+            ObligationDetails         = e.ObligationDetails,
+            Status                    = (ResignationStatusEnum)(int)e.Status,
+            InitiatedBy               = e.InitiatedBy,
+            CreatedDate               = e.CreatedDate,
+            LastModifiedDate          = e.LastModifiedDate,
+            BMReview                  = e.BMReview,
+            BMReviewDate              = e.BMReviewDate,
+            BMComments                = e.BMComments,
+            BMEmail                   = e.BMEmail,
+            AMReview                  = e.AMReview,
+            AMReviewDate              = e.AMReviewDate,
+            AMComments                = e.AMComments,
+            AMEmail                   = e.AMEmail,
+            HRReview                  = e.HRReview,
+            HRReviewDate              = e.HRReviewDate,
+            HRComments                = e.HRComments,
+            HREmail                   = e.HREmail,
+            AcceptanceLetterGenerated = e.AcceptanceLetterGenerated,
+            AcceptanceLetterDate      = e.AcceptanceLetterDate,
+            AccountDeactivated        = e.AccountDeactivated,
+            AccountDeactivatedDate    = e.AccountDeactivatedDate,
+            AccountDeactivatedBy      = e.AccountDeactivatedBy,
+            DocumentCount             = e.Documents.Count,
             Documents = e.Documents.Select(d => new ResignationDocumentViewModel
             {
-                Id = d.Id, FileName = d.FileName, ContentType = d.ContentType, UploadedDate = d.UploadedDate
+                Id          = d.Id,
+                FileName    = d.FileName,
+                ContentType = d.ContentType,
+                UploadedDate = d.UploadedDate
             }).ToList()
         };
     }

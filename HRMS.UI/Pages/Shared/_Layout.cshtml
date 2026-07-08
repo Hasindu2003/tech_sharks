@@ -97,7 +97,11 @@
         }
 
         /* ── PAGE CONTENT ── */
+<<<<<<< HEAD
         .page-content { flex: 1; overflow: auto; background: #ffffff; }
+=======
+        .page-content { flex: 1; overflow: auto; background: #ffffff; padding: 26px; }
+>>>>>>> hasindu-source
 
         /* ── NOTIFICATIONS DROPDOWN ── */
         .notif-wrapper { position: relative; }
@@ -138,6 +142,7 @@
             display: flex; align-items: center; justify-content: center;
         }
         .notif-dot.hidden { display: none; }
+<<<<<<< HEAD
 
         /* ── Shared Table Pagination ── */
         .tbl-pg-bar {
@@ -156,6 +161,8 @@
         .pg-btn:hover:not(:disabled) { background: #f0faf4; border-color: #10823c; color: #10823c; }
         .pg-btn.active { background: #10823c; color: white; border-color: #10823c; }
         .pg-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+=======
+>>>>>>> hasindu-source
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -172,6 +179,10 @@
                     else if (User.IsInRole("HR Manager")) { <text>HR Manager Portal</text> }
                     else if (User.IsInRole("Area Manager")) { <text>Area Manager Portal</text> }
                     else if (User.IsInRole("Branch Manager")) { <text>Branch Manager Portal</text> }
+<<<<<<< HEAD
+=======
+                    else if (User.IsInRole("Department Head")) { <text>Department Head Portal</text> }
+>>>>>>> hasindu-source
                     else { <text>Employee Portal</text> }
                 </div>
             </div>
@@ -203,18 +214,47 @@
                     </li>
                     @if (!User.IsInRole("Admin"))
                     {
-                    <li class="nav-item @(activeNav == "Separation" ? "active" : "")">
-                        <a href="/Transfer/Separation">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="9" cy="7" r="4"/>
-                                    <polyline points="17 11 19 13 23 9"/>
-                                </svg>
-                            </span>
-                            Separation
-                        </a>
-                    </li>
+                        <li class="nav-item @(activeNav == "Separation" ? "active" : "")">
+                            @if (User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager"))
+                            {
+                                <a href="/Separation/Dashboard">
+                                    <span class="nav-icon">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <polyline points="17 11 19 13 23 9"/>
+                                        </svg>
+                                    </span>
+                                    Separation
+                                </a>
+                            }
+                            else if (User.IsInRole("Department Head"))
+                            {
+                                <a href="/DepartmentHead/ReviewTransfers">
+                                    <span class="nav-icon">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <polyline points="17 11 19 13 23 9"/>
+                                        </svg>
+                                    </span>
+                                    Separation
+                                </a>
+                            }
+                            else
+                            {
+                                <a href="/Transfer/Separation">
+                                    <span class="nav-icon">
+                                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                            <circle cx="9" cy="7" r="4"/>
+                                            <polyline points="17 11 19 13 23 9"/>
+                                        </svg>
+                                    </span>
+                                    Separation
+                                </a>
+                            }
+                        </li>
                     }
 
                     @if (User.IsInRole("HR Manager") || User.IsInRole("Area Manager") || User.IsInRole("Branch Manager"))
@@ -231,7 +271,6 @@
                                 Employees
                             </a>
                         </li>
-
                         <li class="nav-item @(activeNav == "Training" ? "active" : "")">
                             <a href="#">
                                 <span class="nav-icon">
@@ -265,6 +304,21 @@
                                     </svg>
                                 </span>
                                 Welfare
+                            </a>
+                        </li>
+                    }
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item @(activeNav == "Separation" ? "active" : "")">
+                            <a href="/Transfer/Separation">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                        <circle cx="9" cy="7" r="4"/>
+                                        <polyline points="17 11 19 13 23 9"/>
+                                    </svg>
+                                </span>
+                                Separation
                             </a>
                         </li>
                     }
@@ -431,6 +485,7 @@
     });
 </script>
 
+<<<<<<< HEAD
 <script>
 function initTablePagination(tableId, pageSize) {
     var table = document.getElementById(tableId);
@@ -488,6 +543,8 @@ function initTablePagination(tableId, pageSize) {
     render();
 }
 </script>
+=======
+>>>>>>> hasindu-source
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

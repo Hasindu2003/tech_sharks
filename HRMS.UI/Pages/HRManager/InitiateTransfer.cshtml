@@ -1,0 +1,373 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "HR Manager")]
+@model HRMS.UI.Pages.HRManager.InitiateTransferModel
+@{
+    ViewData["Title"] = "Initiate Transfer";
+}
+
+<div class="page-header" style="margin-bottom: 24px;">
+    <a asp-page="/HRManager/ReviewTransfers" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="border: none; padding-left: 0; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">
+        <i class="bi bi-arrow-left"></i> Back to Review Transfers
+    </a>
+    <h2>Initiate Transfer</h2>
+    <p class="page-subtitle">Initiate a transfer request for an employee to another branch</p>
+</div>
+
+<div asp-validation-summary="ModelOnly" class="k-alert k-alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "flex" : "none")"></div>
+
+<form method="post" enctype="multipart/form-data">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+        <!-- Left Column -->
+        <div>
+            <!-- Employee Selection -->
+            <div class="k-card" style="margin-bottom:20px">
+                <div class="k-card-header"><i class="bi bi-person-lines-fill" style="color:#1a7a3a;margin-right:6px"></i> Select Employee</div>
+                
+                <div class="k-form-group">
+                    <label asp-for="Input.SelectedEmployeeId">
+                        <i class="bi bi-person" style="color:#1a7a3a;margin-right:4px"></i> Employee <span style="color:#ef4444">*</span>
+                    </label>
+                    <select asp-for="Input.SelectedEmployeeId" id="employeeSelect" style="display:none" asp-items="Model.Employees">
+                        <option value="">-- Select Employee --</option>
+                    </select>
+                    <div class="custom-dropdown" id="employeeDropdown">
+                        <div class="custom-dropdown-trigger" id="employeeTrigger">
+                            <span id="employeeTriggerText">-- Select Employee --</span>
+                            <i class="bi bi-chevron-down custom-dropdown-chevron"></i>
+                        </div>
+                        <div class="custom-dropdown-list" id="employeeList">
+                            <div class="custom-dropdown-search-box">
+                                <i class="bi bi-search custom-dropdown-search-icon"></i>
+                                <input type="text" id="employeeSearch" class="custom-dropdown-search-input"
+                                       placeholder="Search by EPF number..." autocomplete="off" />
+                            </div>
+                            <div class="custom-dropdown-option" data-value="">-- Select Employee --</div>
+                            @foreach (var emp in Model.Employees)
+                            {
+                                <div class="custom-dropdown-option" data-value="@emp.Value">@emp.Text</div>
+                            }
+                            <div class="custom-dropdown-no-results" id="employeeNoResults" style="display:none">No employees found.</div>
+                        </div>
+                    </div>
+                    <span asp-validation-for="Input.SelectedEmployeeId" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <!-- Document Upload -->
+            <div class="k-card">
+                <div class="k-card-header"><i class="bi bi-paperclip" style="color:#1a7a3a;margin-right:6px"></i> Supporting Document (Optional)</div>
+                <div class="k-form-group" style="margin-bottom:0">
+                    <input asp-for="Input.Document" class="k-form-control" type="file"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                    <div style="font-size:0.78rem;color:#9ca3af;margin-top:6px">Allowed: PDF, DOC, DOCX, JPG, PNG. Max size: 5 MB.</div>
+                    <span asp-validation-for="Input.Document" class="text-danger small"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Transfer Details -->
+        <div>
+            <div class="k-card" style="margin-bottom:20px">
+                <div class="k-card-header"><i class="bi bi-arrow-left-right" style="color:#1a7a3a;margin-right:6px"></i> Transfer Details</div>
+
+                <div class="k-form-group">
+                    <label asp-for="Input.RequestedBranch">
+                        <i class="bi bi-geo-alt" style="color:#1a7a3a;margin-right:4px"></i> Target Branch <span style="color:#ef4444">*</span>
+                    </label>
+                    <select asp-for="Input.RequestedBranch" id="branchSelect" style="display:none">
+                        <option value="">-- Select Target Branch --</option>
+                        @foreach (var branch in Model.AllBranches)
+                        {
+                            <option value="@branch">@branch</option>
+                        }
+                    </select>
+                    <div class="custom-dropdown" id="branchDropdown">
+                        <div class="custom-dropdown-trigger" id="branchTrigger">
+                            <span id="branchTriggerText">-- Select Target Branch --</span>
+                            <i class="bi bi-chevron-down custom-dropdown-chevron"></i>
+                        </div>
+                        <div class="custom-dropdown-list" id="branchList">
+                            <div class="custom-dropdown-option" data-value="">-- Select Target Branch --</div>
+                            @foreach (var branch in Model.AllBranches)
+                            {
+                                <div class="custom-dropdown-option" data-value="@branch">@branch</div>
+                            }
+                        </div>
+                    </div>
+                    <span asp-validation-for="Input.RequestedBranch" class="text-danger small"></span>
+                </div>
+
+                <div class="k-form-group">
+                    <label asp-for="Input.PreferredDate">
+                        <i class="bi bi-calendar-event" style="color:#1a7a3a;margin-right:4px"></i> Preferred Transfer Date <span style="color:#ef4444">*</span>
+                    </label>
+                    <input asp-for="Input.PreferredDate" class="k-form-control" type="date"
+                           min="@DateTime.Today.AddDays(7).ToString("yyyy-MM-dd")"
+                           max="@DateTime.Today.AddYears(1).ToString("yyyy-MM-dd")" />
+                    <div style="font-size:0.78rem;color:#9ca3af;margin-top:4px">Must be at least 7 days from today and within 1 year.</div>
+                    <span asp-validation-for="Input.PreferredDate" class="text-danger small"></span>
+                </div>
+
+                <div class="k-form-group" style="margin-bottom:0">
+                    <label asp-for="Input.Reason">
+                        <i class="bi bi-chat-left-text" style="color:#1a7a3a;margin-right:4px"></i> Reason for Transfer <span style="color:#ef4444">*</span>
+                    </label>
+                    <textarea asp-for="Input.Reason" class="k-form-control" rows="5" maxlength="500"
+                              placeholder="Please explain the reason for initiating this transfer (minimum 20 characters)"></textarea>
+                    <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:0.78rem;color:#9ca3af">
+                        <span><span id="charCount">0</span>/500 characters</span>
+                        <span>Min 20 characters</span>
+                    </div>
+                    <span asp-validation-for="Input.Reason" class="text-danger small"></span>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px">
+                <button type="submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-lg" style="justify-content:center;width:100%">
+                    <i class="bi bi-send"></i> Initiate Transfer Request
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <style>
+        .custom-dropdown {
+            position: relative;
+        }
+        .custom-dropdown-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #374151;
+            user-select: none;
+            transition: border-color 0.15s;
+        }
+        .custom-dropdown-trigger:hover {
+            border-color: #1a7a3a;
+        }
+        .custom-dropdown-trigger.open {
+            border-color: #1a7a3a;
+            box-shadow: 0 0 0 2px rgba(26,122,58,0.15);
+        }
+        .custom-dropdown-chevron {
+            transition: transform 0.2s;
+            color: #6b7280;
+            font-size: 0.8rem;
+        }
+        .custom-dropdown-trigger.open .custom-dropdown-chevron {
+            transform: rotate(180deg);
+        }
+        .custom-dropdown-list {
+            display: none;
+            position: absolute;
+            top: calc(100% + 4px);
+            left: 0;
+            right: 0;
+            background: #fff;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+            max-height: calc(6 * 2.5rem);
+            overflow-y: auto;
+            z-index: 999;
+        }
+        .custom-dropdown-list.open {
+            display: block;
+        }
+        .custom-dropdown-option {
+            padding: 0.6rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.95rem;
+            color: #374151;
+            transition: background 0.1s;
+        }
+        .custom-dropdown-option:hover {
+            background: #f0faf4;
+            color: #1a7a3a;
+        }
+        .custom-dropdown-option.selected {
+            background: #e6f4ec;
+            color: #1a7a3a;
+            font-weight: 600;
+        }
+        .custom-dropdown-option[data-value=""] {
+            color: #9ca3af;
+        }
+        #employeeList {
+            max-height: calc(6 * 2.5rem + 2.75rem);
+        }
+        .custom-dropdown-search-box {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid #e5e7eb;
+            z-index: 1;
+        }
+        .custom-dropdown-search-icon {
+            color: #9ca3af;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+        .custom-dropdown-search-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 0.9rem;
+            color: #374151;
+            background: transparent;
+        }
+        .custom-dropdown-search-input::placeholder {
+            color: #9ca3af;
+        }
+        .custom-dropdown-no-results {
+            padding: 0.6rem 0.75rem;
+            color: #9ca3af;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
+    <script>
+        const reasonField = document.getElementById('Input_Reason');
+        const charCount = document.getElementById('charCount');
+        if (reasonField && charCount) {
+            charCount.textContent = reasonField.value.length;
+            reasonField.addEventListener('input', function () {
+                charCount.textContent = this.value.length;
+            });
+        }
+        const dateField = document.getElementById('Input_PreferredDate');
+        if (dateField) {
+            dateField.addEventListener('change', function () {
+                const selected = new Date(this.value);
+                const minDate = new Date();
+                minDate.setDate(minDate.getDate() + 7);
+                minDate.setHours(0, 0, 0, 0);
+                if (selected < minDate) {
+                    alert('Preferred date must be at least 7 days from today.');
+                    this.value = '';
+                }
+            });
+        }
+        const fileInput = document.getElementById('Input_Document');
+        if (fileInput) {
+            fileInput.addEventListener('change', function () {
+                if (this.files.length > 0 && this.files[0].size > 5 * 1024 * 1024) {
+                    alert('File size must not exceed 5 MB.');
+                    this.value = '';
+                }
+            });
+        }
+
+        function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder, searchInputId, noResultsId }) {
+            const select      = document.getElementById(selectId);
+            const trigger     = document.getElementById(triggerId);
+            const list        = document.getElementById(listId);
+            const triggerText = document.getElementById(triggerTextId);
+            const options     = list.querySelectorAll('.custom-dropdown-option');
+            const searchInput = searchInputId ? document.getElementById(searchInputId) : null;
+            const noResults   = noResultsId   ? document.getElementById(noResultsId)   : null;
+
+            function closeDropdown() {
+                list.classList.remove('open');
+                trigger.classList.remove('open');
+                if (searchInput) {
+                    searchInput.value = '';
+                    options.forEach(o => o.style.display = '');
+                    if (noResults) noResults.style.display = 'none';
+                }
+            }
+
+            trigger.addEventListener('click', function () {
+                document.querySelectorAll('.custom-dropdown-list.open').forEach(function (l) {
+                    if (l !== list) {
+                        l.classList.remove('open');
+                        l.previousElementSibling.classList.remove('open');
+                    }
+                });
+                const isOpen = list.classList.contains('open');
+                list.classList.toggle('open', !isOpen);
+                trigger.classList.toggle('open', !isOpen);
+                if (!isOpen && searchInput) {
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            });
+
+            if (searchInput) {
+                searchInput.addEventListener('click', e => e.stopPropagation());
+                searchInput.addEventListener('input', function () {
+                    const query = this.value.trim().toLowerCase();
+                    let anyVisible = false;
+                    options.forEach(function (opt) {
+                        if (!opt.dataset.value) { opt.style.display = 'none'; return; }
+                        // Extract EPF from text format "Name (EPF) - Designation"
+                        const epf = (opt.textContent.match(/\(([^)]+)\)/) || [])[1] || '';
+                        const match = !query || epf.toLowerCase().includes(query);
+                        opt.style.display = match ? '' : 'none';
+                        if (match) anyVisible = true;
+                    });
+                    if (noResults) noResults.style.display = anyVisible ? 'none' : '';
+                });
+            }
+
+            options.forEach(function (opt) {
+                opt.addEventListener('click', function () {
+                    const value = this.dataset.value;
+                    select.value = value;
+                    triggerText.textContent = value ? this.textContent.trim() : placeholder;
+                    options.forEach(o => o.classList.remove('selected'));
+                    if (value) this.classList.add('selected');
+                    closeDropdown();
+                    select.dispatchEvent(new Event('change'));
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!document.getElementById(dropdownId).contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+
+            if (select.value) {
+                const preselected = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
+                if (preselected) {
+                    triggerText.textContent = preselected.textContent.trim();
+                    preselected.classList.add('selected');
+                }
+            }
+        }
+
+        initCustomDropdown({
+            selectId:      'employeeSelect',
+            triggerId:     'employeeTrigger',
+            listId:        'employeeList',
+            triggerTextId: 'employeeTriggerText',
+            dropdownId:    'employeeDropdown',
+            placeholder:   '-- Select Employee --',
+            searchInputId: 'employeeSearch',
+            noResultsId:   'employeeNoResults'
+        });
+
+        initCustomDropdown({
+            selectId:      'branchSelect',
+            triggerId:     'branchTrigger',
+            listId:        'branchList',
+            triggerTextId: 'branchTriggerText',
+            dropdownId:    'branchDropdown',
+            placeholder:   '-- Select Target Branch --'
+        });
+    </script>
+}

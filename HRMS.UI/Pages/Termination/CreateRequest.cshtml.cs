@@ -1,11 +1,13 @@
 ﻿using HRMS.Domain.Entities.Termination;
 using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.UI.Pages.Termination
@@ -15,11 +17,13 @@ namespace HRMS.UI.Pages.Termination
     {
         private readonly ITerminationService _terminationService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public CreateRequestModel(ITerminationService terminationService, UserManager<ApplicationUser> userManager)
+        public CreateRequestModel(ITerminationService terminationService, UserManager<ApplicationUser> userManager, ApplicationDbContext context)
         {
             _terminationService = terminationService;
             _userManager = userManager;
+            _context = context;
         }
 
         [BindProperty]
@@ -103,24 +107,24 @@ namespace HRMS.UI.Pages.Termination
             if (!ModelState.IsValid)
                 return Page();
 
-            var emp = await _userManager.FindByEmailAsync(Input.SelectedEmployeeEmail);
+            var emp = await GetSelectedEmployeeAsync();
             if (emp == null)
             {
                 ModelState.AddModelError("Input.SelectedEmployeeEmail", "Selected employee not found.");
                 return Page();
             }
 
-            var (valid, dateError) = _terminationService.ValidateTerminationDates(Input.InitiationDate, Input.EffectiveTerminationDate);
-            if (!valid)
-            {
-                ModelState.AddModelError("Input.EffectiveTerminationDate", dateError!);
+            if (!ValidateDates())
                 return Page();
-            }
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var id = await _terminationService.CreateTerminationRequestAsync(BuildViewModel(emp, user));
+            var request = BuildViewModel(emp, user);
+
+            var id = await _terminationService.CreateTerminationRequestAsync(request);
+
+            // Upload documents
             await UploadDocumentsAsync(id);
 
             TempData["SuccessMessage"] = "Termination request saved as draft successfully.";
@@ -134,26 +138,27 @@ namespace HRMS.UI.Pages.Termination
             if (!ModelState.IsValid)
                 return Page();
 
-            var emp = await _userManager.FindByEmailAsync(Input.SelectedEmployeeEmail);
+            var emp = await GetSelectedEmployeeAsync();
             if (emp == null)
             {
                 ModelState.AddModelError("Input.SelectedEmployeeEmail", "Selected employee not found.");
                 return Page();
             }
 
-            var (valid, dateError) = _terminationService.ValidateTerminationDates(Input.InitiationDate, Input.EffectiveTerminationDate);
-            if (!valid)
-            {
-                ModelState.AddModelError("Input.EffectiveTerminationDate", dateError!);
+            if (!ValidateDates())
                 return Page();
-            }
 
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            var id = await _terminationService.CreateTerminationRequestAsync(BuildViewModel(emp, user));
+            var request = BuildViewModel(emp, user);
+
+            var id = await _terminationService.CreateTerminationRequestAsync(request);
+
+            // Upload documents
             await UploadDocumentsAsync(id);
 
+            // Validate and submit
             var (success, error) = await _terminationService.ValidateAndSubmitAsync(id);
             if (!success)
             {
@@ -177,6 +182,24 @@ namespace HRMS.UI.Pages.Termination
                 Department = u.Department ?? "",
                 Designation = u.Designation
             }).OrderBy(e => e.FullName).ToList();
+        }
+
+        private async Task<ApplicationUser?> GetSelectedEmployeeAsync()
+        {
+            return await _userManager.FindByEmailAsync(Input.SelectedEmployeeEmail);
+        }
+
+        private bool ValidateDates()
+        {
+            if (Input.EffectiveTerminationDate.HasValue && Input.InitiationDate.HasValue)
+            {
+                if (Input.EffectiveTerminationDate.Value < Input.InitiationDate.Value)
+                {
+                    ModelState.AddModelError("Input.EffectiveTerminationDate", "Effective termination date cannot be before the initiation date.");
+                    return false;
+                }
+            }
+            return true;
         }
 
         private TerminationRequestViewModel BuildViewModel(ApplicationUser emp, ApplicationUser user)

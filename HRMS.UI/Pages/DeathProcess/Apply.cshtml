@@ -4,107 +4,206 @@
     ViewData["Title"] = "Initiate Employee Death Process";
 }
 
-<div style="max-width:800px;margin:0 auto">
-    <div style="margin-bottom:24px">
-        <h2 style="font-weight:700;font-size:1.8rem;margin-bottom:8px">Initiate Employee Death Process</h2>
-        <p style="color:#6b7280;margin:0">Complete the form below and attach mandatory proofs to start the separation due to death workflow.</p>
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-create:hover { background: #0d6e32; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e5dc; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .text-danger { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+</style>
+
+<a href="javascript:history.back()" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back
+</a>
+<h2 class="page-h">Initiate Employee Death Process</h2>
+<p class="page-s">Complete the form below and attach mandatory proofs to start the separation due to death workflow.</p>
+
+@if (!ModelState.IsValid)
+{
+    <div class="error-banner">
+        <div asp-validation-summary="All" style="color:#991b1b;"></div>
     </div>
+}
 
-    @if (!ModelState.IsValid)
-    {
-        <div class="k-alert k-alert-danger">
-            <div asp-validation-summary="All" style="color:#b91c1c;"></div>
-        </div>
-    }
-
-    <form method="post" enctype="multipart/form-data" class="k-card">
-        <h5 class="section-title">Employee Details</h5>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-            <div>
-                <label asp-for="RequestModel.EmployeeName" class="detail-label" style="display:block;margin-bottom:4px"></label>
-                <input asp-for="RequestModel.EmployeeName" class="form-control" required placeholder="Full Name" />
+<form method="post" enctype="multipart/form-data" style="max-width:900px">
+    <div class="form-section">
+        <div class="fst">Employee Details</div>
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="RequestModel.EmployeeName" class="fl">Employee Name <span class="req">*</span></label>
+                <input asp-for="RequestModel.EmployeeName" class="fi" required placeholder="Full Name" list="employeeList" id="nameInput" />
+                <datalist id="employeeList"></datalist>
                 <span asp-validation-for="RequestModel.EmployeeName" class="text-danger"></span>
             </div>
-            <div>
-                <label asp-for="RequestModel.EpfNumber" class="detail-label" style="display:block;margin-bottom:4px"></label>
-                <input asp-for="RequestModel.EpfNumber" class="form-control" required placeholder="e.g. 12345" />
+            <div class="fg">
+                <label asp-for="RequestModel.EpfNumber" class="fl">EPF Number <span class="req">*</span></label>
+                <input asp-for="RequestModel.EpfNumber" class="fi" required placeholder="e.g. 12345" id="epfInput" />
             </div>
-            <div>
-                <label asp-for="RequestModel.EmployeeEmail" class="detail-label" style="display:block;margin-bottom:4px"></label>
-                <input asp-for="RequestModel.EmployeeEmail" type="email" class="form-control" required placeholder="User Email" />
+            <div class="fg">
+                <label asp-for="RequestModel.EmployeeEmail" class="fl">Employee Email <span class="req">*</span></label>
+                <input asp-for="RequestModel.EmployeeEmail" type="email" class="fi" required placeholder="User Email" id="emailInput" />
             </div>
-            <div>
-                <label asp-for="RequestModel.Branch" class="detail-label" style="display:block;margin-bottom:4px"></label>
-                <input asp-for="RequestModel.Branch" class="form-control" required />
+            <div class="fg">
+                <label asp-for="RequestModel.Branch" class="fl">Branch <span class="req">*</span></label>
+                <select class="fi" required id="branchInput" disabled>
+                    <option value="">-- Select Branch --</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b" selected="@(b == Model.RequestModel.Branch ? "selected" : null)">@b</option>
+                    }
+                </select>
+                <input type="hidden" asp-for="RequestModel.Branch" id="hiddenBranchInput" />
             </div>
-            <div>
-                <label asp-for="RequestModel.Department" class="detail-label" style="display:block;margin-bottom:4px"></label>
-                <input asp-for="RequestModel.Department" class="form-control" />
+            <div class="fg">
+                <label asp-for="RequestModel.Department" class="fl">Department</label>
+                <input asp-for="RequestModel.Department" class="fi" id="deptInput" />
             </div>
-            <div>
-                <label asp-for="RequestModel.Designation" class="detail-label" style="display:block;margin-bottom:4px"></label>
-                <input asp-for="RequestModel.Designation" class="form-control" required />
+            <div class="fg">
+                <label asp-for="RequestModel.Designation" class="fl">Designation <span class="req">*</span></label>
+                <input asp-for="RequestModel.Designation" class="fi" required id="desigInput" />
             </div>
         </div>
+    </div>
 
-        <hr style="margin:24px 0;border-color:#e5e7eb" />
-        <h5 class="section-title">Death & Nominee Details</h5>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-            <div>
-                <label asp-for="RequestModel.DateOfDeath" class="detail-label" style="display:block;margin-bottom:4px">Date of Death *</label>
-                <input asp-for="RequestModel.DateOfDeath" type="date" class="form-control" required />
+    <div class="form-section">
+        <div class="fst">Death &amp; Nominee Details</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="RequestModel.DateOfDeath" class="fl">Date of Death <span class="req">*</span></label>
+                <input asp-for="RequestModel.DateOfDeath" type="date" class="fi" required />
             </div>
-            <div>
-                <label asp-for="RequestModel.NatureOfDeath" class="detail-label" style="display:block;margin-bottom:4px">Nature of Death *</label>
-                <input asp-for="RequestModel.NatureOfDeath" class="form-control" required placeholder="e.g., Natural, Accident" />
-            </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
-            <div>
-                <label asp-for="RequestModel.NomineeName" class="detail-label" style="display:block;margin-bottom:4px">Nominee Name *</label>
-                <input asp-for="RequestModel.NomineeName" class="form-control" required />
-            </div>
-            <div>
-                <label asp-for="RequestModel.NomineeRelation" class="detail-label" style="display:block;margin-bottom:4px">Relationship *</label>
-                <input asp-for="RequestModel.NomineeRelation" class="form-control" required />
-            </div>
-            <div>
-                <label asp-for="RequestModel.NomineeContact" class="detail-label" style="display:block;margin-bottom:4px">Nominee Contact</label>
-                <input asp-for="RequestModel.NomineeContact" class="form-control" placeholder="Phone/Email" />
+            <div class="fg">
+                <label asp-for="RequestModel.NatureOfDeath" class="fl">Nature of Death <span class="req">*</span></label>
+                <input asp-for="RequestModel.NatureOfDeath" class="fi" required placeholder="e.g., Natural, Accident" />
             </div>
         </div>
+        <div class="grid-3" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="RequestModel.NomineeName" class="fl">Nominee Name <span class="req">*</span></label>
+                <input asp-for="RequestModel.NomineeName" class="fi" required />
+            </div>
+            <div class="fg">
+                <label asp-for="RequestModel.NomineeRelation" class="fl">Relationship <span class="req">*</span></label>
+                <input asp-for="RequestModel.NomineeRelation" class="fi" required />
+            </div>
+            <div class="fg">
+                <label asp-for="RequestModel.NomineeContact" class="fl">Nominee Contact</label>
+                <input asp-for="RequestModel.NomineeContact" class="fi" placeholder="Phone/Email" />
+            </div>
+        </div>
+        <div class="fg" style="margin-bottom:0">
+            <label asp-for="RequestModel.AdditionalRemarks" class="fl">Additional Remarks</label>
+            <textarea asp-for="RequestModel.AdditionalRemarks" class="fi" rows="2"></textarea>
+        </div>
+    </div>
 
-        <div style="margin-bottom:16px">
-            <label asp-for="RequestModel.AdditionalRemarks" class="detail-label" style="display:block;margin-bottom:4px"></label>
-            <textarea asp-for="RequestModel.AdditionalRemarks" class="form-control" rows="2"></textarea>
-        </div>
-
-        <hr style="margin:24px 0;border-color:#e5e7eb" />
-        <h5 class="section-title">Financial Obligations</h5>
-        <p style="font-size:0.85rem;color:#6b7280;margin-bottom:12px">Outstanding obligations do not block submission but must be flagged for the finance department.</p>
-        <div style="display:flex;gap:32px;margin-bottom:16px">
-            <label style="display:flex;align-items:center;gap:8px">
-                <input asp-for="RequestModel.HasOutstandingLoans" type="checkbox" /> Outstanding Loans?
+    <div class="form-section">
+        <div class="fst">Financial Obligations</div>
+        <p style="font-size:13px;color:#7a8863;margin:0 0 12px 0">Outstanding obligations do not block submission but must be flagged for the finance department.</p>
+        <div class="fg">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:10px">
+                <input asp-for="RequestModel.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
+                Outstanding Loans?
             </label>
-            <label style="display:flex;align-items:center;gap:8px">
-                <input asp-for="RequestModel.IsLoanGuarantor" type="checkbox" /> Loan Guarantor?
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="RequestModel.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
+                Loan Guarantor?
             </label>
         </div>
-        <div style="margin-bottom:16px">
-            <label asp-for="RequestModel.ObligationDetails" class="detail-label" style="display:block;margin-bottom:4px">Obligation Details</label>
-            <textarea asp-for="RequestModel.ObligationDetails" class="form-control" rows="2" placeholder="Describe any loans or obligations..."></textarea>
+        <div class="fg" style="margin-bottom:0">
+            <label asp-for="RequestModel.ObligationDetails" class="fl">Obligation Details</label>
+            <textarea asp-for="RequestModel.ObligationDetails" class="fi" rows="2" placeholder="Describe any loans or obligations..."></textarea>
         </div>
+    </div>
 
-        <hr style="margin:24px 0;border-color:#e5e7eb" />
-        <h5 class="section-title">Mandatory Documents *</h5>
-        <div style="margin-bottom:24px">
-            <input type="file" name="documents" class="form-control" multiple required accept=".pdf,.png,.jpg,.jpeg" />
-            <div style="font-size:0.8rem;color:#6b7280;margin-top:4px">Please upload Death Certificate and relevant proofs (PDF, JPG, PNG). At least one document is required.</div>
+    <div class="form-section">
+        <div class="fst">Mandatory Documents <span class="req">*</span></div>
+        <div class="fg" style="margin-bottom:0">
+            <input type="file" name="documents" class="fi" multiple required accept=".pdf,.png,.jpg,.jpeg" style="padding:6px 12px" />
+            <span class="fi-hint">Please upload Death Certificate and relevant proofs (PDF, JPG, PNG). At least one document is required.</span>
         </div>
+    </div>
 
-        <div style="display:flex;justify-content:flex-end;gap:12px">
-            <a href="javascript:history.back()" class="btn-kanrich btn-kanrich-outline">Cancel</a>
-            <button type="submit" class="btn-kanrich btn-kanrich-primary">Process Death Request</button>
-        </div>
-    </form>
-</div>
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+        <a href="javascript:history.back()" class="btn-outline">Cancel</a>
+        <button type="submit" class="btn-create">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Process Death Request
+        </button>
+    </div>
+</form>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const epfInput = document.getElementById('epfInput');
+            const nameInput = document.getElementById('nameInput');
+            const emailInput = document.getElementById('emailInput');
+            const branchInput = document.getElementById('branchInput');
+            const deptInput = document.getElementById('deptInput');
+            const desigInput = document.getElementById('desigInput');
+            const employeeList = document.getElementById('employeeList');
+
+            let searchData = [];
+
+            function fillFields(data) {
+                if (!data) return;
+                nameInput.value = data.fullName || '';
+                epfInput.value = data.epfNumber || '';
+                emailInput.value = data.email || '';
+                branchInput.value = data.branch || '';
+                const hiddenBranchInput = document.getElementById('hiddenBranchInput');
+                if (hiddenBranchInput) { hiddenBranchInput.value = data.branch || ''; }
+                deptInput.value = data.department || '';
+                desigInput.value = data.designation || '';
+            }
+
+            epfInput.addEventListener('blur', async function() {
+                const epfValue = this.value.trim();
+                if (epfValue.length < 2) return;
+                try {
+                    const response = await fetch(`/Api/EmployeeData?handler=ByEpf&epf=${epfValue}`);
+                    if (response.ok) { const data = await response.json(); fillFields(data); }
+                } catch (error) { console.error('Error:', error); }
+            });
+
+            nameInput.addEventListener('input', async function() {
+                const term = this.value.trim();
+                if (term.length < 3) return;
+                const match = searchData.find(e => e.fullName === term);
+                if (match) { fillFields(match); return; }
+                try {
+                    const response = await fetch(`/Api/EmployeeData?handler=Search&term=${encodeURIComponent(term)}`);
+                    if (response.ok) {
+                        const data = await response.json();
+                        searchData = data;
+                        employeeList.innerHTML = '';
+                        data.forEach(emp => {
+                            const option = document.createElement('option');
+                            option.value = emp.fullName;
+                            option.textContent = `EPF: ${emp.epfNumber} - ${emp.branch}`;
+                            employeeList.appendChild(option);
+                        });
+                    }
+                } catch (error) { console.error('Error:', error); }
+            });
+        });
+    </script>
+}

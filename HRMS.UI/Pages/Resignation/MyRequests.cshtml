@@ -4,83 +4,98 @@
     ViewData["Title"] = "My Resignation Requests";
 }
 
-<div class="page-header">
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 19px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .k-badge, .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .k-badge-pending  { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .k-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .k-badge-rejected { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .k-badge-info     { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+    .btn-create { background: #10823c; color: white; padding: 9px 17px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-create:hover { background: #0d6e32; color: white; }
+    .success-banner { background: #ecfdf5; color: #065f46; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #10b981; display: flex; align-items: center; gap: 8px; }
+    .error-banner  { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; display: flex; align-items: center; gap: 8px; }
+</style>
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
     <div>
-        <h1 class="page-title">My Resignation Requests</h1>
-        <p class="page-subtitle">Track the status of your resignation submissions.</p>
+        <h2 class="page-h">My Resignation Requests</h2>
+        <p class="page-s">Track the status of your resignation submissions</p>
     </div>
-    <a asp-page="/Resignation/Apply" class="btn-primary-action">
-        <i class="bi bi-plus-lg me-2"></i>New Resignation
+    <a asp-page="/Resignation/Apply" class="btn-create">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        New Resignation
     </a>
 </div>
 
 @if (TempData["SuccessMessage"] != null)
 {
-    <div class="alert alert-success alert-dismissible fade show"><i class="bi bi-check-circle me-2"></i>@TempData["SuccessMessage"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="success-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        @TempData["SuccessMessage"]
+    </div>
 }
 @if (TempData["ErrorMessage"] != null)
 {
-    <div class="alert alert-danger alert-dismissible fade show"><i class="bi bi-exclamation-triangle me-2"></i>@TempData["ErrorMessage"]<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <div class="error-banner">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        @TempData["ErrorMessage"]
+    </div>
 }
 
 @if (!Model.Requests.Any())
 {
-    <div class="k-empty-state">
-        <i class="bi bi-file-earmark-text"></i>
-        <h3>No resignation requests found</h3>
-        <p>You haven't submitted any resignation requests yet.</p>
-        <a asp-page="/Resignation/Apply" class="btn-primary-action mt-3">Submit a Resignation</a>
+    <div class="table-card" style="text-align:center;padding:48px">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e5dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:block;margin:0 auto 12px"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p style="font-size:14px;font-weight:600;color:#151811;margin-bottom:4px">No resignation requests found</p>
+        <span style="font-size:12px;color:#7a8863;display:block;margin-bottom:16px">You haven't submitted any resignation requests yet</span>
+        <a asp-page="/Resignation/Apply" class="btn-create" style="margin:0 auto">Submit a Resignation</a>
     </div>
 }
 else
 {
-    <div class="k-card">
-        <div class="table-responsive">
-            <table class="k-table" id="tbl-my-res">
-                <thead>
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr>
+                    <th style="width:70px">ID</th>
+                    <th>Submitted</th>
+                    <th>Last Working Day</th>
+                    <th>Notice (Days)</th>
+                    <th>Status</th>
+                    <th>Documents</th>
+                    <th style="text-align:right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var req in Model.Requests)
+                {
                     <tr>
-                        <th>#</th>
-                        <th>Submitted</th>
-                        <th>Last Working Day</th>
-                        <th>Notice (Days)</th>
-                        <th>Status</th>
-                        <th>Documents</th>
-                        <th>Actions</th>
+                        <td style="font-weight:600;color:#7a8863">#@req.Id</td>
+                        <td style="color:#7a8863">@req.ResignationDate.ToString("dd MMM yyyy")</td>
+                        <td style="font-weight:600;color:#10823c">@req.EffectiveDate.ToString("dd MMM yyyy")</td>
+                        <td style="color:#7a8863">@req.NoticePeriodDays</td>
+                        <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
+                        <td><span class="k-badge k-badge-info">@req.DocumentCount file(s)</span></td>
+                        <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end">
+                            <a asp-page="/Resignation/Details" asp-route-id="@req.Id" class="btn-action">View</a>
+                            @if (req.Status == ResignationStatusEnum.HRApproved && req.AcceptanceLetterGenerated)
+                            {
+                                <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@req.Id" class="btn-action" style="color:#10823c">Letter</a>
+                            }
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @foreach (var req in Model.Requests)
-                    {
-                        <tr>
-                            <td><span class="fw-semibold">#@req.Id</span></td>
-                            <td>@req.ResignationDate.ToString("dd MMM yyyy")</td>
-                            <td>@req.EffectiveDate.ToString("dd MMM yyyy")</td>
-                            <td>@req.NoticePeriodDays</td>
-                            <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
-                            <td><span class="k-badge k-badge-info">@req.DocumentCount file(s)</span></td>
-                            <td>
-                                <a asp-page="/Resignation/Details" asp-route-id="@req.Id" class="btn-icon-sm" title="View Details">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                @if (req.Status == ResignationStatusEnum.HRApproved && req.AcceptanceLetterGenerated)
-                                {
-                                    <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@req.Id" class="btn-icon-sm text-success" title="View Acceptance Letter">
-                                        <i class="bi bi-file-earmark-check"></i>
-                                    </a>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
+                }
+            </tbody>
+        </table>
     </div>
-}
-
-@section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-my-res', 8);
-});
-</script>
 }

@@ -1,4 +1,4 @@
-﻿using HRMS.Application.Models;
+using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.HRManager
 {
-    [Authorize(Roles = "Admin,HR Manager")]
+    [Authorize(Roles = "HR Manager")]
     public class ReviewTransferModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
@@ -21,10 +21,7 @@ namespace HRMS.UI.Pages.HRManager
         public async Task<IActionResult> OnGetAsync(int id)
         {
             TransferRequest = await _transferService.GetRequestByIdAsync(id);
-
-            if (TransferRequest == null)
-                return NotFound();
-
+            if (TransferRequest == null) return NotFound();
             return Page();
         }
 
@@ -38,11 +35,17 @@ namespace HRMS.UI.Pages.HRManager
             }
 
             bool approved = action == "approve";
-            await _transferService.HRManagerReviewAsync(id, approved, comments.Trim());
+            var ok = await _transferService.HRManagerReviewAsync(id, approved, comments.Trim());
+
+            if (!ok)
+            {
+                TempData["ErrorMessage"] = "Unable to process review. The request may already be at a different stage.";
+                return RedirectToPage("/HRManager/ReviewTransfers");
+            }
 
             TempData["SuccessMessage"] = approved
-                ? "Transfer request approved and forwarded to Branch Managers."
-                : "Transfer request rejected.";
+                ? "Transfer request finalized and fully approved."
+                : "Transfer request rejected at finalization.";
 
             return RedirectToPage("/HRManager/ReviewTransfers");
         }

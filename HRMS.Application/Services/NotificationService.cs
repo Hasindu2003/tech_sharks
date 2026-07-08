@@ -6,11 +6,11 @@ namespace HRMS.Application.Services
 {
     public interface INotificationService
     {
-        Task CreateNotificationAsync(string recipientEmail, string title, string message, CoreNotificationType type, int transferRequestId);
-        Task<List<Notification>> GetNotificationsAsync(string email);
-        Task<int> GetUnreadCountAsync(string email);
+        Task CreateNotificationAsync(string userId, string title, string message, HRMS.Domain.Entities.Transfer.NotificationType type, int transferRequestId, string targetUrl = "");
+        Task<List<Notification>> GetNotificationsAsync(string userId);
+        Task<int> GetUnreadCountAsync(string userId);
         Task MarkAsReadAsync(int id);
-        Task MarkAllAsReadAsync(string email);
+        Task MarkAllAsReadAsync(string userId);
     }
 
     public class NotificationService : INotificationService
@@ -22,44 +22,36 @@ namespace HRMS.Application.Services
             _context = context;
         }
 
-        public async Task CreateNotificationAsync(string recipientEmail, string title, string message, CoreNotificationType type, int transferRequestId)
+        public async Task CreateNotificationAsync(string userId, string title, string message, HRMS.Domain.Entities.Transfer.NotificationType type, int transferRequestId, string targetUrl = "")
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == recipientEmail);
-            if (user == null) return;
-
-            _context.Notifications.Add(new Notification
+            var notification = new Notification
             {
-                UserId = user.Id,
+                UserId = userId,
                 Title = title,
                 Message = message,
-                Type = type,
+                Type = (CoreNotificationType)type,
                 TransferRequestId = transferRequestId,
-                TargetUrl = $"/Transfer/Details?id={transferRequestId}",
+                TargetUrl = targetUrl,
                 IsRead = false,
                 CreatedAt = DateTime.Now
-            });
+            };
 
+            _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Notification>> GetNotificationsAsync(string email)
+        public async Task<List<Notification>> GetNotificationsAsync(string userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return new List<Notification>();
-
             return await _context.Notifications
-                .Where(n => n.UserId == user.Id)
+                .Where(n => n.UserId == userId)
                 .OrderByDescending(n => n.CreatedAt)
                 .ToListAsync();
         }
 
-        public async Task<int> GetUnreadCountAsync(string email)
+        public async Task<int> GetUnreadCountAsync(string userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return 0;
-
             return await _context.Notifications
-                .CountAsync(n => n.UserId == user.Id && !n.IsRead);
+                .CountAsync(n => n.UserId == userId && !n.IsRead);
         }
 
         public async Task MarkAsReadAsync(int id)
@@ -72,13 +64,10 @@ namespace HRMS.Application.Services
             }
         }
 
-        public async Task MarkAllAsReadAsync(string email)
+        public async Task MarkAllAsReadAsync(string userId)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
-            if (user == null) return;
-
             var unread = await _context.Notifications
-                .Where(n => n.UserId == user.Id && !n.IsRead)
+                .Where(n => n.UserId == userId && !n.IsRead)
                 .ToListAsync();
 
             foreach (var n in unread)

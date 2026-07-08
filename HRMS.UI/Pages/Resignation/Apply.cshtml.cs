@@ -1,4 +1,4 @@
-using HRMS.Infrastructure.Identity;
+﻿using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +9,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.UI.Pages.Resignation
 {
-    [Authorize(Roles = "Admin,HR Manager,Area Manager,Branch Manager,Employee")]
+    [Authorize(Roles = "Employee")]
     public class ApplyModel : PageModel
     {
         private readonly IResignationService _resignationService;
@@ -76,13 +76,7 @@ namespace HRMS.UI.Pages.Resignation
 
             if (!ModelState.IsValid) return Page();
 
-            var (_, _, id) = await _resignationService.CreateResignationAsync(
-                CurrentUser.Email!, CurrentUser.FullName, CurrentUser.EpfNumber,
-                CurrentUser.Branch, CurrentUser.Department, CurrentUser.Designation,
-                Input.ReasonForResignation ?? "", Input.EffectiveDate, Input.AdditionalRemarks,
-                Input.HasOutstandingLoans, Input.IsLoanGuarantor, Input.HasOverridePermission,
-                Input.ObligationDetails, submitNow: false);
-
+            var id = await SaveRequestAsync(CurrentUser, false);
             await UploadDocumentsAsync(id);
 
             TempData["SuccessMessage"] = "Resignation request saved as draft.";
@@ -94,25 +88,56 @@ namespace HRMS.UI.Pages.Resignation
             CurrentUser = await _userManager.GetUserAsync(User);
             if (CurrentUser == null) return Challenge();
 
-            if (!ModelState.IsValid) return Page();
-
-            var (success, error, id) = await _resignationService.CreateResignationAsync(
-                CurrentUser.Email!, CurrentUser.FullName, CurrentUser.EpfNumber,
-                CurrentUser.Branch, CurrentUser.Department, CurrentUser.Designation,
-                Input.ReasonForResignation, Input.EffectiveDate, Input.AdditionalRemarks,
-                Input.HasOutstandingLoans, Input.IsLoanGuarantor, Input.HasOverridePermission,
-                Input.ObligationDetails, submitNow: true);
-
-            if (!success)
+            if (Input.EffectiveDate.HasValue)
             {
-                ModelState.AddModelError("Input.EffectiveDate", error!);
-                return Page();
+                var minDate = DateTime.Today.AddDays(14);
+                if (Input.EffectiveDate.Value.Date < minDate)
+                    ModelState.AddModelError("Input.EffectiveDate", "Effective date must be at least 14 days from today (minimum notice period).");
             }
 
+            if (!ModelState.IsValid) return Page();
+
+            var id = await SaveRequestAsync(CurrentUser, true);
             await UploadDocumentsAsync(id);
+
+            var (success, error) = await _resignationService.ValidateAndSubmitAsync(id);
+            if (!success)
+            {
+                TempData["ErrorMessage"] = error;
+                return RedirectToPage("/Resignation/MyRequests");
+            }
 
             TempData["SuccessMessage"] = "Resignation request submitted successfully. Your Branch Manager will review it shortly.";
             return RedirectToPage("/Resignation/MyRequests");
+        }
+
+        private async Task<int> SaveRequestAsync(ApplicationUser user, bool submit)
+        {
+            var today = DateTime.Today;
+            var effectiveDate = Input.EffectiveDate ?? today.AddDays(30);
+            var noticeDays = (effectiveDate - today).Days;
+
+            var vm = new ResignationRequestViewModel
+            {
+                EmployeeName         = user.FullName,
+                EpfNumber            = user.EpfNumber,
+                EmployeeEmail        = user.Email!,
+                Branch               = user.Branch,
+                Department           = user.Department ?? "",
+                Designation          = user.Designation,
+                ReasonForResignation = Input.ReasonForResignation ?? "",
+                ResignationDate      = today,
+                EffectiveDate        = effectiveDate,
+                NoticePeriodDays     = noticeDays,
+                AdditionalRemarks    = Input.AdditionalRemarks,
+                HasOutstandingLoans  = Input.HasOutstandingLoans,
+                IsLoanGuarantor      = Input.IsLoanGuarantor,
+                HasOverridePermission = Input.HasOverridePermission,
+                ObligationDetails    = Input.ObligationDetails,
+                InitiatedBy          = user.Email!
+            };
+
+            return await _resignationService.CreateResignationRequestAsync(vm);
         }
 
         private async Task UploadDocumentsAsync(int requestId)

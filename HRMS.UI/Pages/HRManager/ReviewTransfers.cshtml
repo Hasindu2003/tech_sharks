@@ -1,57 +1,128 @@
 @page
 @using Microsoft.AspNetCore.Authorization
+@using HRMS.Application.Models
 @attribute [Authorize(Roles = "HR Manager")]
 @model HRMS.UI.Pages.HRManager.ReviewTransfersModel
 @{
-    ViewData["Title"] = "Separation";
+    ViewData["Title"] = "Review Transfers";
 }
 
-<div style="margin-bottom:24px">
-    <a asp-page="/Separation/Dashboard" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px">
-        <i class="bi bi-arrow-left"></i> Back to Separation
-    </a>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Review Transfers</h2>
-            <p style="color:#6b7280;font-size:0.9rem;margin:0">Review transfer requests — Initial screening and approval</p>
-        </div>
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sec-title { font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 10px 0; }
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 28px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .table-card-urgent { border-color: #1a7a3a; }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .employee-cell { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .emp-info .name { font-size: 14px; font-weight: 700; color: #151811; display: block; }
+    .emp-info .sub  { font-size: 12px; color: #7a8863; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+    .btn-view { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-view:hover { background: #f3f4f0; }
+    .btn-create { background: #10823c; color: white; padding: 9px 17px; border-radius: 6px; font-family: 'Manrope', sans-serif; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .btn-create:hover { background: #0d6e32; color: white; }
+    .empty-state { text-align: center; padding: 36px; }
+    .e-title { font-size: 14px; font-weight: 600; color: #151811; margin-bottom: 4px; }
+    .e-sub { font-size: 12px; color: #7a8863; }
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+    .badge-pending  { background: #fef3c7; color: #92400e; }
+    .badge-progress { background: #dbeafe; color: #1e40af; }
+    .badge-approved { background: #d1fae5; color: #065f46; }
+    .badge-rejected { background: #fee2e2; color: #991b1b; }
+    .badge-final    { background: #10823c; color: white; }
+    .section-header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .section-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+    .icon-finalize { background: #d1fae5; }
+    .icon-incoming { background: #dbeafe; }
+    .icon-outgoing { background: #fef3c7; }
+    .finalize-header { background: #f0faf4; border-bottom: 2px solid #1a7a3a; padding: 12px 19px; display:flex; align-items:center; gap:8px; font-weight:700; color:#1a7a3a; font-size:13px; }
+</style>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+    <div>
+        <h2 class="page-h">Review Transfers</h2>
+        <p style="font-size:12px;color:#7a8863;margin:0">Transfer requests involving <strong>@Model.HRBranch</strong></p>
     </div>
+    <a asp-page="/HRManager/InitiateTransfer" class="btn-create">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Initiate Transfer
+    </a>
 </div>
 
-@if (Model.PendingRequests.Any())
+@{
+    string StatusBadge(TransferStatus status) => status switch
+    {
+        TransferStatus.Pending              => "<span class='badge badge-pending'>Awaiting Dept Head</span>",
+        TransferStatus.DeptHeadApproved     => "<span class='badge badge-progress'>Awaiting BMs</span>",
+        TransferStatus.DeptHeadRejected     => "<span class='badge badge-rejected'>Dept Head Rejected</span>",
+        TransferStatus.CurrentBMApproved    => "<span class='badge badge-progress'>Current BM ✓</span>",
+        TransferStatus.TargetBMApproved     => "<span class='badge badge-progress'>Target BM ✓</span>",
+        TransferStatus.CurrentBMRejected    => "<span class='badge badge-rejected'>Current BM ✗</span>",
+        TransferStatus.TargetBMRejected     => "<span class='badge badge-rejected'>Target BM ✗</span>",
+        TransferStatus.BothBMsApproved      => "<span class='badge badge-progress'>Awaiting AM</span>",
+        TransferStatus.AreaManagerApproved  => "<span class='badge badge-approved'>Awaiting HR Final</span>",
+        TransferStatus.AreaManagerRejected  => "<span class='badge badge-rejected'>AM Rejected</span>",
+        TransferStatus.FullyApproved        => "<span class='badge badge-final'>Fully Approved</span>",
+        TransferStatus.HRFinalRejected      => "<span class='badge badge-rejected'>HR Rejected</span>",
+        _                                   => "<span class='badge badge-pending'>Unknown</span>"
+    };
+}
+
+<!-- ── FINALIZATION QUEUE ── -->
+<div class="section-header">
+    <div class="section-icon icon-finalize">
+        <i class="bi bi-check2-all" style="color:#1a7a3a;font-size:14px"></i>
+    </div>
+    <h3 class="sec-title" style="margin:0">
+        Pending HR Finalization
+        @if (Model.FinalizationQueue.Any())
+        {
+            <span style="background:#1a7a3a;color:white;padding:1px 7px;border-radius:10px;font-size:11px;margin-left:6px">@Model.FinalizationQueue.Count</span>
+        }
+    </h3>
+</div>
+
+@if (Model.FinalizationQueue.Any())
 {
-    <h5 class="section-title">New Requests — Awaiting HR Screening</h5>
-    <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
-        <table class="k-table" id="tbl-hr-transfers">
+    <div class="table-card table-card-urgent">
+        <div class="finalize-header">
+            <i class="bi bi-flag-fill"></i> These requests have been approved by all parties and require your final sign-off.
+        </div>
+        <table class="emp-table">
             <thead>
                 <tr>
                     <th>Employee</th>
-                    <th>From Branch</th>
-                    <th>To Branch</th>
-                    <th>Submission Date</th>
-                    <th>Review</th>
+                    <th>From</th>
+                    <th>To</th>
+                    <th>Submitted</th>
+                    <th style="text-align:right"></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var request in Model.PendingRequests)
+                @foreach (var r in Model.FinalizationQueue)
                 {
-                    var initials = string.Join("", request.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
                     <tr>
                         <td>
                             <div class="employee-cell">
-                                <div class="emp-avatar">@initials</div>
-                                <div class="emp-details">
-                                    <div class="emp-name">@request.EmployeeName</div>
-                                    <div class="emp-dept">@request.Department</div>
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">@r.Department · @r.EpfNumber</span>
                                 </div>
                             </div>
                         </td>
-                        <td>@request.CurrentBranch</td>
-                        <td>@request.RequestedBranch</td>
-                        <td>@request.RequestedDate.ToString("MMM dd, yyyy")</td>
-                        <td>
-                            <a asp-page="/HRManager/ReviewTransfer" asp-route-id="@request.Id"
-                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                        <td style="color:#7a8863">@r.CurrentBranch</td>
+                        <td style="font-weight:600">@r.RequestedBranch</td>
+                        <td style="color:#7a8863">@r.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td style="text-align:right">
+                            <a asp-page="/HRManager/ReviewTransfer" asp-route-id="@r.Id" class="btn-action">Finalize</a>
                         </td>
                     </tr>
                 }
@@ -61,17 +132,102 @@
 }
 else
 {
-    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
-        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
-        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No pending requests</div>
-        <div style="font-size:0.88rem">All transfer requests have been screened</div>
+    <div class="table-card empty-state" style="padding:24px">
+        <p class="e-title">No requests pending finalization</p>
+        <span class="e-sub">Requests approved by the Area Manager will appear here for your final sign-off.</span>
     </div>
 }
 
-@section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-hr-transfers', 8);
-});
-</script>
+<!-- ── INCOMING ── -->
+<div class="section-header" style="margin-top:4px">
+    <div class="section-icon icon-incoming">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#1e40af" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+    </div>
+    <h3 class="sec-title" style="margin:0">Incoming Transfers <span style="color:#7a8863;font-weight:500;font-size:12px">(requesting to join @Model.HRBranch)</span></h3>
+</div>
+
+@if (Model.IncomingRequests.Any())
+{
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr><th>Employee</th><th>From Branch</th><th>Submitted</th><th>Status</th><th style="text-align:right"></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.IncomingRequests)
+                {
+                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">@r.Department · @r.CurrentDesignation</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="color:#7a8863">@r.CurrentBranch</td>
+                        <td style="color:#7a8863">@r.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td>@Html.Raw(StatusBadge(r.Status))</td>
+                        <td style="text-align:right"><a asp-page="/HRManager/ReviewTransfer" asp-route-id="@r.Id" class="btn-view">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="table-card empty-state">
+        <p class="e-title">No incoming transfer requests</p>
+        <span class="e-sub">No employees are currently requesting to join @Model.HRBranch.</span>
+    </div>
+}
+
+<!-- ── OUTGOING ── -->
+<div class="section-header" style="margin-top:4px">
+    <div class="section-icon icon-outgoing">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#92400e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </div>
+    <h3 class="sec-title" style="margin:0">Outgoing Transfers <span style="color:#7a8863;font-weight:500;font-size:12px">(requesting to leave @Model.HRBranch)</span></h3>
+</div>
+
+@if (Model.OutgoingRequests.Any())
+{
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr><th>Employee</th><th>To Branch</th><th>Submitted</th><th>Status</th><th style="text-align:right"></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.OutgoingRequests)
+                {
+                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">@r.Department · @r.CurrentDesignation</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-weight:600">@r.RequestedBranch</td>
+                        <td style="color:#7a8863">@r.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td>@Html.Raw(StatusBadge(r.Status))</td>
+                        <td style="text-align:right"><a asp-page="/HRManager/ReviewTransfer" asp-route-id="@r.Id" class="btn-view">View</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="table-card empty-state">
+        <p class="e-title">No outgoing transfer requests</p>
+        <span class="e-sub">No employees from @Model.HRBranch are currently requesting a transfer.</span>
+    </div>
 }

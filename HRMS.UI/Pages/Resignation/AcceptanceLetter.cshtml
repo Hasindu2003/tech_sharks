@@ -5,89 +5,97 @@
     var r = Model.Request!;
 }
 
-<div class="page-header d-print-none">
-    <h1 class="page-title">Acceptance Letter</h1>
-    <div class="d-flex gap-2">
-        <button onclick="window.print()" class="btn-primary-action"><i class="bi bi-printer me-2"></i>Print</button>
-        <a asp-page="/Resignation/Details" asp-route-id="@r.Id" class="btn-secondary-action"><i class="bi bi-arrow-left me-2"></i>Back</a>
+<style>
+    .no-print { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0; }
+    .btn-create { background: #10823c; color: white; padding: 9px 17px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; border: none; }
+    .btn-create:hover { background: #0d6e32; color: white; }
+    .btn-outline { background: white; color: #151811; padding: 9px 17px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e5dc; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .letter-wrap { max-width: 800px; margin: 0 auto; background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 48px 56px; box-shadow: 0 1px 2px rgba(0,0,0,.05); font-family: 'Georgia', serif; }
+    .letter-logo { text-align: center; margin-bottom: 36px; }
+    .letter-logo h2 { font-size: 22px; letter-spacing: 3px; font-weight: 700; color: #151811; margin: 0 0 4px 0; }
+    .letter-logo p { font-size: 13px; color: #7a8863; margin: 0; }
+    .letter-logo hr { border: none; border-top: 2px solid #10823c; margin: 16px 0 0 0; }
+    .letter-body p { font-size: 15px; line-height: 1.9; color: #151811; margin-bottom: 14px; }
+    .letter-footer { border-top: 1px dashed #e2e5dc; margin-top: 48px; padding-top: 16px; text-align: center; font-size: 12px; color: #7a8863; }
+    @@media print {
+        .no-print, .sidebar, .topbar { display: none !important; }
+        .main-content { margin: 0 !important; padding: 0 !important; }
+        .letter-wrap { box-shadow: none !important; border: none !important; padding: 24px; }
+    }
+</style>
+
+<div class="no-print">
+    <h2 class="page-h">Acceptance Letter</h2>
+    <div style="display:flex;gap:8px">
+        <button onclick="window.print()" class="btn-create">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+            Print
+        </button>
+        <a asp-page="/Resignation/Details" asp-route-id="@r.Id" class="btn-outline">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            Back
+        </a>
     </div>
 </div>
 
-<!-- Letter Body -->
-<div class="k-card" style="max-width:800px; margin:0 auto; font-family: 'Georgia', serif;">
-    <div class="k-card-body p-5">
-        <!-- Header -->
-        <div class="text-center mb-5">
-            <h2 class="mb-1" style="font-size:1.5rem; letter-spacing:2px; font-weight:700;">KANRICH CORPORATION</h2>
-            <p class="mb-0 text-muted" style="font-size:0.85rem;">Human Resources Department | Head Office, Colombo</p>
-            <hr class="mt-3" style="border-color: var(--accent); border-width:2px;">
-        </div>
+<div class="letter-wrap">
+    <div class="letter-logo">
+        <h2>KANRICH CORPORATION</h2>
+        <p>Human Resources Department | Head Office, Colombo</p>
+        <hr />
+    </div>
 
-        <!-- Date -->
-        <p class="text-end mb-4">@r.AcceptanceLetterDate?.ToString("MMMM dd, yyyy")</p>
+    <div class="letter-body">
+        <p style="text-align:right;margin-bottom:24px">@r.AcceptanceLetterDate?.ToString("MMMM dd, yyyy")</p>
 
-        <!-- Reference -->
         <p><strong>Ref:</strong> RESIG/@r.Id/@r.EffectiveDate.Year</p>
 
-        <!-- Addressee -->
-        <div class="mb-4">
-            <p class="mb-1"><strong>@r.EmployeeName</strong></p>
-            <p class="mb-1">@r.Designation</p>
-            <p class="mb-1">@r.Department</p>
-            <p class="mb-0">@r.Branch</p>
+        <div style="margin-bottom:24px;font-size:15px;color:#151811">
+            <p style="margin:0;font-weight:700">@r.EmployeeName</p>
+            <p style="margin:0">@r.Designation</p>
+            <p style="margin:0">@r.Department</p>
+            <p style="margin:0">@r.Branch</p>
         </div>
 
-        <!-- Subject -->
-        <p class="mb-4"><strong>Subject: Acceptance of Resignation</strong></p>
+        <p><strong>Subject: Acceptance of Resignation</strong></p>
 
-        <!-- Body -->
         <p>Dear <strong>@r.EmployeeName.Split(' ')[0]</strong>,</p>
 
-        <p style="line-height:2.0; text-align:justify;">
+        <p style="text-align:justify">
             This is to formally acknowledge and accept your resignation submitted on
             <strong>@r.ResignationDate.ToString("MMMM dd, yyyy")</strong>, from the position of
             <strong>@r.Designation</strong> in the <strong>@r.Department</strong> department at
             <strong>@r.Branch</strong>.
         </p>
 
-        <p style="line-height:2.0; text-align:justify;">
+        <p style="text-align:justify">
             As per your resignation notice and organizational policy, your <strong>last working day</strong>
             will be <strong>@r.EffectiveDate.ToString("MMMM dd, yyyy")</strong> (a notice period of
             <strong>@r.NoticePeriodDays days</strong>). Your payroll will remain active until this date.
         </p>
 
-        <p style="line-height:2.0; text-align:justify;">
+        <p style="text-align:justify">
             We kindly request that you complete all necessary knowledge transfer and handover responsibilities
             before your last working day. Please coordinate with your Branch Manager to ensure operational
             continuity. Kindly return all organizational assets, access cards, and equipment to the HR department.
         </p>
 
-        <p style="line-height:2.0;">
+        <p>
             We sincerely appreciate your contributions to Kanrich Corporation and wish you all the best in
             your future endeavors.
         </p>
 
-        <!-- Signature -->
-        <div class="mt-5">
-            <p class="mb-1"><strong>@r.HREmail?.Split('@')[0].Replace('.', ' ')</strong></p>
-            <p class="mb-1">Human Resources Manager</p>
-            <p class="mb-1">Kanrich Corporation</p>
-            <p class="mb-0 text-muted small">Date: @r.HRReviewDate?.ToString("MMMM dd, yyyy")</p>
-        </div>
-
-        <!-- Stamp -->
-        <div class="text-center mt-5 pt-4" style="border-top:1px dashed var(--border-color);">
-            <p class="text-muted small mb-0">
-                This is a system-generated acceptance letter | Reference: #@r.Id | Kanrich HRMS
-            </p>
+        <div style="margin-top:48px;font-size:15px;color:#151811">
+            <p style="margin:0;font-weight:700">@r.HREmail?.Split('@')[0].Replace('.', ' ')</p>
+            <p style="margin:0">Human Resources Manager</p>
+            <p style="margin:0">Kanrich Corporation</p>
+            <p style="margin:4px 0 0 0;font-size:13px;color:#7a8863">Date: @r.HRReviewDate?.ToString("MMMM dd, yyyy")</p>
         </div>
     </div>
-</div>
 
-<style>
-@@media print {
-    .sidebar, .topbar, .page-header, .d-print-none { display: none !important; }
-    .main-content { margin: 0 !important; padding: 0 !important; }
-    .k-card { box-shadow: none !important; border: none !important; }
-}
-</style>
+    <div class="letter-footer">
+        This is a system-generated acceptance letter &nbsp;|&nbsp; Reference: #@r.Id &nbsp;|&nbsp; Kanrich HRMS
+    </div>
+</div>

@@ -1,0 +1,159 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Department Head")]
+@model HRMS.UI.Pages.DepartmentHead.ReviewTransfersModel
+@{
+    ViewData["Title"] = "Separation";
+    ViewData["ActiveNav"] = "Separation";
+}
+
+<style>
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 19px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .employee-cell { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .emp-info .name { font-size: 14px; font-weight: 700; color: #151811; display: block; }
+    .emp-info .sub  { font-size: 12px; color: #7a8863; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+</style>
+
+<div class="page-header" style="margin-bottom:24px">
+    <div>
+        <h1 style="font-size:19px;font-weight:800;color:#151811;margin:0 0 3px">Separation</h1>
+        <div style="font-size:12px;color:#7a8863">@Model.DeptHeadDepartment — @Model.DeptHeadBranch</div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success"><i class="bi bi-check-circle"></i> @successMsg</div>
+}
+@if (TempData["ErrorMessage"] is string errorMsg)
+{
+    <div class="k-alert k-alert-danger"><i class="bi bi-exclamation-triangle"></i> @errorMsg</div>
+}
+
+<!-- Pending section -->
+<div style="font-size:14px;font-weight:700;color:#151811;margin:0 0 10px">
+    Awaiting Your Approval
+    @if (Model.PendingRequests.Any())
+    {
+        <span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;margin-left:6px">@Model.PendingRequests.Count</span>
+    }
+</div>
+
+@if (Model.PendingRequests.Any())
+{
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Current Branch</th>
+                    <th>Requested Branch</th>
+                    <th>Submitted</th>
+                    <th style="text-align:right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.PendingRequests)
+                {
+                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">@r.EpfNumber · @r.CurrentDesignation</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="color:#7a8863">@r.CurrentBranch</td>
+                        <td style="font-weight:600">@r.RequestedBranch</td>
+                        <td style="color:#7a8863">@r.RequestedDate.ToString("MMM dd, yyyy")</td>
+                        <td style="text-align:right">
+                            <a asp-page="/DepartmentHead/ReviewTransfer" asp-route-id="@r.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                <i class="bi bi-eye"></i> Review
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:40px 24px;margin-bottom:28px">
+        <i class="bi bi-check2-circle" style="font-size:32px;color:#e2e5dc;display:block;margin-bottom:10px"></i>
+        <div style="font-size:14px;font-weight:600;color:#151811;margin-bottom:4px">No pending requests</div>
+        <div style="font-size:12px;color:#7a8863">All transfer requests for your department have been reviewed.</div>
+    </div>
+}
+
+<!-- Reviewed history section -->
+<div style="font-size:14px;font-weight:700;color:#151811;margin:0 0 10px">
+    Previously Reviewed
+    <span style="background:#f3f4f6;color:#7a8863;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800;margin-left:6px">@Model.ReviewedRequests.Count</span>
+</div>
+
+@if (Model.ReviewedRequests.Any())
+{
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Requested Branch</th>
+                    <th>Your Decision</th>
+                    <th>Reviewed On</th>
+                    <th style="text-align:right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.ReviewedRequests)
+                {
+                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var isApproved = r.DeptHeadReview == "Approved";
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">@r.EpfNumber · @r.CurrentDesignation</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-weight:600">@r.RequestedBranch</td>
+                        <td>
+                            <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
+                                         background:@(isApproved ? "#e8f3ec" : "#fff0f0");color:@(isApproved ? "#10823c" : "#dc3545")">
+                                <i class="bi bi-@(isApproved ? "check-circle" : "x-circle")"></i>
+                                @r.DeptHeadReview
+                            </span>
+                        </td>
+                        <td style="color:#7a8863">
+                            @(r.DeptHeadReviewDate.HasValue ? r.DeptHeadReviewDate.Value.ToString("MMM dd, yyyy") : "-")
+                        </td>
+                        <td style="text-align:right">
+                            <a asp-page="/Transfer/Details" asp-route-id="@r.Id" class="btn-action">View</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="k-card" style="text-align:center;padding:32px 24px">
+        <div style="font-size:13px;color:#7a8863">No reviewed requests yet.</div>
+    </div>
+}

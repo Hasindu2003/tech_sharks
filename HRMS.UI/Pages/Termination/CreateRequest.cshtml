@@ -6,32 +6,52 @@
     ViewData["Title"] = "Employee Termination";
 }
 
-<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-    <div>
-        <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">New Termination Request</h2>
-        <p style="color:#6b7280;font-size:0.9rem;margin:0">Initiate an employee termination process</p>
-    </div>
-    <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline">
-        <i class="bi bi-arrow-left"></i> Back to List
-    </a>
-</div>
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; display: block; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-create:hover { background: #0d6e32; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #e2e5dc; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .text-danger.small { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+    .emp-info-panel { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 12px; }
+    .override-block { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-top: 12px; }
+</style>
+
+<a asp-page="/Termination/Requests" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    Back to List
+</a>
+<h2 class="page-h">New Termination Request</h2>
+<p class="page-s">Initiate an employee termination process</p>
 
 @if (TempData["ErrorMessage"] is string errorMsg)
 {
-    <div class="k-alert k-alert-danger">
-        <i class="bi bi-exclamation-triangle"></i> @errorMsg
-    </div>
+    <div class="error-banner">@errorMsg</div>
 }
 
 <form method="post" enctype="multipart/form-data">
-    <div asp-validation-summary="ModelOnly" class="k-alert k-alert-danger" style="display:none"></div>
+    <div asp-validation-summary="ModelOnly" class="error-banner" style="display:none"></div>
 
-    <!-- Section 1: Select Employee -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-person-badge" style="margin-right:8px;color:var(--primary)"></i>Employee Selection</div>
-        <div class="k-form-group">
-            <label asp-for="Input.SelectedEmployeeEmail">Select Employee <span style="color:var(--accent-red)">*</span></label>
-            <select asp-for="Input.SelectedEmployeeEmail" id="employeeSelect" style="display:none">
+    <div class="form-section">
+        <div class="fst">Employee Selection</div>
+        <div class="fg" style="margin-bottom:0">
+            <label asp-for="Input.SelectedEmployeeEmail" class="fl">Select Employee <span class="req">*</span></label>
+            <select asp-for="Input.SelectedEmployeeEmail" class="fi" id="employeeSelect" onchange="populateEmployeeInfo()">
                 <option value="">-- Select an employee --</option>
                 @foreach (var emp in Model.Employees)
                 {
@@ -45,61 +65,26 @@
                     </option>
                 }
             </select>
-            <div class="custom-dropdown" id="employeeDropdown">
-                <div class="custom-dropdown-trigger" id="employeeTrigger">
-                    <span id="employeeTriggerText">-- Select an employee --</span>
-                    <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                </div>
-                <div class="custom-dropdown-list" id="employeeList">
-                    <div class="custom-dropdown-search-box">
-                        <svg class="custom-dropdown-search-icon" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                        <input type="text" id="employeeSearch" class="custom-dropdown-search-input" placeholder="Search by name or EPF..." autocomplete="off" />
-                    </div>
-                    <div class="custom-dropdown-option" data-value="">-- Select an employee --</div>
-                    @foreach (var emp in Model.Employees)
-                    {
-                        <div class="custom-dropdown-option" data-value="@emp.Email">@emp.FullName (@emp.EpfNumber) — @emp.Branch</div>
-                    }
-                    <div class="custom-dropdown-no-results" id="employeeNoResults" style="display:none">No employees found.</div>
-                </div>
-            </div>
             <span asp-validation-for="Input.SelectedEmployeeEmail" class="text-danger small"></span>
-        </div>
 
-        <!-- Auto-filled employee info panel -->
-        <div id="employeeInfoPanel" style="display:none;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:16px;margin-top:12px">
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
-                <div>
-                    <div class="detail-label">Employee Name</div>
-                    <div class="detail-value" id="infoName">—</div>
-                </div>
-                <div>
-                    <div class="detail-label">EPF Number</div>
-                    <div class="detail-value" id="infoEpf">—</div>
-                </div>
-                <div>
-                    <div class="detail-label">Branch</div>
-                    <div class="detail-value" id="infoBranch">—</div>
-                </div>
-                <div>
-                    <div class="detail-label">Department</div>
-                    <div class="detail-value" id="infoDept">—</div>
-                </div>
-                <div>
-                    <div class="detail-label">Designation</div>
-                    <div class="detail-value" id="infoDesig">—</div>
+            <div id="employeeInfoPanel" style="display:none" class="emp-info-panel">
+                <div class="grid-3">
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Name</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoName">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">EPF Number</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoEpf">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Branch</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoBranch">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Department</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoDept">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Designation</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoDesig">—</div></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Section 2: Termination Details -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-clipboard-x" style="margin-right:8px;color:var(--accent-red)"></i>Termination Details</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.TerminationType">Termination Type <span style="color:var(--accent-red)">*</span></label>
-                <select asp-for="Input.TerminationType" id="termTypeSelect" style="display:none">
+    <div class="form-section">
+        <div class="fst">Termination Details</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="Input.TerminationType" class="fl">Termination Type <span class="req">*</span></label>
+                <select asp-for="Input.TerminationType" class="fi">
                     <option value="0">Voluntary</option>
                     <option value="1">Involuntary</option>
                     <option value="2">Retirement</option>
@@ -107,232 +92,119 @@
                     <option value="4">Probation</option>
                     <option value="5">Death</option>
                 </select>
-                <div class="custom-dropdown" id="termTypeDropdown">
-                    <div class="custom-dropdown-trigger" id="termTypeTrigger">
-                        <span id="termTypeTriggerText">Voluntary</span>
-                        <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="custom-dropdown-list" id="termTypeList">
-                        <div class="custom-dropdown-option" data-value="0">Voluntary</div>
-                        <div class="custom-dropdown-option" data-value="1">Involuntary</div>
-                        <div class="custom-dropdown-option" data-value="2">Retirement</div>
-                        <div class="custom-dropdown-option" data-value="3">End of Contract</div>
-                        <div class="custom-dropdown-option" data-value="4">Probation</div>
-                        <div class="custom-dropdown-option" data-value="5">Death</div>
-                    </div>
-                </div>
                 <span asp-validation-for="Input.TerminationType" class="text-danger small"></span>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.InitiationDate">Initiation Date <span style="color:var(--accent-red)">*</span></label>
-                <input asp-for="Input.InitiationDate" type="date" class="k-form-control" />
+            <div class="fg">
+                <label asp-for="Input.InitiationDate" class="fl">Initiation Date <span class="req">*</span></label>
+                <input asp-for="Input.InitiationDate" type="date" class="fi" />
                 <span asp-validation-for="Input.InitiationDate" class="text-danger small"></span>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.EffectiveTerminationDate">Effective Termination Date <span style="color:var(--accent-red)">*</span></label>
-                <input asp-for="Input.EffectiveTerminationDate" type="date" class="k-form-control" />
+            <div class="fg">
+                <label asp-for="Input.EffectiveTerminationDate" class="fl">Effective Termination Date <span class="req">*</span></label>
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" />
                 <span asp-validation-for="Input.EffectiveTerminationDate" class="text-danger small"></span>
             </div>
         </div>
-        <div class="k-form-group">
-            <label asp-for="Input.ReasonForTermination">Reason for Termination <span style="color:var(--accent-red)">*</span></label>
-            <textarea asp-for="Input.ReasonForTermination" class="k-form-control" rows="3" placeholder="Provide a detailed reason for the termination..."></textarea>
+        <div class="fg">
+            <label asp-for="Input.ReasonForTermination" class="fl">Reason for Termination <span class="req">*</span></label>
+            <textarea asp-for="Input.ReasonForTermination" class="fi" rows="3" placeholder="Provide a detailed reason for the termination..."></textarea>
             <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.SupervisorRemarks">Supervisor Remarks</label>
-                <textarea asp-for="Input.SupervisorRemarks" class="k-form-control" rows="2" placeholder="Optional supervisor remarks..."></textarea>
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="Input.SupervisorRemarks" class="fl">Supervisor Remarks</label>
+                <textarea asp-for="Input.SupervisorRemarks" class="fi" rows="2" placeholder="Optional supervisor remarks..."></textarea>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.SpecialRemarks">Special Remarks / Notes</label>
-                <textarea asp-for="Input.SpecialRemarks" class="k-form-control" rows="2" placeholder="Any special notes..."></textarea>
+            <div class="fg">
+                <label asp-for="Input.SpecialRemarks" class="fl">Special Remarks / Notes</label>
+                <textarea asp-for="Input.SpecialRemarks" class="fi" rows="2" placeholder="Any special notes..."></textarea>
             </div>
         </div>
     </div>
 
-    <!-- Section 3: Obligations -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-exclamation-triangle" style="margin-right:8px;color:var(--accent-orange)"></i>Employee Obligations</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.DirectObligations">Direct Obligations (e.g. outstanding loans)</label>
-                <textarea asp-for="Input.DirectObligations" class="k-form-control" rows="2" placeholder="List any direct financial obligations..."></textarea>
+    <div class="form-section">
+        <div class="fst">Employee Obligations</div>
+        <div class="grid-2" style="margin-bottom:14px">
+            <div class="fg">
+                <label asp-for="Input.DirectObligations" class="fl">Direct Obligations (e.g. outstanding loans)</label>
+                <textarea asp-for="Input.DirectObligations" class="fi" rows="2" placeholder="List any direct financial obligations..."></textarea>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.IndirectObligations">Indirect Obligations (e.g. loan guarantor)</label>
-                <textarea asp-for="Input.IndirectObligations" class="k-form-control" rows="2" placeholder="List any indirect obligations..."></textarea>
+            <div class="fg">
+                <label asp-for="Input.IndirectObligations" class="fl">Indirect Obligations (e.g. loan guarantor)</label>
+                <textarea asp-for="Input.IndirectObligations" class="fi" rows="2" placeholder="List any indirect obligations..."></textarea>
             </div>
         </div>
-        <div style="display:flex;gap:32px;margin-top:12px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
-                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+        <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:12px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
                 Employee has outstanding loan balances
             </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer">
-                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:18px;height:18px;accent-color:var(--primary)" />
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
                 Employee is a loan guarantor
             </label>
         </div>
-        <div style="margin-top:16px;padding:14px 18px;background:#fef3c7;border:1px solid #fcd34d;border-radius:8px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:0.9rem;cursor:pointer;font-weight:600;color:#92400e">
-                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:18px;height:18px;accent-color:var(--accent-orange)" />
-                <i class="bi bi-shield-exclamation"></i> Senior Management Override (allows termination despite outstanding obligations)
+        <div class="override-block">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#92400e">
+                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b" />
+                Senior Management Override (allows termination despite outstanding obligations)
             </label>
         </div>
     </div>
 
-    <!-- Section 4: Documents -->
-    <div class="k-fieldset">
-        <div class="k-fieldset-title"><i class="bi bi-file-earmark-arrow-up" style="margin-right:8px;color:var(--accent-blue)"></i>Supporting Documents</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
-            <div class="k-form-group">
-                <label asp-for="Input.DocumentType">Document Type</label>
-                <select asp-for="Input.DocumentType" id="docTypeSelect" style="display:none">
+    <div class="form-section">
+        <div class="fst">Supporting Documents</div>
+        <div class="grid-2">
+            <div class="fg">
+                <label asp-for="Input.DocumentType" class="fl">Document Type</label>
+                <select asp-for="Input.DocumentType" class="fi">
                     <option value="TerminationLetter">Termination Letter</option>
                     <option value="DisciplinaryReport">Disciplinary Investigation Report</option>
                     <option value="WarningLetter">Warning Letter</option>
                     <option value="Other" selected>Other</option>
                 </select>
-                <div class="custom-dropdown" id="docTypeDropdown">
-                    <div class="custom-dropdown-trigger" id="docTypeTrigger">
-                        <span id="docTypeTriggerText">Other</span>
-                        <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="custom-dropdown-list" id="docTypeList">
-                        <div class="custom-dropdown-option" data-value="TerminationLetter">Termination Letter</div>
-                        <div class="custom-dropdown-option" data-value="DisciplinaryReport">Disciplinary Investigation Report</div>
-                        <div class="custom-dropdown-option" data-value="WarningLetter">Warning Letter</div>
-                        <div class="custom-dropdown-option selected" data-value="Other">Other</div>
-                    </div>
-                </div>
             </div>
-            <div class="k-form-group">
-                <label asp-for="Input.Documents">Upload Files</label>
-                <input asp-for="Input.Documents" type="file" class="k-form-control" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                <div style="font-size:0.78rem;color:var(--text-muted);margin-top:4px">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</div>
+            <div class="fg">
+                <label asp-for="Input.Documents" class="fl">Upload Files</label>
+                <input asp-for="Input.Documents" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                <span class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</span>
             </div>
         </div>
     </div>
 
-    <!-- Action buttons -->
-    <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px">
-        <a asp-page="/Termination/Requests" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">Cancel</a>
-        <button type="submit" asp-page-handler="SaveDraft" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg">
-            <i class="bi bi-save"></i> Save as Draft
+    <div style="display:flex;gap:12px;justify-content:flex-end">
+        <a asp-page="/Termination/Requests" class="btn-outline">Cancel</a>
+        <button type="submit" asp-page-handler="SaveDraft" class="btn-outline">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save as Draft
         </button>
-        <button type="submit" asp-page-handler="Submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-lg">
-            <i class="bi bi-send"></i> Submit for Approval
+        <button type="submit" asp-page-handler="Submit" class="btn-create">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit for Approval
         </button>
     </div>
 </form>
 
 @section Scripts {
-<style>
-    .custom-dropdown { position: relative; }
-    .custom-dropdown-trigger {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px;
-        background: #fff; cursor: pointer; font-size: 0.9rem; color: #374151;
-        user-select: none; transition: border-color 0.15s; min-height: 42px;
-    }
-    .custom-dropdown-trigger:hover { border-color: var(--primary, #10823c); }
-    .custom-dropdown-trigger.open { border-color: var(--primary, #10823c); box-shadow: 0 0 0 2px rgba(16,130,60,.15); }
-    .custom-dropdown-chevron { transition: transform 0.2s; color: #6b7280; width: 14px; height: 14px; flex-shrink: 0; }
-    .custom-dropdown-trigger.open .custom-dropdown-chevron { transform: rotate(180deg); }
-    .custom-dropdown-list {
-        display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-        background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
-        box-shadow: 0 4px 16px rgba(0,0,0,.12); max-height: calc(6 * 2.5rem); overflow-y: auto; z-index: 999;
-    }
-    .custom-dropdown-list.open { display: block; }
-    .custom-dropdown-option { padding: 0.6rem 0.75rem; cursor: pointer; font-size: 0.9rem; color: #374151; transition: background 0.1s; }
-    .custom-dropdown-option:hover { background: #f0faf4; color: #10823c; }
-    .custom-dropdown-option.selected { background: #e6f4ec; color: #10823c; font-weight: 600; }
-    .custom-dropdown-option[data-value=""] { color: #9ca3af; }
-    .custom-dropdown-search-box {
-        position: sticky; top: 0; background: #fff; display: flex; align-items: center; gap: 8px;
-        padding: 0.5rem 0.75rem; border-bottom: 1px solid #e5e7eb; z-index: 1;
-    }
-    .custom-dropdown-search-icon { width: 13px; height: 13px; stroke: #9ca3af; flex-shrink: 0; fill: none; }
-    .custom-dropdown-search-input { border: none; outline: none; flex: 1; font-size: 0.9rem; color: #374151; background: transparent; }
-    .custom-dropdown-search-input::placeholder { color: #9ca3af; }
-    .custom-dropdown-no-results { padding: 0.6rem 0.75rem; color: #9ca3af; font-size: 0.85rem; text-align: center; }
-</style>
-<script>
-    function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder, searchInputId, noResultsId }) {
-        const select = document.getElementById(selectId);
-        const trigger = document.getElementById(triggerId);
-        const list = document.getElementById(listId);
-        const triggerText = document.getElementById(triggerTextId);
-        const options = list.querySelectorAll('.custom-dropdown-option');
-        const searchInput = searchInputId ? document.getElementById(searchInputId) : null;
-        const noResults = noResultsId ? document.getElementById(noResultsId) : null;
-        function close() {
-            list.classList.remove('open'); trigger.classList.remove('open');
-            if (searchInput) { searchInput.value = ''; options.forEach(o => o.style.display = ''); if (noResults) noResults.style.display = 'none'; }
+    <script>
+        function populateEmployeeInfo() {
+            var select = document.getElementById('employeeSelect');
+            var option = select.options[select.selectedIndex];
+            var panel = document.getElementById('employeeInfoPanel');
+            if (option.value) {
+                panel.style.display = 'block';
+                document.getElementById('infoName').textContent = option.getAttribute('data-name');
+                document.getElementById('infoEpf').textContent = option.getAttribute('data-epf');
+                document.getElementById('infoBranch').textContent = option.getAttribute('data-branch');
+                document.getElementById('infoDept').textContent = option.getAttribute('data-dept');
+                document.getElementById('infoDesig').textContent = option.getAttribute('data-desig');
+            } else {
+                panel.style.display = 'none';
+            }
         }
-        trigger.addEventListener('click', function () {
-            const isOpen = list.classList.contains('open');
-            list.classList.toggle('open', !isOpen); trigger.classList.toggle('open', !isOpen);
-            if (!isOpen && searchInput) setTimeout(() => searchInput.focus(), 50);
+        document.addEventListener('DOMContentLoaded', function() {
+            var select = document.getElementById('employeeSelect');
+            if (select.value) populateEmployeeInfo();
         });
-        if (searchInput) {
-            searchInput.addEventListener('click', e => e.stopPropagation());
-            searchInput.addEventListener('input', function () {
-                const q = this.value.trim().toLowerCase();
-                let any = false;
-                options.forEach(function (opt) {
-                    if (!opt.dataset.value) { opt.style.display = 'none'; return; }
-                    const show = !q || opt.textContent.toLowerCase().includes(q);
-                    opt.style.display = show ? '' : 'none';
-                    if (show) any = true;
-                });
-                if (noResults) noResults.style.display = any ? 'none' : '';
-            });
-        }
-        options.forEach(function (opt) {
-            opt.addEventListener('click', function () {
-                const value = this.dataset.value;
-                select.value = value;
-                triggerText.textContent = value ? this.textContent.trim() : placeholder;
-                options.forEach(o => o.classList.remove('selected'));
-                if (value) this.classList.add('selected');
-                close(); select.dispatchEvent(new Event('change'));
-            });
-        });
-        document.addEventListener('click', function (e) {
-            if (!document.getElementById(dropdownId).contains(e.target)) close();
-        });
-        if (select.value) {
-            const pre = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
-            if (pre) { triggerText.textContent = pre.textContent.trim(); pre.classList.add('selected'); }
-        }
-    }
-
-    function populateEmployeeInfo() {
-        var select = document.getElementById('employeeSelect');
-        var option = select.options[select.selectedIndex];
-        var panel = document.getElementById('employeeInfoPanel');
-        if (option && option.value) {
-            panel.style.display = 'block';
-            document.getElementById('infoName').textContent = option.getAttribute('data-name');
-            document.getElementById('infoEpf').textContent = option.getAttribute('data-epf');
-            document.getElementById('infoBranch').textContent = option.getAttribute('data-branch');
-            document.getElementById('infoDept').textContent = option.getAttribute('data-dept');
-            document.getElementById('infoDesig').textContent = option.getAttribute('data-desig');
-        } else {
-            panel.style.display = 'none';
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        initCustomDropdown({ selectId: 'employeeSelect', triggerId: 'employeeTrigger', listId: 'employeeList', triggerTextId: 'employeeTriggerText', dropdownId: 'employeeDropdown', placeholder: '-- Select an employee --', searchInputId: 'employeeSearch', noResultsId: 'employeeNoResults' });
-        initCustomDropdown({ selectId: 'termTypeSelect', triggerId: 'termTypeTrigger', listId: 'termTypeList', triggerTextId: 'termTypeTriggerText', dropdownId: 'termTypeDropdown', placeholder: 'Voluntary' });
-        initCustomDropdown({ selectId: 'docTypeSelect', triggerId: 'docTypeTrigger', listId: 'docTypeList', triggerTextId: 'docTypeTriggerText', dropdownId: 'docTypeDropdown', placeholder: 'Other' });
-
-        document.getElementById('employeeSelect').addEventListener('change', populateEmployeeInfo);
-        if (document.getElementById('employeeSelect').value) populateEmployeeInfo();
-    });
-</script>
+    </script>
 }

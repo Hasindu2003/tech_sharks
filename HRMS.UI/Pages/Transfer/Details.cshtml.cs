@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Transfer
 {
-    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager,Employee")]
+    [Authorize]
     public class DetailsModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
@@ -25,11 +25,11 @@ namespace HRMS.UI.Pages.Transfer
             if (TransferRequest == null)
                 return NotFound();
 
-            if (!User.IsInRole("Admin") &&
-                !User.IsInRole("HR Manager") &&
-                !User.IsInRole("Area Manager") &&
+            if (!User.IsInRole("Area Manager") &&
                 !User.IsInRole("Branch Manager") &&
-                TransferRequest.RequestedBy != User.Identity!.Name)
+                !User.IsInRole("HR Manager") &&
+                TransferRequest.RequestedBy != User.Identity!.Name &&
+                TransferRequest.EmployeeEmail != User.Identity!.Name)
             {
                 return Forbid();
             }

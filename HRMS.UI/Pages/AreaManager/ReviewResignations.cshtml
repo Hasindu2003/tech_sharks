@@ -1,34 +1,55 @@
 @page
 @model HRMS.UI.Pages.AreaManager.ReviewResignationsModel
 @{
-    ViewData["Title"] = "Separation";
+    ViewData["Title"] = "Review Resignations";
 }
 
-<div style="margin-bottom:24px">
-    <a asp-page="/Separation/Dashboard" style="color:#6b7280;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-bottom:12px">
-        <i class="bi bi-arrow-left"></i> Back to Separation
-    </a>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
-        <div>
-            <h2 style="font-weight:700;font-size:1.6rem;margin-bottom:4px">Review Resignations</h2>
-            <p style="color:#6b7280;font-size:0.9rem;margin:0">Manage employee Resignation processes</p>
-        </div>
-    </div>
-</div>
+<style>
+    .back-link { color: #7a8863; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px; }
+    .back-link:hover { color: #10823c; }
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .sec-title { font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 10px 0; }
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 19px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .employee-cell { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .emp-info .name { font-size: 14px; font-weight: 700; color: #151811; display: block; }
+    .emp-info .sub  { font-size: 12px; color: #7a8863; }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 2px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .badge-ok   { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .badge-ok .dot { background: #22c55e; }
+    .badge-warn { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .badge-warn .dot { background: #f59e0b; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+    .empty-state { text-align: center; padding: 48px; }
+    .empty-state svg { display: block; margin: 0 auto 12px; }
+    .e-title { font-size: 14px; font-weight: 600; color: #151811; margin-bottom: 4px; }
+    .e-sub { font-size: 12px; color: #7a8863; }
+</style>
+
+<h2 class="page-h">Review Resignations</h2>
+<p class="page-s">Provide operations approval for resignation requests</p>
 
 @if (Model.PendingRequests.Any())
 {
-    <h5 class="section-title">Pending Review</h5>
-    <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
-        <table class="k-table" id="tbl-am-res">
+    <h3 class="sec-title">Pending Review</h3>
+    <div class="table-card">
+        <table class="emp-table">
             <thead>
                 <tr>
                     <th>Employee</th>
-                    <th>Submission Date</th>
+                    <th>Submitted</th>
                     <th>Last Working Day</th>
                     <th>BM Review</th>
                     <th>Obligations</th>
-                    <th>Review</th>
+                    <th style="text-align:right"></th>
                 </tr>
             </thead>
             <tbody>
@@ -38,26 +59,32 @@
                     <tr>
                         <td>
                             <div class="employee-cell">
-                                <div class="emp-avatar">@initials</div>
-                                <div class="emp-details">
-                                    <div class="emp-name">@req.EmployeeName</div>
-                                    <div class="emp-dept">@req.Designation · @req.Branch</div>
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@req.EmployeeName</span>
+                                    <span class="sub">@req.Designation · @req.Branch</span>
                                 </div>
                             </div>
                         </td>
-                        <td>@req.ResignationDate.ToString("MMM dd, yyyy")</td>
-                        <td style="font-weight:600;color:#1a7a3a">@req.EffectiveDate.ToString("MMM dd, yyyy")</td>
-                        <td><span class="k-badge k-badge-approved"><i class="bi bi-check"></i> @req.BMReviewDate?.ToString("MMM dd")</span></td>
+                        <td style="color:#7a8863">@req.ResignationDate.ToString("MMM dd, yyyy")</td>
+                        <td style="font-weight:600;color:#10823c">@req.EffectiveDate.ToString("MMM dd, yyyy")</td>
+                        <td>
+                            <span class="status-badge badge-ok">
+                                <span class="dot"></span> @req.BMReviewDate?.ToString("MMM dd")
+                            </span>
+                        </td>
                         <td>
                             @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
                             {
-                                <span class="k-badge k-badge-rejected"><i class="bi bi-exclamation-triangle"></i> Yes</span>
+                                <span class="status-badge badge-warn"><span class="dot"></span> Yes</span>
                             }
-                            else { <span class="k-badge k-badge-approved">None</span> }
+                            else
+                            {
+                                <span class="status-badge badge-ok"><span class="dot"></span> None</span>
+                            }
                         </td>
-                        <td>
-                            <a asp-page="/AreaManager/ReviewResignation" asp-route-id="@req.Id"
-                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">Review</a>
+                        <td style="text-align:right">
+                            <a asp-page="/AreaManager/ReviewResignation" asp-route-id="@req.Id" class="btn-action">Review</a>
                         </td>
                     </tr>
                 }
@@ -67,17 +94,9 @@
 }
 else
 {
-    <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
-        <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
-        <div style="font-weight:600;font-size:1rem;margin-bottom:4px">No pending resignation requests</div>
-        <div style="font-size:0.88rem">All resignation requests have been reviewed</div>
+    <div class="table-card empty-state">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#e2e5dc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <p class="e-title">No pending resignation requests</p>
+        <span class="e-sub">All resignation requests have been reviewed.</span>
     </div>
-}
-
-@section Scripts {
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-am-res', 8);
-});
-</script>
 }

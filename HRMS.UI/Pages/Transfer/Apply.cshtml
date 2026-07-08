@@ -1,179 +1,103 @@
 @page
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "Admin,HR Manager,Area Manager,Branch Manager,Employee")]
+@attribute [Authorize(Roles = "Employee,Branch Manager")]
 @model HRMS.UI.Pages.Transfer.ApplyModel
 @{
     ViewData["Title"] = "Apply for Transfer";
 }
 
-<div class="page-header">
-    <h2>Apply for Transfer</h2>
-    <p class="page-subtitle">Submit a new transfer request to another branch</p>
-</div>
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+    .form-section { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px 22px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .fst { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 16px 0; padding-bottom: 12px; border-bottom: 1px solid #e2e5dc; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi[readonly] { background: #f9fafb; color: #7a8863; }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .char-row { display: flex; justify-content: space-between; margin-top: 4px; font-size: 11px; color: #7a8863; }
+    .req { color: #ef4444; }
+    .btn-create { background: #10823c; color: white; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: none; cursor: pointer; width: 100%; }
+    .btn-create:hover { background: #0d6e32; color: white; }
+    .btn-outline { background: white; color: #151811; padding: 10px 20px; border-radius: 6px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #e2e5dc; width: 100%; }
+    .btn-outline:hover { background: #f9fafb; color: #151811; }
+    .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
+    .text-danger.small { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+</style>
 
-<div asp-validation-summary="All" class="k-alert k-alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "flex" : "none")"></div>
+<h2 class="page-h">Apply for Transfer</h2>
+<p class="page-s">Submit a new transfer request to another branch</p>
 
-@if (User.IsInRole("HR Manager") || User.IsInRole("Admin"))
-{
-    <div class="k-card" style="margin-bottom:24px;border:1px solid #1a7a3a">
-        <div class="k-card-header" style="background:rgba(26, 122, 58, 0.05);color:#1a7a3a">
-            <i class="bi bi-search" style="margin-right:6px"></i> HR Manager: Search Employee to Transfer
-        </div>
-        <div class="k-card-body" style="padding:20px">
-            <form method="post" asp-page-handler="Search" style="display:flex;gap:12px;align-items:flex-end;margin-bottom:20px">
-                <div class="k-form-group" style="margin-bottom:0;flex:1">
-                    <label style="font-size:0.85rem;color:#6b7280;margin-bottom:4px">Employee Name or ID</label>
-                    <input asp-for="SearchQuery" class="k-form-control" placeholder="Enter name or Employee ID..." />
-                </div>
-                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="height:42px">
-                    <i class="bi bi-search"></i> Search
-                </button>
-                @if (Model.SelectedEmployeeId.HasValue)
-                {
-                    <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-outline" style="height:42px">
-                        <i class="bi bi-x-circle"></i> Clear Selection
-                    </a>
-                }
-            </form>
-
-            @if (TempData["SearchError"] != null)
-            {
-                <div class="alert alert-warning" style="font-size:0.9rem;padding:8px 12px;margin-bottom:0">
-                    <i class="bi bi-info-circle"></i> @TempData["SearchError"]
-                </div>
-            }
-
-            @if (Model.SearchResults != null && Model.SearchResults.Any())
-            {
-                <div style="margin-top:16px;border-top:1px dashed #e5e7eb;padding-top:16px">
-                    <p style="font-size:0.88rem;font-weight:600;margin-bottom:12px;color:#374151">Search Results:</p>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(300px, 1fr));gap:12px">
-                        @foreach (var emp in Model.SearchResults)
-                        {
-                            <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:#f9fafb;border-radius:8px;border:1px solid #e5e7eb">
-                                <div>
-                                    <div style="font-weight:600;font-size:0.95rem">@emp.FullName</div>
-                                    <div style="font-size:0.8rem;color:#6b7280">ID: @emp.Id • @(emp.Designation?.Title ?? "N/A")</div>
-                                    <div style="font-size:0.8rem;color:#6b7280">@emp.Branch?.Name</div>
-                                </div>
-                                <a asp-page="/Transfer/Apply" asp-route-employeeId="@emp.Id" class="btn-kanrich btn-kanrich-sm btn-kanrich-primary">
-                                    Select
-                                </a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-        </div>
-    </div>
-}
+<div asp-validation-summary="ModelOnly" class="error-banner" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "block" : "none")"></div>
 
 <form method="post" enctype="multipart/form-data">
-    <input type="hidden" asp-for="SelectedEmployeeId" />
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
         <!-- Left Column -->
         <div>
-            <!-- Auto-Filled Employee Details -->
-            <div class="k-card" style="margin-bottom:20px">
-                <div class="k-card-header">
-                    <i class="bi bi-person" style="color:#1a7a3a;margin-right:6px"></i> 
-                    Employee Details @(Model.SelectedEmployeeId.HasValue ? "(Selected)" : "(Auto-filled)")
-                </div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-                    <div class="k-form-group">
-                        <label><i class="bi bi-person" style="color:#1a7a3a;margin-right:4px"></i> Full Name</label>
-                        <input asp-for="Input.EmployeeName" class="k-form-control" readonly style="background:#f9fafb" />
+            <div class="form-section">
+                <div class="fst">Employee Details (Auto-filled)</div>
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Full Name</label>
+                        <input asp-for="Input.EmployeeName" class="fi" readonly />
                     </div>
-                    <div class="k-form-group">
-                        <label><i class="bi bi-hash" style="color:#1a7a3a;margin-right:4px"></i> EPF Number</label>
-                        <input asp-for="Input.EpfNumber" class="k-form-control" readonly style="background:#f9fafb" />
+                    <div class="fg">
+                        <label class="fl">EPF Number</label>
+                        <input asp-for="Input.EpfNumber" class="fi" readonly />
                     </div>
-                    <div class="k-form-group">
-                        <label><i class="bi bi-building" style="color:#1a7a3a;margin-right:4px"></i> Current Branch</label>
-                        <input asp-for="Input.CurrentBranch" class="k-form-control" readonly style="background:#f9fafb" />
+                    <div class="fg">
+                        <label class="fl">Current Branch</label>
+                        <input asp-for="Input.CurrentBranch" class="fi" readonly />
                     </div>
-                    <div class="k-form-group">
-                        <label><i class="bi bi-briefcase" style="color:#1a7a3a;margin-right:4px"></i> Designation</label>
-                        <input asp-for="Input.CurrentDesignation" class="k-form-control" readonly style="background:#f9fafb" />
+                    <div class="fg">
+                        <label class="fl">Designation</label>
+                        <input asp-for="Input.CurrentDesignation" class="fi" readonly />
                     </div>
                 </div>
             </div>
 
-            <!-- Document Upload -->
-            <div class="k-card">
-                <div class="k-card-header"><i class="bi bi-paperclip" style="color:#1a7a3a;margin-right:6px"></i> Supporting Document (Optional)</div>
-                <div class="k-form-group" style="margin-bottom:0">
-                    <input asp-for="Input.Document" class="k-form-control" type="file"
-                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                    <div style="font-size:0.78rem;color:#9ca3af;margin-top:6px">Allowed: PDF, DOC, DOCX, JPG, PNG. Max size: 5 MB.</div>
+            <div class="form-section">
+                <div class="fst">Supporting Document (Optional)</div>
+                <div class="fg" style="margin-bottom:0">
+                    <input asp-for="Input.Document" class="fi" type="file" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                    <span class="fi-hint">Allowed: PDF, DOC, DOCX, JPG, PNG. Max size: 5 MB.</span>
                     <span asp-validation-for="Input.Document" class="text-danger small"></span>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column: Transfer Details -->
+        <!-- Right Column -->
         <div>
-            <div class="k-card" style="margin-bottom:20px">
-                <div class="k-card-header"><i class="bi bi-arrow-left-right" style="color:#1a7a3a;margin-right:6px"></i> Transfer Details</div>
-
-                <div class="k-form-group">
-                    <label asp-for="Input.RequestedBranch">
-                        <i class="bi bi-geo-alt" style="color:#1a7a3a;margin-right:4px"></i> Requested Branch <span style="color:#ef4444">*</span>
-                    </label>
-                    @if (!Model.AvailableBranches.Any())
-                    {
-                        <div style="padding:9px 12px;border:1px solid #e2e5dc;border-radius:7px;font-size:13px;color:#9ca3af;background:#f9fafb;">No other branches available</div>
-                    }
-                    else
-                    {
-                        <select asp-for="Input.RequestedBranch" id="branchSelectApply" style="display:none">
-                            <option value="">-- Select Branch --</option>
-                            @foreach (var branch in Model.AvailableBranches)
-                            {
-                                <option value="@branch">@branch</option>
-                            }
-                        </select>
-                        <div class="custom-dropdown" id="branchDropdownApply">
-                            <div class="custom-dropdown-trigger" id="branchTriggerApply">
-                                <span id="branchTriggerTextApply">-- Select Branch --</span>
-                                <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-                            </div>
-                            <div class="custom-dropdown-list" id="branchListApply">
-                                <div class="custom-dropdown-option" data-value="">-- Select Branch --</div>
-                                @foreach (var branch in Model.AvailableBranches)
-                                {
-                                    <div class="custom-dropdown-option" data-value="@branch">@branch</div>
-                                }
-                            </div>
-                        </div>
-                    }
-                    @if (!Model.AvailableBranches.Any())
-                    {
-                        <div style="font-size:0.78rem;color:#ef4444;margin-top:4px">
-                            Note: You cannot request a transfer as there are no other branches registered in the system.
-                        </div>
-                    }
+            <div class="form-section" style="margin-bottom:16px">
+                <div class="fst">Transfer Details</div>
+                <div class="fg">
+                    <label class="fl">Requested Branch <span class="req">*</span></label>
+                    <select asp-for="Input.RequestedBranch" class="fi">
+                        <option value="">-- Select Branch --</option>
+                        @foreach (var branch in Model.AvailableBranches)
+                        {
+                            <option value="@branch">@branch</option>
+                        }
+                    </select>
                     <span asp-validation-for="Input.RequestedBranch" class="text-danger small"></span>
                 </div>
-
-                <div class="k-form-group">
-                    <label asp-for="Input.PreferredDate">
-                        <i class="bi bi-calendar-event" style="color:#1a7a3a;margin-right:4px"></i> Preferred Transfer Date <span style="color:#ef4444">*</span>
-                    </label>
-                    <input asp-for="Input.PreferredDate" class="k-form-control" type="date"
+                <div class="fg">
+                    <label class="fl">Preferred Transfer Date <span class="req">*</span></label>
+                    <input asp-for="Input.PreferredDate" class="fi" type="date"
                            min="@DateTime.Today.AddDays(7).ToString("yyyy-MM-dd")"
                            max="@DateTime.Today.AddYears(1).ToString("yyyy-MM-dd")" />
-                    <div style="font-size:0.78rem;color:#9ca3af;margin-top:4px">Must be at least 7 days from today and within 1 year.</div>
+                    <span class="fi-hint">Must be at least 7 days from today and within 1 year.</span>
                     <span asp-validation-for="Input.PreferredDate" class="text-danger small"></span>
                 </div>
-
-                <div class="k-form-group" style="margin-bottom:0">
-                    <label asp-for="Input.Reason">
-                        <i class="bi bi-chat-left-text" style="color:#1a7a3a;margin-right:4px"></i> Reason for Transfer <span style="color:#ef4444">*</span>
-                    </label>
-                    <textarea asp-for="Input.Reason" class="k-form-control" rows="5" maxlength="500"
+                <div class="fg" style="margin-bottom:0">
+                    <label class="fl">Reason for Transfer <span class="req">*</span></label>
+                    <textarea asp-for="Input.Reason" class="fi" rows="5" maxlength="500"
                               placeholder="Please explain your reason for requesting this transfer (minimum 20 characters)"></textarea>
-                    <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:0.78rem;color:#9ca3af">
+                    <div class="char-row">
                         <span><span id="charCount">0</span>/500 characters</span>
                         <span>Min 20 characters</span>
                     </div>
@@ -182,12 +106,11 @@
             </div>
 
             <div style="display:flex;flex-direction:column;gap:10px">
-                <button type="submit" class="btn-kanrich btn-kanrich-primary btn-kanrich-lg" style="justify-content:center;width:100%">
-                    <i class="bi bi-send"></i> Submit Transfer Request
+                <button type="submit" class="btn-create">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    Submit Transfer Request
                 </button>
-                <a asp-page="/Transfer/MyRequests" class="btn-kanrich btn-kanrich-outline btn-kanrich-lg" style="justify-content:center;width:100%">
-                    <i class="bi bi-list"></i> View My Requests
-                </a>
+                <a asp-page="/Transfer/MyRequests" class="btn-outline">View My Requests</a>
             </div>
         </div>
     </div>
@@ -195,64 +118,7 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
-    <style>
-        .custom-dropdown { position: relative; }
-        .custom-dropdown-trigger {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 6px;
-            background: #fff; cursor: pointer; font-size: 0.95rem; color: #374151;
-            user-select: none; transition: border-color 0.15s; min-height: 42px;
-        }
-        .custom-dropdown-trigger:hover { border-color: #10823c; }
-        .custom-dropdown-trigger.open { border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.15); }
-        .custom-dropdown-chevron { transition: transform 0.2s; color: #6b7280; width: 14px; height: 14px; flex-shrink: 0; }
-        .custom-dropdown-trigger.open .custom-dropdown-chevron { transform: rotate(180deg); }
-        .custom-dropdown-list {
-            display: none; position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-            background: #fff; border: 1px solid #d1d5db; border-radius: 6px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.12); max-height: calc(6 * 2.5rem); overflow-y: auto; z-index: 999;
-        }
-        .custom-dropdown-list.open { display: block; }
-        .custom-dropdown-option { padding: 0.6rem 0.75rem; cursor: pointer; font-size: 0.95rem; color: #374151; transition: background 0.1s; }
-        .custom-dropdown-option:hover { background: #f0faf4; color: #10823c; }
-        .custom-dropdown-option.selected { background: #e6f4ec; color: #10823c; font-weight: 600; }
-        .custom-dropdown-option[data-value=""] { color: #9ca3af; }
-    </style>
     <script>
-        function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder }) {
-            const select = document.getElementById(selectId);
-            const trigger = document.getElementById(triggerId);
-            const list = document.getElementById(listId);
-            const triggerText = document.getElementById(triggerTextId);
-            const options = list.querySelectorAll('.custom-dropdown-option');
-            function close() { list.classList.remove('open'); trigger.classList.remove('open'); }
-            trigger.addEventListener('click', function () {
-                const isOpen = list.classList.contains('open');
-                list.classList.toggle('open', !isOpen); trigger.classList.toggle('open', !isOpen);
-            });
-            options.forEach(function (opt) {
-                opt.addEventListener('click', function () {
-                    const value = this.dataset.value;
-                    select.value = value;
-                    triggerText.textContent = value ? this.textContent.trim() : placeholder;
-                    options.forEach(o => o.classList.remove('selected'));
-                    if (value) this.classList.add('selected');
-                    close(); select.dispatchEvent(new Event('change'));
-                });
-            });
-            document.addEventListener('click', function (e) {
-                if (!document.getElementById(dropdownId).contains(e.target)) close();
-            });
-            if (select.value) {
-                const pre = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
-                if (pre) { triggerText.textContent = pre.textContent.trim(); pre.classList.add('selected'); }
-            }
-        }
-        document.addEventListener('DOMContentLoaded', function () {
-            if (document.getElementById('branchSelectApply'))
-                initCustomDropdown({ selectId: 'branchSelectApply', triggerId: 'branchTriggerApply', listId: 'branchListApply', triggerTextId: 'branchTriggerTextApply', dropdownId: 'branchDropdownApply', placeholder: '-- Select Branch --' });
-        });
-
         const reasonField = document.getElementById('Input_Reason');
         const charCount = document.getElementById('charCount');
         if (reasonField && charCount) {

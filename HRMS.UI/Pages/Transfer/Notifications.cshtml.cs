@@ -1,4 +1,4 @@
-﻿using HRMS.Domain.Entities.Core;
+﻿using HRMS.Domain.Entities.Transfer;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Transfer
 {
-    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager,Employee")]
+    [Authorize]
     public class NotificationsModel : PageModel
     {
         private readonly INotificationService _notificationService;
@@ -21,9 +21,7 @@ namespace HRMS.UI.Pages.Transfer
 
         public async Task OnGetAsync()
         {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return;
-
+            var email = User.Identity!.Name!;
             Notifications = await _notificationService.GetNotificationsAsync(email);
             UnreadCount = await _notificationService.GetUnreadCountAsync(email);
         }
@@ -36,9 +34,7 @@ namespace HRMS.UI.Pages.Transfer
 
         public async Task<IActionResult> OnPostMarkAllReadAsync()
         {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return RedirectToPage();
-
+            var email = User.Identity!.Name!;
             await _notificationService.MarkAllAsReadAsync(email);
             return RedirectToPage();
         }

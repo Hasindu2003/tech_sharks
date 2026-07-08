@@ -2,6 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Domain.Entities.Termination
 {
+    /// <summary>
+    /// Represents a request to terminate an employee's services.
+    /// Can be initiated by HR and tracks the workflow through approval and finance clearance.
+    /// </summary>
     public class TerminationRequest
     {
         [Key]
@@ -92,6 +96,9 @@ namespace HRMS.Domain.Entities.Termination
         public ICollection<TerminationDocument> Documents { get; set; } = new List<TerminationDocument>();
     }
 
+    /// <summary>
+    /// Defines the possible states of a termination request during its lifecycle.
+    /// </summary>
     public enum TerminationRequestStatus
     {
         New = 0,
@@ -102,6 +109,9 @@ namespace HRMS.Domain.Entities.Termination
         Terminated = 5
     }
 
+    /// <summary>
+    /// Specifies the nature of the employee termination (e.g., Voluntary, Involuntary).
+    /// </summary>
     public enum TerminationType
     {
         Voluntary = 0,

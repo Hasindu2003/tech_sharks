@@ -1,111 +1,106 @@
-@page
-@using HRMS.Domain.Entities.Core
+@page "/Notifications"
+@using HRMS.Domain.Entities.Transfer
 @model HRMS.UI.Pages.Transfer.NotificationsModel
 @{
     ViewData["Title"] = "Notifications";
 }
 
-<div class="page-header">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-            <h2><i class="bi bi-bell" style="margin-right:8px"></i>Notifications</h2>
-            <p class="page-subtitle">Stay updated on your resignation, transfer and termination request progress</p>
-        </div>
-        @if (Model.UnreadCount > 0)
-        {
-            <form method="post" asp-page-handler="MarkAllRead">
-                <button type="submit" class="btn-kanrich btn-kanrich-outline">
-                    <i class="bi bi-check-all"></i> Mark All as Read (@Model.UnreadCount)
-                </button>
-            </form>
-        }
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0; }
+    .btn-outline { background: white; color: #151811; padding: 8px 15px; border-radius: 6px; font-size: 13px; font-weight: 700; border: 1px solid #e2e5dc; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-outline:hover { background: #f9fafb; }
+    .btn-mark { background: white; color: #7a8863; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: 600; border: 1px solid #e2e5dc; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-mark:hover { background: #f9fafb; color: #151811; }
+    .notif-item { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 16px 18px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 14px; transition: box-shadow .15s; }
+    .notif-item.unread { background: #f0fdf4; border-color: #bbf7d0; }
+    .notif-item:hover { box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+    .notif-ic { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .notif-ic.green { background: #dcfce7; color: #16a34a; }
+    .notif-ic.red   { background: #fee2e2; color: #dc2626; }
+    .notif-ic.blue  { background: #dbeafe; color: #2563eb; }
+    .notif-title { font-size: 13px; font-weight: 700; color: #151811; margin-bottom: 3px; display: flex; align-items: center; gap: 7px; }
+    .notif-title.read { font-weight: 500; }
+    .unread-dot { width: 7px; height: 7px; background: #10823c; border-radius: 50%; display: inline-block; }
+    .notif-msg { font-size: 13px; color: #374151; line-height: 1.5; margin-bottom: 7px; }
+    .notif-time { font-size: 11.5px; color: #9ca3af; display: flex; align-items: center; gap: 6px; }
+    .notif-actions { display: flex; align-items: center; gap: 7px; flex-shrink: 0; margin-top: 2px; }
+    .btn-view { color: #10823c; font-size: 12px; font-weight: 700; text-decoration: none; padding: 4px 10px; border-radius: 5px; border: 1px solid #e2e5dc; background: white; white-space: nowrap; }
+    .btn-view:hover { background: #e8f3ec; color: #10823c; }
+    .empty-wrap { text-align: center; padding: 60px 20px; background: white; border: 1px solid #e2e5dc; border-radius: 10px; }
+</style>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px">
+    <div>
+        <h2 class="page-h">Notifications</h2>
+        <p class="page-s">Stay updated on your resignation, transfer and termination request progress</p>
     </div>
+    @if (Model.UnreadCount > 0)
+    {
+        <form method="post" asp-page-handler="MarkAllRead">
+            <button type="submit" class="btn-outline">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/><polyline points="20 12 9 23 4 18"/></svg>
+                Mark All as Read (@Model.UnreadCount)
+            </button>
+        </form>
+    }
 </div>
 
 @if (Model.Notifications.Any())
 {
-    <div class="notification-list">
-        @foreach (var n in Model.Notifications)
-        {
-            var iconClass = n.Type switch
-            {
-                CoreNotificationType.Approved => "bi-check-circle-fill",
-                CoreNotificationType.Rejected => "bi-x-circle-fill",
-                _ => "bi-info-circle-fill"
-            };
-            var iconColor = n.Type switch
-            {
-                CoreNotificationType.Approved => "#16a34a",
-                CoreNotificationType.Rejected => "#dc2626",
-                _ => "#2563eb"
-            };
-            var bgColor = n.IsRead ? "#ffffff" : "#f0fdf4";
-            var borderColor = n.IsRead ? "#e5e7eb" : "#bbf7d0";
-            var timeAgo = GetTimeAgo(n.CreatedAt);
+    @foreach (var n in Model.Notifications)
+    {
+        var icClass = n.Type == NotificationType.Approved ? "green" : n.Type == NotificationType.Rejected ? "red" : "blue";
+        var timeAgo = GetTimeAgo(n.CreatedAt);
 
-            <div class="notification-item" style="background:@bgColor;border:1px solid @borderColor;border-radius:12px;padding:18px 20px;margin-bottom:12px;display:flex;align-items:flex-start;gap:14px;transition:all 0.2s ease">
-                <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem;
-                    background:@(n.Type == CoreNotificationType.Approved ? "#dcfce7" : n.Type == CoreNotificationType.Rejected ? "#fee2e2" : "#dbeafe")">
-                    <i class="bi @iconClass" style="color:@iconColor"></i>
+        <div class="notif-item @(!n.IsRead ? "unread" : "")">
+            <div class="notif-ic @icClass">
+                @if (n.Type == NotificationType.Approved)
+                {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                }
+                else if (n.Type == NotificationType.Rejected)
+                {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                }
+                else
+                {
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                }
+            </div>
+            <div style="flex:1;min-width:0">
+                <div class="notif-title @(n.IsRead ? "read" : "")">
+                    @n.Title
+                    @if (!n.IsRead) { <span class="unread-dot"></span> }
                 </div>
-                <div style="flex:1;min-width:0">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
-                        <div style="flex:1">
-                            <div style="font-weight:@(n.IsRead ? "500" : "700");font-size:0.92rem;color:#111827;margin-bottom:4px">
-                                @n.Title
-                                @if (!n.IsRead)
-                                {
-                                    <span style="display:inline-block;width:8px;height:8px;background:#16a34a;border-radius:50%;margin-left:6px;vertical-align:middle"></span>
-                                }
-                            </div>
-                            <div style="font-size:0.85rem;color:#4b5563;line-height:1.5;margin-bottom:8px">@n.Message</div>
-                            <div style="display:flex;align-items:center;gap:12px;font-size:0.78rem;color:#9ca3af">
-                                <span><i class="bi bi-clock"></i> @timeAgo</span>
-                                <span>•</span>
-                                <span>@n.CreatedAt.ToString("MMM dd, yyyy h:mm tt")</span>
-                            </div>
-                        </div>
-                        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
-                            @{
-                                // Route to the correct detail page based on notification content
-                                var isResignNotif = n.Title.Contains("Resignation") || n.Title.Contains("resignation") || n.Title.Contains("Account") || n.Title.Contains("Employment");
-                            }
-                            @if (isResignNotif)
-                            {
-                                <a asp-page="/Transfer/Separation" asp-route-ActiveTab="Resignation"
-                                   class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="white-space:nowrap">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                            }
-                            else
-                            {
-                                <a asp-page="/Transfer/Details" asp-route-id="@n.TransferRequestId"
-                                   class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="white-space:nowrap">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                            }
-                            @if (!n.IsRead)
-                            {
-                                <form method="post" asp-page-handler="MarkRead" asp-route-id="@n.Id" style="margin:0">
-                                    <button type="submit" class="btn-kanrich btn-kanrich-sm" style="background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;white-space:nowrap"
-                                            title="Mark as read">
-                                        <i class="bi bi-check2"></i>
-                                    </button>
-                                </form>
-                            }
-                        </div>
-                    </div>
+                <div class="notif-msg">@n.Message</div>
+                <div class="notif-time">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    @timeAgo &nbsp;·&nbsp; @n.CreatedAt.ToString("MMM dd, yyyy h:mm tt")
                 </div>
             </div>
-        }
-    </div>
+            <div class="notif-actions">
+                <a href="@(string.IsNullOrEmpty(n.TargetUrl) ? "javascript:void(0)" : n.TargetUrl)" class="btn-view">View</a>
+                @if (!n.IsRead)
+                {
+                    <form method="post" asp-page-handler="MarkRead" asp-route-id="@n.Id" style="margin:0">
+                        <button type="submit" class="btn-mark" title="Mark as read">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    }
 }
 else
 {
-    <div class="k-card" style="text-align:center;padding:60px;color:#9ca3af">
-        <i class="bi bi-bell-slash" style="font-size:3rem;display:block;margin-bottom:12px"></i>
-        <div style="font-weight:600;font-size:1.1rem;margin-bottom:8px;color:#6b7280">No notifications yet</div>
-        <div style="font-size:0.88rem">You'll be notified when your transfer requests are reviewed</div>
+    <div class="empty-wrap">
+        <div style="width:48px;height:48px;background:#f3f4f6;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px auto">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        </div>
+        <div style="font-weight:700;font-size:14px;color:#151811;margin-bottom:5px">No notifications yet</div>
+        <div style="font-size:13px;color:#7a8863">You'll be notified when your transfer requests are reviewed</div>
     </div>
 }
 

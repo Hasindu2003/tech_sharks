@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.BranchManager
 {
-    [Authorize(Roles = "Admin,Branch Manager")]
+    [Authorize(Roles = "Branch Manager")]
     public class ReviewResignationsModel : PageModel
     {
         private readonly IResignationService _resignationService;

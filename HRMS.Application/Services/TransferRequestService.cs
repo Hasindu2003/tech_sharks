@@ -1,7 +1,6 @@
-using HRMS.Application.Models;
 using HRMS.Domain.Entities.Transfer;
-using HRMS.Domain.Entities.Core;
 using HRMS.Infrastructure.Persistence;
+using HRMS.Application.Models;
 using Microsoft.EntityFrameworkCore;
 using DomainTransfer = HRMS.Domain.Entities.Transfer;
 
@@ -9,22 +8,30 @@ namespace HRMS.Application.Services
 {
     public interface ITransferRequestService
     {
-        Task<(bool Success, string? Error, int Id)> ApplyTransferAsync(
-            string employeeEmail, string employeeName, string epfNumber,
-            string currentBranch, string currentDesignation, string department,
-            string requestedBranch, string reason, DateTime? preferredDate,
-            string requestedBy, string requestedByRole, DateTime joiningDate,
-            byte[]? documentData, string? documentFileName, string? documentContentType);
-
         Task<int> CreateTransferRequestAsync(TransferRequestViewModel request, byte[]? documentData, string? documentFileName, string? documentContentType);
         Task<List<TransferRequestViewModel>> GetAllRequestsAsync();
         Task<List<TransferRequestViewModel>> GetRequestsByUserAsync(string email);
-        Task<List<TransferRequestViewModel>> GetPendingRequestsForHRManagerAsync();
-        Task<bool> HRManagerReviewAsync(int id, bool approved, string comments);
+
+        // Stage 2 – Department Head
+        Task<List<TransferRequestViewModel>> GetRequestsForDeptHeadAsync(string branch, string department);
+        Task<List<TransferRequestViewModel>> GetReviewedByDeptHeadAsync(string branch, string department);
+        Task<bool> DeptHeadReviewAsync(int id, bool approved, string comments);
+
+        // Stage 3 – Branch Managers (parallel)
         Task<List<TransferRequestViewModel>> GetPendingRequestsForBranchManagerAsync(string branch);
+        Task<List<TransferRequestViewModel>> GetReviewedByBranchManagerAsync(string branch);
         Task<bool> BranchManagerReviewAsync(int id, bool approved, string comments, string reviewerBranch);
+
+        // Stage 4 – Area Manager
         Task<List<TransferRequestViewModel>> GetRequestsForAreaManagerAsync();
+        Task<List<TransferRequestViewModel>> GetReviewedByAreaManagerAsync();
         Task<bool> AreaManagerReviewAsync(int id, bool approved, string comments);
+
+        // Stage 5 – HR Finalization
+        Task<List<TransferRequestViewModel>> GetRequestsForHRManagerAsync(string branch);
+        Task<List<TransferRequestViewModel>> GetRequestsForHRFinalizationAsync();
+        Task<bool> HRManagerReviewAsync(int id, bool approved, string comments);
+
         Task<TransferRequestViewModel?> GetRequestByIdAsync(int id);
         Task<(byte[]? Data, string? FileName, string? ContentType)> GetDocumentAsync(int id);
     }
@@ -34,145 +41,101 @@ namespace HRMS.Application.Services
         private readonly ApplicationDbContext _context;
         private readonly INotificationService _notificationService;
 
-        private static readonly string[] AllowedDocumentExtensions = { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
-        private const long MaxDocumentSizeBytes = 5 * 1024 * 1024;
-
         public TransferRequestService(ApplicationDbContext context, INotificationService notificationService)
         {
             _context = context;
             _notificationService = notificationService;
         }
 
-        public Task<(bool Success, string? Error, int Id)> ApplyTransferAsync(
-            string employeeEmail, string employeeName, string epfNumber,
-            string currentBranch, string currentDesignation, string department,
-            string requestedBranch, string reason, DateTime? preferredDate,
-            string requestedBy, string requestedByRole, DateTime joiningDate,
-            byte[]? documentData, string? documentFileName, string? documentContentType)
-        {
-            if (preferredDate.HasValue)
-            {
-                var minDate = DateTime.Today.AddDays(7);
-                var maxDate = DateTime.Today.AddYears(1);
-
-                if (preferredDate.Value.Date < minDate)
-                    return Task.FromResult<(bool, string?, int)>((false, "Preferred date must be at least 7 days from today.", 0));
-
-                if (preferredDate.Value.Date > maxDate)
-                    return Task.FromResult<(bool, string?, int)>((false, "Preferred date cannot be more than 1 year from today.", 0));
-            }
-
-            if (string.Equals(requestedBranch, currentBranch, StringComparison.OrdinalIgnoreCase))
-                return Task.FromResult<(bool, string?, int)>((false, "You cannot request a transfer to your current branch.", 0));
-
-            var yearsOfService = (int)((DateTime.Today - joiningDate).TotalDays / 365.25);
-
-            var vm = new TransferRequestViewModel
-            {
-                EmployeeName       = employeeName,
-                EpfNumber          = epfNumber,
-                EmployeeEmail      = employeeEmail,
-                CurrentBranch      = currentBranch,
-                CurrentDesignation = currentDesignation,
-                Department         = department,
-                RequestedBranch    = requestedBranch,
-                Reason             = reason,
-                PreferredDate      = preferredDate,
-                YearsOfService     = yearsOfService,
-                RequestedBy        = requestedBy,
-                RequestedByRole    = requestedByRole
-            };
-
-            return CreateTransferRequestAsync(vm, documentData, documentFileName, documentContentType)
-                .ContinueWith(t => (true, (string?)null, t.Result));
-        }
-
+        // ── Stage 1: Create ──────────────────────────────────────────────────
         public async Task<int> CreateTransferRequestAsync(TransferRequestViewModel request, byte[]? documentData, string? documentFileName, string? documentContentType)
         {
             var entity = new DomainTransfer.TransferRequest
             {
-                EmployeeName = request.EmployeeName,
-                EpfNumber = request.EpfNumber,
-                EmployeeEmail = request.EmployeeEmail,
-                CurrentBranch = request.CurrentBranch,
+                EmployeeName     = request.EmployeeName,
+                EpfNumber        = request.EpfNumber,
+                EmployeeEmail    = request.EmployeeEmail,
+                CurrentBranch    = request.CurrentBranch,
                 CurrentDesignation = request.CurrentDesignation,
-                Department = request.Department,
-                RequestedBranch = request.RequestedBranch,
-                Reason = request.Reason,
-                PreferredDate = request.PreferredDate,
-                YearsOfService = request.YearsOfService,
-                RequestedBy = request.RequestedBy,
-                RequestedByRole = request.RequestedByRole,
-                RequestedDate = DateTime.Now,
-                Status = DomainTransfer.TransferRequestStatus.Pending,
-                DocumentData = documentData,
+                Department       = request.Department,
+                RequestedBranch  = request.RequestedBranch,
+                Reason           = request.Reason,
+                PreferredDate    = request.PreferredDate,
+                YearsOfService   = request.YearsOfService,
+                JoinDate         = request.JoinDate,
+                RequestedBy      = request.RequestedBy,
+                RequestedByRole  = request.RequestedByRole,
+                RequestedDate    = DateTime.Now,
+                Status           = DomainTransfer.TransferRequestStatus.Pending,
+                DocumentData     = documentData,
                 DocumentFileName = documentFileName,
                 DocumentContentType = documentContentType
             };
 
             _context.TransferRequests.Add(entity);
-
-            if (request.RequestedByRole == "HR Manager")
-            {
-                entity.Status = DomainTransfer.TransferRequestStatus.HRManagerApproved;
-                entity.HRManagerReview = "Approved (Initiated by HR)";
-                entity.HRManagerReviewDate = DateTime.Now;
-                entity.HRManagerComments = "Transfer initiated by HR Manager for administrative purposes.";
-            }
-
             await _context.SaveChangesAsync();
-
-            if (request.RequestedByRole == "HR Manager")
-            {
-                await _notificationService.CreateNotificationAsync(request.EmployeeEmail,
-                    "Administrative Transfer Initiated",
-                    $"An administrative transfer has been initiated for you from {request.CurrentBranch} to {request.RequestedBranch}.",
-                    CoreNotificationType.Info, entity.Id);
-            }
-
             return entity.Id;
         }
 
-        public async Task<List<TransferRequestViewModel>> GetPendingRequestsForHRManagerAsync()
+        // ── Stage 2: Department Head ─────────────────────────────────────────
+        public async Task<List<TransferRequestViewModel>> GetRequestsForDeptHeadAsync(string branch, string department)
         {
             var entities = await _context.TransferRequests
-                .Where(r => r.Status == DomainTransfer.TransferRequestStatus.Pending)
+                .Where(r => r.Status == DomainTransfer.TransferRequestStatus.Pending
+                         && r.CurrentBranch == branch
+                         && r.Department == department)
                 .OrderByDescending(r => r.RequestedDate)
                 .ToListAsync();
             return entities.Select(MapToViewModel).ToList();
         }
 
-        public async Task<bool> HRManagerReviewAsync(int id, bool approved, string comments)
+        public async Task<List<TransferRequestViewModel>> GetReviewedByDeptHeadAsync(string branch, string department)
+        {
+            var entities = await _context.TransferRequests
+                .Where(r => r.DeptHeadReview != null
+                         && r.CurrentBranch == branch
+                         && r.Department == department)
+                .OrderByDescending(r => r.DeptHeadReviewDate)
+                .ToListAsync();
+            return entities.Select(MapToViewModel).ToList();
+        }
+
+        public async Task<bool> DeptHeadReviewAsync(int id, bool approved, string comments)
         {
             var request = await _context.TransferRequests.FindAsync(id);
-            if (request == null) return false;
+            if (request == null || request.Status != DomainTransfer.TransferRequestStatus.Pending) return false;
 
-            request.HRManagerReview = approved ? "Approved" : "Rejected";
-            request.HRManagerReviewDate = DateTime.Now;
-            request.HRManagerComments = comments;
+            request.DeptHeadReview     = approved ? "Approved" : "Rejected";
+            request.DeptHeadReviewDate = DateTime.Now;
+            request.DeptHeadComments   = comments;
             request.Status = approved
-                ? DomainTransfer.TransferRequestStatus.HRManagerApproved
-                : DomainTransfer.TransferRequestStatus.HRManagerRejected;
+                ? DomainTransfer.TransferRequestStatus.DeptHeadApproved
+                : DomainTransfer.TransferRequestStatus.DeptHeadRejected;
 
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(request.RequestedBy,
-                approved ? "Transfer Request Approved by HR Manager" : "Transfer Request Rejected by HR Manager",
+            await _notificationService.CreateNotificationAsync(
+                request.RequestedBy,
+                approved ? "Transfer Approved by Department Head" : "Transfer Rejected by Department Head ❌",
                 approved
-                    ? $"Your transfer request #{request.Id} from {request.CurrentBranch} to {request.RequestedBranch} has been approved by HR Manager."
-                    : $"Your transfer request #{request.Id} has been rejected by HR Manager. Comments: {comments}",
-                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected, request.Id);
+                    ? $"Transfer request #{request.Id} for {request.EmployeeName} has been approved by the Department Head and is now awaiting Branch Manager reviews."
+                    : $"Transfer request #{request.Id} for {request.EmployeeName} has been rejected by the Department Head. Comments: {comments}",
+                approved ? NotificationType.Approved : NotificationType.Rejected,
+                request.Id,
+                $"/Transfer/Details/{request.Id}"
+            );
 
             return true;
         }
 
+        // ── Stage 3: Branch Managers (parallel) ──────────────────────────────
         public async Task<List<TransferRequestViewModel>> GetPendingRequestsForBranchManagerAsync(string branch)
         {
             var entities = await _context.TransferRequests
-                .Where(r => (r.Status == DomainTransfer.TransferRequestStatus.HRManagerApproved ||
-                             r.Status == DomainTransfer.TransferRequestStatus.CurrentBMApproved ||
-                             r.Status == DomainTransfer.TransferRequestStatus.TargetBMApproved) &&
-                            (r.CurrentBranch == branch || r.RequestedBranch == branch))
+                .Where(r => (r.Status == DomainTransfer.TransferRequestStatus.DeptHeadApproved ||
+                             r.Status == DomainTransfer.TransferRequestStatus.CurrentBMApproved  ||
+                             r.Status == DomainTransfer.TransferRequestStatus.TargetBMApproved)
+                         && (r.CurrentBranch == branch || r.RequestedBranch == branch))
                 .OrderByDescending(r => r.RequestedDate)
                 .ToListAsync();
 
@@ -180,13 +143,25 @@ namespace HRMS.Application.Services
             foreach (var e in entities)
             {
                 bool isCurrentBM = e.CurrentBranch == branch;
-                bool isTargetBM = e.RequestedBranch == branch;
+                bool isTargetBM  = e.RequestedBranch == branch;
+
                 if (isCurrentBM && e.CurrentBMReview != null) continue;
-                if (isTargetBM && e.TargetBMReview != null) continue;
+                if (isTargetBM  && e.TargetBMReview  != null) continue;
                 if (isCurrentBM && isTargetBM && (e.CurrentBMReview != null || e.TargetBMReview != null)) continue;
+
                 result.Add(MapToViewModel(e));
             }
             return result;
+        }
+
+        public async Task<List<TransferRequestViewModel>> GetReviewedByBranchManagerAsync(string branch)
+        {
+            var entities = await _context.TransferRequests
+                .Where(r => (r.CurrentBranch == branch && r.CurrentBMReview != null)
+                         || (r.RequestedBranch == branch && r.TargetBMReview != null))
+                .OrderByDescending(r => r.CurrentBMReviewDate ?? r.TargetBMReviewDate)
+                .ToListAsync();
+            return entities.Select(MapToViewModel).ToList();
         }
 
         public async Task<bool> BranchManagerReviewAsync(int id, bool approved, string comments, string reviewerBranch)
@@ -194,19 +169,28 @@ namespace HRMS.Application.Services
             var request = await _context.TransferRequests.FindAsync(id);
             if (request == null) return false;
 
-            bool isCurrentBM = request.CurrentBranch == reviewerBranch;
-            bool isTargetBM = request.RequestedBranch == reviewerBranch;
+            if (request.Status != DomainTransfer.TransferRequestStatus.DeptHeadApproved &&
+                request.Status != DomainTransfer.TransferRequestStatus.CurrentBMApproved &&
+                request.Status != DomainTransfer.TransferRequestStatus.TargetBMApproved)
+                return false;
 
-            if (isCurrentBM && isTargetBM)
+            bool isCurrentBM = request.CurrentBranch  == reviewerBranch;
+            bool isTargetBM  = request.RequestedBranch == reviewerBranch;
+
+            if (!isCurrentBM && !isTargetBM) return false;
+
+            if (isCurrentBM)
             {
-                request.CurrentBMReview = approved ? "Approved" : "Rejected"; request.CurrentBMReviewDate = DateTime.Now; request.CurrentBMComments = comments;
-                request.TargetBMReview = approved ? "Approved" : "Rejected"; request.TargetBMReviewDate = DateTime.Now; request.TargetBMComments = comments;
+                request.CurrentBMReview     = approved ? "Approved" : "Rejected";
+                request.CurrentBMReviewDate = DateTime.Now;
+                request.CurrentBMComments   = comments;
             }
-            else if (isCurrentBM)
-            { request.CurrentBMReview = approved ? "Approved" : "Rejected"; request.CurrentBMReviewDate = DateTime.Now; request.CurrentBMComments = comments; }
-            else if (isTargetBM)
-            { request.TargetBMReview = approved ? "Approved" : "Rejected"; request.TargetBMReviewDate = DateTime.Now; request.TargetBMComments = comments; }
-            else return false;
+            if (isTargetBM)
+            {
+                request.TargetBMReview     = approved ? "Approved" : "Rejected";
+                request.TargetBMReviewDate = DateTime.Now;
+                request.TargetBMComments   = comments;
+            }
 
             if (!approved)
             {
@@ -217,23 +201,41 @@ namespace HRMS.Application.Services
             else
             {
                 bool currentDone = request.CurrentBMReview == "Approved";
-                bool targetDone = request.TargetBMReview == "Approved";
-                request.Status = (currentDone && targetDone) ? DomainTransfer.TransferRequestStatus.BothBMsApproved
-                    : currentDone ? DomainTransfer.TransferRequestStatus.CurrentBMApproved
-                    : DomainTransfer.TransferRequestStatus.TargetBMApproved;
+                bool targetDone  = request.TargetBMReview  == "Approved";
+
+                if (currentDone && targetDone)
+                    request.Status = DomainTransfer.TransferRequestStatus.BothBMsApproved;
+                else if (currentDone)
+                    request.Status = DomainTransfer.TransferRequestStatus.CurrentBMApproved;
+                else
+                    request.Status = DomainTransfer.TransferRequestStatus.TargetBMApproved;
             }
 
             await _context.SaveChangesAsync();
 
             var bmLabel = isCurrentBM ? "Current Branch Manager" : "Target Branch Manager";
-            await _notificationService.CreateNotificationAsync(request.RequestedBy,
-                approved ? $"Transfer Request Approved by {bmLabel}" : $"Transfer Request Rejected by {bmLabel}",
+            await _notificationService.CreateNotificationAsync(
+                request.RequestedBy,
+                approved ? $"Transfer Approved by {bmLabel}" : $"Transfer Rejected by {bmLabel} ❌",
                 approved
-                    ? $"Your transfer request #{request.Id} has been approved by {bmLabel}."
-                    : $"Your transfer request #{request.Id} has been rejected by {bmLabel}. Comments: {comments}",
-                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected, request.Id);
+                    ? $"Transfer request #{request.Id} has been approved by {bmLabel}."
+                    : $"Transfer request #{request.Id} has been rejected by {bmLabel}. Comments: {comments}",
+                approved ? NotificationType.Approved : NotificationType.Rejected,
+                request.Id,
+                $"/Transfer/Details/{request.Id}"
+            );
 
             return true;
+        }
+
+        // ── Stage 4: Area Manager ─────────────────────────────────────────────
+        public async Task<List<TransferRequestViewModel>> GetReviewedByAreaManagerAsync()
+        {
+            var entities = await _context.TransferRequests
+                .Where(r => r.AreaManagerReview != null)
+                .OrderByDescending(r => r.AreaManagerReviewDate)
+                .ToListAsync();
+            return entities.Select(MapToViewModel).ToList();
         }
 
         public async Task<List<TransferRequestViewModel>> GetRequestsForAreaManagerAsync()
@@ -248,37 +250,103 @@ namespace HRMS.Application.Services
         public async Task<bool> AreaManagerReviewAsync(int id, bool approved, string comments)
         {
             var request = await _context.TransferRequests.FindAsync(id);
-            if (request == null) return false;
+            if (request == null || request.Status != DomainTransfer.TransferRequestStatus.BothBMsApproved) return false;
 
-            request.AreaManagerReview = approved ? "Approved" : "Rejected";
+            request.AreaManagerReview     = approved ? "Approved" : "Rejected";
             request.AreaManagerReviewDate = DateTime.Now;
-            request.AreaManagerComments = comments;
+            request.AreaManagerComments   = comments;
             request.Status = approved
                 ? DomainTransfer.TransferRequestStatus.AreaManagerApproved
                 : DomainTransfer.TransferRequestStatus.AreaManagerRejected;
 
             await _context.SaveChangesAsync();
 
-            await _notificationService.CreateNotificationAsync(request.RequestedBy,
-                approved ? "Transfer Request Approved" : "Transfer Request Rejected",
+            await _notificationService.CreateNotificationAsync(
+                request.RequestedBy,
+                approved ? "Transfer Approved by Area Manager – Awaiting HR Finalization" : "Transfer Rejected by Area Manager ❌",
                 approved
-                    ? $"Your transfer request #{request.Id} from {request.CurrentBranch} to {request.RequestedBranch} has been fully approved."
-                    : $"Your transfer request #{request.Id} has been rejected by the Area Manager. Comments: {comments}",
-                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected, request.Id);
+                    ? $"Transfer request #{request.Id} has been approved by the Area Manager and is now awaiting final HR approval."
+                    : $"Transfer request #{request.Id} has been rejected by the Area Manager. Comments: {comments}",
+                approved ? NotificationType.Approved : NotificationType.Rejected,
+                request.Id,
+                $"/Transfer/Details/{request.Id}"
+            );
 
             return true;
         }
 
+        // ── Stage 5: HR Finalization ──────────────────────────────────────────
+        public async Task<List<TransferRequestViewModel>> GetRequestsForHRManagerAsync(string branch)
+        {
+            var entities = await _context.TransferRequests
+                .Where(r => r.CurrentBranch == branch || r.RequestedBranch == branch)
+                .OrderByDescending(r => r.RequestedDate)
+                .ToListAsync();
+            return entities.Select(MapToViewModel).ToList();
+        }
+
+        public async Task<List<TransferRequestViewModel>> GetRequestsForHRFinalizationAsync()
+        {
+            var entities = await _context.TransferRequests
+                .Where(r => r.Status == DomainTransfer.TransferRequestStatus.AreaManagerApproved)
+                .OrderByDescending(r => r.RequestedDate)
+                .ToListAsync();
+            return entities.Select(MapToViewModel).ToList();
+        }
+
+        public async Task<bool> HRManagerReviewAsync(int id, bool approved, string comments)
+        {
+            var request = await _context.TransferRequests.FindAsync(id);
+            if (request == null || request.Status != DomainTransfer.TransferRequestStatus.AreaManagerApproved) return false;
+
+            request.HRManagerReview     = approved ? "Approved" : "Rejected";
+            request.HRManagerReviewDate = DateTime.Now;
+            request.HRManagerComments   = comments;
+            request.Status = approved
+                ? DomainTransfer.TransferRequestStatus.FullyApproved
+                : DomainTransfer.TransferRequestStatus.HRFinalRejected;
+
+            await _context.SaveChangesAsync();
+
+            await _notificationService.CreateNotificationAsync(
+                request.RequestedBy,
+                approved ? "Transfer Fully Approved ✅" : "Transfer Rejected at HR Finalization ❌",
+                approved
+                    ? $"Transfer request #{request.Id} for {request.EmployeeName} from {request.CurrentBranch} to {request.RequestedBranch} has been fully approved and finalized by HR."
+                    : $"Transfer request #{request.Id} has been rejected at HR finalization. Comments: {comments}",
+                approved ? NotificationType.Approved : NotificationType.Rejected,
+                request.Id,
+                $"/Transfer/Details/{request.Id}"
+            );
+
+            if (approved)
+            {
+                await _notificationService.CreateNotificationAsync(
+                    request.EmployeeEmail,
+                    "Your Transfer Has Been Approved ✅",
+                    $"Your transfer from {request.CurrentBranch} to {request.RequestedBranch} has been fully approved. Please coordinate with your managers for the transition.",
+                    NotificationType.Approved,
+                    request.Id,
+                    $"/Transfer/Details/{request.Id}"
+                );
+            }
+
+            return true;
+        }
+
+        // ── General queries ───────────────────────────────────────────────────
         public async Task<List<TransferRequestViewModel>> GetAllRequestsAsync()
         {
-            var entities = await _context.TransferRequests.OrderByDescending(r => r.RequestedDate).ToListAsync();
+            var entities = await _context.TransferRequests
+                .OrderByDescending(r => r.RequestedDate)
+                .ToListAsync();
             return entities.Select(MapToViewModel).ToList();
         }
 
         public async Task<List<TransferRequestViewModel>> GetRequestsByUserAsync(string email)
         {
             var entities = await _context.TransferRequests
-                .Where(r => r.RequestedBy == email)
+                .Where(r => r.RequestedBy == email || r.EmployeeEmail == email)
                 .OrderByDescending(r => r.RequestedDate)
                 .ToListAsync();
             return entities.Select(MapToViewModel).ToList();
@@ -299,22 +367,45 @@ namespace HRMS.Application.Services
             return entity == null ? (null, null, null) : (entity.DocumentData, entity.DocumentFileName, entity.DocumentContentType);
         }
 
-        private static TransferRequestViewModel MapToViewModel(DomainTransfer.TransferRequest entity) => new()
+        // ── Mapper ────────────────────────────────────────────────────────────
+        private static TransferRequestViewModel MapToViewModel(DomainTransfer.TransferRequest entity)
         {
-            Id = entity.Id, EmployeeName = entity.EmployeeName, EpfNumber = entity.EpfNumber,
-            EmployeeEmail = entity.EmployeeEmail, CurrentBranch = entity.CurrentBranch,
-            CurrentDesignation = entity.CurrentDesignation, Department = entity.Department,
-            RequestedBranch = entity.RequestedBranch, Reason = entity.Reason,
-            PreferredDate = entity.PreferredDate, YearsOfService = entity.YearsOfService,
-            RequestedBy = entity.RequestedBy, RequestedByRole = entity.RequestedByRole,
-            RequestedDate = entity.RequestedDate, Status = (TransferStatus)(int)entity.Status,
-            DocumentFileName = entity.DocumentFileName, HasDocument = entity.DocumentData != null,
-            HRManagerReview = entity.HRManagerReview, HRManagerReviewDate = entity.HRManagerReviewDate,
-            HRManagerComments = entity.HRManagerComments, CurrentBMReview = entity.CurrentBMReview,
-            CurrentBMReviewDate = entity.CurrentBMReviewDate, CurrentBMComments = entity.CurrentBMComments,
-            TargetBMReview = entity.TargetBMReview, TargetBMReviewDate = entity.TargetBMReviewDate,
-            TargetBMComments = entity.TargetBMComments, AreaManagerReview = entity.AreaManagerReview,
-            AreaManagerReviewDate = entity.AreaManagerReviewDate, AreaManagerComments = entity.AreaManagerComments
-        };
+            return new TransferRequestViewModel
+            {
+                Id                 = entity.Id,
+                EmployeeName       = entity.EmployeeName,
+                EpfNumber          = entity.EpfNumber,
+                EmployeeEmail      = entity.EmployeeEmail,
+                CurrentBranch      = entity.CurrentBranch,
+                CurrentDesignation = entity.CurrentDesignation,
+                Department         = entity.Department,
+                RequestedBranch    = entity.RequestedBranch,
+                Reason             = entity.Reason,
+                PreferredDate      = entity.PreferredDate,
+                YearsOfService     = entity.YearsOfService,
+                JoinDate           = entity.JoinDate,
+                RequestedBy        = entity.RequestedBy,
+                RequestedByRole    = entity.RequestedByRole,
+                RequestedDate      = entity.RequestedDate,
+                Status             = (TransferStatus)(int)entity.Status,
+                DocumentFileName   = entity.DocumentFileName,
+                HasDocument        = entity.DocumentData != null,
+                DeptHeadReview     = entity.DeptHeadReview,
+                DeptHeadReviewDate = entity.DeptHeadReviewDate,
+                DeptHeadComments   = entity.DeptHeadComments,
+                CurrentBMReview     = entity.CurrentBMReview,
+                CurrentBMReviewDate = entity.CurrentBMReviewDate,
+                CurrentBMComments   = entity.CurrentBMComments,
+                TargetBMReview     = entity.TargetBMReview,
+                TargetBMReviewDate = entity.TargetBMReviewDate,
+                TargetBMComments   = entity.TargetBMComments,
+                AreaManagerReview     = entity.AreaManagerReview,
+                AreaManagerReviewDate = entity.AreaManagerReviewDate,
+                AreaManagerComments   = entity.AreaManagerComments,
+                HRManagerReview     = entity.HRManagerReview,
+                HRManagerReviewDate = entity.HRManagerReviewDate,
+                HRManagerComments   = entity.HRManagerComments,
+            };
+        }
     }
 }
