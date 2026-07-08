@@ -1,5 +1,6 @@
 @page "/Notifications"
 @using HRMS.Domain.Entities.Transfer
+@using HRMS.Domain.Entities.Core
 @model HRMS.UI.Pages.Transfer.NotificationsModel
 @{
     ViewData["Title"] = "Notifications";
@@ -50,16 +51,16 @@
 {
     @foreach (var n in Model.Notifications)
     {
-        var icClass = n.Type == NotificationType.Approved ? "green" : n.Type == NotificationType.Rejected ? "red" : "blue";
+        var icClass = n.Type == CoreNotificationType.Approved ? "green" : n.Type == CoreNotificationType.Rejected ? "red" : "blue";
         var timeAgo = GetTimeAgo(n.CreatedAt);
 
         <div class="notif-item @(!n.IsRead ? "unread" : "")">
             <div class="notif-ic @icClass">
-                @if (n.Type == NotificationType.Approved)
+                @if (n.Type == CoreNotificationType.Approved)
                 {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
                 }
-                else if (n.Type == NotificationType.Rejected)
+                else if (n.Type == CoreNotificationType.Rejected)
                 {
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                 }

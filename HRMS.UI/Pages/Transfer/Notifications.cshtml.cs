@@ -1,4 +1,5 @@
-﻿using HRMS.Domain.Entities.Transfer;
+using HRMS.Domain.Entities.Transfer;
+using HRMS.Domain.Entities.Core;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
