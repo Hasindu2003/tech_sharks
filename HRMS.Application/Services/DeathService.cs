@@ -1,5 +1,6 @@
-﻿using HRMS.Domain.Entities.Death;
+using HRMS.Domain.Entities.Death;
 using HRMS.Domain.Entities.Transfer;
+using HRMS.Domain.Entities.Core;
 using HRMS.Infrastructure.Identity;
 using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
@@ -182,7 +183,7 @@ namespace HRMS.Application.Services
                 "BM_ROLE", // Simplified logic for role broadcast
                 "New Employee Death Request",
                 $"A death request for {entity.EmployeeName} requires your review.",
-                NotificationType.Info,
+                CoreNotificationType.Info,
                 entity.Id,
                 "/Separation/Dashboard"
             );
@@ -228,7 +229,7 @@ namespace HRMS.Application.Services
                 req.InitiatedBy,
                 "Death Request Rejected",
                 $"Your request for {req.EmployeeName} was rejected by BM.",
-                NotificationType.Rejected,
+                CoreNotificationType.Rejected,
                 req.Id,
                 "/Separation/Dashboard"
             );

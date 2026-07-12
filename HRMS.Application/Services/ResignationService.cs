@@ -1,5 +1,6 @@
-﻿using HRMS.Domain.Entities.Resignation;
+using HRMS.Domain.Entities.Resignation;
 using HRMS.Domain.Entities.Transfer;
+using HRMS.Domain.Entities.Core;
 using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +13,7 @@ namespace HRMS.Application.Services
     {
         Task<int> CreateResignationRequestAsync(ResignationRequestViewModel vm);
         Task<(bool Success, string? Error)> ValidateAndSubmitAsync(int id);
+        Task<(bool Success, string? Error)> UpdateDraftAsync(int id, DateTime effectiveDate, string reasonForResignation, string? additionalRemarks, bool hasOutstandingLoans, bool isLoanGuarantor);
         Task<ResignationRequestViewModel?> GetByIdAsync(int id);
         Task<List<ResignationRequestViewModel>> GetMyResignationsAsync(string employeeEmail);
         Task<List<ResignationRequestViewModel>> GetPendingForBranchManagerAsync();
@@ -45,7 +47,7 @@ namespace HRMS.Application.Services
             _notificationService = notificationService;
         }
 
-        // ── Create ──
+        // -- Create --
         /// <summary>
         /// Creates a new resignation request in Draft status.
         /// </summary>
@@ -79,7 +81,7 @@ namespace HRMS.Application.Services
             return entity.Id;
         }
 
-        // ── Validate & Submit ──
+        // -- Validate & Submit --
         /// <summary>
         /// Validates that a draft request is ready for submission (e.g., has documents attached)
         /// and moves it to the SubmittedForApproval status.
@@ -99,7 +101,7 @@ namespace HRMS.Application.Services
             if (!entity.Documents.Any())
                 return (false, "At least one supporting document must be attached before submission.");
 
-            // All validations passed — submit
+            // All validations passed � submit
             entity.Status = ResignationStatus.SubmittedForApproval;
             entity.LastModifiedDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -107,7 +109,41 @@ namespace HRMS.Application.Services
             return (true, null);
         }
 
-        // ── Queries ──
+        // -- Update Draft --
+        /// <summary>
+        /// Updates an existing Draft resignation with new field values.
+        /// Only works if the request is still in Draft status.
+        /// </summary>
+        public async Task<(bool Success, string? Error)> UpdateDraftAsync(
+            int id,
+            DateTime effectiveDate,
+            string reasonForResignation,
+            string? additionalRemarks,
+            bool hasOutstandingLoans,
+            bool isLoanGuarantor)
+        {
+            var entity = await _context.ResignationRequests
+                .FirstOrDefaultAsync(r => r.Id == id);
+
+            if (entity == null)
+                return (false, "Resignation request not found.");
+
+            if (entity.Status != ResignationStatus.Draft)
+                return (false, "Only draft requests can be edited.");
+
+            entity.EffectiveDate        = effectiveDate;
+            entity.NoticePeriodDays     = (effectiveDate.Date - DateTime.Today).Days;
+            entity.ReasonForResignation = reasonForResignation;
+            entity.AdditionalRemarks    = additionalRemarks;
+            entity.HasOutstandingLoans  = hasOutstandingLoans;
+            entity.IsLoanGuarantor      = isLoanGuarantor;
+            entity.LastModifiedDate     = DateTime.Now;
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        // -- Queries --
         public async Task<ResignationRequestViewModel?> GetByIdAsync(int id)
         {
             var entity = await _context.ResignationRequests
@@ -179,7 +215,7 @@ namespace HRMS.Application.Services
             return list.Select(Map).ToList();
         }
 
-        // ── Stage 1: Branch Manager ──
+        // -- Stage 1: Branch Manager --
         /// <summary>
         /// Approves the resignation at the Branch Manager level.
         /// </summary>
@@ -202,7 +238,7 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Resignation Acknowledged by Branch Manager",
                 $"Your resignation request has been acknowledged by your Branch Manager. It is now pending Area Manager review. Effective date: {entity.EffectiveDate:MMMM dd, yyyy}.",
-                NotificationType.Approved,
+                CoreNotificationType.Approved,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
@@ -228,14 +264,14 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Resignation Request Rejected",
                 $"Your resignation request has been rejected by your Branch Manager. Reason: {comments}",
-                NotificationType.Rejected,
+                CoreNotificationType.Rejected,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
 
-        // ── Stage 2: Area Manager ──
+        // -- Stage 2: Area Manager --
         /// <summary>
         /// Approves the resignation at the Area Manager level.
         /// </summary>
@@ -258,7 +294,7 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Resignation Approved by Area Manager",
                 $"Your resignation request has been approved by the Area Manager. It is now pending final HR Manager approval. Effective date: {entity.EffectiveDate:MMMM dd, yyyy}.",
-                NotificationType.Approved,
+                CoreNotificationType.Approved,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
@@ -284,14 +320,14 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Resignation Request Rejected",
                 $"Your resignation request has been rejected by the Area Manager. Reason: {comments}",
-                NotificationType.Rejected,
+                CoreNotificationType.Rejected,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
 
-        // ── Stage 3: HR Manager ──
+        // -- Stage 3: HR Manager --
         /// <summary>
         /// Approves the resignation at the HR Manager level (Final approval).
         /// Generates the acceptance letter and prepares for account deactivation.
@@ -313,12 +349,12 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
-            // Notify employee — acceptance letter ready
+            // Notify employee � acceptance letter ready
             await _notificationService.CreateNotificationAsync(
                 entity.EmployeeEmail,
-                "Resignation Accepted — Letter Available",
+                "Resignation Accepted � Letter Available",
                 $"Your resignation has been officially approved by HR. Your acceptance letter is now available. Your last working day is {entity.EffectiveDate:MMMM dd, yyyy}. Please ensure all handover tasks are completed.",
-                NotificationType.Approved,
+                CoreNotificationType.Approved,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
@@ -327,7 +363,7 @@ namespace HRMS.Application.Services
                 reviewerEmail,
                 $"Reminder: Process Account Deactivation on {entity.EffectiveDate:dd MMM yyyy}",
                 $"Resignation of {entity.EmployeeName} ({entity.EpfNumber}) has been approved. Please remember to process account deactivation on the effective date: {entity.EffectiveDate:MMMM dd, yyyy}. Use the 'Process Effective Date' action on the resignation details page.",
-                NotificationType.Info,
+                CoreNotificationType.Info,
                 entity.Id,
                 "/HRManager/ReviewResignations");
 
@@ -353,14 +389,14 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Resignation Request Rejected by HR",
                 $"Your resignation request has been rejected by the HR Manager. Reason: {comments}. Please contact HR for further clarification.",
-                NotificationType.Rejected,
+                CoreNotificationType.Rejected,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
             return true;
         }
 
-        // ── Process Effective Date (account deactivation) ──
+        // -- Process Effective Date (account deactivation) --
         public async Task<(bool Success, string? Error)> ProcessEffectiveDateAsync(
             int id, string processedBy, UserManager<ApplicationUser> userManager)
         {
@@ -398,16 +434,16 @@ namespace HRMS.Application.Services
             // Notify employee
             await _notificationService.CreateNotificationAsync(
                 entity.EmployeeEmail,
-                "Employment Ended — Account Deactivated",
+                "Employment Ended � Account Deactivated",
                 $"Your employment has officially ended on {entity.EffectiveDate:MMMM dd, yyyy}. Your account has been deactivated. Please contact HR if you need any assistance.",
-                NotificationType.Info,
+                CoreNotificationType.Info,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
             return (true, null);
         }
 
-        // ── Reactivate Account ──
+        // -- Reactivate Account --
         public async Task<(bool Success, string? Error)> ReactivateAccountAsync(
             int id, string reactivatedBy, UserManager<ApplicationUser> userManager)
         {
@@ -439,14 +475,14 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Account Reactivated",
                 $"Your account has been reactivated by {reactivatedBy}. You can now log in to the HRMS portal.",
-                NotificationType.Approved,
+                CoreNotificationType.Approved,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Resignation");
 
             return (true, null);
         }
 
-        // ── Documents ──
+        // -- Documents --
         public async Task<int> AddDocumentAsync(int resignationRequestId, string fileName, string contentType, byte[] data)
         {
             var doc = new ResignationDocument
@@ -468,7 +504,7 @@ namespace HRMS.Application.Services
             return doc == null ? (null, null, null) : (doc.DocumentData, doc.FileName, doc.ContentType);
         }
 
-        // ── Mapper ──
+        // -- Mapper --
         private static ResignationRequestViewModel Map(ResignationRequest e) => new()
         {
             Id                        = e.Id,

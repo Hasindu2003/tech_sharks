@@ -10,7 +10,13 @@ namespace HRMS.Domain.Entities.Leave
         public int LeaveId { get; set; }       // FK to Leave
         public Leave Leave { get; set; } = null!;
 
-        public string? MedicalCertificate { get; set; }
+        public int LeaveLevel { get; set; } = 1;
+        public int ChildNumber { get; set; } = 1;
         public DateTime? ExpectedDeliveryDate { get; set; }
+        public string? MedicalCertificate { get; set; }
+        public string? MedicalCertificatePath { get; set; }
+        public string? DoctorLetterPath { get; set; }
+        public string VerificationStatus { get; set; } = "Pending";
+        public string? VerificationComments { get; set; }
     }
 }

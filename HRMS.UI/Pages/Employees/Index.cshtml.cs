@@ -13,7 +13,10 @@ using HRMS.Infrastructure.Persistence;
 
 namespace HRMS.UI.Pages.Employees
 {
+    using Employee = HRMS.Domain.Entities.Core.Employee;
+
     [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+
     public class IndexModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -52,23 +55,28 @@ namespace HRMS.UI.Pages.Employees
 
             var currentUser = await _userManager.GetUserAsync(User);
 
-            if (User.IsInRole("HR Manager") && currentUser?.EmployeeId != null)
+            if (User.IsInRole("HR Manager") || User.IsInRole("Branch Manager"))
             {
-                var hrEmployee = await _context.Employees.FindAsync(currentUser.EmployeeId.Value);
-                scopedBranchId = hrEmployee?.BranchId;
+                if (!string.IsNullOrWhiteSpace(currentUser?.Branch))
+                {
+                    var branch = await _context.Branches.FirstOrDefaultAsync(b => b.Name == currentUser.Branch);
+                    scopedBranchId = branch?.Id ?? -1; // -1 ensures no results if branch name is invalid
+                }
+                else
+                {
+                    scopedBranchId = -1; // Missing branch config -> see nothing
+                }
             }
-            else if (User.IsInRole("Branch Manager") && !string.IsNullOrWhiteSpace(currentUser?.Branch))
+            else if (User.IsInRole("Area Manager"))
             {
-                var branch = await _context.Branches.FirstOrDefaultAsync(b => b.Name == currentUser.Branch);
-                scopedBranchId = branch?.Id;
-            }
-            else if (User.IsInRole("Area Manager") && !string.IsNullOrWhiteSpace(currentUser?.ManagedBranches))
-            {
-                amBranchIds = currentUser.ManagedBranches
+                var managed = currentUser?.ManagedBranches ?? "";
+                amBranchIds = managed
                     .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
                     .Where(id => id > 0)
                     .ToList();
+                    
+                if (!amBranchIds.Any()) amBranchIds = new List<int> { -1 }; // Missing config -> see nothing
             }
 
             var employeeQuery = _context.Employees

@@ -1,5 +1,6 @@
-﻿using HRMS.Domain.Entities.Termination;
+using HRMS.Domain.Entities.Termination;
 using HRMS.Domain.Entities.Transfer;
+using HRMS.Domain.Entities.Core;
 using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using Microsoft.EntityFrameworkCore;
@@ -125,7 +126,7 @@ namespace HRMS.Application.Services
             if (entity.IsLoanGuarantor && !entity.HasOverridePermission)
                 return (false, "Employee is listed as a loan guarantor for another employee. The termination cannot proceed until the guarantee is released, or a senior management override is provided.");
 
-            // All validations passed — submit
+            // All validations passed � submit
             entity.Status = TerminationRequestStatus.SubmittedForApproval;
             entity.LastModifiedDate = DateTime.Now;
             await _context.SaveChangesAsync();
@@ -200,7 +201,7 @@ namespace HRMS.Application.Services
                 entity.InitiatedBy,
                 "Termination Request Approved",
                 $"Termination request #{entity.Id} for {entity.EmployeeName} ({entity.EpfNumber}) has been approved. Proceeding to financial clearance stage.",
-                NotificationType.Approved,
+                CoreNotificationType.Approved,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Termination"
             );
@@ -231,7 +232,7 @@ namespace HRMS.Application.Services
                 entity.InitiatedBy,
                 "Termination Request Rejected",
                 $"Termination request #{entity.Id} for {entity.EmployeeName} ({entity.EpfNumber}) has been rejected. Comments: {comments}",
-                NotificationType.Rejected,
+                CoreNotificationType.Rejected,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Termination"
             );
@@ -267,7 +268,7 @@ namespace HRMS.Application.Services
                 entity.EmployeeEmail,
                 "Employment Termination Finalized",
                 $"Your employment termination has been finalized effective {entity.EffectiveTerminationDate:MMMM dd, yyyy}. All financial settlements have been processed. Please contact HR for any further information.",
-                NotificationType.Info,
+                CoreNotificationType.Info,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Termination"
             );
@@ -277,7 +278,7 @@ namespace HRMS.Application.Services
                 entity.InitiatedBy,
                 "Termination Process Completed",
                 $"Termination request #{entity.Id} for {entity.EmployeeName} ({entity.EpfNumber}) has been fully processed. Employee status updated to Terminated.",
-                NotificationType.Approved,
+                CoreNotificationType.Approved,
                 entity.Id,
                 "/Transfer/Separation?ActiveTab=Termination"
             );
@@ -285,7 +286,7 @@ namespace HRMS.Application.Services
             return true;
         }
 
-        // ── Document Management ──
+        // -- Document Management --
         public async Task<int> AddDocumentAsync(int terminationRequestId, string fileName, string contentType, byte[] data, TerminationDocumentType docType)
         {
             var doc = new TerminationDocument
@@ -352,7 +353,7 @@ namespace HRMS.Application.Services
             return entities.Select(MapToViewModel).ToList();
         }
 
-        // ── Mapper ──
+        // -- Mapper --
         private static TerminationRequestViewModel MapToViewModel(TerminationRequest entity)
         {
             return new TerminationRequestViewModel

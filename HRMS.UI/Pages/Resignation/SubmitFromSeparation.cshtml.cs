@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -36,17 +36,29 @@ namespace HRMS.UI.Pages.Resignation
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Basic date validation
-            if (effectiveDate.Date < DateTime.Today.AddDays(14))
+            // ── Strict validation applies to "submit" only, not drafts ──
+            if (action == "submit")
             {
-                TempData["ErrorMessage"] = "Effective date must be at least 14 days from today.";
-                return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
-            }
+                if (effectiveDate.Date < DateTime.Today.AddDays(14))
+                {
+                    TempData["ErrorMessage"] = "Effective date must be at least 14 days from today.";
+                    return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
+                }
 
-            if (string.IsNullOrWhiteSpace(reasonForResignation) || reasonForResignation.Length < 20)
+                if (string.IsNullOrWhiteSpace(reasonForResignation) || reasonForResignation.Length < 20)
+                {
+                    TempData["ErrorMessage"] = "Reason for resignation must be at least 20 characters.";
+                    return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
+                }
+            }
+            else
             {
-                TempData["ErrorMessage"] = "Reason for resignation must be at least 20 characters.";
-                return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
+                // Draft: ensure at least some minimal data exists
+                if (effectiveDate == default)
+                    effectiveDate = DateTime.Today.AddDays(14);
+
+                if (string.IsNullOrWhiteSpace(reasonForResignation))
+                    reasonForResignation = "(draft)";
             }
 
             var noticeDays = (effectiveDate.Date - DateTime.Today).Days;
@@ -69,9 +81,10 @@ namespace HRMS.UI.Pages.Resignation
                 InitiatedBy          = user.Email!
             };
 
+            // Always create as Draft first
             var id = await _resignationService.CreateResignationRequestAsync(vm);
 
-            // Upload docs
+            // Upload supporting documents (allowed for both draft and submit)
             if (documents != null)
             {
                 var allowed = new[] { ".pdf", ".doc", ".docx", ".jpg", ".jpeg", ".png" };
@@ -88,6 +101,7 @@ namespace HRMS.UI.Pages.Resignation
 
             if (action == "submit")
             {
+                // Validate documents are present, then move to SubmittedForApproval
                 var (success, error) = await _resignationService.ValidateAndSubmitAsync(id);
                 if (!success)
                 {
@@ -98,10 +112,11 @@ namespace HRMS.UI.Pages.Resignation
             }
             else
             {
-                TempData["SuccessMessage"] = "Resignation saved as draft.";
+                TempData["SuccessMessage"] = "Resignation saved as draft. You can review and submit it later.";
             }
 
             return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
         }
+
     }
 }

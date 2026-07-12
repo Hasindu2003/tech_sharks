@@ -1,0 +1,189 @@
+@page
+@model HRMS.UI.Pages.Employee.Overseas.StatusModel
+@{
+    ViewData["Title"] = "Overseas Request Status";
+    ViewData["ActiveNav"] = "LeaveDashboard";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0; }
+    
+    /* Inline table styles */
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    /* Badges */
+    .status-badge {
+        padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .status-badge.Pending { background: #fef3c7; color: #92400e; }
+    .status-badge.Approved { background: #dcfce7; color: #166534; }
+    .status-badge.Rejected { background: #fee2e2; color: #991b1b; }
+    
+    /* Custom badge map */
+    .status-badge.New { background: #fef3c7; color: #92400e; }
+    .status-badge.Verified { background: #dbeafe; color: #1e40af; }
+    .status-badge.PendingBoard { background: #fef3c7; color: #92400e; }
+    .status-badge.Cancelled { background: #f3f4f6; color: #4b5563; }
+    
+    /* Dropdown container */
+    .kanrich-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    /* Dropdown content (hidden by default) */
+    .kanrich-dropdown-content {
+        display: none;
+        position: absolute;
+        right: 0;
+        background-color: #ffffff;
+        min-width: 220px;
+        box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.1);
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        z-index: 100;
+        margin-top: 4px;
+        overflow: hidden;
+    }
+    /* Links inside the dropdown */
+    .kanrich-dropdown-content a {
+        color: #151811;
+        padding: 11px 16px;
+        text-decoration: none;
+        display: block;
+        font-size: 13px;
+        font-weight: 600;
+        border-bottom: 1px solid #f3f4f6;
+        text-align: left;
+        transition: background-color 0.15s, color 0.15s;
+    }
+    .kanrich-dropdown-content a:last-child {
+        border-bottom: none;
+    }
+    /* Change color of dropdown links on hover */
+    .kanrich-dropdown-content a:hover {
+        background-color: #f6f8f7;
+        color: #10823c;
+    }
+    /* Show the dropdown menu on hover */
+    .kanrich-dropdown:hover .kanrich-dropdown-content {
+        display: block;
+    }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;">
+    <div>
+        <h1 class="page-h">My Overseas Requests</h1>
+        <p class="page-s">Track status of submitted overseas leave applications</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="/Employee/Leave/Dashboard" class="btn-kanrich btn-kanrich-outline" style="padding:9px 18px">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <div class="kanrich-dropdown">
+            <button class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px">
+                <i class="bi bi-plus-circle"></i> Apply for Leave <i class="bi bi-chevron-down" style="font-size: 10px; margin-left: 4px;"></i>
+            </button>
+            <div class="kanrich-dropdown-content">
+                <a href="/Employee/Leave/Apply"><i class="bi bi-calendar-plus"></i> Standard Leave</a>
+                <a href="/Employee/Overseas/Request"><i class="bi bi-globe"></i> Overseas Leave</a>
+                @if (!Model.EmployeeGender.Equals("Male", StringComparison.OrdinalIgnoreCase))
+                {
+                    <a href="/Employee/Maternity/Request"><i class="bi bi-heart-pulse"></i> Maternity Leave</a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="tbl-card">
+    <table class="sep-table">
+        <thead>
+            <tr>
+                <th>Applied Date</th>
+                <th>Leave Period</th>
+                <th>Country</th>
+                <th>Passport Status</th>
+                <th>Board Approval</th>
+                <th>Final Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.MyOverseasLeaves.Any())
+            {
+                @foreach (var leave in Model.MyOverseasLeaves)
+                {
+                    <tr>
+                        <td style="font-weight: 600;">@leave.AppliedDate.ToString("MMM dd, yyyy")</td>
+                        <td>@leave.StartDate.ToString("MMM dd, yyyy") to @leave.EndDate.ToString("MMM dd, yyyy") (@leave.TotalDays days)</td>
+                        <td style="font-weight: 600;">@leave.OverseasLeave?.Country</td>
+                        <td>
+                            @{
+                                var rawPassportStatus = leave.OverseasLeave?.VerificationStatus ?? "Pending";
+                                var badgeClass = rawPassportStatus.Replace(" ", "");
+                            }
+                            <span class="status-badge @badgeClass">@rawPassportStatus</span>
+                        </td>
+                        <td>
+                            @{
+                                var rawBoardStatus = leave.OverseasLeave?.BoardApprovalStatus ?? "Pending";
+                                var boardBadgeClass = rawBoardStatus.Replace(" ", "");
+                            }
+                            <span class="status-badge @boardBadgeClass">@rawBoardStatus</span>
+                        </td>
+                        <td>
+                            <span class="status-badge @leave.Status">
+                                @if (leave.Status == "Pending")
+                                {
+                                    <i class="bi bi-clock"></i>
+                                }
+                                else if (leave.Status == "Approved")
+                                {
+                                    <i class="bi bi-check-circle-fill"></i>
+                                }
+                                else if (leave.Status == "Rejected")
+                                {
+                                    <i class="bi bi-x-circle-fill"></i>
+                                }
+                                else if (leave.Status == "Cancelled")
+                                {
+                                    <i class="bi bi-slash-circle"></i>
+                                }
+                                @leave.Status
+                            </span>
+                        </td>
+                        <td>
+                            @if (leave.Status == "Pending")
+                            {
+                                <form method="post" asp-page-handler="Cancel" asp-route-leaveId="@leave.Id" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this request?');">
+                                    <button type="submit" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm" style="padding: 4px 10px;">
+                                        <i class="bi bi-x-circle"></i> Cancel
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span style="color: #9ca3af; font-size: 12px; font-style: italic;">No actions</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #9ca3af; padding: 48px 24px; font-size: 13.5px;">
+                        <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 10px;"></i>
+                        No overseas requests found.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

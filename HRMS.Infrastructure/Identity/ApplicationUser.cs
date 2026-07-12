@@ -3,10 +3,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Infrastructure.Identity
 {
-    /// <summary>
-    /// Represents the customized Identity User for HRMS.
-    /// Includes additional profile information like EPF Number, Branch, and Designation.
-    /// </summary>
     public class ApplicationUser : IdentityUser
     {
         // Link to the Employee record (optional)

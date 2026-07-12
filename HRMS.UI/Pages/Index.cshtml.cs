@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -56,21 +52,12 @@ namespace HRMS.UI.Pages
                 var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Email == email);
                 GreetingName = employee?.FullName ?? currentUser?.FullName ?? email;
             }
-            else
-            {
-                GreetingName = "Admin";
-            }
 
-            // Determine branch scope by role
+            // Total employees (scoped by role)
             int? scopedBranchId = null;
             List<int>? amBranchIds = null;
 
-            if (User.IsInRole("HR Manager") && currentUser?.EmployeeId != null)
-            {
-                var hrEmployee = await _context.Employees.FindAsync(currentUser.EmployeeId.Value);
-                scopedBranchId = hrEmployee?.BranchId;
-            }
-            else if (User.IsInRole("Branch Manager") && !string.IsNullOrWhiteSpace(currentUser?.Branch))
+            if (User.IsInRole("Branch Manager") && !string.IsNullOrWhiteSpace(currentUser?.Branch))
             {
                 var branch = await _context.Branches.FirstOrDefaultAsync(b => b.Name == currentUser.Branch);
                 scopedBranchId = branch?.Id;
@@ -80,11 +67,10 @@ namespace HRMS.UI.Pages
                 amBranchIds = currentUser.ManagedBranches
                     .Split(',', StringSplitOptions.RemoveEmptyEntries)
                     .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
-                    .Where(id => id > 0)
-                    .ToList();
+                    .Where(id => id > 0).ToList();
             }
 
-            var countQuery = _context.Employees.Where(e => e.Status != "Draft" && e.NIC != "DUTY-ACC");
+            var countQuery = _context.Employees.Where(e => e.Status != "Draft");
             if (scopedBranchId.HasValue)
                 countQuery = countQuery.Where(e => e.BranchId == scopedBranchId.Value);
             else if (amBranchIds != null)
@@ -118,9 +104,9 @@ namespace HRMS.UI.Pages
 
             UpcomingEvents = new List<UpcomingEventItem>
             {
-                new() { Title = "Design Team Meeting", Time = "10:00 AM - 11:30 AM", Month = "Aug", Day = "25", ThemeClass = "event-green" },
-                new() { Title = "Monthly Town Hall", Time = "02:00 PM - 03:00 PM", Month = "Aug", Day = "28", ThemeClass = "event-orange" },
-                new() { Title = "Labor Day Holiday", Time = "All Day", Month = "Sep", Day = "02", ThemeClass = "event-blue" },
+                new() { Title = "Design Team Meeting",   Time = "10:00 AM - 11:30 AM", Month = "Aug", Day = "25", ThemeClass = "event-green"  },
+                new() { Title = "Monthly Town Hall",     Time = "02:00 PM - 03:00 PM", Month = "Aug", Day = "28", ThemeClass = "event-orange" },
+                new() { Title = "Labor Day Holiday",     Time = "All Day",              Month = "Sep", Day = "02", ThemeClass = "event-blue"   },
             };
         }
 

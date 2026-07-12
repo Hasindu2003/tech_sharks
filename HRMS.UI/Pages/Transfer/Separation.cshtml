@@ -1,90 +1,261 @@
-﻿@page
+@page
 @using Microsoft.AspNetCore.Authorization
+@using HRMS.Application.Models
 @attribute [Authorize(Roles = "Employee")]
 @model HRMS.UI.Pages.Transfer.SeparationModel
 @{
-    ViewData["Title"] = "Separation";
-    var isTransferTab = Model.ActiveTab == "Transfer";
-    var isTerminationTab = Model.ActiveTab == "Termination";
+    ViewData["Title"] = "My Separation";
+    ViewData["ActiveNav"] = "Separation";
+    var isTransferTab = Model.ActiveTab != "Resignation";
     var isResignationTab = Model.ActiveTab == "Resignation";
-    var hasActiveResignation = isResignationTab && Model.MyResignations.Any(r =>
-        r.Status == ResignationStatusEnum.Draft ||
+    var hasDraftResignation = Model.MyResignations.Any(r => r.Status == ResignationStatusEnum.Draft);
+    var hasPendingResignation = Model.MyResignations.Any(r =>
         r.Status == ResignationStatusEnum.SubmittedForApproval ||
         r.Status == ResignationStatusEnum.BMApproved ||
         r.Status == ResignationStatusEnum.AMApproved);
+    var hasActiveResignation = hasDraftResignation || hasPendingResignation;
 }
 
-<div class="page-header" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+<style>
+    .sep-page-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sep-page-sub   { font-size: 12px; color: #7a8863; margin: 0; }
+
+    /* Tab Bar */
+    .sep-tab-bar {
+        display: flex;
+        gap: 4px;
+        padding: 5px;
+        background: #f6f8f7;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        width: fit-content;
+        margin-bottom: 24px;
+    }
+    .sep-tab {
+        padding: 9px 20px;
+        border-radius: 7px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #7a8863;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.15s, color 0.15s;
+        cursor: pointer;
+    }
+    .sep-tab.active {
+        background: #ffffff;
+        color: #10823c;
+        font-weight: 700;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .sep-tab:hover:not(.active) { background: #edf0eb; color: #374151; text-decoration: none; }
+    .tab-count {
+        font-size: 11px;
+        font-weight: 800;
+        padding: 1px 7px;
+        border-radius: 20px;
+    }
+    .sep-tab.active .tab-count { background: #10823c; color: #fff; }
+    .sep-tab:not(.active) .tab-count { background: #e2e5dc; color: #7a8863; }
+
+    /* Section Title */
+    .sep-section-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        margin: 0 0 12px 0;
+    }
+
+    /* Empty State */
+    .sep-empty {
+        text-align: center;
+        padding: 52px 24px;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        color: #9ca3af;
+    }
+    .sep-empty i { font-size: 2.2rem; display: block; margin-bottom: 10px; }
+    .sep-empty-title { font-size: 0.95rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+    .sep-empty-sub   { font-size: 0.85rem; color: #9ca3af; margin-bottom: 18px; }
+
+    /* Inline table styles matching the rest of the system */
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    /* Approval Flow Panel */
+    .approval-panel {
+        background: #f6f8f7;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    .approval-panel h5 {
+        font-size: 13px;
+        font-weight: 700;
+        color: #151811;
+        margin: 0 0 4px 0;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+    }
+    .approval-panel .ap-sub { font-size: 12px; color: #7a8863; margin: 0 0 18px 0; }
+    .ap-step {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 14px;
+    }
+    .ap-step:last-child { margin-bottom: 0; }
+    .ap-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #10823c;
+        margin-top: 4px;
+        flex-shrink: 0;
+        box-shadow: 0 0 0 3px rgba(16,130,60,0.15);
+    }
+    .ap-label { font-size: 13px; font-weight: 700; color: #151811; margin-bottom: 2px; }
+    .ap-desc  { font-size: 12px; color: #7a8863; }
+
+    /* Active resignation notice */
+    .active-notice {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 18px 22px;
+        margin-top: 4px;
+    }
+    .active-notice i { font-size: 1.6rem; color: #f59e0b; flex-shrink: 0; }
+    .active-notice-title { font-size: 13.5px; font-weight: 700; color: #92400e; margin-bottom: 2px; }
+    .active-notice-sub   { font-size: 12.5px; color: #b45309; }
+
+    /* Form card */
+    .form-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .form-card-body { padding: 20px; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+    .checkbox-label {
+        display: flex; align-items: center; gap: 8px;
+        font-size: 13px; color: #374151; cursor: pointer;
+    }
+    .checkbox-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #10823c; }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;">
     <div>
-        <h1>Employee Separation</h1>
-        <div class="page-subtitle">Manage your Transfer, Termination, Resignation and Death requests</div>
+        <h1 class="sep-page-title">My Separation</h1>
+        <p class="sep-page-sub">Track and manage your transfer and resignation requests</p>
     </div>
     @if (isTransferTab)
     {
-        <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary" style="padding:10px 20px">
-            <i class="bi bi-plus-circle"></i> New Process
+        <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px">
+            <i class="bi bi-plus-circle"></i> New Transfer Request
         </a>
     }
-    @if (isResignationTab && !Model.MyResignations.Any(r => r.Status == ResignationStatusEnum.Draft || r.Status == ResignationStatusEnum.SubmittedForApproval || r.Status == ResignationStatusEnum.BMApproved || r.Status == ResignationStatusEnum.AMApproved))
+    @if (isResignationTab && !hasActiveResignation)
     {
-        <button class="btn-kanrich btn-kanrich-primary" style="padding:10px 20px" onclick="document.getElementById('resignationForm').scrollIntoView({behavior:'smooth'})">
-            <i class="bi bi-plus-circle"></i> New Resignation
+        <button class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px"
+                onclick="document.getElementById('resignationForm').scrollIntoView({behavior:'smooth'})">
+            <i class="bi bi-plus-circle"></i> Submit Resignation
         </button>
     }
 </div>
 
 @if (TempData["SuccessMessage"] is string successMsg)
 {
-    <div class="k-alert k-alert-success">
-        <i class="bi bi-check-circle"></i> @successMsg
+    <div class="k-alert k-alert-success" style="margin-bottom:20px">
+        <i class="bi bi-check-circle-fill"></i> @successMsg
     </div>
 }
 @if (TempData["ErrorMessage"] is string errorMsg)
 {
-    <div class="k-alert k-alert-danger">
-        <i class="bi bi-exclamation-triangle"></i> @errorMsg
+    <div class="k-alert k-alert-danger" style="margin-bottom:20px">
+        <i class="bi bi-exclamation-triangle-fill"></i> @errorMsg
     </div>
 }
 
-<!-- Tabs -->
-<div style="display:flex; gap:12px; margin-bottom:24px; padding:6px; background:var(--bg-card); border-radius:var(--border-radius-lg); box-shadow:var(--shadow-sm); width:fit-content; border: 1px solid var(--border-color);">
+<!-- Tab Bar -->
+<div class="sep-tab-bar">
     <a asp-page="/Transfer/Separation" asp-route-ActiveTab="Transfer"
-       style="padding:10px 20px; border-radius:var(--border-radius-sm); @(isTransferTab ? "background:var(--primary-light); font-weight:700; color:var(--primary)" : "color:var(--text-secondary)"); font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:8px; text-decoration:none; transition: background 0.15s;">
-        Transfer <span style="background:@(isTransferTab ? "var(--primary)" : "#f3f4f6"); color:@(isTransferTab ? "#fff" : "var(--text-muted)"); padding:2px 8px; border-radius:20px; font-size:0.75rem; font-weight:800;">@Model.TransferCount</span>
-    </a>
-    <a asp-page="/Transfer/Separation" asp-route-ActiveTab="Termination"
-       style="padding:10px 20px; border-radius:var(--border-radius-sm); @(isTerminationTab ? "background:var(--primary-light); font-weight:700; color:var(--primary)" : "color:var(--text-secondary)"); font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:8px; text-decoration:none; transition: background 0.15s;">
-        Termination <span style="background:@(isTerminationTab ? "var(--primary)" : "#f3f4f6"); color:@(isTerminationTab ? "#fff" : "var(--text-muted)"); padding:2px 8px; border-radius:20px; font-size:0.75rem; font-weight:800;">@Model.TerminationCount</span>
+       class="sep-tab @(isTransferTab ? "active" : "")">
+        <i class="bi bi-arrow-left-right"></i>
+        Transfers
+        <span class="tab-count">@Model.TransferCount</span>
     </a>
     <a asp-page="/Transfer/Separation" asp-route-ActiveTab="Resignation"
-       style="padding:10px 20px; border-radius:var(--border-radius-sm); @(isResignationTab ? "background:var(--primary-light); font-weight:700; color:var(--primary)" : "color:var(--text-secondary)"); font-size:0.95rem; cursor:pointer; display:flex; align-items:center; gap:8px; text-decoration:none; transition: background 0.15s;">
-        Resignation <span style="background:@(isResignationTab ? "var(--primary)" : "#f3f4f6"); color:@(isResignationTab ? "#fff" : "var(--text-muted)"); padding:2px 8px; border-radius:20px; font-size:0.75rem; font-weight:800;">@Model.ResignationCount</span>
+       class="sep-tab @(isResignationTab ? "active" : "")">
+        <i class="bi bi-box-arrow-right"></i>
+        Resignations
+        <span class="tab-count">@Model.ResignationCount</span>
     </a>
 </div>
 
 @if (isTransferTab)
 {
-    <!-- Transfer Tab -->
+    <!-- ═══ TRANSFER TAB ═══ -->
     @if (Model.MyRequests.Any())
     {
-        <h5 class="section-title">My Transfer Requests</h5>
-        <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
-            <table class="k-table">
+        <p class="sep-section-title">My Transfer Requests</p>
+        <div class="tbl-card">
+            <table class="sep-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Date</th>
-                        <th>From</th>
-                        <th>To</th>
+                        <th>Date Submitted</th>
+                        <th>Current Branch</th>
+                        <th>Requested Branch</th>
                         <th>Status</th>
-                        <th>View</th>
+                        <th style="text-align:center">Details</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var request in Model.MyRequests)
                     {
                         <tr>
-                            <td style="font-weight:600">#@request.Id</td>
+                            <td><span style="font-weight:700; color:#10823c">#@request.Id</span></td>
                             <td>@request.RequestedDate.ToString("MMM dd, yyyy")</td>
                             <td>@request.CurrentBranch</td>
                             <td>@request.RequestedBranch</td>
@@ -101,21 +272,21 @@
                                         <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Dept Head Rejected</span>
                                         break;
                                     case TransferStatus.HRFinalRejected:
-                                        <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> HR Rejected</span>
+                                        <span class="k-badge k-badge-rejected"><i class="bi bi-x-circle"></i> HR Rejected</span>
                                         break;
                                     case TransferStatus.CurrentBMApproved:
                                     case TransferStatus.TargetBMApproved:
-                                        <span class="k-badge k-badge-info"><i class="bi bi-clock"></i> BM Review</span>
+                                        <span class="k-badge k-badge-info"><i class="bi bi-hourglass-split"></i> BM Review</span>
                                         break;
                                     case TransferStatus.CurrentBMRejected:
                                     case TransferStatus.TargetBMRejected:
                                         <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> BM Rejected</span>
                                         break;
                                     case TransferStatus.BothBMsApproved:
-                                        <span class="k-badge k-badge-info"><i class="bi bi-check-all"></i> Awaiting AM</span>
+                                        <span class="k-badge k-badge-info"><i class="bi bi-check-all"></i> Awaiting Area Manager</span>
                                         break;
                                     case TransferStatus.AreaManagerApproved:
-                                        <span class="k-badge k-badge-info"><i class="bi bi-clock"></i> Awaiting HR</span>
+                                        <span class="k-badge k-badge-info"><i class="bi bi-hourglass-split"></i> Awaiting HR</span>
                                         break;
                                     case TransferStatus.AreaManagerRejected:
                                         <span class="k-badge k-badge-rejected"><i class="bi bi-x-circle"></i> AM Rejected</span>
@@ -125,7 +296,7 @@
                                         break;
                                 }
                             </td>
-                            <td>
+                            <td style="text-align:center">
                                 <a asp-page="/Transfer/Details" asp-route-id="@request.Id"
                                    class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
                                     <i class="bi bi-eye"></i> View
@@ -139,99 +310,52 @@
     }
     else
     {
-        <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
-            <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
-            <div style="font-weight:600;font-size:1rem;margin-bottom:8px">No transfer requests yet</div>
-            <div style="font-size:0.88rem;margin-bottom:16px">Submit a transfer request to get started</div>
+        <div class="sep-empty">
+            <i class="bi bi-arrow-left-right"></i>
+            <div class="sep-empty-title">No transfer requests yet</div>
+            <div class="sep-empty-sub">Submit a request to be transferred to another branch.</div>
             <a asp-page="/Transfer/Apply" class="btn-kanrich btn-kanrich-primary">
-                <i class="bi bi-plus-circle"></i> Submit a Transfer Request
+                <i class="bi bi-plus-circle"></i> Submit Transfer Request
             </a>
-        </div>
-    }
-}
-else if (isTerminationTab)
-{
-    <!-- Termination Tab -->
-    @if (Model.MyTerminations.Any())
-    {
-        <h5 class="section-title">My Termination Records</h5>
-        <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:8px">
-            <table class="k-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Type</th>
-                        <th>Effective Date</th>
-                        <th>Status</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var term in Model.MyTerminations)
-                    {
-                        <tr>
-                            <td style="font-weight:600">#@term.Id</td>
-                            <td>@term.TerminationTypeDisplay</td>
-                            <td>@term.EffectiveTerminationDate.ToString("MMM dd, yyyy")</td>
-                            <td><span class="k-badge @term.StatusBadgeClass">@term.StatusDisplay</span></td>
-                            <td>
-                                @if (term.Status == HRMS.Application.Models.TerminationStatusEnum.Terminated)
-                                {
-                                    <a asp-page="/Termination/TerminationReport" asp-route-id="@term.Id"
-                                       class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
-                                        <i class="bi bi-file-earmark-text"></i> View Report
-                                    </a>
-                                }
-                                else
-                                {
-                                    <span class="k-badge k-badge-pending"><i class="bi bi-hourglass-split"></i> In Progress</span>
-                                }
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    }
-    else
-    {
-        <div class="k-card" style="text-align:center;padding:48px;color:#9ca3af">
-            <i class="bi bi-inbox" style="font-size:2.5rem;display:block;margin-bottom:12px"></i>
-            <div style="font-weight:600;font-size:1rem;margin-bottom:8px">No termination records</div>
-            <div style="font-size:0.88rem">No termination processes have been initiated for your account</div>
         </div>
     }
 }
 else if (isResignationTab)
 {
-    <!-- Resignation Tab -->
-
+    <!-- ═══ RESIGNATION TAB ═══ -->
     @if (Model.MyResignations.Any())
     {
-        <h5 class="section-title">My Resignation Requests</h5>
-        <div class="k-card" style="padding:0;overflow:hidden;margin-bottom:24px">
-            <table class="k-table">
+        <p class="sep-section-title">My Resignation Requests</p>
+        <div class="tbl-card" style="margin-bottom:24px">
+            <table class="sep-table">
                 <thead>
                     <tr>
                         <th>ID</th>
-                        <th>Submitted</th>
+                        <th>Submitted On</th>
                         <th>Last Working Day</th>
-                        <th>Notice (Days)</th>
+                        <th>Notice Period</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th style="text-align:center">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var res in Model.MyResignations)
                     {
                         <tr>
-                            <td style="font-weight:600">#@res.Id</td>
+                            <td><span style="font-weight:700; color:#10823c">#@res.Id</span></td>
                             <td>@res.ResignationDate.ToString("MMM dd, yyyy")</td>
                             <td>@res.EffectiveDate.ToString("MMM dd, yyyy")</td>
-                            <td>@res.NoticePeriodDays</td>
+                            <td>@res.NoticePeriodDays days</td>
                             <td><span class="k-badge @res.StatusBadgeClass">@res.StatusDisplay</span></td>
-                            <td>
-                                @if (res.Status == ResignationStatusEnum.HRApproved && res.AcceptanceLetterGenerated)
+                            <td style="text-align:center">
+                                @if (res.Status == ResignationStatusEnum.Draft)
+                                {
+                                    <a asp-page="/Resignation/EditDraft" asp-route-id="@res.Id"
+                                       class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                                        <i class="bi bi-pencil-square"></i> Edit Draft
+                                    </a>
+                                }
+                                else if (res.Status == ResignationStatusEnum.HRApproved && res.AcceptanceLetterGenerated)
                                 {
                                     <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@res.Id"
                                        class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
@@ -252,90 +376,96 @@ else if (isResignationTab)
 
     @if (!hasActiveResignation)
     {
-        <!-- Resignation Form -->
-        <h5 class="section-title" id="resignationForm">Submit Resignation</h5>
-        <div class="transfer-detail-grid">
-            <div>
-                <div class="k-card" style="margin-bottom:20px">
-                    <div class="k-card-header">Resignation Details</div>
+        <!-- New Resignation Form -->
+        <p class="sep-section-title" id="resignationForm">Submit a Resignation</p>
+        <div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
+            <!-- Form -->
+            <div class="form-card">
+                <div class="form-card-header">Resignation Details</div>
+                <div class="form-card-body">
                     <form method="post" asp-page="/Resignation/SubmitFromSeparation" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
 
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-                            <div class="k-form-group">
-                                <label>Last Working Day <span style="color:var(--accent-red)">*</span></label>
-                                <input type="date" name="EffectiveDate" class="k-form-control" required
-                                       min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")" id="effectiveDateInput" />
-                                <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:4px">Min. 14 days notice. Notice: <strong id="noticeDays" class="text-primary-k">—</strong></div>
+                        <div class="grid-2">
+                            <div class="fg">
+                                <label class="fl">Last Working Day <span class="req">*</span></label>
+                                <input type="date" name="EffectiveDate" class="fi" required
+                                       min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")"
+                                       id="effectiveDateInput" />
+                                <div class="fi-hint">
+                                    Minimum 14 days notice required.
+                                    Notice period: <strong id="noticeDays" style="color:#10823c">—</strong>
+                                </div>
                             </div>
-                            <div class="k-form-group">
-                                <label>Obligations</label>
-                                <div style="display:flex;flex-direction:column;gap:8px;padding-top:8px">
-                                    <label style="font-size:0.88rem;display:flex;align-items:center;gap:8px;cursor:pointer;">
-                                        <input type="checkbox" name="HasOutstandingLoans" value="true" id="loansChk" class="form-check-input"> Outstanding loans
+                            <div class="fg">
+                                <label class="fl">Financial Obligations</label>
+                                <div style="display:flex; flex-direction:column; gap:10px; padding-top:6px;">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="HasOutstandingLoans" value="true" id="loansChk" />
+                                        I have outstanding loans
                                     </label>
-                                    <label style="font-size:0.88rem;display:flex;align-items:center;gap:8px;cursor:pointer;">
-                                        <input type="checkbox" name="IsLoanGuarantor" value="true" id="guarantorChk" class="form-check-input"> Loan guarantor
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="IsLoanGuarantor" value="true" id="guarantorChk" />
+                                        I am a loan guarantor
                                     </label>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="k-form-group">
-                            <label>Reason for Resignation <span style="color:var(--accent-red)">*</span></label>
-                            <textarea name="ReasonForResignation" class="k-form-control" rows="4" required minlength="20"
-                                placeholder="Please provide a detailed reason (min. 20 characters)..."></textarea>
+                        <div class="fg" style="margin-top:4px;">
+                            <label class="fl">Reason for Resignation <span class="req">*</span></label>
+                            <textarea name="ReasonForResignation" class="fi" rows="4" required minlength="20"
+                                      placeholder="Please provide a detailed reason (minimum 20 characters)..."></textarea>
                         </div>
 
-                        <div class="k-form-group">
-                            <label>Additional Remarks</label>
-                            <textarea name="AdditionalRemarks" class="k-form-control" rows="2"
-                                placeholder="Any additional information..."></textarea>
+                        <div class="fg">
+                            <label class="fl">Additional Remarks</label>
+                            <textarea name="AdditionalRemarks" class="fi" rows="2"
+                                      placeholder="Any additional information you'd like to share..."></textarea>
                         </div>
 
-                        <div class="k-form-group">
-                            <label>Supporting Documents <span style="color:var(--accent-red)">*</span></label>
-                            <input type="file" name="Documents" class="k-form-control" multiple
-                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                            <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:4px">PDF, DOC, DOCX, JPG, PNG — max 5MB each. At least one required.</div>
+                        <div class="fg">
+                            <label class="fl">Supporting Documents <span class="req">*</span></label>
+                            <input type="file" name="Documents" class="fi" multiple
+                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px;" />
+                            <div class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each. At least one document required.</div>
                         </div>
 
-                        <div style="display:flex;gap:12px">
+                        <div style="display:flex; gap:10px; margin-top:4px;">
                             <button type="submit" name="action" value="submit" class="btn-kanrich btn-kanrich-primary">
                                 <i class="bi bi-send"></i> Submit Resignation
                             </button>
                             <button type="submit" name="action" value="draft" class="btn-kanrich btn-kanrich-outline">
-                                <i class="bi bi-floppy"></i> Save Draft
+                                <i class="bi bi-floppy"></i> Save as Draft
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
 
-            <div>
-                <div class="eligibility-panel">
-                    <h5><i class="bi bi-diagram-3"></i> Approval Flow</h5>
-                    <p class="ep-subtitle">Your resignation goes through 3 stages of review.</p>
-                    <div class="ep-check-item">
-                        <div class="ep-check-circle"></div>
-                        <div>
-                            <div class="ep-check-label">Stage 1 — Branch Manager</div>
-                            <div class="ep-check-desc">Acknowledges & ensures operational continuity</div>
-                        </div>
+            <!-- Approval Flow -->
+            <div class="approval-panel">
+                <h5><i class="bi bi-diagram-3" style="color:#10823c"></i> Approval Flow</h5>
+                <p class="ap-sub">Your resignation passes through 3 review stages before being finalised.</p>
+                <div class="ap-step">
+                    <div class="ap-dot"></div>
+                    <div>
+                        <div class="ap-label">Stage 1 — Branch Manager</div>
+                        <div class="ap-desc">Acknowledges and plans for operational continuity.</div>
                     </div>
-                    <div class="ep-check-item">
-                        <div class="ep-check-circle"></div>
-                        <div>
-                            <div class="ep-check-label">Stage 2 — Area Manager</div>
-                            <div class="ep-check-desc">Reviews & approves based on org. requirements</div>
-                        </div>
+                </div>
+                <div class="ap-step">
+                    <div class="ap-dot"></div>
+                    <div>
+                        <div class="ap-label">Stage 2 — Area Manager</div>
+                        <div class="ap-desc">Reviews based on regional staffing requirements.</div>
                     </div>
-                    <div class="ep-check-item">
-                        <div class="ep-check-circle"></div>
-                        <div>
-                            <div class="ep-check-label">Stage 3 — HR Manager</div>
-                            <div class="ep-check-desc">Final approval, generates acceptance letter</div>
-                        </div>
+                </div>
+                <div class="ap-step">
+                    <div class="ap-dot"></div>
+                    <div>
+                        <div class="ap-label">Stage 3 — HR Manager</div>
+                        <div class="ap-desc">Final approval. Generates your acceptance letter.</div>
                     </div>
                 </div>
             </div>
@@ -343,11 +473,26 @@ else if (isResignationTab)
     }
     else
     {
-        <div class="k-card" style="text-align:center;padding:32px;color:#6b7280;border-left:4px solid #f59e0b">
-            <i class="bi bi-hourglass-split" style="font-size:2rem;display:block;margin-bottom:8px;color:#f59e0b"></i>
-            <div style="font-weight:600;font-size:0.95rem">You have an active resignation in progress</div>
-            <div style="font-size:0.85rem;margin-top:4px">You cannot submit a new resignation while one is being reviewed.</div>
-        </div>
+        @if (hasDraftResignation)
+        {
+            <div class="active-notice" style="background: #eff6ff; border-color: #bfdbfe;">
+                <i class="bi bi-pencil-square" style="color: #1d4ed8;"></i>
+                <div>
+                    <div class="active-notice-title" style="color: #1e40af;">Saved Draft Resignation</div>
+                    <div class="active-notice-sub" style="color: #1e40af;">You already have a resignation request saved as a draft. Please use the <strong>Edit Draft</strong> button in the table above to review and submit it.</div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="active-notice">
+                <i class="bi bi-hourglass-split"></i>
+                <div>
+                    <div class="active-notice-title">Resignation Already In Progress</div>
+                    <div class="active-notice-sub">You cannot submit a new resignation while one is currently under review.</div>
+                </div>
+            </div>
+        }
     }
 }
 
@@ -357,11 +502,13 @@ else if (isResignationTab)
     const noticeDays = document.getElementById('noticeDays');
     if (effectiveDateInput) {
         effectiveDateInput.addEventListener('change', function () {
-            const today = new Date(); today.setHours(0,0,0,0);
+            const today = new Date(); today.setHours(0, 0, 0, 0);
             const effective = new Date(this.value);
             if (!isNaN(effective)) {
                 const d = Math.round((effective - today) / 86400000);
-                noticeDays.textContent = d + ' days';
+                noticeDays.textContent = d + ' day' + (d !== 1 ? 's' : '');
+            } else {
+                noticeDays.textContent = '—';
             }
         });
     }

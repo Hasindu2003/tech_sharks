@@ -4,8 +4,9 @@ namespace HRMS.Domain.Entities.Core
 {
     public class DraftEmployee
     {
-        public int Id { get; set; }
+        public int Id { get; set; }   // Primary Key
 
+        // Basic Information
         public string? FullName { get; set; }
         public string? Initials { get; set; }
         public string? Sex { get; set; }
@@ -19,6 +20,7 @@ namespace HRMS.Domain.Entities.Core
         public string? PhoneNumber { get; set; }
         public string? ResidentialAddress { get; set; }
 
+        // Spouse Details
         public string? SpouseName { get; set; }
         public string? SpouseContactNo { get; set; }
 
@@ -27,20 +29,23 @@ namespace HRMS.Domain.Entities.Core
         public string? BankAccountName { get; set; }
         public string? BankAccountNumber { get; set; }
 
+        // Designation FK and navigation
         public int? DesignationId { get; set; }
         public Designation? Designation { get; set; }
-
+        
         public DateTime? DateConfirmed { get; set; }
         public int? ProbationPeriodMonths { get; set; }
         public int? InternPeriodMonths { get; set; }
         public decimal? PreviousExperienceYears { get; set; }
         public string? Status { get; set; }
-
+        
         public DateTime? LastUpdated { get; set; }
 
+        // Every employee belongs to a department
         public int? DepartmentId { get; set; }
         public Department? Department { get; set; }
 
+        // Every employee belongs to a branch
         public int? BranchId { get; set; }
         public Branch? Branch { get; set; }
     }

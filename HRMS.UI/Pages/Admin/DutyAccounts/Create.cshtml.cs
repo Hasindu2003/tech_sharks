@@ -15,7 +15,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.UI.Pages.Admin.DutyAccounts
 {
+    using Employee = HRMS.Domain.Entities.Core.Employee;
+
     public class BranchDeptGroup
+
     {
         public string BranchName { get; set; } = string.Empty;
         public List<SelectListItem> Departments { get; set; } = new();
@@ -61,9 +64,6 @@ namespace HRMS.UI.Pages.Admin.DutyAccounts
         /// <summary>Used by Department Head (BranchDepartment record ID).</summary>
         [BindProperty]
         public int? DeptHeadBranchDeptId { get; set; }
-
-        [BindProperty]
-        public DateTime DateOfJoining { get; set; } = DateTime.Today;
 
         // ── Dropdown Data ─────────────────────────────────────────────────
         public List<SelectListItem> BranchList { get; set; } = new();
@@ -292,7 +292,7 @@ namespace HRMS.UI.Pages.Admin.DutyAccounts
                                         ? deptHeadBD!.Department.Name
                                         : null,
                     Designation     = SelectedRole,
-                    DateOfJoining   = DateOfJoining,
+                    DateOfJoining   = DateTime.Now,
                     ManagedBranches = SelectedRole == "Area Manager"
                                         ? string.Join(",", ManagedBranchIds)
                                         : null,

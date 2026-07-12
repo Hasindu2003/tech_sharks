@@ -1,0 +1,140 @@
+@page
+@model HRMS.UI.Pages.Employee.Maternity.RequestModel
+@{
+    ViewData["Title"] = "Apply for Maternity Leave";
+    ViewData["ActiveNav"] = "LeaveDashboard";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Form card */
+    .form-card {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .form-card-body { padding: 20px; }
+    
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+
+    .info-banner {
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        color: #1e40af;
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 12.5px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+</style>
+
+<div class="form-card" style="margin-top: 20px;">
+    <div class="form-card-header">Maternity Leave Request</div>
+    <div class="form-card-body">
+        <h2 class="page-h">Maternity Leave Request</h2>
+        <p class="page-s">Submit maternity details for verification and approval</p>
+
+        <div class="info-banner">
+            <i class="bi bi-info-circle-fill"></i>
+            <span>Maternity leave is subject to HR verification. The standard duration is 84 days.</span>
+        </div>
+
+        @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+        {
+            <div class="k-alert k-alert-danger" style="margin-bottom: 16px;">
+                <i class="bi bi-exclamation-triangle-fill"></i> @Model.ErrorMessage
+            </div>
+        }
+
+        <form method="post">
+            <div class="grid-2">
+                <div class="fg">
+                    <label class="fl">Start Date <span class="req">*</span></label>
+                    <input type="date" asp-for="StartDate" class="fi" required id="startDateInput" />
+                </div>
+                <div class="fg">
+                    <label class="fl">End Date <span class="req">*</span></label>
+                    <input type="date" asp-for="EndDate" class="fi" required id="endDateInput" />
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="fg">
+                    <label class="fl">Child Number <span class="req">*</span></label>
+                    <select asp-for="ChildNumber" class="fi" required>
+                        <option value="1">First Child</option>
+                        <option value="2">Second Child</option>
+                        <option value="3">Third Child</option>
+                        <option value="4">Fourth Child</option>
+                        <option value="5">Fifth Child</option>
+                    </select>
+                </div>
+                <div class="fg">
+                    <label class="fl">Expected Delivery Date</label>
+                    <input type="date" asp-for="ExpectedDeliveryDate" class="fi" />
+                </div>
+            </div>
+
+            <div class="fg">
+                <label class="fl">Additional Notes</label>
+                <textarea asp-for="Reason" class="fi" rows="3" placeholder="Enter any comments or specific instructions..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <a href="/Employee/Leave/Dashboard" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary">Submit Request</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const startInput = document.getElementById('startDateInput');
+        const endInput = document.getElementById('endDateInput');
+
+        startInput.addEventListener('change', function() {
+            if (startInput.value) {
+                // Pre-calculate 84 days notice automatically
+                const start = new Date(startInput.value);
+                start.setDate(start.getDate() + 83); // 84 days inclusive
+                const year = start.getFullYear();
+                const month = String(start.getMonth() + 1).padStart(2, '0');
+                const day = String(start.getDate()).padStart(2, '0');
+                endInput.value = `${year}-${month}-${day}`;
+            }
+        });
+    </script>
+}

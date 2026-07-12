@@ -1,0 +1,238 @@
+@page
+@model HRMS.UI.Pages.Admin.Users.IndexModel
+@{
+    ViewData["Title"] = "User Account Management";
+    ViewData["ActiveNav"] = "AdminUsers";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0; }
+    
+    /* Inline table styles */
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    /* Badges */
+    .role-badge-container { display: inline-flex; align-items: center; gap: 4px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: #374151; margin: 2px; }
+    .role-badge-container.admin { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+    .role-badge-container.hr { background: #e0e7ff; border-color: #c7d2fe; color: #3730a3; }
+    
+    .remove-role-btn { border: none; background: transparent; padding: 0; font-size: 14px; font-weight: bold; color: #9ca3af; cursor: pointer; margin-left: 2px; }
+    .remove-role-btn:hover { color: #ef4444; }
+
+    /* Modal dialog */
+    .k-modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4); z-index: 1000;
+        backdrop-filter: blur(2px);
+    }
+    .k-modal-content {
+        background: white; border-radius: 10px; border: 1px solid #e2e5dc;
+        max-width: 440px; margin: 100px auto; padding: 20px 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+    .k-modal-content h3 { font-size: 16px; font-weight: 800; color: #151811; margin: 0 0 12px 0; }
+    
+    .fg { margin-bottom: 12px; }
+    .fl { font-size: 12.5px; font-weight: 600; color: #151811; margin-bottom: 4px; display: block; }
+    .fi {
+        width: 100%; padding: 8px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 13.5px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;">
+    <div>
+        <h1 class="page-h">User Account Management</h1>
+        <p class="page-s">Create and manage corporate login accounts and roles</p>
+    </div>
+    <button class="btn-kanrich btn-kanrich-primary" onclick="showCreateModal()" style="padding:9px 18px">
+        <i class="bi bi-person-plus"></i> Create User Account
+    </button>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="k-alert k-alert-success" style="margin-bottom: 20px;">
+        <i class="bi bi-check-circle-fill"></i> @Model.SuccessMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom: 20px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> @Model.ErrorMessage
+    </div>
+}
+
+<div class="tbl-card">
+    <table class="sep-table">
+        <thead>
+            <tr>
+                <th>Email / Username</th>
+                <th>Linked Employee</th>
+                <th>Assigned Roles</th>
+                <th style="text-align:right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model.Users)
+            {
+                <tr>
+                    <td>
+                        <div style="font-weight: 600; color: #151811;">@user.Email</div>
+                        <div style="font-size: 11px; color: #7a8863;">UserName: @user.UserName</div>
+                    </td>
+                    <td style="font-weight: 600;">@user.LinkedEmployee</td>
+                    <td>
+                        @if (user.Roles.Any())
+                        {
+                            @foreach (var role in user.Roles)
+                            {
+                                var badgeClass = "";
+                                if (role == "Admin") badgeClass = "admin";
+                                else if (role == "HR Manager") badgeClass = "hr";
+                                
+                                <span class="role-badge-container @badgeClass">
+                                    @role
+                                    <form method="post" asp-page-handler="RemoveRole" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="userId" value="@user.Id" />
+                                        <input type="hidden" name="role" value="@role" />
+                                        <button type="submit" class="remove-role-btn" title="Remove role">&times;</button>
+                                    </form>
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span style="color:#9ca3af; font-style:italic; font-size:12px;">No roles assigned</span>
+                        }
+                    </td>
+                    <td style="text-align:right">
+                        <div style="display:inline-flex; gap:6px; align-items:center;">
+                            <button class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" onclick="showRoleModal('@user.Id', '@user.Email')">
+                                <i class="bi bi-plus"></i> Add Role
+                            </button>
+                            @if (user.Roles.Count == 0)
+                            {
+                                <form method="post" asp-page-handler="DeleteUser" style="display:inline;" onsubmit="return confirm('Delete this user permanently?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId" value="@user.Id" />
+                                    <button type="submit" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="color:#ef4444; border-color:#fee2e2;">
+                                        Delete
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<!-- Create Modal -->
+<div id="createModal" class="k-modal">
+    <div class="k-modal-content">
+        <h3>Create New User Account</h3>
+        <p style="font-size: 12px; color: #7a8863; margin-top: -6px; margin-bottom: 14px;">User will login with their email. Default password is <strong>Password@123</strong>.</p>
+        
+        <form method="post" asp-page-handler="CreateUser">
+            @Html.AntiForgeryToken()
+            <div class="fg">
+                <label class="fl">Email Address</label>
+                <input type="email" name="email" class="fi" placeholder="e.g. employee@company.com" required />
+            </div>
+            
+            <div class="fg">
+                <label class="fl">Initial System Role</label>
+                <select name="role" class="fi" required>
+                    <option value="">-- Select Role --</option>
+                    @foreach (var role in Model.AllRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </div>
+
+            <div class="fg">
+                <label class="fl">Link to Employee Record (Optional)</label>
+                <select name="employeeId" class="fi">
+                    <option value="">-- Do not link --</option>
+                    @foreach (var emp in Model.Employees)
+                    {
+                        <option value="@emp.Id">@emp.Label</option>
+                    }
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" onclick="hideCreateModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary">Create User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Assign Role Modal -->
+<div id="roleModal" class="k-modal">
+    <div class="k-modal-content">
+        <h3>Assign System Role</h3>
+        <p id="modalUserEmail" style="font-size: 13px; font-weight: 700; color: #151811; margin-top: -6px; margin-bottom: 14px;"></p>
+        
+        <form method="post" asp-page-handler="AssignRole">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="modalUserId" name="userId" />
+            
+            <div class="fg">
+                <label class="fl">Role to Assign</label>
+                <select name="role" class="fi" required>
+                    <option value="">-- Select Role --</option>
+                    @foreach (var role in Model.AllRoles)
+                    {
+                        <option value="@role">@role</option>
+                    }
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" onclick="hideRoleModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary">Assign Role</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showCreateModal() {
+            document.getElementById('createModal').style.display = 'block';
+        }
+        function hideCreateModal() {
+            document.getElementById('createModal').style.display = 'none';
+        }
+        function showRoleModal(userId, email) {
+            document.getElementById('modalUserId').value = userId;
+            document.getElementById('modalUserEmail').textContent = email;
+            document.getElementById('roleModal').style.display = 'block';
+        }
+        function hideRoleModal() {
+            document.getElementById('roleModal').style.display = 'none';
+        }
+        window.onclick = function(event) {
+            var createModal = document.getElementById('createModal');
+            var roleModal = document.getElementById('roleModal');
+            if (event.target == createModal) hideCreateModal();
+            if (event.target == roleModal) hideRoleModal();
+        }
+    </script>
+}

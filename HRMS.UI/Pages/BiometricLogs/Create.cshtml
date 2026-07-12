@@ -1,0 +1,146 @@
+@page
+@model HRMS.UI.Pages.BiometricLogs.CreateModel
+@{
+    ViewData["Title"] = "Add Biometric Log";
+    ViewData["ActiveNav"] = "BiometricLogs";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Form card */
+    .form-card {
+        max-width: 600px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .form-card-body { padding: 20px; }
+    
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+    .text-danger { color: #ef4444; font-size: 12px; display: block; margin-top: 4px; }
+</style>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div style="max-width: 600px; margin: 20px auto 0 auto; background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-family: 'Manrope', sans-serif;">
+        <i class="bi bi-check-circle-fill" style="margin-right: 8px;"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div style="max-width: 600px; margin: 20px auto 0 auto; background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; padding: 12px 20px; border-radius: 8px; font-size: 14px; font-family: 'Manrope', sans-serif;">
+        <i class="bi bi-exclamation-triangle-fill" style="margin-right: 8px;"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<div class="form-card" style="margin-top: 20px;">
+    <div class="form-card-header">Biometric Log Entry Form</div>
+    <div class="form-card-body">
+        <h2 class="page-h" style="margin-bottom: 4px;">Record Biometric Scan</h2>
+        <p class="page-s" style="margin-bottom: 20px;">Simulate or record a biometric device check-in/out log</p>
+
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 16px;"></div>
+
+            <div class="grid-2">
+                <div class="fg">
+                    <label asp-for="BiometricLog.EmployeeId" class="fl">Select Employee <span class="req">*</span></label>
+                    <select asp-for="BiometricLog.EmployeeId" class="fi" required>
+                        <option value="">-- Choose Employee --</option>
+                        @foreach (var emp in Model.Employees)
+                        {
+                            <option value="@emp.Id">@emp.FullName (@emp.EPFNumber)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="BiometricLog.EmployeeId" class="text-danger"></span>
+                </div>
+
+                <div class="fg">
+                    <label asp-for="BiometricLog.LogDateTime" class="fl">Scan Timestamp <span class="req">*</span></label>
+                    <input asp-for="BiometricLog.LogDateTime" class="fi" type="datetime-local" required />
+                    <span asp-validation-for="BiometricLog.LogDateTime" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="fg">
+                <label asp-for="BiometricLog.DeviceId" class="fl">Scanner Device ID <span class="req">*</span></label>
+                <input asp-for="BiometricLog.DeviceId" class="fi" placeholder="e.g., DEVICE-01" required />
+                <span asp-validation-for="BiometricLog.DeviceId" class="text-danger"></span>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                <a asp-page="/Attendance/Index" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary">Save Biometric Log</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="form-card" style="margin-top: 24px; margin-bottom: 40px;">
+    <div class="form-card-header">Import Biometric Logs from CSV</div>
+    <div class="form-card-body">
+        <h2 class="page-h" style="margin-bottom: 4px;">Upload Punch Export File</h2>
+        <p class="page-s" style="margin-bottom: 20px;">Upload a CSV file exported from a biometric device (e.g. fingerprint scanner)</p>
+
+        <form method="post" enctype="multipart/form-data" asp-page-handler="ImportCsv">
+            <div class="fg" style="margin-bottom: 20px;">
+                <label asp-for="CsvFile" class="fl">Select CSV File <span class="req">*</span></label>
+                <input asp-for="CsvFile" type="file" class="fi" accept=".csv" required />
+                <span asp-validation-for="CsvFile" class="text-danger"></span>
+                <div style="font-size: 12px; color: #7a8863; margin-top: 6px;">
+                    Expected format: CSV containing headers <code>UserID</code>, <code>VerifyTime</code>, <code>VerifyState</code>, and <code>DeviceID</code>.
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                <a asp-page="/Attendance/Index" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary">Upload & Import</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        const dateTimeInput = document.querySelector('input[type="datetime-local"]');
+        if (dateTimeInput && !dateTimeInput.value) {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            dateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+    </script>
+}

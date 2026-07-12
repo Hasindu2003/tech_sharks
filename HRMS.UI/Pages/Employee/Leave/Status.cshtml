@@ -1,0 +1,426 @@
+@page
+@model HRMS.UI.Pages.Employee.Leave.StatusModel
+@{
+    ViewData["Title"] = "My Leave Requests";
+    ViewData["ActiveNav"] = "LeaveDashboard";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0; }
+    
+    /* Inline table styles */
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    /* Badges */
+    .status-badge {
+        padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .status-badge.Pending { background: #fef3c7; color: #92400e; }
+    .status-badge.Approved { background: #dcfce7; color: #166534; }
+    .status-badge.Rejected { background: #fee2e2; color: #991b1b; }
+    .status-badge.Cancelled { background: #f3f4f6; color: #4b5563; }
+    
+    /* Maternity specific badges */
+    .status-badge.New { background: #fef3c7; color: #92400e; }
+    .status-badge.PendingHR { background: #fef3c7; color: #92400e; }
+    .status-badge.HRVerified { background: #dbeafe; color: #1e40af; }
+    
+    /* Overseas specific badges */
+    .status-badge.Verified { background: #dbeafe; color: #1e40af; }
+    .status-badge.PendingBoard { background: #fef3c7; color: #92400e; }
+
+    .rejection-reason {
+        font-size: 11px; color: #991b1b; font-style: italic; margin-top: 4px; font-weight: 500;
+    }
+
+    /* Tabs Horizontal Navbar */
+    .k-tabs {
+        display: flex;
+        border-bottom: 1px solid #e2e5dc;
+        padding-left: 0;
+        list-style: none;
+        gap: 8px;
+        margin: 0 0 20px 0;
+    }
+    .tab-btn {
+        background: none;
+        border: none;
+        padding: 10px 16px;
+        font-size: 13.5px;
+        font-weight: 600;
+        color: #7a8863;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        transition: color 0.15s, border-color 0.15s;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .tab-btn.active {
+        color: #10823c;
+        border-bottom-color: #10823c;
+        font-weight: 700;
+    }
+    .tab-btn:hover {
+        color: #10823c;
+    }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;">
+    <div>
+        <h1 class="page-h">My Leave Requests</h1>
+        <p class="page-s">Track status of submitted leave applications</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+        <a href="/Employee/Leave/Dashboard" class="btn-kanrich btn-kanrich-outline" style="padding:9px 18px">
+            <i class="bi bi-arrow-left"></i> Dashboard
+        </a>
+        <a href="/Employee/Leave/Apply" class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px">
+            <i class="bi bi-plus-circle"></i> Apply for Leave
+        </a>
+    </div>
+</div>
+
+<!-- Horizontal Navbar for Tab Navigation -->
+<ul class="k-tabs" id="statusTabs" role="tablist">
+    <li class="nav-item">
+        <button class="tab-btn active" id="standard-tab" data-tab="standard" type="button">
+            <i class="bi bi-calendar-plus"></i> Standard Leaves
+        </button>
+    </li>
+    <li class="nav-item">
+        <button class="tab-btn" id="overseas-tab" data-tab="overseas" type="button">
+            <i class="bi bi-globe"></i> Overseas Leaves
+        </button>
+    </li>
+    @if (!Model.EmployeeGender.Equals("Male", StringComparison.OrdinalIgnoreCase))
+    {
+        <li class="nav-item">
+            <button class="tab-btn" id="maternity-tab" data-tab="maternity" type="button">
+                <i class="bi bi-heart-pulse"></i> Maternity Leaves
+            </button>
+        </li>
+    }
+</ul>
+
+<!-- Hidden input to preserve active tab across posts -->
+<form id="tabPreserveForm">
+    <input type="hidden" asp-for="ActiveTab" id="activeTabInput" />
+</form>
+
+<!-- 1. STANDARD LEAVE TABLE -->
+<div class="tab-pane" id="standard-pane">
+    <div class="tbl-card">
+        <table class="sep-table">
+            <thead>
+                <tr>
+                    <th>Applied Date</th>
+                    <th>Leave Type</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Days</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.MyLeaves.Any())
+                {
+                    @foreach (var leave in Model.MyLeaves)
+                    {
+                        <tr>
+                            <td style="font-weight: 600;">@leave.AppliedDate.ToString("MMM dd, yyyy")</td>
+                            <td>@leave.LeaveType</td>
+                            <td>@leave.StartDate.ToString("MMM dd, yyyy")</td>
+                            <td>@leave.EndDate.ToString("MMM dd, yyyy")</td>
+                            <td style="font-weight: 600;">@leave.TotalDays days</td>
+                            <td>
+                                @if (!string.IsNullOrEmpty(leave.Reason))
+                                {
+                                    <span title="@leave.Reason">
+                                        @(leave.Reason.Length > 40 ? leave.Reason.Substring(0, 40) + "..." : leave.Reason)
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color:#d1d5db">—</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="status-badge @leave.Status">
+                                    @if (leave.Status == "Pending")
+                                    {
+                                        <i class="bi bi-clock"></i>
+                                    }
+                                    else if (leave.Status == "Approved")
+                                    {
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    }
+                                    else if (leave.Status == "Rejected")
+                                    {
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    }
+                                    else if (leave.Status == "Cancelled")
+                                    {
+                                        <i class="bi bi-slash-circle"></i>
+                                    }
+                                    @leave.Status
+                                </span>
+                                @if (leave.Status == "Rejected" && !string.IsNullOrEmpty(leave.RejectionReason))
+                                {
+                                    <div class="rejection-reason">Reason: @leave.RejectionReason</div>
+                                }
+                            </td>
+                            <td>
+                                @if (leave.Status == "Pending")
+                                {
+                                    <form method="post" asp-page-handler="Cancel" asp-route-leaveId="@leave.Id" asp-route-activeTab="standard" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this leave request?');">
+                                        <button type="submit" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm" style="padding: 4px 10px;">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span style="color: #9ca3af; font-size: 12px; font-style: italic;">No actions</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: #9ca3af; padding: 48px 24px; font-size: 13.5px;">
+                            <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 10px;"></i>
+                            You have not submitted any standard leave requests yet.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 2. OVERSEAS LEAVE TABLE -->
+<div class="tab-pane" id="overseas-pane" style="display: none;">
+    <div class="tbl-card">
+        <table class="sep-table">
+            <thead>
+                <tr>
+                    <th>Applied Date</th>
+                    <th>Leave Period</th>
+                    <th>Country</th>
+                    <th>Passport Status</th>
+                    <th>Board Approval</th>
+                    <th>Final Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.MyOverseasLeaves.Any())
+                {
+                    @foreach (var leave in Model.MyOverseasLeaves)
+                    {
+                        <tr>
+                            <td style="font-weight: 600;">@leave.AppliedDate.ToString("MMM dd, yyyy")</td>
+                            <td>@leave.StartDate.ToString("MMM dd, yyyy") to @leave.EndDate.ToString("MMM dd, yyyy") (@leave.TotalDays days)</td>
+                            <td style="font-weight: 600;">@leave.OverseasLeave?.Country</td>
+                            <td>
+                                @{
+                                    var rawPassportStatus = leave.OverseasLeave?.VerificationStatus ?? "Pending";
+                                    var badgeClass = rawPassportStatus.Replace(" ", "");
+                                }
+                                <span class="status-badge @badgeClass">@rawPassportStatus</span>
+                            </td>
+                            <td>
+                                @{
+                                    var rawBoardStatus = leave.OverseasLeave?.BoardApprovalStatus ?? "Pending";
+                                    var boardBadgeClass = rawBoardStatus.Replace(" ", "");
+                                }
+                                <span class="status-badge @boardBadgeClass">@rawBoardStatus</span>
+                            </td>
+                            <td>
+                                <span class="status-badge @leave.Status">
+                                    @if (leave.Status == "Pending")
+                                    {
+                                        <i class="bi bi-clock"></i>
+                                    }
+                                    else if (leave.Status == "Approved")
+                                    {
+                                        <i class="bi bi-check-circle-fill"></i>
+                                    }
+                                    else if (leave.Status == "Rejected")
+                                    {
+                                        <i class="bi bi-x-circle-fill"></i>
+                                    }
+                                    else if (leave.Status == "Cancelled")
+                                    {
+                                        <i class="bi bi-slash-circle"></i>
+                                    }
+                                    @leave.Status
+                                </span>
+                            </td>
+                            <td>
+                                @if (leave.Status == "Pending")
+                                {
+                                    <form method="post" asp-page-handler="Cancel" asp-route-leaveId="@leave.Id" asp-route-activeTab="overseas" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this request?');">
+                                        <button type="submit" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm" style="padding: 4px 10px;">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span style="color: #9ca3af; font-size: 12px; font-style: italic;">No actions</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #9ca3af; padding: 48px 24px; font-size: 13.5px;">
+                            <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 10px;"></i>
+                            No overseas requests found.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- 3. MATERNITY LEAVE TABLE -->
+@if (!Model.EmployeeGender.Equals("Male", StringComparison.OrdinalIgnoreCase))
+{
+    <div class="tab-pane" id="maternity-pane" style="display: none;">
+        <div class="tbl-card">
+            <table class="sep-table">
+                <thead>
+                    <tr>
+                        <th>Applied Date</th>
+                        <th>Leave Period</th>
+                        <th>Child #</th>
+                        <th>HR Verification</th>
+                        <th>Final Status</th>
+                        <th>Payroll Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.MyMaternityLeaves.Any())
+                    {
+                        @foreach (var leave in Model.MyMaternityLeaves)
+                        {
+                            <tr>
+                                <td style="font-weight: 600;">@leave.AppliedDate.ToString("MMM dd, yyyy")</td>
+                                <td>@leave.StartDate.ToString("MMM dd, yyyy") to @leave.EndDate.ToString("MMM dd, yyyy") (@leave.TotalDays days)</td>
+                                <td style="font-weight: 600;">Child #@leave.MaternityLeave?.ChildNumber</td>
+                                <td>
+                                    @{
+                                        var rawHrStatus = leave.MaternityLeave?.VerificationStatus ?? "Pending";
+                                        var badgeClass = rawHrStatus.Replace(" ", "");
+                                    }
+                                    <span class="status-badge @badgeClass">@rawHrStatus</span>
+                                </td>
+                                <td>
+                                    <span class="status-badge @leave.Status">
+                                        @if (leave.Status == "Pending")
+                                        {
+                                            <i class="bi bi-clock"></i>
+                                        }
+                                        else if (leave.Status == "Approved")
+                                        {
+                                            <i class="bi bi-check-circle-fill"></i>
+                                        }
+                                        else if (leave.Status == "Rejected")
+                                        {
+                                            <i class="bi bi-x-circle-fill"></i>
+                                        }
+                                        else if (leave.Status == "Cancelled")
+                                        {
+                                            <i class="bi bi-slash-circle"></i>
+                                        }
+                                        @leave.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    @if (leave.MaternityPayment != null)
+                                    {
+                                        <span class="status-badge Approved">Processed (@leave.MaternityPayment.SalaryAdjustmentType)</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-badge Pending">Pending Processing</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (leave.Status == "Pending")
+                                    {
+                                        <form method="post" asp-page-handler="Cancel" asp-route-leaveId="@leave.Id" asp-route-activeTab="maternity" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this request?');">
+                                            <button type="submit" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm" style="padding: 4px 10px;">
+                                                <i class="bi bi-x-circle"></i> Cancel
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: #9ca3af; font-size: 12px; font-style: italic;">No actions</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: #9ca3af; padding: 48px 24px; font-size: 13.5px;">
+                                <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 10px;"></i>
+                                No maternity requests found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Tab switching logic
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+        const activeTabInput = document.getElementById('activeTabInput');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabPanes.forEach(p => p.style.display = 'none');
+
+                this.classList.add('active');
+                const targetId = this.getAttribute('data-tab');
+                document.getElementById(targetId + '-pane').style.display = 'block';
+                if (activeTabInput) {
+                    activeTabInput.value = targetId;
+                }
+            });
+        });
+
+        // Initialize active tab from model state or query parameter
+        const initialTab = '@Model.ActiveTab';
+        const initialBtn = document.getElementById(initialTab + '-tab');
+        if (initialBtn) {
+            initialBtn.click();
+        }
+    </script>
+}

@@ -1,0 +1,191 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using HRMS.Application.Models
+@attribute [Authorize(Roles = "Employee")]
+@model HRMS.UI.Pages.Resignation.EditDraftModel
+@{
+    ViewData["Title"] = "Edit Draft Resignation";
+    ViewData["ActiveNav"] = "Separation";
+}
+
+<style>
+    .sep-page-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sep-page-sub   { font-size: 12px; color: #7a8863; margin: 0; }
+    .form-card { background: #fff; border: 1px solid #e2e5dc; border-radius: 10px; box-shadow: 0 1px 2px rgba(0,0,0,.05); overflow: hidden; }
+    .form-card-header { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #7a8863; padding: 14px 20px; border-bottom: 1px solid #e2e5dc; background: #f9fafb; }
+    .form-card-body { padding: 20px; }
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; box-sizing: border-box; transition: border-color .15s, box-shadow .15s; }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .fi-hint { font-size: 11px; color: #7a8863; margin-top: 4px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+    .checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #374151; cursor: pointer; }
+    .checkbox-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #10823c; }
+    .draft-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; display:flex; align-items:center; gap:10px; font-size:13px; color:#1d4ed8; }
+    .draft-banner i { font-size:1.1rem; flex-shrink:0; }
+    .approval-panel { background: #f6f8f7; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px; }
+    .approval-panel h5 { font-size: 13px; font-weight: 700; color: #151811; margin: 0 0 4px 0; display:flex; align-items:center; gap:7px; }
+    .ap-sub { font-size: 12px; color: #7a8863; margin: 0 0 18px 0; }
+    .ap-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+    .ap-step:last-child { margin-bottom: 0; }
+    .ap-dot { width: 10px; height: 10px; border-radius: 50%; background: #10823c; margin-top: 4px; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(16,130,60,0.15); }
+    .ap-label { font-size: 13px; font-weight: 700; color: #151811; margin-bottom: 2px; }
+    .ap-desc  { font-size: 12px; color: #7a8863; }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
+    <div>
+        <h1 class="sep-page-title">Edit Draft Resignation <span style="font-size:14px;font-weight:600;color:#7a8863">#@Model.Draft!.Id</span></h1>
+        <p class="sep-page-sub">Update and save your draft, or submit it when ready</p>
+    </div>
+    <a asp-page="/Transfer/Separation" asp-route-ActiveTab="Resignation" class="btn-kanrich btn-kanrich-outline">
+        <i class="bi bi-arrow-left"></i> Back
+    </a>
+</div>
+
+@if (TempData["ErrorMessage"] is string errorMsg)
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom:20px">
+        <i class="bi bi-exclamation-triangle-fill"></i> @errorMsg
+    </div>
+}
+
+<div class="draft-banner">
+    <i class="bi bi-pencil-square"></i>
+    <span>This resignation is saved as a <strong>Draft</strong>. You can edit it freely and submit when you're ready. Last modified: <strong>@Model.Draft.LastModifiedDate.ToString("MMM dd, yyyy HH:mm")</strong></span>
+</div>
+
+<div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
+    <!-- Edit Form -->
+    <div class="form-card">
+        <div class="form-card-header">Resignation Details</div>
+        <div class="form-card-body">
+            <form method="post" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" value="@Model.Draft.Id" />
+
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Last Working Day <span class="req">*</span></label>
+                        <input type="date" name="EffectiveDate" class="fi" required
+                               value="@Model.Draft.EffectiveDate.ToString("yyyy-MM-dd")"
+                               min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")"
+                               id="effectiveDateInput" />
+                        <div class="fi-hint">
+                            Minimum 14 days notice required.
+                            Notice period: <strong id="noticeDays" style="color:#10823c">@Model.Draft.NoticePeriodDays days</strong>
+                        </div>
+                    </div>
+                    <div class="fg">
+                        <label class="fl">Financial Obligations</label>
+                        <div style="display:flex; flex-direction:column; gap:10px; padding-top:6px;">
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="HasOutstandingLoans" value="true"
+                                       @(Model.Draft.HasOutstandingLoans ? "checked" : "") />
+                                I have outstanding loans
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" name="IsLoanGuarantor" value="true"
+                                       @(Model.Draft.IsLoanGuarantor ? "checked" : "") />
+                                I am a loan guarantor
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fg" style="margin-top:4px;">
+                    <label class="fl">Reason for Resignation <span class="req">*</span></label>
+                    <textarea name="ReasonForResignation" class="fi" rows="4" required minlength="20"
+                              placeholder="Please provide a detailed reason (minimum 20 characters)...">@(Model.Draft.ReasonForResignation == "(draft)" ? "" : Model.Draft.ReasonForResignation)</textarea>
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Additional Remarks</label>
+                    <textarea name="AdditionalRemarks" class="fi" rows="2"
+                              placeholder="Any additional information...">@Model.Draft.AdditionalRemarks</textarea>
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Add More Supporting Documents</label>
+                    <input type="file" name="Documents" class="fi" multiple
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px;" />
+                    <div class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each. At least one document required before submitting.</div>
+                </div>
+
+                @if (Model.Draft.Documents != null && Model.Draft.Documents.Any())
+                {
+                    <div class="fg">
+                        <label class="fl">Attached Documents</label>
+                        <div style="display:flex; flex-direction:column; gap:6px;">
+                            @foreach (var doc in Model.Draft.Documents)
+                            {
+                                <div style="display:flex; align-items:center; gap:8px; padding:8px 12px; background:#f9fafb; border:1px solid #e2e5dc; border-radius:6px; font-size:13px;">
+                                    <i class="bi bi-paperclip" style="color:#7a8863"></i>
+                                    <span>@doc.FileName</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <div style="display:flex; gap:10px; margin-top:8px;">
+                    <button type="submit" name="action" value="submit" class="btn-kanrich btn-kanrich-primary">
+                        <i class="bi bi-send"></i> Submit Resignation
+                    </button>
+                    <button type="submit" name="action" value="draft" class="btn-kanrich btn-kanrich-outline">
+                        <i class="bi bi-floppy"></i> Save as Draft
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Approval Flow -->
+    <div class="approval-panel">
+        <h5><i class="bi bi-diagram-3" style="color:#10823c"></i> Approval Flow</h5>
+        <p class="ap-sub">Your resignation passes through 3 review stages before being finalised.</p>
+        <div class="ap-step">
+            <div class="ap-dot"></div>
+            <div>
+                <div class="ap-label">Stage 1 — Branch Manager</div>
+                <div class="ap-desc">Acknowledges and plans for operational continuity.</div>
+            </div>
+        </div>
+        <div class="ap-step">
+            <div class="ap-dot"></div>
+            <div>
+                <div class="ap-label">Stage 2 — Area Manager</div>
+                <div class="ap-desc">Reviews based on regional staffing requirements.</div>
+            </div>
+        </div>
+        <div class="ap-step">
+            <div class="ap-dot"></div>
+            <div>
+                <div class="ap-label">Stage 3 — HR Manager</div>
+                <div class="ap-desc">Final approval. Generates your acceptance letter.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    const effectiveDateInput = document.getElementById('effectiveDateInput');
+    const noticeDays = document.getElementById('noticeDays');
+    if (effectiveDateInput) {
+        effectiveDateInput.addEventListener('change', function () {
+            const today = new Date(); today.setHours(0, 0, 0, 0);
+            const effective = new Date(this.value);
+            if (!isNaN(effective)) {
+                const d = Math.round((effective - today) / 86400000);
+                noticeDays.textContent = d + ' day' + (d !== 1 ? 's' : '');
+            } else {
+                noticeDays.textContent = '—';
+            }
+        });
+    }
+</script>
+}

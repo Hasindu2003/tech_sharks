@@ -1,4 +1,5 @@
 using HRMS.Domain.Entities.Transfer;
+using HRMS.Domain.Entities.Core;
 using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using Microsoft.EntityFrameworkCore;
@@ -120,7 +121,7 @@ namespace HRMS.Application.Services
                 approved
                     ? $"Transfer request #{request.Id} for {request.EmployeeName} has been approved by the Department Head and is now awaiting Branch Manager reviews."
                     : $"Transfer request #{request.Id} for {request.EmployeeName} has been rejected by the Department Head. Comments: {comments}",
-                approved ? NotificationType.Approved : NotificationType.Rejected,
+                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected,
                 request.Id,
                 $"/Transfer/Details/{request.Id}"
             );
@@ -220,7 +221,7 @@ namespace HRMS.Application.Services
                 approved
                     ? $"Transfer request #{request.Id} has been approved by {bmLabel}."
                     : $"Transfer request #{request.Id} has been rejected by {bmLabel}. Comments: {comments}",
-                approved ? NotificationType.Approved : NotificationType.Rejected,
+                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected,
                 request.Id,
                 $"/Transfer/Details/{request.Id}"
             );
@@ -267,7 +268,7 @@ namespace HRMS.Application.Services
                 approved
                     ? $"Transfer request #{request.Id} has been approved by the Area Manager and is now awaiting final HR approval."
                     : $"Transfer request #{request.Id} has been rejected by the Area Manager. Comments: {comments}",
-                approved ? NotificationType.Approved : NotificationType.Rejected,
+                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected,
                 request.Id,
                 $"/Transfer/Details/{request.Id}"
             );
@@ -314,7 +315,7 @@ namespace HRMS.Application.Services
                 approved
                     ? $"Transfer request #{request.Id} for {request.EmployeeName} from {request.CurrentBranch} to {request.RequestedBranch} has been fully approved and finalized by HR."
                     : $"Transfer request #{request.Id} has been rejected at HR finalization. Comments: {comments}",
-                approved ? NotificationType.Approved : NotificationType.Rejected,
+                approved ? CoreNotificationType.Approved : CoreNotificationType.Rejected,
                 request.Id,
                 $"/Transfer/Details/{request.Id}"
             );
@@ -325,7 +326,7 @@ namespace HRMS.Application.Services
                     request.EmployeeEmail,
                     "Your Transfer Has Been Approved ✅",
                     $"Your transfer from {request.CurrentBranch} to {request.RequestedBranch} has been fully approved. Please coordinate with your managers for the transition.",
-                    NotificationType.Approved,
+                    CoreNotificationType.Approved,
                     request.Id,
                     $"/Transfer/Details/{request.Id}"
                 );

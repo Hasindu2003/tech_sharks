@@ -9,7 +9,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.UI.Pages.Employees
 {
+    using Employee = HRMS.Domain.Entities.Core.Employee;
+
     [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+
     public class DetailsModel : PageModel
     {
         private readonly ApplicationDbContext _context;

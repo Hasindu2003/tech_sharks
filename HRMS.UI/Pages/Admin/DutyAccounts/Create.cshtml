@@ -369,21 +369,6 @@
         <div asp-validation-summary="All"></div>
         <input type="hidden" id="selectedRoleInput" name="SelectedRole" value="@Model.SelectedRole" />
 
-        <!-- Common: Date of Joining -->
-        <div style="margin-bottom:20px;background:#fff;border:1px solid #e2e5dc;border-radius:10px;padding:16px 20px;display:flex;align-items:center;gap:16px">
-            <div style="flex:1">
-                <label style="font-size:13px;font-weight:700;color:#374151;display:block;margin-bottom:6px">
-                    Date of Joining <span style="color:#ef4444">*</span>
-                </label>
-                <input type="date" name="DateOfJoining"
-                       value="@Model.DateOfJoining.ToString("yyyy-MM-dd")"
-                       max="@DateTime.Today.ToString("yyyy-MM-dd")"
-                       required
-                       style="padding:8px 12px;border:1px solid #d1d5db;border-radius:6px;font-size:14px;color:#374151;width:200px" />
-                <div style="font-size:11px;color:#9ca3af;margin-top:4px">The employee's actual hire / joining date — used to calculate years of service.</div>
-            </div>
-        </div>
-
         <!-- HR Manager Panel -->
         <div class="form-panel @(Model.SelectedRole == "HR Manager" ? "visible" : "")" id="panel-HR Manager">
             <div class="form-panel-header">

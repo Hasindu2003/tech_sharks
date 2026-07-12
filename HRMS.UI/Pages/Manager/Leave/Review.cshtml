@@ -1,0 +1,700 @@
+@page
+@model HRMS.UI.Pages.Manager.Leave.ReviewModel
+@{
+    ViewData["Title"] = "Review Leave Request";
+    ViewData["ActiveNav"] = "LeaveApproval";
+}
+
+<style>
+    .review-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+    }
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+    .btn-back:hover {
+        background: #e2e8f0;
+        color: #1e293b;
+    }
+    .review-title {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1e293b;
+        margin: 0;
+    }
+    .review-subtitle {
+        font-size: 12.5px;
+        color: #64748b;
+        margin: 2px 0 0 0;
+    }
+
+    .review-grid {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 24px;
+        margin-bottom: 28px;
+    }
+
+    .review-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        padding: 24px;
+    }
+    .card-sec-title {
+        font-size: 14.5px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0 0 16px 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #f1f5f9;
+        padding-bottom: 10px;
+    }
+    .card-sec-title i {
+        color: #10823c;
+    }
+
+    /* Detail layouts */
+    .detail-row {
+        display: grid;
+        grid-template-columns: 1fr 1.5fr;
+        gap: 12px;
+        margin-bottom: 14px;
+        font-size: 13.5px;
+    }
+    .detail-label {
+        font-weight: 600;
+        color: #64748b;
+    }
+    .detail-val {
+        color: #1e293b;
+        font-weight: 700;
+    }
+
+    /* Employee Profile Card */
+    .emp-profile-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .emp-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #10823c, #0d6e32);
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 800;
+    }
+    .emp-meta {
+        display: flex;
+        flex-direction: column;
+    }
+    .emp-name {
+        font-size: 15px;
+        font-weight: 800;
+        color: #1e293b;
+    }
+    .emp-title {
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
+    .badge-status {
+        display: inline-block;
+        padding: 3px 8px;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 12px;
+        text-transform: uppercase;
+    }
+    .badge-Pending, .badge-PendingDH, .badge-PendingBM, .badge-PendingHR { background: #fef3c7; color: #d97706; }
+    .badge-Approved { background: #dcfce7; color: #166534; }
+    .badge-Rejected { background: #fee2e2; color: #991b1b; }
+
+    /* Action Form Card */
+    .action-card {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 20px;
+        margin-top: 20px;
+    }
+    .comment-area {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-family: inherit;
+        resize: none;
+        box-sizing: border-box;
+        margin-bottom: 16px;
+    }
+    .comment-area:focus {
+        outline: none;
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.1);
+    }
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+    .btn-action {
+        font-family: inherit;
+        font-size: 13.5px;
+        font-weight: 700;
+        padding: 9px 18px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .btn-approve {
+        background: #10823c;
+        color: #ffffff;
+    }
+    .btn-approve:hover {
+        background: #0d6e32;
+    }
+    .btn-reject {
+        background: #ef4444;
+        color: #ffffff;
+    }
+    .btn-reject:hover {
+        background: #dc2626;
+    }
+
+    /* History table */
+    .history-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .history-table-container {
+        overflow-x: auto;
+    }
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+        font-size: 13px;
+    }
+    .history-table th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 700;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .history-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        color: #334155;
+    }
+    .history-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .attachment-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #f1f5f9;
+        color: #334155;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        text-decoration: none;
+        font-weight: 700;
+        border: 1px solid #cbd5e1;
+    }
+    .attachment-badge:hover {
+        background: #e2e8f0;
+    }
+
+    @@media (max-width: 1024px) {
+        .review-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="review-header">
+    <a asp-page="./Approval" class="btn-back" title="Back to Inbox">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+        <h1 class="review-title">Review Leave Request</h1>
+        <p class="review-subtitle">Examine details, check past leave records, and approve or reject this request.</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="k-alert k-alert-success" style="margin-bottom: 20px;">
+        <i class="bi bi-check-circle-fill"></i> @Model.SuccessMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom: 20px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> @Model.ErrorMessage
+    </div>
+}
+
+<div class="review-grid">
+    <!-- Left Column: Request details & Actions -->
+    <div>
+        <div class="review-card">
+            <h3 class="card-sec-title">
+                <i class="bi bi-calendar-event"></i> Leave Application Details
+            </h3>
+
+            <div class="detail-row">
+                <span class="detail-label">Leave Type</span>
+                <span class="detail-val">
+                    <span class="badge-status" style="background:#cbd5e1; color:#1e293b; font-size: 11.5px;">
+                        @Model.LeaveItem.LeaveType
+                    </span>
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Duration</span>
+                <span class="detail-val">
+                    @Model.LeaveItem.StartDate.ToString("MMM dd, yyyy") – @Model.LeaveItem.EndDate.ToString("MMM dd, yyyy")
+                    <span style="color:#10823c; margin-left: 6px;">(@Model.LeaveItem.TotalDays Days)</span>
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="detail-val">
+                    <span class="badge-status badge-@Model.LeaveItem.Status">@Model.LeaveItem.Status</span>
+                </span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Applied Date</span>
+                <span class="detail-val">@Model.LeaveItem.AppliedDate.ToString("MMMM dd, yyyy HH:mm")</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Remarks/Reason</span>
+                <span class="detail-val" style="font-weight: 500; font-style: italic;">
+                    @(string.IsNullOrWhiteSpace(Model.LeaveItem.Reason) ? "No remarks provided." : Model.LeaveItem.Reason)
+                </span>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.LeaveItem.AttachmentPath))
+            {
+                <div class="detail-row">
+                    <span class="detail-label">Attachment</span>
+                    <span class="detail-val">
+                        <a href="@Model.LeaveItem.AttachmentPath" target="_blank" class="attachment-badge">
+                            <i class="bi bi-file-earmark-arrow-down"></i> View Attached File
+                        </a>
+                    </span>
+                </div>
+            }
+
+            @* Special details for Maternity Leave *@
+            @if (Model.LeaveItem.MaternityLeave != null)
+            {
+                <h4 class="card-sec-title" style="margin-top: 24px; font-size: 13.5px; border-bottom: 1px dashed #e2e8f0;">
+                    <i class="bi bi-heart-pulse"></i> Maternity Leave Sub-Details
+                </h4>
+                <div class="detail-row">
+                    <span class="detail-label">Child Number</span>
+                    <span class="detail-val">@Model.LeaveItem.MaternityLeave.ChildNumber</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Expected Delivery</span>
+                    <span class="detail-val">@(Model.LeaveItem.MaternityLeave.ExpectedDeliveryDate?.ToString("MMM dd, yyyy") ?? "Not Provided")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Verification Status</span>
+                    <span class="detail-val">
+                        <span class="badge-status" style="background:#f1f5f9; color:#475569;">
+                            @Model.LeaveItem.MaternityLeave.VerificationStatus
+                        </span>
+                    </span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.LeaveItem.MaternityLeave.MedicalCertificatePath))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">Medical Certificate</span>
+                        <span class="detail-val">
+                            <a href="@Model.LeaveItem.MaternityLeave.MedicalCertificatePath" target="_blank" class="attachment-badge">
+                                <i class="bi bi-file-earmark-check"></i> View MC
+                            </a>
+                        </span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.LeaveItem.MaternityLeave.DoctorLetterPath))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">Doctor Letter</span>
+                        <span class="detail-val">
+                            <a href="@Model.LeaveItem.MaternityLeave.DoctorLetterPath" target="_blank" class="attachment-badge">
+                                <i class="bi bi-file-earmark-text"></i> View Doctor Letter
+                            </a>
+                        </span>
+                    </div>
+                }
+            }
+
+            @* Special details for Overseas Leave *@
+            @if (Model.LeaveItem.OverseasLeave != null)
+            {
+                <h4 class="card-sec-title" style="margin-top: 24px; font-size: 13.5px; border-bottom: 1px dashed #e2e8f0;">
+                    <i class="bi bi-globe"></i> Overseas Leave Sub-Details
+                </h4>
+                <div class="detail-row">
+                    <span class="detail-label">Destination Country</span>
+                    <span class="detail-val">@Model.LeaveItem.OverseasLeave.Country</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Passport Number</span>
+                    <span class="detail-val">@Model.LeaveItem.OverseasLeave.PassportNumber</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Passport Expiry</span>
+                    <span class="detail-val">@Model.LeaveItem.OverseasLeave.PassportExpiry.ToString("MMM dd, yyyy")</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Travel Purpose</span>
+                    <span class="detail-val">@(Model.LeaveItem.OverseasLeave.Purpose ?? "Not Provided")</span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.LeaveItem.OverseasLeave.PassportCopyPath))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">Passport Copy</span>
+                        <span class="detail-val">
+                            <a href="@Model.LeaveItem.OverseasLeave.PassportCopyPath" target="_blank" class="attachment-badge">
+                                <i class="bi bi-file-earmark-check"></i> View Copy
+                            </a>
+                        </span>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(Model.LeaveItem.OverseasLeave.ConfirmationLetterPath))
+                {
+                    <div class="detail-row">
+                        <span class="detail-label">Confirmation Letter</span>
+                        <span class="detail-val">
+                            <a href="@Model.LeaveItem.OverseasLeave.ConfirmationLetterPath" target="_blank" class="attachment-badge">
+                                <i class="bi bi-file-earmark-text"></i> View Letter
+                            </a>
+                        </span>
+                    </div>
+                }
+            }
+
+            @if (Model.CanApprove)
+            {
+                <div class="action-card">
+                    <h4 style="font-size:13.5px; font-weight:800; color:#334155; margin: 0 0 10px 0;">Manager Decision</h4>
+                    <p style="font-size: 11.5px; color: #64748b; margin: 0 0 14px 0;">Add optional comments for approvals. Reason comments are required if rejecting (min 5 characters).</p>
+                    
+                    <textarea id="managerComments" class="comment-area" rows="3" placeholder="Enter comments or reason..."></textarea>
+                    
+                    <div class="action-buttons">
+                        <form method="post" asp-page-handler="Reject" id="rejectForm" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.LeaveItem.Id" />
+                            <input type="hidden" name="reason" id="rejectReasonInput" />
+                            <button type="button" onclick="submitDecision('Reject')" class="btn-action btn-reject">
+                                <i class="bi bi-x-circle"></i> Reject Request
+                            </button>
+                        </form>
+
+                        <form method="post" asp-page-handler="Approve" id="approveForm" style="display:inline;">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@Model.LeaveItem.Id" />
+                            <input type="hidden" name="comments" id="approveCommentsInput" />
+                            <button type="button" onclick="submitDecision('Approve')" class="btn-action btn-approve">
+                                <i class="bi bi-check-circle"></i> Approve Request
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            }
+            else
+            {
+                @if (!Model.ApprovalSteps.Any() && (Model.LeaveItem.Status == "Approved" || Model.LeaveItem.Status == "Rejected"))
+                {
+                    <div style="margin-top: 24px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
+                        <div style="font-size: 12.5px; font-weight: 700; color: #64748b; margin-bottom: 4px;">Decision Log</div>
+                        @if (Model.LeaveItem.Status == "Approved")
+                        {
+                            <div style="font-size:13px; color:#1e293b;">
+                                <strong>Approved By:</strong> @(Model.LeaveItem.ApprovedBy?.FullName ?? "Manager") <br/>
+                                <strong>Approved Date:</strong> @(Model.LeaveItem.ApprovedDate?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")
+                            </div>
+                        }
+                        else if (Model.LeaveItem.Status == "Rejected")
+                        {
+                            <div style="font-size:13px; color:#1e293b;">
+                                <strong>Reason:</strong> @(Model.LeaveItem.RejectionReason ?? "No reason given")
+                            </div>
+                        }
+                    </div>
+                }
+            }
+
+            @* Show full workflow approval logs here under all conditions if they exist *@
+            @if (Model.ApprovalSteps.Any())
+            {
+                <div style="margin-top: 24px; padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                    <div style="font-size: 13.5px; font-weight: 800; color: #475569; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+                        <i class="bi bi-shield-check" style="color: #10823c;"></i> Workflow Approval Log
+                    </div>
+                    
+                    <div style="position: relative; padding-left: 20px; border-left: 2px solid #cbd5e1; margin-left: 8px; display: flex; flex-direction: column; gap: 16px;">
+                        @foreach (var step in Model.ApprovalSteps)
+                        {
+                            <div style="position: relative;">
+                                <!-- Timeline Dot -->
+                                <div style="position: absolute; left: -26px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: @(step.Status == "Approved" ? "#10823c" : "#ef4444"); border: 2px solid #ffffff; box-shadow: 0 0 0 2px @(step.Status == "Approved" ? "#dcfce7" : "#fee2e2");"></div>
+                                
+                                <div style="font-size: 12px; color: #64748b;">
+                                    <strong style="color: #1e293b;">@step.Approver.FullName</strong>
+                                    <span style="margin: 0 4px; color: #cbd5e1;">|</span>
+                                    @step.ApprovalDate.ToString("MMM dd, yyyy HH:mm")
+                                </div>
+                                <div style="font-size: 13px; margin-top: 2px; font-weight: 700; color: @(step.Status == "Approved" ? "#166534" : "#991b1b");">
+                                    @step.Status
+                                </div>
+                                @if (!string.IsNullOrEmpty(step.Comments) && !step.Comments.Equals("Approved", StringComparison.OrdinalIgnoreCase) && !step.Comments.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <div style="font-size: 12.5px; font-style: italic; color: #475569; margin-top: 4px; background: #ffffff; padding: 6px 12px; border-radius: 6px; border: 1px solid #e2e8f0; display: inline-block;">
+                                        "@step.Comments"
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Right Column: Employee Profile details -->
+    <div>
+        <div class="review-card">
+            <h3 class="card-sec-title">
+                <i class="bi bi-person-badge"></i> Employee Profile
+            </h3>
+
+            <div class="emp-profile-header">
+                <div class="emp-avatar">
+                    @(Model.LeaveItem.Employee?.Initials ?? Model.LeaveItem.Employee?.FullName?.Substring(0, 2).ToUpper() ?? "EE")
+                </div>
+                <div class="emp-meta">
+                    <span class="emp-name">@Model.LeaveItem.Employee?.FullName</span>
+                    <span class="emp-title">@(Model.LeaveItem.Employee?.Designation?.Title ?? "Employee")</span>
+                </div>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">EPF No</span>
+                <span class="detail-val">@Model.LeaveItem.Employee?.EPFNumber</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Branch</span>
+                <span class="detail-val">@Model.LeaveItem.Employee?.Branch?.Name</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Department</span>
+                <span class="detail-val">@(Model.LeaveItem.Employee?.Department?.Name ?? "N/A")</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Email</span>
+                <span class="detail-val">@Model.LeaveItem.Employee?.Email</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Phone</span>
+                <span class="detail-val">@Model.LeaveItem.Employee?.PhoneNumber</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Joined Date</span>
+                <span class="detail-val">@(Model.LeaveItem.Employee?.DateJoined?.ToString("MMMM dd, yyyy") ?? "N/A")</span>
+            </div>
+
+            <div class="detail-row">
+                <span class="detail-label">Status</span>
+                <span class="detail-val">
+                    <span class="badge-status" style="background:#e0f2fe; color:#0369a1;">
+                        @Model.LeaveItem.Employee?.Status
+                    </span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Leave Balances Section -->
+<div class="history-card" style="margin-bottom: 24px;">
+    <h3 class="card-sec-title">
+        <i class="bi bi-pie-chart"></i> Leave Entitlements (@Model.LeaveItem.StartDate.Year)
+    </h3>
+    @if (Model.LeaveBalances.Any())
+    {
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+            @foreach (var balance in Model.LeaveBalances)
+            {
+                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 8px 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+                    <div>
+                        <div style="font-size: 11.5px; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.02em;">
+                            @balance.LeaveType
+                        </div>
+                        <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">
+                            Total: @balance.TotalDays | Used: @balance.UsedDays
+                        </div>
+                    </div>
+                    <div style="text-align: right; flex-shrink: 0;">
+                        <span style="font-size: 15px; font-weight: 800; color: #10823c;">
+                            @balance.RemainingDays
+                        </span>
+                        <span style="font-size: 9.5px; color: #64748b; font-weight: 700; display: block; margin-top: -2px; text-transform: uppercase;">
+                            Left
+                        </span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; font-size: 13px; color: #94a3b8; padding: 12px 0;">
+            No leave entitlement records for @Model.LeaveItem.StartDate.Year
+        </div>
+    }
+</div>
+
+<!-- History Section -->
+<div class="history-card">
+    <h3 class="card-sec-title">
+        <i class="bi bi-clock-history"></i> Leave Request History (@Model.LeaveHistory.Count past records)
+    </h3>
+
+    @if (Model.LeaveHistory.Any())
+    {
+        <div class="history-table-container">
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Leave Type</th>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Days</th>
+                        <th>Status</th>
+                        <th>Remarks/Reason</th>
+                        <th>Decision Info</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var hist in Model.LeaveHistory)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge-status" style="background:#f1f5f9; color:#475569; font-weight:700;">
+                                    @hist.LeaveType
+                                </span>
+                            </td>
+                            <td>@hist.StartDate.ToString("MMM dd, yyyy")</td>
+                            <td>@hist.EndDate.ToString("MMM dd, yyyy")</td>
+                            <td style="font-weight: 700;">@hist.TotalDays</td>
+                            <td>
+                                <span class="badge-status badge-@hist.Status">@hist.Status</span>
+                            </td>
+                            <td style="max-width: 250px; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" title="@hist.Reason">
+                                @(string.IsNullOrWhiteSpace(hist.Reason) ? "-" : hist.Reason)
+                            </td>
+                            <td>
+                                @if (hist.Status == "Approved")
+                                {
+                                    <span style="font-size:11.5px; color:#64748b;">
+                                        Approved by @(hist.ApprovedBy?.FullName ?? "Manager")
+                                    </span>
+                                }
+                                else if (hist.Status == "Rejected")
+                                {
+                                    <span style="font-size:11.5px; color:#b91c1c; font-style:italic;" title="@hist.RejectionReason">
+                                        Rejected: @hist.RejectionReason
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="font-size:11.5px; color:#d97706;">Pending approval</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div style="text-align: center; padding: 28px; color: #94a3b8; font-size: 13.5px;">
+            <i class="bi bi-info-circle" style="font-size:1.5rem; display:block; margin-bottom: 6px;"></i>
+            No previous leave requests found for this employee.
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        function submitDecision(action) {
+            const commentsText = document.getElementById('managerComments').value.trim();
+
+            if (action === 'Approve') {
+                document.getElementById('approveCommentsInput').value = commentsText || 'Approved';
+                document.getElementById('approveForm').submit();
+            } else if (action === 'Reject') {
+                if (commentsText.length < 5) {
+                    alert('Please provide a rejection reason/comments (minimum 5 characters) in the comment box.');
+                    return;
+                }
+                document.getElementById('rejectReasonInput').value = commentsText;
+                document.getElementById('rejectForm').submit();
+            }
+        }
+    </script>
+}

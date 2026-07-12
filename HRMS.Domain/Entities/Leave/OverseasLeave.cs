@@ -13,7 +13,15 @@ namespace HRMS.Domain.Entities.Leave
         public string PassportNumber { get; set; } = null!;
         public DateTime PassportExpiry { get; set; }
         public string Country { get; set; } = null!;
-        public string? TravelDocuments { get; set; }  // Optional: visa, tickets
-        public string? Purpose { get; set; }          // Optional description
+        public string? ContactDetailsOverseas { get; set; }
+        public string? Purpose { get; set; }
+        public string? TravelDocuments { get; set; }
+        public string? PassportCopyPath { get; set; }
+        public string? ConfirmationLetterPath { get; set; }
+
+        public string VerificationStatus { get; set; } = "New";
+        public string? VerificationComments { get; set; }
+        public string BoardApprovalStatus { get; set; } = "Pending";
+        public string? BoardRejectionReason { get; set; }
     }
 }

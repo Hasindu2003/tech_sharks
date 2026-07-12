@@ -1,0 +1,189 @@
+@page
+@model HRMS.UI.Pages.Attendance.DashboardModel
+@{
+    ViewData["Title"] = "Attendance & Leave Management Hub";
+    ViewData["PageTitle"] = "Attendance & Leave Management Hub";
+    ViewData["ActiveNav"] = "AttendanceDashboard";
+}
+
+<style>
+    .sep-wrap { background: #ffffff; min-height: calc(100vh - 62px); }
+
+    .sep-page-title  { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sep-page-sub    { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0 0 22px 0; }
+    .sep-section-title { font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 12px 0; }
+
+    .sep-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+        gap: 14px;
+    }
+
+    .sep-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        transition: box-shadow 0.2s;
+    }
+    .sep-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); color: inherit; text-decoration: none; }
+
+    .sep-icon {
+        width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .sep-icon svg { width: 20px; height: 20px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .sep-icon.green  { background: rgba(16,130,60,0.1); }
+    .sep-icon.green svg  { stroke: #10823c; }
+    .sep-icon.orange { background: rgba(249,115,22,0.1); }
+    .sep-icon.orange svg { stroke: #f97316; }
+    .sep-icon.blue   { background: rgba(59,130,246,0.1); }
+    .sep-icon.blue svg   { stroke: #3b82f6; }
+    .sep-icon.purple { background: rgba(168,85,247,0.1); }
+    .sep-icon.purple svg { stroke: #a855f7; }
+    .sep-icon.red    { background: rgba(239,68,68,0.1); }
+    .sep-icon.red svg    { stroke: #ef4444; }
+
+    .sep-card-title { font-size: 13px; font-weight: 700; color: #151811; margin: 0 0 3px 0; }
+    .sep-card-desc  { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0; line-height: 1.5; }
+</style>
+
+<div class="sep-wrap">
+    <h2 class="sep-page-title">Attendance & Leave Management</h2>
+    <p class="sep-page-sub">Centralized panel to view logs, request leaves, process allowances, and manage approvals.</p>
+
+    <h3 class="sep-section-title">Features & Services</h3>
+    <div class="sep-grid">
+
+        <!-- Attendance Logs (All Roles) -->
+        <a href="/Attendance" class="sep-card">
+            <div class="sep-icon blue">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <div>
+                <p class="sep-card-title">Attendance Logs</p>
+                <p class="sep-card-desc">View daily attendance punch details and total working hours.</p>
+            </div>
+        </a>
+
+        <!-- Leave Dashboard (Employee) -->
+        @if (User.IsInRole("Employee"))
+        {
+            <a href="/Employee/Leave/Dashboard" class="sep-card">
+                <div class="sep-icon green">
+                    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Leave Dashboard</p>
+                    <p class="sep-card-desc">Apply for leaves, view balances, and track application history.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Leave Approvals (Department Head, Branch Manager, Area Manager, HR Manager, Admin) -->
+        @if (User.IsInRole("Department Head") || User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+        {
+            <a href="/Manager/Leave/Approval" class="sep-card">
+                <div class="sep-icon orange">
+                    <svg viewBox="0 0 24 24"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Leave Approvals</p>
+                    <p class="sep-card-desc">Approve or reject leave applications submitted by department/branch staff.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Maternity Verification (HR Manager, Admin) -->
+        @if (User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+        {
+            <a href="/HR/Maternity/Verification" class="sep-card">
+                <div class="sep-icon purple">
+                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Maternity Verif.</p>
+                    <p class="sep-card-desc">Review and verify maternity leave requests and medical documents.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Overseas Verification (HR Manager, Admin) -->
+        @if (User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+        {
+            <a href="/HR/Overseas/Verification" class="sep-card">
+                <div class="sep-icon blue">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Overseas Verif.</p>
+                    <p class="sep-card-desc">Review and verify overseas leave requests and travel documents.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Maternity Pay Processing (HR Manager, Admin) -->
+        @if (User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+        {
+            <a href="/Finance/Maternity/Processing" class="sep-card">
+                <div class="sep-icon green">
+                    <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Maternity Pay Proc.</p>
+                    <p class="sep-card-desc">Process maternal allowance payments and benefit calculations.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Biometric Logs (Branch Manager, Area Manager, HR Manager, Admin) -->
+        @if (User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+        {
+            <a href="/BiometricLogs" class="sep-card">
+                <div class="sep-icon orange">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Biometric Logs</p>
+                    <p class="sep-card-desc">View raw fingerprint scan logs collected from physical devices.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Maternity Admin Approval (Branch Manager, Area Manager, HR Manager, Admin) -->
+        @if (User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+        {
+            <a href="/Admin/Maternity/AdminApproval" class="sep-card">
+                <div class="sep-icon purple">
+                    <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 11 13 15 9"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Maternity Adm Approval</p>
+                    <p class="sep-card-desc">Provide administrative approval for verified maternity applications.</p>
+                </div>
+            </a>
+        }
+
+        <!-- Overseas Board Approval (Admin) -->
+        @if (User.IsInRole("Admin"))
+        {
+            <a href="/Admin/Overseas/BoardApproval" class="sep-card">
+                <div class="sep-icon red">
+                    <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>
+                </div>
+                <div>
+                    <p class="sep-card-title">Overseas Board Approval</p>
+                    <p class="sep-card-desc">Provide final board clearance approval for overseas leaves.</p>
+                </div>
+            </a>
+        }
+
+    </div>
+</div>

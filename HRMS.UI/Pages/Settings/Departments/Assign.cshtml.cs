@@ -14,7 +14,10 @@ using HRMS.Infrastructure.Persistence;
 
 namespace HRMS.UI.Pages.Settings.Departments
 {
+    using Employee = HRMS.Domain.Entities.Core.Employee;
+
     [Authorize(Roles = "Admin")]
+
     public class AssignModel : PageModel
     {
         private readonly ApplicationDbContext _context;

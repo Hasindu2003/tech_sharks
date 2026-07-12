@@ -10,12 +10,20 @@ namespace HRMS.Domain.Entities.Leave
         public int EmployeeId { get; set; }
         public Employee Employee { get; set; } = null!;
 
+        public DateTime AppliedDate { get; set; } = DateTime.Now;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public int TotalDays { get; set; }
 
         public string LeaveType { get; set; } = null!;  // Normal, Maternity, Overseas
         public string Status { get; set; } = null!;     // Pending / Approved / Rejected
         public string? Reason { get; set; }
+        public string? AttachmentPath { get; set; }
+        public string? RejectionReason { get; set; }
+
+        public int? ApprovedById { get; set; }
+        public Employee? ApprovedBy { get; set; }
+        public DateTime? ApprovedDate { get; set; }
 
         // Navigation properties to special leaves
         public MaternityLeave? MaternityLeave { get; set; }

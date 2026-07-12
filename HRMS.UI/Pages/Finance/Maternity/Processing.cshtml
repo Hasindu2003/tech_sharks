@@ -1,0 +1,139 @@
+@page
+@model HRMS.UI.Pages.Finance.Maternity.ProcessingModel
+@{
+    ViewData["Title"] = "Maternity Payroll Processing";
+    ViewData["ActiveNav"] = "FinanceMaternity";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Request Card list */
+    .req-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .req-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .req-card-body { padding: 20px; }
+    
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+    .detail-item small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #7a8863; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .detail-item div { font-size: 13.5px; font-weight: 600; color: #151811; }
+
+    .fg { margin-bottom: 14px; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+</style>
+
+<h1 class="page-h">Maternity Payroll Processing</h1>
+<p class="page-s">Configure salary adjustment settings and nursing break options for approved maternity leaves</p>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="k-alert k-alert-success" style="margin-bottom: 20px;">
+        <i class="bi bi-check-circle-fill"></i> @Model.SuccessMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom: 20px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> @Model.ErrorMessage
+    </div>
+}
+
+@if (Model.ApprovedLeaves.Any())
+{
+    @foreach (var leave in Model.ApprovedLeaves)
+    {
+        <div class="req-card">
+            <div class="req-card-header">
+                <div>
+                    <strong style="font-size: 14.5px; color: #151811;">@leave.Employee?.FullName</strong>
+                    <span style="font-size: 11.5px; color: #7a8863; margin-left: 8px;">Approved on @leave.ApprovedDate?.ToString("MMM dd, yyyy")</span>
+                </div>
+            </div>
+            
+            <div class="req-card-body">
+                <div class="grid-4">
+                    <div class="detail-item">
+                        <small>Maternity Period</small>
+                        <div>@leave.StartDate.ToString("MMM dd, yyyy") to @leave.EndDate.ToString("MMM dd, yyyy")</div>
+                    </div>
+                    <div class="detail-item">
+                        <small>Duration</small>
+                        <div>@leave.TotalDays days</div>
+                    </div>
+                    <div class="detail-item">
+                        <small>Child Number</small>
+                        <div>Child #@leave.MaternityLeave?.ChildNumber</div>
+                    </div>
+                    <div class="detail-item">
+                        <small>Leave Level</small>
+                        <div>Level @(leave.MaternityLeave?.LeaveLevel ?? 1)</div>
+                    </div>
+                </div>
+
+                <form method="post" asp-page-handler="Process" style="border-top: 1px solid #e2e5dc; padding-top: 16px; margin-top: 4px;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="leaveId" value="@leave.Id" />
+                    
+                    <div class="grid-2">
+                        <div class="fg">
+                            <label class="fl">Salary Adjustment Type <span class="req">*</span></label>
+                            <select name="salaryType" class="fi" required>
+                                <option value="Full">Full Pay</option>
+                                <option value="Half">Half Pay</option>
+                                <option value="NoPay">No Pay</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label class="fl">Salary Percentage (%) <span class="req">*</span></label>
+                            <input type="number" name="percentage" class="fi" value="100" min="0" max="100" required />
+                        </div>
+                    </div>
+                    
+                    <div class="fg">
+                        <label class="fl">Nursing Break Configuration <span class="req">*</span></label>
+                        <input type="text" name="nursingConfig" class="fi" placeholder="e.g., 1 hour nursing break daily" required />
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; margin-top: 14px;">
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                            <i class="bi bi-cash-coin"></i> Process Maternity Payroll
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div style="text-align: center; padding: 64px 24px; background: white; border: 1px solid #e2e5dc; border-radius: 10px; color: #9ca3af;">
+        <i class="bi bi-mailbox" style="font-size: 2.5rem; display: block; margin-bottom: 12px;"></i>
+        <div style="font-size: 14.5px; font-weight: 700; color: #374151; margin-bottom: 4px;">No Pending Leaves</div>
+        <div style="font-size: 12.5px; color: #9ca3af;">There are no approved maternity leaves waiting for payroll processing.</div>
+    </div>
+}

@@ -1,0 +1,163 @@
+@page
+@model HRMS.UI.Pages.Admin.Maternity.AdminApprovalModel
+@{
+    ViewData["Title"] = "Admin Maternity Approval";
+    ViewData["ActiveNav"] = "AdminMaternity";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Request Card list */
+    .req-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        margin-bottom: 16px;
+        overflow: hidden;
+    }
+    .req-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .req-card-body { padding: 20px; }
+    
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 14px; }
+    .detail-item small { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; color: #7a8863; letter-spacing: 0.05em; margin-bottom: 2px; }
+    .detail-item div { font-size: 13.5px; font-weight: 600; color: #151811; }
+
+    /* Badges */
+    .status-badge {
+        padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .status-badge.HRVerified { background: #dbeafe; color: #1e40af; }
+    .status-badge.Pending { background: #fef3c7; color: #92400e; }
+
+    /* Modal dialog */
+    .k-modal {
+        display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.4); z-index: 1000;
+        backdrop-filter: blur(2px);
+    }
+    .k-modal-content {
+        background: white; border-radius: 10px; border: 1px solid #e2e5dc;
+        max-width: 440px; margin: 120px auto; padding: 20px 24px;
+        box-shadow: 0 4px 12px rgba(0,0,0,.15);
+    }
+    .k-modal-content h3 { font-size: 16px; font-weight: 800; color: #151811; margin: 0 0 12px 0; }
+    .k-modal-content textarea { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13.5px; font-family: 'Manrope', sans-serif; resize: none; box-sizing: border-box; }
+    .k-modal-content textarea:focus { outline: none; border-color: #ef4444; box-shadow: 0 0 0 2px rgba(239,68,68,.1); }
+</style>
+
+<h1 class="page-h">Admin Maternity Approval</h1>
+<p class="page-s">Provide final executive board/admin approval for verified maternity leaves</p>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="k-alert k-alert-success" style="margin-bottom: 20px;">
+        <i class="bi bi-check-circle-fill"></i> @Model.SuccessMessage
+    </div>
+}
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom: 20px;">
+        <i class="bi bi-exclamation-triangle-fill"></i> @Model.ErrorMessage
+    </div>
+}
+
+@if (Model.PendingApprovals.Any())
+{
+    @foreach (var leave in Model.PendingApprovals)
+    {
+        <div class="req-card">
+            <div class="req-card-header">
+                <div>
+                    <strong style="font-size: 14.5px; color: #151811;">@leave.Employee?.FullName</strong>
+                    <span style="font-size: 11.5px; color: #7a8863; margin-left: 8px;">Applied on @leave.AppliedDate.ToString("MMM dd, yyyy")</span>
+                </div>
+                <span class="status-badge HRVerified">
+                    <i class="bi bi-shield-check"></i> HR Verified
+                </span>
+            </div>
+            
+            <div class="req-card-body">
+                <div class="grid-4">
+                    <div class="detail-item">
+                        <small>Maternity Period</small>
+                        <div>@leave.StartDate.ToString("MMM dd, yyyy") to @leave.EndDate.ToString("MMM dd, yyyy")</div>
+                    </div>
+                    <div class="detail-item">
+                        <small>Duration</small>
+                        <div>@leave.TotalDays days</div>
+                    </div>
+                    <div class="detail-item">
+                        <small>Child Number</small>
+                        <div>Child #@leave.MaternityLeave?.ChildNumber</div>
+                    </div>
+                    <div class="detail-item">
+                        <small>Leave Level</small>
+                        <div>Level @(leave.MaternityLeave?.LeaveLevel ?? 1)</div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+                    <button class="btn-kanrich btn-kanrich-outline" style="color: #ef4444; border-color: #fee2e2;" onclick="showRejectModal(@leave.Id)">
+                        <i class="bi bi-x-circle"></i> Reject Application
+                    </button>
+                    <form method="post" asp-page-handler="Approve" style="display:inline;">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="leaveId" value="@leave.Id" />
+                        <input type="hidden" name="comments" value="Approved by Admin" />
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                            <i class="bi bi-check-circle"></i> Approve Application
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+}
+else
+{
+    <div style="text-align: center; padding: 64px 24px; background: white; border: 1px solid #e2e5dc; border-radius: 10px; color: #9ca3af;">
+        <i class="bi bi-mailbox" style="font-size: 2.5rem; display: block; margin-bottom: 12px;"></i>
+        <div style="font-size: 14.5px; font-weight: 700; color: #374151; margin-bottom: 4px;">No Pending Approvals</div>
+        <div style="font-size: 12.5px; color: #9ca3af;">There are no maternity applications awaiting final admin approval.</div>
+    </div>
+}
+
+<div id="rejectModal" class="k-modal">
+    <div class="k-modal-content">
+        <h3>Reject Maternity Leave</h3>
+        <p style="font-size: 12px; color: #7a8863; margin-top: -6px; margin-bottom: 14px;">Please provide a reason for rejecting this maternity application.</p>
+        
+        <form method="post" asp-page-handler="Reject">
+            @Html.AntiForgeryToken()
+            <input type="hidden" id="rejectLeaveId" name="leaveId" />
+            <textarea name="reason" placeholder="Enter reason (minimum 5 characters)..." rows="3" required minlength="5"></textarea>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px;">
+                <button type="button" onclick="hideRejectModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="background:#ef4444;">Reject Application</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showRejectModal(leaveId) {
+            document.getElementById('rejectLeaveId').value = leaveId;
+            document.getElementById('rejectModal').style.display = 'block';
+        }
+        function hideRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+    </script>
+}

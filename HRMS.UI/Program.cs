@@ -9,6 +9,8 @@ using HRMS.Application.Designations.Commands;
 using HRMS.Application.Common;
 using HRMS.Application.Entity.Commands;
 using MySqlConnector;
+using HRMS.UI.Services;
+using HRMS.UI.Services.Impl;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +39,11 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     options.SignIn.RequireConfirmedAccount = true;
     options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
+
+    // Lockout settings
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    options.Lockout.AllowedForNewUsers = true;
 })
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
@@ -47,6 +54,8 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LoginPath = "/Account/Login";
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
+    options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    options.SlidingExpiration = true;
 });
 
 builder.Services.AddAuthorization(options =>
@@ -57,9 +66,11 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("Admin", "HR Manager"));
     options.AddPolicy("RequireManagers", policy =>
         policy.RequireRole("HR Manager", "Area Manager", "Branch Manager"));
+    options.AddPolicy("RequireEmployee", policy =>
+        policy.RequireRole("Employee"));
 });
 
-// Register command handlers
+// Register command handlers (Settings / CQRS)
 builder.Services.AddScoped<ICommandHandler<CreateBranchCommand, Result>, CreateBranchCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<EditBranchCommand, Result>, EditBranchCommandHandler>();
 builder.Services.AddScoped<ICommandHandler<CreateDepartmentCommand, Result>, CreateDepartmentCommandHandler>();
@@ -74,17 +85,25 @@ builder.Services.AddScoped<ITerminationService, TerminationService>();
 builder.Services.AddScoped<IResignationService, ResignationService>();
 builder.Services.AddScoped<IDeathService, DeathService>();
 
-// Add Razor Pages
+// Register services for Attendance, Biometric Logs and Leaves (Imasha's part)
+builder.Services.AddScoped<IBiometricLogService, BiometricLogService>();
+builder.Services.AddScoped<IAttendanceService, AttendanceService>();
+builder.Services.AddScoped<ILeaveService, LeaveService>();
+builder.Services.AddScoped<IOverseasLeaveService, OverseasLeaveService>();
+builder.Services.AddScoped<IMaternityLeaveService, MaternityLeaveService>();
+
+// Add Razor Pages with role-based folder authorization
 builder.Services.AddRazorPages(options =>
 {
     options.Conventions.AuthorizeFolder("/Settings", "RequireAdmin");
     options.Conventions.AuthorizeFolder("/Employees", "RequireManagers");
     options.Conventions.AuthorizeFolder("/Documents", "RequireAdminOrHR");
+    options.Conventions.AuthorizeFolder("/Employee", "RequireEmployee");
 });
 
 var app = builder.Build();
 
-// Ensure database exists, then apply migrations and seed roles/users
+// Ensure database exists, then apply migrations
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
@@ -92,16 +111,25 @@ using (var scope = app.Services.CreateScope())
     var connectionString = context.Database.GetConnectionString();
     if (!string.IsNullOrEmpty(connectionString))
     {
-        var csBuilder = new MySqlConnectionStringBuilder(connectionString);
-        var databaseName = csBuilder.Database;
-
-        csBuilder.Database = null;
-        using (var connection = new MySqlConnection(csBuilder.ConnectionString))
+        try
         {
-            await connection.OpenAsync();
-            using var command = connection.CreateCommand();
-            command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{databaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
-            await command.ExecuteNonQueryAsync();
+            var csBuilder = new MySqlConnectionStringBuilder(connectionString);
+            var databaseName = csBuilder.Database;
+
+            csBuilder.Database = null;
+            using (var connection = new MySqlConnection(csBuilder.ConnectionString))
+            {
+                await connection.OpenAsync();
+                using var command = connection.CreateCommand();
+                command.CommandText = $"CREATE DATABASE IF NOT EXISTS `{databaseName}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;";
+                await command.ExecuteNonQueryAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            // Cloud providers like Aiven may deny CREATE DATABASE permissions.
+            // That's fine because the 'defaultdb' database already exists. We can safely ignore this.
+            Console.WriteLine("Could not manually create database, continuing to EnsureCreated. Error: " + ex.Message);
         }
     }
 
@@ -130,10 +158,74 @@ using (var scope = app.Services.CreateScope())
 
         // JoinDate added for service duration display
         await AddColumnIfMissing("TransferRequests", "JoinDate", "datetime(6) NULL");
+
+        // DeptHead fields added for 5-stage transfer workflow
+        await AddColumnIfMissing("TransferRequests", "DeptHeadReview", "varchar(50) NULL");
+        await AddColumnIfMissing("TransferRequests", "DeptHeadReviewDate", "datetime(6) NULL");
+        await AddColumnIfMissing("TransferRequests", "DeptHeadComments", "varchar(1000) NULL");
+
+        // Leave fields added for Imasha's modules
+        await AddColumnIfMissing("Leaves", "AppliedDate", "datetime(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6)");
+        await AddColumnIfMissing("Leaves", "TotalDays", "int NOT NULL DEFAULT 0");
+        await AddColumnIfMissing("Leaves", "AttachmentPath", "longtext NULL");
+        await AddColumnIfMissing("Leaves", "RejectionReason", "longtext NULL");
+        await AddColumnIfMissing("Leaves", "ApprovedById", "int NULL");
+        await AddColumnIfMissing("Leaves", "ApprovedDate", "datetime(6) NULL");
+
+        // MaternityLeave fields
+        await AddColumnIfMissing("MaternityLeaves", "LeaveLevel", "int NOT NULL DEFAULT 1");
+        await AddColumnIfMissing("MaternityLeaves", "ChildNumber", "int NOT NULL DEFAULT 1");
+        await AddColumnIfMissing("MaternityLeaves", "MedicalCertificatePath", "longtext NULL");
+        await AddColumnIfMissing("MaternityLeaves", "DoctorLetterPath", "longtext NULL");
+        await AddColumnIfMissing("MaternityLeaves", "VerificationStatus", "varchar(50) NOT NULL DEFAULT 'Pending'");
+        await AddColumnIfMissing("MaternityLeaves", "VerificationComments", "longtext NULL");
+
+        // OverseasLeave fields
+        await AddColumnIfMissing("OverseasLeaves", "ContactDetailsOverseas", "longtext NULL");
+        await AddColumnIfMissing("OverseasLeaves", "PassportCopyPath", "longtext NULL");
+        await AddColumnIfMissing("OverseasLeaves", "ConfirmationLetterPath", "longtext NULL");
+        await AddColumnIfMissing("OverseasLeaves", "VerificationStatus", "varchar(50) NOT NULL DEFAULT 'New'");
+        await AddColumnIfMissing("OverseasLeaves", "VerificationComments", "longtext NULL");
+        await AddColumnIfMissing("OverseasLeaves", "BoardApprovalStatus", "varchar(50) NOT NULL DEFAULT 'Pending'");
+        await AddColumnIfMissing("OverseasLeaves", "BoardRejectionReason", "longtext NULL");
+
+        // MaternityPayments fields
+        await AddColumnIfMissing("MaternityPayments", "SalaryAdjustmentType", "varchar(50) NOT NULL DEFAULT 'Full'");
+        await AddColumnIfMissing("MaternityPayments", "NursingBreakConfig", "longtext NULL");
+        await AddColumnIfMissing("MaternityPayments", "ProcessedBy", "longtext NULL");
+        
+        // Modify PaymentDate to be nullable
+        var alterDate = connection.CreateCommand();
+        alterDate.CommandText = "ALTER TABLE `MaternityPayments` MODIFY COLUMN `PaymentDate` datetime(6) NULL";
+        try { await alterDate.ExecuteNonQueryAsync(); } catch {}
+
+        // Create LeaveAllocationSettings table if not exists
+        var createTableCmd = connection.CreateCommand();
+        createTableCmd.CommandText = @"
+            CREATE TABLE IF NOT EXISTS `LeaveAllocationSettings` (
+                `Id` int AUTO_INCREMENT PRIMARY KEY,
+                `LeaveType` varchar(50) NOT NULL UNIQUE,
+                `DefaultDays` int NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        try { await createTableCmd.ExecuteNonQueryAsync(); } catch {}
+
+        // Attendance fields
+        await AddColumnIfMissing("Attendances", "TotalHours", "double NULL");
+
+        // Apply missing Area Manager managed branches for existing seeded users
+
+
+        var updateCmd = connection.CreateCommand();
+        updateCmd.CommandText = "UPDATE `AspNetUsers` SET `ManagedBranches` = '2,4' WHERE `FullName` = 'Nimal Perera' AND (`ManagedBranches` IS NULL OR `ManagedBranches` = '')";
+        await updateCmd.ExecuteNonQueryAsync();
+
+        var updateCmd2 = connection.CreateCommand();
+        updateCmd2.CommandText = "UPDATE `AspNetUsers` SET `ManagedBranches` = '3' WHERE `FullName` = 'Suresh Fernando' AND (`ManagedBranches` IS NULL OR `ManagedBranches` = '')";
+        await updateCmd2.ExecuteNonQueryAsync();
     }
 }
 
-// Seed roles and dummy users
+// Seed roles and default users
 using (var scope = app.Services.CreateScope())
 {
     var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -148,7 +240,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     // Seed default admin user
-    const string adminEmail = "admin@hrms.local";
+    const string adminEmail = "admin@kanrich.lk";
     const string adminPassword = "Admin@123";
 
     if (await userManager.FindByEmailAsync(adminEmail) is null)
@@ -157,184 +249,16 @@ using (var scope = app.Services.CreateScope())
         {
             UserName = adminEmail,
             Email = adminEmail,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            FullName = "System Administrator",
+            EpfNumber = "EPF-0000",
+            Branch = "Head Office - Colombo",
+            Designation = "System Administrator",
+            Department = "IT"
         };
         var result = await userManager.CreateAsync(adminUser, adminPassword);
         if (result.Succeeded)
             await userManager.AddToRoleAsync(adminUser, "Admin");
-    }
-
-    // Seed default HR Manager user
-    const string hrEmail = "hr@hrms.local";
-    const string hrPassword = "HrManager@123";
-
-    if (await userManager.FindByEmailAsync(hrEmail) is null)
-    {
-        var hrUser = new ApplicationUser
-        {
-            UserName = hrEmail,
-            Email = hrEmail,
-            EmailConfirmed = true
-        };
-        var hrResult = await userManager.CreateAsync(hrUser, hrPassword);
-        if (hrResult.Succeeded)
-            await userManager.AddToRoleAsync(hrUser, "HR Manager");
-    }
-
-    // Seed default Employee user
-    const string employeeEmail = "employee@hrms.local";
-    const string employeePassword = "Employee@123";
-
-    if (await userManager.FindByEmailAsync(employeeEmail) is null)
-    {
-        var employeeUser = new ApplicationUser
-        {
-            UserName = employeeEmail,
-            Email = employeeEmail,
-            EmailConfirmed = true
-        };
-        var employeeResult = await userManager.CreateAsync(employeeUser, employeePassword);
-        if (employeeResult.Succeeded)
-            await userManager.AddToRoleAsync(employeeUser, "Employee");
-    }
-
-    // Seed default Area Manager user
-    const string areaManagerEmail = "area@hrms.local";
-    const string areaManagerPassword = "AreaManager@123";
-
-    if (await userManager.FindByEmailAsync(areaManagerEmail) is null)
-    {
-        var areaUser = new ApplicationUser
-        {
-            UserName = areaManagerEmail, Email = areaManagerEmail, EmailConfirmed = true
-        };
-        var areaResult = await userManager.CreateAsync(areaUser, areaManagerPassword);
-        if (areaResult.Succeeded)
-            await userManager.AddToRoleAsync(areaUser, "Area Manager");
-    }
-
-    // Seed default Branch Manager user
-    const string branchManagerEmail = "branch@hrms.local";
-    const string branchManagerPassword = "BranchManager@123";
-
-    if (await userManager.FindByEmailAsync(branchManagerEmail) is null)
-    {
-        var branchUser = new ApplicationUser
-        {
-            UserName = branchManagerEmail, Email = branchManagerEmail, EmailConfirmed = true
-        };
-        var branchResult = await userManager.CreateAsync(branchUser, branchManagerPassword);
-        if (branchResult.Succeeded)
-            await userManager.AddToRoleAsync(branchUser, "Branch Manager");
-    }
-
-    // Seed dummy users with @kanrich.lk emails
-    var dummyUsers = new[]
-    {
-        // ══════════════════════════════════════════════════════════════
-        //  DEPARTMENT HEADS
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "depthead.finance.kandy@kanrich.lk",    Password = "Kanrich@2024", Role = "Department Head", FullName = "Sudath Abeykoon",      EpfNumber = "EPF-4001", Branch = "Kandy Branch",   Designation = "Department Head - Finance", Department = "Finance", DateOfJoining = new DateTime(2012, 3, 1) },
-        new { Email = "depthead.hr.kandy@kanrich.lk",         Password = "Kanrich@2024", Role = "Department Head", FullName = "Renuka Jayasinghe",    EpfNumber = "EPF-4002", Branch = "Kandy Branch",   Designation = "Department Head - HR",      Department = "HR",      DateOfJoining = new DateTime(2013, 6, 1) },
-        new { Email = "depthead.it.kandy@kanrich.lk",         Password = "Kanrich@2024", Role = "Department Head", FullName = "Chaminda Perera",      EpfNumber = "EPF-4003", Branch = "Kandy Branch",   Designation = "Department Head - IT",      Department = "IT",      DateOfJoining = new DateTime(2014, 1, 15) },
-        new { Email = "depthead.finance.galle@kanrich.lk",    Password = "Kanrich@2024", Role = "Department Head", FullName = "Nayana Gunasekara",    EpfNumber = "EPF-4004", Branch = "Galle Branch",   Designation = "Department Head - Finance", Department = "Finance", DateOfJoining = new DateTime(2013, 4, 1) },
-        new { Email = "depthead.hr.galle@kanrich.lk",         Password = "Kanrich@2024", Role = "Department Head", FullName = "Pradeep Wickrama",     EpfNumber = "EPF-4005", Branch = "Galle Branch",   Designation = "Department Head - HR",      Department = "HR",      DateOfJoining = new DateTime(2014, 9, 1) },
-        new { Email = "depthead.it.galle@kanrich.lk",         Password = "Kanrich@2024", Role = "Department Head", FullName = "Thisara Mendis",       EpfNumber = "EPF-4006", Branch = "Galle Branch",   Designation = "Department Head - IT",      Department = "IT",      DateOfJoining = new DateTime(2015, 2, 1) },
-        new { Email = "depthead.finance.negombo@kanrich.lk",  Password = "Kanrich@2024", Role = "Department Head", FullName = "Dilrukshi Seneviratne",EpfNumber = "EPF-4007", Branch = "Negombo Branch", Designation = "Department Head - Finance", Department = "Finance", DateOfJoining = new DateTime(2014, 7, 1) },
-        new { Email = "depthead.hr.negombo@kanrich.lk",       Password = "Kanrich@2024", Role = "Department Head", FullName = "Asiri Ranasinghe",     EpfNumber = "EPF-4008", Branch = "Negombo Branch", Designation = "Department Head - HR",      Department = "HR",      DateOfJoining = new DateTime(2015, 11, 1) },
-        new { Email = "depthead.it.negombo@kanrich.lk",       Password = "Kanrich@2024", Role = "Department Head", FullName = "Kavindi Weerasinghe",  EpfNumber = "EPF-4009", Branch = "Negombo Branch", Designation = "Department Head - IT",      Department = "IT",      DateOfJoining = new DateTime(2016, 3, 1) },
-
-        // ══════════════════════════════════════════════════════════════
-        //  AREA MANAGERS — Head Office, Colombo
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "nimal.perera@kanrich.lk",              Password = "Kanrich@2024", Role = "Area Manager",   FullName = "Nimal Perera",              EpfNumber = "EPF-1001", Branch = "Head Office - Colombo", Designation = "Area Manager - Western",  Department = "Management",      DateOfJoining = new DateTime(2010, 3, 15) },
-        new { Email = "suresh.fernando@kanrich.lk",           Password = "Kanrich@2024", Role = "Area Manager",   FullName = "Suresh Fernando",           EpfNumber = "EPF-1002", Branch = "Head Office - Colombo", Designation = "Area Manager - Central",  Department = "Management",      DateOfJoining = new DateTime(2011, 7, 1) },
-
-        // ══════════════════════════════════════════════════════════════
-        //  HR MANAGERS — Head Office, Colombo
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "priyantha.jayasekara@kanrich.lk",      Password = "Kanrich@2024", Role = "HR Manager",     FullName = "Priyantha Jayasekara",      EpfNumber = "EPF-1501", Branch = "Head Office - Colombo", Designation = "Senior HR Manager",       Department = "Human Resources", DateOfJoining = new DateTime(2012, 4, 1) },
-        new { Email = "nimali.wickramasinghe@kanrich.lk",     Password = "Kanrich@2024", Role = "HR Manager",     FullName = "Nimali Wickramasinghe",     EpfNumber = "EPF-1502", Branch = "Head Office - Colombo", Designation = "HR Manager",              Department = "Human Resources", DateOfJoining = new DateTime(2016, 8, 15) },
-
-        // ══════════════════════════════════════════════════════════════
-        //  BRANCH MANAGERS
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "kamani.silva@kanrich.lk",              Password = "Kanrich@2024", Role = "Branch Manager", FullName = "Kamani Silva",              EpfNumber = "EPF-2001", Branch = "Kandy Branch",          Designation = "Branch Manager",          Department = "Operations",      DateOfJoining = new DateTime(2013, 1, 10) },
-        new { Email = "roshan.jayawardena@kanrich.lk",        Password = "Kanrich@2024", Role = "Branch Manager", FullName = "Roshan Jayawardena",        EpfNumber = "EPF-2002", Branch = "Galle Branch",          Designation = "Branch Manager",          Department = "Operations",      DateOfJoining = new DateTime(2014, 5, 20) },
-        new { Email = "dilini.rathnayake@kanrich.lk",         Password = "Kanrich@2024", Role = "Branch Manager", FullName = "Dilini Rathnayake",         EpfNumber = "EPF-2003", Branch = "Negombo Branch",        Designation = "Branch Manager",          Department = "Operations",      DateOfJoining = new DateTime(2015, 9, 1) },
-
-        // ══════════════════════════════════════════════════════════════
-        //  KANDY BRANCH — Finance Department (3)
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "kasun.bandara@kanrich.lk",             Password = "Kanrich@2024", Role = "Employee",       FullName = "Kasun Bandara",             EpfNumber = "EPF-3001", Branch = "Kandy Branch",          Designation = "Senior Executive",        Department = "Finance",         DateOfJoining = new DateTime(2018, 4, 12) },
-        new { Email = "anjali.fernando@kanrich.lk",           Password = "Kanrich@2024", Role = "Employee",       FullName = "Anjali Fernando",           EpfNumber = "EPF-3002", Branch = "Kandy Branch",          Designation = "Executive",               Department = "Finance",         DateOfJoining = new DateTime(2019, 9, 5) },
-        new { Email = "ruwan.pathirana@kanrich.lk",           Password = "Kanrich@2024", Role = "Employee",       FullName = "Ruwan Pathirana",           EpfNumber = "EPF-3003", Branch = "Kandy Branch",          Designation = "Junior Executive",        Department = "Finance",         DateOfJoining = new DateTime(2022, 1, 15) },
-
-        // KANDY BRANCH — HR Department (3)
-        new { Email = "malini.herath@kanrich.lk",             Password = "Kanrich@2024", Role = "Employee",       FullName = "Malini Herath",             EpfNumber = "EPF-3004", Branch = "Kandy Branch",          Designation = "Senior Executive",        Department = "HR",              DateOfJoining = new DateTime(2019, 6, 1) },
-        new { Email = "sachini.perera@kanrich.lk",            Password = "Kanrich@2024", Role = "Employee",       FullName = "Sachini Perera",            EpfNumber = "EPF-3005", Branch = "Kandy Branch",          Designation = "Executive",               Department = "HR",              DateOfJoining = new DateTime(2020, 3, 10) },
-        new { Email = "dinesh.rajapaksha@kanrich.lk",         Password = "Kanrich@2024", Role = "Employee",       FullName = "Dinesh Rajapaksha",         EpfNumber = "EPF-3006", Branch = "Kandy Branch",          Designation = "Junior Executive",        Department = "HR",              DateOfJoining = new DateTime(2023, 2, 20) },
-
-        // KANDY BRANCH — IT Department (3)
-        new { Email = "lakmal.jayasuriya@kanrich.lk",         Password = "Kanrich@2024", Role = "Employee",       FullName = "Lakmal Jayasuriya",         EpfNumber = "EPF-3007", Branch = "Kandy Branch",          Designation = "Senior Executive",        Department = "IT",              DateOfJoining = new DateTime(2017, 8, 1) },
-        new { Email = "nethmi.silva@kanrich.lk",              Password = "Kanrich@2024", Role = "Employee",       FullName = "Nethmi Silva",              EpfNumber = "EPF-3008", Branch = "Kandy Branch",          Designation = "Executive",               Department = "IT",              DateOfJoining = new DateTime(2020, 11, 15) },
-        new { Email = "ashan.wijeratne@kanrich.lk",           Password = "Kanrich@2024", Role = "Employee",       FullName = "Ashan Wijeratne",           EpfNumber = "EPF-3009", Branch = "Kandy Branch",          Designation = "Junior Executive",        Department = "IT",              DateOfJoining = new DateTime(2022, 6, 8) },
-
-        // ══════════════════════════════════════════════════════════════
-        //  GALLE BRANCH — Finance Department (3)
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "tharaka.wijesinghe@kanrich.lk",        Password = "Kanrich@2024", Role = "Employee",       FullName = "Tharaka Wijesinghe",        EpfNumber = "EPF-3010", Branch = "Galle Branch",          Designation = "Senior Executive",        Department = "Finance",         DateOfJoining = new DateTime(2017, 2, 15) },
-        new { Email = "chamari.bandara@kanrich.lk",           Password = "Kanrich@2024", Role = "Employee",       FullName = "Chamari Bandara",           EpfNumber = "EPF-3011", Branch = "Galle Branch",          Designation = "Executive",               Department = "Finance",         DateOfJoining = new DateTime(2019, 7, 20) },
-        new { Email = "janith.kumara@kanrich.lk",             Password = "Kanrich@2024", Role = "Employee",       FullName = "Janith Kumara",             EpfNumber = "EPF-3012", Branch = "Galle Branch",          Designation = "Junior Executive",        Department = "Finance",         DateOfJoining = new DateTime(2023, 4, 1) },
-
-        // GALLE BRANCH — HR Department (3)
-        new { Email = "sanduni.gamage@kanrich.lk",            Password = "Kanrich@2024", Role = "Employee",       FullName = "Sanduni Gamage",            EpfNumber = "EPF-3013", Branch = "Galle Branch",          Designation = "Senior Executive",        Department = "HR",              DateOfJoining = new DateTime(2018, 10, 5) },
-        new { Email = "prasanna.dissanayake@kanrich.lk",      Password = "Kanrich@2024", Role = "Employee",       FullName = "Prasanna Dissanayake",      EpfNumber = "EPF-3014", Branch = "Galle Branch",          Designation = "Executive",               Department = "HR",              DateOfJoining = new DateTime(2021, 1, 18) },
-        new { Email = "iresha.gunathilaka@kanrich.lk",        Password = "Kanrich@2024", Role = "Employee",       FullName = "Iresha Gunathilaka",        EpfNumber = "EPF-3015", Branch = "Galle Branch",          Designation = "Junior Executive",        Department = "HR",              DateOfJoining = new DateTime(2023, 8, 12) },
-
-        // GALLE BRANCH — IT Department (3)
-        new { Email = "nuwan.herath@kanrich.lk",              Password = "Kanrich@2024", Role = "Employee",       FullName = "Nuwan Herath",              EpfNumber = "EPF-3016", Branch = "Galle Branch",          Designation = "Senior Executive",        Department = "IT",              DateOfJoining = new DateTime(2016, 5, 10) },
-        new { Email = "dilhani.rathnayake@kanrich.lk",        Password = "Kanrich@2024", Role = "Employee",       FullName = "Dilhani Rathnayake",        EpfNumber = "EPF-3017", Branch = "Galle Branch",          Designation = "Executive",               Department = "IT",              DateOfJoining = new DateTime(2020, 9, 22) },
-        new { Email = "sampath.wickramasinghe@kanrich.lk",    Password = "Kanrich@2024", Role = "Employee",       FullName = "Sampath Wickramasinghe",    EpfNumber = "EPF-3018", Branch = "Galle Branch",          Designation = "Junior Executive",        Department = "IT",              DateOfJoining = new DateTime(2022, 12, 1) },
-
-        // ══════════════════════════════════════════════════════════════
-        //  NEGOMBO BRANCH — Finance Department (3)
-        // ══════════════════════════════════════════════════════════════
-        new { Email = "chathura.mendis@kanrich.lk",           Password = "Kanrich@2024", Role = "Employee",       FullName = "Chathura Mendis",           EpfNumber = "EPF-3019", Branch = "Negombo Branch",        Designation = "Senior Executive",        Department = "Finance",         DateOfJoining = new DateTime(2020, 1, 5) },
-        new { Email = "harsha.senaratne@kanrich.lk",          Password = "Kanrich@2024", Role = "Employee",       FullName = "Harsha Senaratne",          EpfNumber = "EPF-3020", Branch = "Negombo Branch",        Designation = "Executive",               Department = "Finance",         DateOfJoining = new DateTime(2021, 6, 15) },
-        new { Email = "miyuri.jayawardena@kanrich.lk",        Password = "Kanrich@2024", Role = "Employee",       FullName = "Miyuri Jayawardena",        EpfNumber = "EPF-3021", Branch = "Negombo Branch",        Designation = "Junior Executive",        Department = "Finance",         DateOfJoining = new DateTime(2023, 3, 8) },
-
-        // NEGOMBO BRANCH — HR Department (3)
-        new { Email = "piumi.dissanayake@kanrich.lk",         Password = "Kanrich@2024", Role = "Employee",       FullName = "Piumi Dissanayake",         EpfNumber = "EPF-3022", Branch = "Negombo Branch",        Designation = "Senior Executive",        Department = "HR",              DateOfJoining = new DateTime(2019, 4, 20) },
-        new { Email = "ravindu.silva@kanrich.lk",             Password = "Kanrich@2024", Role = "Employee",       FullName = "Ravindu Silva",             EpfNumber = "EPF-3023", Branch = "Negombo Branch",        Designation = "Executive",               Department = "HR",              DateOfJoining = new DateTime(2021, 11, 1) },
-        new { Email = "kumuduni.fernando@kanrich.lk",         Password = "Kanrich@2024", Role = "Employee",       FullName = "Kumuduni Fernando",         EpfNumber = "EPF-3024", Branch = "Negombo Branch",        Designation = "Junior Executive",        Department = "HR",              DateOfJoining = new DateTime(2024, 1, 10) },
-
-        // NEGOMBO BRANCH — IT Department (3)
-        new { Email = "sameera.gunaratne@kanrich.lk",         Password = "Kanrich@2024", Role = "Employee",       FullName = "Sameera Gunaratne",         EpfNumber = "EPF-3025", Branch = "Negombo Branch",        Designation = "Senior Executive",        Department = "IT",              DateOfJoining = new DateTime(2018, 7, 15) },
-        new { Email = "thilini.perera@kanrich.lk",            Password = "Kanrich@2024", Role = "Employee",       FullName = "Thilini Perera",            EpfNumber = "EPF-3026", Branch = "Negombo Branch",        Designation = "Executive",               Department = "IT",              DateOfJoining = new DateTime(2021, 2, 28) },
-        new { Email = "asanka.jayasinghe@kanrich.lk",         Password = "Kanrich@2024", Role = "Employee",       FullName = "Asanka Jayasinghe",         EpfNumber = "EPF-3027", Branch = "Negombo Branch",        Designation = "Junior Executive",        Department = "IT",              DateOfJoining = new DateTime(2023, 9, 5) },
-    };
-
-    foreach (var dummy in dummyUsers)
-    {
-        if (await userManager.FindByEmailAsync(dummy.Email) is null)
-        {
-            var user = new ApplicationUser
-            {
-                UserName = dummy.Email,
-                Email = dummy.Email,
-                EmailConfirmed = true,
-                FullName = dummy.FullName,
-                EpfNumber = dummy.EpfNumber,
-                Branch = dummy.Branch,
-                Designation = dummy.Designation,
-                Department = dummy.Department,
-                DateOfJoining = dummy.DateOfJoining
-            };
-            var result = await userManager.CreateAsync(user, dummy.Password);
-            if (result.Succeeded)
-                await userManager.AddToRoleAsync(user, dummy.Role);
-        }
     }
 }
 
@@ -347,8 +271,12 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStaticFiles();
+
 app.UseRouting();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapRazorPages();
+
 app.Run();

@@ -19,7 +19,10 @@ using Microsoft.AspNetCore.Hosting;
 
 namespace HRMS.UI.Pages.Employees
 {
+    using Employee = HRMS.Domain.Entities.Core.Employee;
+
     [Authorize(Roles = "HR Manager")]
+
     public class CreateModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -505,8 +508,18 @@ namespace HRMS.UI.Pages.Employees
         private async Task<int> GetHrManagerBranchIdAsync()
         {
             var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser?.EmployeeId == null) return 0;
-            var hrEmp = await _context.Employees.FindAsync(currentUser.EmployeeId.Value);
+            if (currentUser == null) return 0;
+            
+            Domain.Entities.Core.Employee? hrEmp = null;
+            if (currentUser.EmployeeId.HasValue)
+            {
+                hrEmp = await _context.Employees.FindAsync(currentUser.EmployeeId.Value);
+            }
+            else
+            {
+                hrEmp = await _context.Employees.FirstOrDefaultAsync(e => e.Email == currentUser.Email);
+            }
+
             return hrEmp?.BranchId ?? 0;
         }
 

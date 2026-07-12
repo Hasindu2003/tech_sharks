@@ -13,6 +13,7 @@ namespace HRMS.Domain.Entities.Attendance
         public DateTime Date { get; set; }
         public DateTime? TimeIn { get; set; }
         public DateTime? TimeOut { get; set; }
+        public double? TotalHours { get; set; }
 
         public string Status { get; set; } = null!; //present, absent, late, on leave, etc.
     }

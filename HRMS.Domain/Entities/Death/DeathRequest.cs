@@ -4,10 +4,6 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Domain.Entities.Death
 {
-    /// <summary>
-    /// Represents a formal request/process initiated following the death of an employee.
-    /// Tracks mandatory document submissions, nominee details, and the approval chain from Branch to HR.
-    /// </summary>
     public class DeathRequest
     {
         [Key]
@@ -115,9 +111,6 @@ namespace HRMS.Domain.Entities.Death
         public ICollection<DeathDocument> Documents { get; set; } = new List<DeathDocument>();
     }
 
-    /// <summary>
-    /// Defines the possible states of a death process request during its lifecycle.
-    /// </summary>
     public enum DeathRequestStatus
     {
         Draft = 0,

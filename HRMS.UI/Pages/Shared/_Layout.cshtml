@@ -13,6 +13,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -97,11 +99,17 @@
         }
 
         /* ── PAGE CONTENT ── */
-<<<<<<< HEAD
-        .page-content { flex: 1; overflow: auto; background: #ffffff; }
-=======
         .page-content { flex: 1; overflow: auto; background: #ffffff; padding: 26px; }
->>>>>>> hasindu-source
+
+        /* Remove double-padding from legacy containers from Main */
+        .page-content .main-content,
+        .page-content .dash-wrap,
+        .page-content .edit-shell,
+        .page-content > div[style*="padding: 26px"] {
+            padding: 0 !important;
+            background: transparent !important;
+            min-height: auto !important;
+        }
 
         /* ── NOTIFICATIONS DROPDOWN ── */
         .notif-wrapper { position: relative; }
@@ -142,7 +150,6 @@
             display: flex; align-items: center; justify-content: center;
         }
         .notif-dot.hidden { display: none; }
-<<<<<<< HEAD
 
         /* ── Shared Table Pagination ── */
         .tbl-pg-bar {
@@ -161,8 +168,75 @@
         .pg-btn:hover:not(:disabled) { background: #f0faf4; border-color: #10823c; color: #10823c; }
         .pg-btn.active { background: #10823c; color: white; border-color: #10823c; }
         .pg-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-=======
->>>>>>> hasindu-source
+
+        /* Collapsible Menu styling */
+        .nav-item-collapsible {
+            display: flex;
+            flex-direction: column;
+        }
+        .nav-item-collapsible-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 11px;
+            border-radius: 7px;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            color: #151811;
+            cursor: pointer;
+            transition: background 0.15s;
+            user-select: none;
+        }
+        .nav-item-collapsible-trigger:hover {
+            background: #f6f8f7;
+        }
+        .nav-item-collapsible.active-parent > .nav-item-collapsible-trigger {
+            font-weight: 700;
+            color: #10823c;
+            background: rgba(16,130,60,.03);
+        }
+        .nav-item-collapsible-chevron {
+            transition: transform 0.2s;
+            font-size: 10px;
+            color: #7a8863;
+        }
+        .nav-item-collapsible.open .nav-item-collapsible-chevron {
+            transform: rotate(180deg);
+        }
+        .nav-item-collapsible-content {
+            display: none;
+            flex-direction: column;
+            gap: 2px;
+            padding-left: 12px;
+            margin-top: 2px;
+            border-left: 1.5px solid #e2e5dc;
+            margin-left: 20px;
+        }
+        .nav-item-collapsible.open .nav-item-collapsible-content {
+            display: flex;
+        }
+        .nav-item-sub a {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #4b5563;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item-sub a:hover {
+            background: #f6f8f7;
+            color: #151811;
+        }
+        .nav-item-sub.active a {
+            background: rgba(16,130,60,.08);
+            color: #10823c;
+            font-weight: 600;
+        }
     </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -179,10 +253,7 @@
                     else if (User.IsInRole("HR Manager")) { <text>HR Manager Portal</text> }
                     else if (User.IsInRole("Area Manager")) { <text>Area Manager Portal</text> }
                     else if (User.IsInRole("Branch Manager")) { <text>Branch Manager Portal</text> }
-<<<<<<< HEAD
-=======
                     else if (User.IsInRole("Department Head")) { <text>Department Head Portal</text> }
->>>>>>> hasindu-source
                     else { <text>Employee Portal</text> }
                 </div>
             </div>
@@ -199,19 +270,22 @@
                             Dashboard
                         </a>
                     </li>
-                    <li class="nav-item @(activeNav == "Calendar" ? "active" : "")">
-                        <a href="#">
-                            <span class="nav-icon">
-                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                    <line x1="16" y1="2" x2="16" y2="6"/>
-                                    <line x1="8" y1="2" x2="8" y2="6"/>
-                                    <line x1="3" y1="10" x2="21" y2="10"/>
-                                </svg>
-                            </span>
-                            Calendar
-                        </a>
-                    </li>
+                    @if (!User.IsInRole("Admin"))
+                    {
+                        <li class="nav-item @(activeNav == "Calendar" ? "active" : "")">
+                            <a href="#">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                        <line x1="16" y1="2" x2="16" y2="6"/>
+                                        <line x1="8" y1="2" x2="8" y2="6"/>
+                                        <line x1="3" y1="10" x2="21" y2="10"/>
+                                    </svg>
+                                </span>
+                                Calendar
+                            </a>
+                        </li>
+                    }
                     @if (!User.IsInRole("Admin"))
                     {
                         <li class="nav-item @(activeNav == "Separation" ? "active" : "")">
@@ -255,9 +329,22 @@
                                 </a>
                             }
                         </li>
-                    }
 
+                        <li class="nav-item @(activeNav == "AttendanceDashboard" ? "active" : "")">
+                            <a href="/Attendance/Dashboard">
+                                <span class="nav-icon">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <polyline points="12 6 12 12 16 14"/>
+                                    </svg>
+                                </span>
+                                Attendance & Leave
+                            </a>
+                        </li>
+                    }
+                    
                     @if (User.IsInRole("HR Manager") || User.IsInRole("Area Manager") || User.IsInRole("Branch Manager"))
+
                     {
                         <li class="nav-item @(activeNav == "Employees" ? "active" : "")">
                             <a href="/Employees">
@@ -271,6 +358,7 @@
                                 Employees
                             </a>
                         </li>
+
                         <li class="nav-item @(activeNav == "Training" ? "active" : "")">
                             <a href="#">
                                 <span class="nav-icon">
@@ -307,22 +395,10 @@
                             </a>
                         </li>
                     }
-                    @if (User.IsInRole("Admin"))
-                    {
-                        <li class="nav-item @(activeNav == "Separation" ? "active" : "")">
-                            <a href="/Transfer/Separation">
-                                <span class="nav-icon">
-                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="9" cy="7" r="4"/>
-                                        <polyline points="17 11 19 13 23 9"/>
-                                    </svg>
-                                </span>
-                                Separation
-                            </a>
-                        </li>
-                    }
+
+
                 </ul>
+
             </nav>
         </div>
         <div class="sidebar-bottom">
@@ -483,68 +559,164 @@
         fetchNotifications();
         setInterval(fetchNotifications, 45000);
     });
+
+    function toggleNavCollapsible(id) {
+        const parent = document.getElementById(id);
+        if (parent) {
+            parent.classList.toggle('open');
+        }
+    }
 </script>
 
-<<<<<<< HEAD
 <script>
-function initTablePagination(tableId, pageSize) {
+function initTablePagination(tableId, initialPageSize) {
     var table = document.getElementById(tableId);
     if (!table) return;
     var tbody = table.querySelector('tbody');
     if (!tbody) return;
-    var dataRows = Array.from(tbody.querySelectorAll('tr')).filter(function(r) {
-        return !r.classList.contains('empty-row');
-    });
-    if (dataRows.length <= pageSize) return;
-    var totalPages = Math.ceil(dataRows.length / pageSize);
+    
+    var pageSize = initialPageSize || 10;
     var currentPage = 1;
+    
     var bar = document.createElement('div');
     bar.className = 'tbl-pg-bar';
     table.insertAdjacentElement('afterend', bar);
+    
     function render() {
+        var dataRows = Array.from(tbody.querySelectorAll('tr')).filter(function(r) {
+            return !r.classList.contains('empty-row');
+        });
+        
+        var totalPages = Math.ceil(dataRows.length / pageSize);
+        if (totalPages < 1) totalPages = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
+        
         dataRows.forEach(function(row, i) {
             row.style.display = (i >= (currentPage-1)*pageSize && i < currentPage*pageSize) ? '' : 'none';
         });
+        
         var start = (currentPage-1)*pageSize + 1;
         var end = Math.min(currentPage*pageSize, dataRows.length);
+        
         bar.innerHTML = '';
+        
+        // 1. Info span
         var info = document.createElement('span');
         info.className = 'tbl-pg-info';
         info.textContent = 'Showing ' + start + '–' + end + ' of ' + dataRows.length;
         bar.appendChild(info);
+        
+        // 2. Page size selector dropdown
+        var select = document.createElement('select');
+        select.className = 'tbl-pg-select';
+        select.style.cssText = 'margin-left: 12px; padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 12.5px; cursor: pointer; color: #374151; background: #fff; outline: none; font-family: inherit;';
+        
+        var sizes = [10, 20, 50, 100];
+        sizes.forEach(function(sz) {
+            var opt = document.createElement('option');
+            opt.value = sz;
+            opt.textContent = sz + ' / page';
+            if (sz === pageSize) opt.selected = true;
+            select.appendChild(opt);
+        });
+        
+        select.onchange = function() {
+            pageSize = parseInt(this.value, 10);
+            currentPage = 1;
+            render();
+        };
+        bar.appendChild(select);
+        
+        // 3. Button group container
         var btns = document.createElement('div');
         btns.className = 'tbl-pg-btns';
+        
+        // Prev button
         var prev = document.createElement('button');
         prev.className = 'pg-btn';
         prev.textContent = '← Prev';
         prev.disabled = currentPage <= 1;
-        prev.onclick = function() { if (currentPage > 1) { currentPage--; render(); } };
+        prev.onclick = function(e) {
+            e.preventDefault();
+            if (currentPage > 1) {
+                currentPage--;
+                render();
+            }
+        };
         btns.appendChild(prev);
-        var startP = Math.max(1, currentPage - 2);
-        var endP = Math.min(totalPages, startP + 4);
-        if (endP - startP < 4) startP = Math.max(1, endP - 4);
-        for (var p = startP; p <= endP; p++) {
-            (function(page) {
-                var btn = document.createElement('button');
-                btn.className = 'pg-btn' + (page === currentPage ? ' active' : '');
-                btn.textContent = page;
-                btn.onclick = function() { currentPage = page; render(); };
-                btns.appendChild(btn);
-            })(p);
+        
+        // Page numbers with smart ellipsis truncation
+        var pageNumbers = [];
+        if (totalPages <= 7) {
+            for (var i = 1; i <= totalPages; i++) pageNumbers.push(i);
+        } else {
+            pageNumbers.push(1);
+            
+            var startP = Math.max(2, currentPage - 1);
+            var endP = Math.min(totalPages - 1, currentPage + 1);
+            
+            if (currentPage <= 4) {
+                endP = 5;
+            } else if (currentPage >= totalPages - 3) {
+                startP = totalPages - 4;
+            }
+            
+            if (startP > 2) {
+                pageNumbers.push('...');
+            }
+            
+            for (var i = startP; i <= endP; i++) {
+                pageNumbers.push(i);
+            }
+            
+            if (endP < totalPages - 1) {
+                pageNumbers.push('...');
+            }
+            
+            pageNumbers.push(totalPages);
         }
+        
+        pageNumbers.forEach(function(p) {
+            if (p === '...') {
+                var el = document.createElement('span');
+                el.className = 'tbl-pg-ellipsis';
+                el.textContent = '...';
+                el.style.cssText = 'padding: 6px 12px; font-size: 13px; color: #9ca3af; display: inline-block; font-weight: 500; user-select: none;';
+                btns.appendChild(el);
+            } else {
+                var btn = document.createElement('button');
+                btn.className = 'pg-btn' + (p === currentPage ? ' active' : '');
+                btn.textContent = p;
+                btn.onclick = function(e) {
+                    e.preventDefault();
+                    currentPage = p;
+                    render();
+                };
+                btns.appendChild(btn);
+            }
+        });
+        
+        // Next button
         var next = document.createElement('button');
         next.className = 'pg-btn';
         next.textContent = 'Next →';
         next.disabled = currentPage >= totalPages;
-        next.onclick = function() { if (currentPage < totalPages) { currentPage++; render(); } };
+        next.onclick = function(e) {
+            e.preventDefault();
+            if (currentPage < totalPages) {
+                currentPage++;
+                render();
+            }
+        };
         btns.appendChild(next);
+        
         bar.appendChild(btns);
     }
+    
     render();
 }
 </script>
-=======
->>>>>>> hasindu-source
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
 @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

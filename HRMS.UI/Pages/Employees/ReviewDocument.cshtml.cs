@@ -11,7 +11,10 @@ using HRMS.Infrastructure.Persistence;
 
 namespace HRMS.UI.Pages.Employees
 {
+    using Employee = HRMS.Domain.Entities.Core.Employee;
+
     [Authorize(Roles = "HR Manager")]
+
     public class ReviewDocumentModel : PageModel
     {
         private readonly ApplicationDbContext _context;

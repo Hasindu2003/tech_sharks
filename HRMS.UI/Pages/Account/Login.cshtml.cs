@@ -61,17 +61,17 @@ namespace HRMS.UI.Pages.Account
             }
             else if (result.IsLockedOut)
             {
-                ErrorMessage = "Your account has been locked due to multiple failed login attempts. Please try again after 5 minutes.";
+                ModelState.AddModelError(string.Empty, "Your account has been locked due to multiple failed login attempts. Please try again after 5 minutes.");
                 return Page();
             }
             else if (result.IsNotAllowed)
             {
-                ErrorMessage = "Your account is not activated. Please contact your administrator.";
+                ModelState.AddModelError(string.Empty, "Your account is not activated. Please contact your administrator.");
                 return Page();
             }
             else
             {
-                ErrorMessage = "Invalid email or password. Please check your credentials and try again.";
+                ModelState.AddModelError(string.Empty, "Invalid email or password. Please check your credentials and try again.");
                 return Page();
             }
         }

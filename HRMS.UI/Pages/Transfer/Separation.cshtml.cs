@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -12,23 +12,22 @@ namespace HRMS.UI.Pages.Transfer
     public class SeparationModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
-        private readonly ITerminationService _terminationService;
         private readonly IResignationService _resignationService;
         private readonly UserManager<ApplicationUser> _userManager;
 
-        public SeparationModel(ITransferRequestService transferService, ITerminationService terminationService, IResignationService resignationService, UserManager<ApplicationUser> userManager)
+        public SeparationModel(
+            ITransferRequestService transferService,
+            IResignationService resignationService,
+            UserManager<ApplicationUser> userManager)
         {
             _transferService = transferService;
-            _terminationService = terminationService;
             _resignationService = resignationService;
             _userManager = userManager;
         }
 
         public List<TransferRequestViewModel> MyRequests { get; set; } = new();
-        public List<TerminationRequestViewModel> MyTerminations { get; set; } = new();
         public List<ResignationRequestViewModel> MyResignations { get; set; } = new();
         public int TransferCount { get; set; }
-        public int TerminationCount { get; set; }
         public int ResignationCount { get; set; }
 
         [BindProperty(SupportsGet = true)]
@@ -41,9 +40,6 @@ namespace HRMS.UI.Pages.Transfer
             {
                 MyRequests = await _transferService.GetRequestsByUserAsync(user.Email!);
                 TransferCount = MyRequests.Count;
-
-                MyTerminations = await _terminationService.GetTerminationsByEmployeeEmailAsync(user.Email!);
-                TerminationCount = MyTerminations.Count;
 
                 MyResignations = await _resignationService.GetMyResignationsAsync(user.Email!);
                 ResignationCount = MyResignations.Count;

@@ -16,6 +16,7 @@ using System.Threading.Tasks;
 namespace HRMS.UI.Pages
 {
     [Authorize]
+
     public class ProfileModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -29,7 +30,7 @@ namespace HRMS.UI.Pages
             _userManager = userManager;
         }
 
-        public Employee? Employee { get; set; }
+        public HRMS.Domain.Entities.Core.Employee? Employee { get; set; }
         public List<EmployeeDocument> Documents { get; set; } = new();
 
         [BindProperty]

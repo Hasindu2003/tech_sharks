@@ -1,0 +1,427 @@
+@page
+@model HRMS.UI.Pages.Attendance.IndexModel
+@{
+    ViewData["Title"] = "Attendance Summary";
+    ViewData["ActiveNav"] = "Attendance";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0; }
+    
+    /* Filter Bar */
+    .filter-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 16px 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    
+    .fg { margin-bottom: 0; }
+    .fl { font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+    .fi {
+        width: 100%; padding: 8px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 13.5px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+
+    /* Inline table styles */
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+    
+    /* Badges */
+    .status-badge {
+        padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .status-badge.Present { background: #dcfce7; color: #166534; }
+    .status-badge.Absent { background: #fee2e2; color: #991b1b; }
+    .status-badge.Late { background: #fef3c7; color: #92400e; }
+    .status-badge.OnLeave { background: #e0e7ff; color: #3730a3; }
+    
+    .hours-badge { 
+        background: #f3f4f6; color: #4b5563; padding: 4px 8px; 
+        border-radius: 6px; font-size: 12px; font-weight: 700;
+    }
+
+    .custom-dropdown {
+        position: relative;
+        text-align: left;
+    }
+    .custom-dropdown-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        background: #fff;
+        cursor: pointer;
+        font-size: 13.5px;
+        color: #151811;
+        user-select: none;
+        transition: border-color 0.15s;
+        box-sizing: border-box;
+        height: 38px;
+    }
+    .custom-dropdown-trigger:hover {
+        border-color: #10823c;
+    }
+    .custom-dropdown-trigger.open {
+        border-color: #10823c;
+        box-shadow: 0 0 0 2px rgba(16,130,60,0.15);
+    }
+    .custom-dropdown-chevron {
+        transition: transform 0.2s;
+        color: #6b7280;
+        font-size: 0.8rem;
+    }
+    .custom-dropdown-trigger.open .custom-dropdown-chevron {
+        transform: rotate(180deg);
+    }
+    .custom-dropdown-list {
+        display: none;
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        background: #fff;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        max-height: calc(6 * 2.5rem);
+        overflow-y: auto;
+        z-index: 999;
+    }
+    .custom-dropdown-list.open {
+        display: block;
+    }
+    .custom-dropdown-option {
+        padding: 0.6rem 0.75rem;
+        cursor: pointer;
+        font-size: 0.95rem;
+        color: #374151;
+        transition: background 0.1s;
+    }
+    .custom-dropdown-option:hover {
+        background: #f0faf4;
+        color: #10823c;
+    }
+    .custom-dropdown-option.selected {
+        background: #e6f4ec;
+        color: #10823c;
+        font-weight: 600;
+    }
+    .custom-dropdown-option[data-value=""] {
+        color: #9ca3af;
+    }
+    #employeeList {
+        max-height: calc(6 * 2.5rem + 2.75rem);
+    }
+    .custom-dropdown-search-box {
+        position: sticky;
+        top: 0;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+        z-index: 1;
+    }
+    .custom-dropdown-search-icon {
+        color: #9ca3af;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+    }
+    .custom-dropdown-search-input {
+        border: none;
+        outline: none;
+        flex: 1;
+        font-size: 0.9rem;
+        color: #374151;
+        background: transparent;
+    }
+    .custom-dropdown-no-results {
+        padding: 0.75rem;
+        color: #9ca3af;
+        font-size: 0.9rem;
+        text-align: center;
+    }
+</style>
+
+<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;">
+    <div>
+        <h1 class="page-h">Attendance Records</h1>
+        <p class="page-s">View and filter daily attendance logs</p>
+    </div>
+    @if (User.IsInRole("HR Manager"))
+    {
+        <a asp-page="/BiometricLogs/Create" class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px">
+            <i class="bi bi-plus-circle"></i> Add Biometric Log
+        </a>
+    }
+</div>
+
+<!-- Filter Bar -->
+<div class="filter-card">
+    <form method="get" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:end;">
+        @if (Model.ShowBranchFilter)
+        {
+            <div class="fg">
+                <label class="fl">Branch</label>
+                <select asp-for="FilterBranchId" class="fi" onchange="this.form.submit()">
+                    <option value="">-- All Managed Branches --</option>
+                    @foreach (var br in Model.ManagedBranchesList)
+                    {
+                        <option value="@br.Id">@br.Name</option>
+                    }
+                </select>
+            </div>
+        }
+
+        @if (Model.ShowDepartmentFilter)
+        {
+            <div class="fg">
+                <label class="fl">Department</label>
+                <select asp-for="FilterDepartmentId" class="fi" onchange="this.form.submit()">
+                    <option value="">-- All Departments --</option>
+                    @foreach (var dept in Model.DepartmentsList)
+                    {
+                        <option value="@dept.Id">@dept.Name</option>
+                    }
+                </select>
+            </div>
+        }
+
+        @if (Model.IsManager)
+        {
+            <div class="fg">
+                <label class="fl">Employee</label>
+                <select asp-for="EmployeeId" id="employeeSelect" style="display:none">
+                    <option value="">-- All Employees --</option>
+                    @foreach (var emp in Model.Employees)
+                    {
+                        <option value="@emp.Id">@emp.FullName (@emp.EPFNumber)</option>
+                    }
+                </select>
+                <div class="custom-dropdown" id="employeeDropdown">
+                    <div class="custom-dropdown-trigger" id="employeeTrigger">
+                        <span id="employeeTriggerText">-- All Employees --</span>
+                        <i class="bi bi-chevron-down custom-dropdown-chevron"></i>
+                    </div>
+                    <div class="custom-dropdown-list" id="employeeList">
+                        <div class="custom-dropdown-search-box">
+                            <i class="bi bi-search custom-dropdown-search-icon"></i>
+                            <input type="text" id="employeeSearch" class="custom-dropdown-search-input"
+                                   placeholder="Search by EPF number..." autocomplete="off" />
+                        </div>
+                        <div class="custom-dropdown-option" data-value="">-- All Employees --</div>
+                        @foreach (var emp in Model.Employees)
+                        {
+                            <div class="custom-dropdown-option" data-value="@emp.Id">@emp.FullName (@emp.EPFNumber)</div>
+                        }
+                        <div class="custom-dropdown-no-results" id="employeeNoResults" style="display:none">No employees found.</div>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        <div class="fg">
+            <label class="fl">From Date</label>
+            <input type="date" asp-for="FromDate" class="fi" />
+        </div>
+        
+        <div class="fg">
+            <label class="fl">To Date</label>
+            <input type="date" asp-for="ToDate" class="fi" />
+        </div>
+        
+        <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
+            <a asp-page="./Index" class="btn-kanrich btn-kanrich-outline" style="padding:9px 24px; height: 38px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">Reset</a>
+            <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding:9px 36px; height: 38px;">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+        </div>
+    </form>
+</div>
+
+
+
+<!-- Table -->
+<div class="tbl-card">
+    <table class="sep-table" id="attendanceTable">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Clock In</th>
+                <th>Clock Out</th>
+                <th>Total Hours</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Attendances.Any())
+            {
+                @foreach (var att in Model.Attendances)
+                {
+                    <tr>
+                        <td style="font-weight: 600;">@att.Date.ToString("yyyy-MM-dd")</td>
+                        <td>
+                            <div style="font-weight: 600; color: #151811;">@att.Employee?.FullName</div>
+                            <div style="font-size: 11px; color: #7a8863;">@att.Employee?.EPFNumber</div>
+                        </td>
+                        <td>@(att.TimeIn?.ToString("HH:mm:ss") ?? "—")</td>
+                        <td>@(att.TimeOut?.ToString("HH:mm:ss") ?? "—")</td>
+                        <td>
+                            @if (att.TotalHours.HasValue)
+                            {
+                                <span class="hours-badge">@att.TotalHours.Value.ToString("F2") hrs</span>
+                            }
+                            else
+                            {
+                                <span style="color:#d1d5db">—</span>
+                            }
+                        </td>
+                        <td>
+                            <span class="status-badge @att.Status">
+                                @if (att.Status == "Present")
+                                {
+                                    <i class="bi bi-check-circle-fill"></i>
+                                }
+                                else if (att.Status == "Absent")
+                                {
+                                    <i class="bi bi-x-circle-fill"></i>
+                                }
+                                else if (att.Status == "Late")
+                                {
+                                    <i class="bi bi-exclamation-circle-fill"></i>
+                                }
+                                else if (att.Status == "OnLeave")
+                                {
+                                    <i class="bi bi-calendar-event-fill"></i>
+                                }
+                                @att.Status
+                            </span>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" style="text-align: center; color: #9ca3af; padding: 48px 24px;">
+                        <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 10px;"></i>
+                        No attendance records found for this selection.
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder, searchInputId, noResultsId }) {
+            const select      = document.getElementById(selectId);
+            if (!select) return;
+            const trigger     = document.getElementById(triggerId);
+            const list        = document.getElementById(listId);
+            const triggerText = document.getElementById(triggerTextId);
+            const options     = list.querySelectorAll('.custom-dropdown-option');
+            const searchInput = searchInputId ? document.getElementById(searchInputId) : null;
+            const noResults   = noResultsId   ? document.getElementById(noResultsId)   : null;
+
+            function closeDropdown() {
+                list.classList.remove('open');
+                trigger.classList.remove('open');
+                if (searchInput) {
+                    searchInput.value = '';
+                    options.forEach(o => o.style.display = '');
+                    if (noResults) noResults.style.display = 'none';
+                }
+            }
+
+            trigger.addEventListener('click', function () {
+                document.querySelectorAll('.custom-dropdown-list.open').forEach(function (l) {
+                    if (l !== list) {
+                        l.classList.remove('open');
+                        l.previousElementSibling.classList.remove('open');
+                    }
+                });
+                const isOpen = list.classList.contains('open');
+                list.classList.toggle('open', !isOpen);
+                trigger.classList.toggle('open', !isOpen);
+                if (!isOpen && searchInput) {
+                    setTimeout(() => searchInput.focus(), 50);
+                }
+            });
+
+            if (searchInput) {
+                searchInput.addEventListener('click', e => e.stopPropagation());
+                searchInput.addEventListener('input', function () {
+                    const query = this.value.trim().toLowerCase();
+                    let anyVisible = false;
+                    options.forEach(function (opt) {
+                        if (!opt.dataset.value) { opt.style.display = 'none'; return; }
+                        // Extract EPF from text format "Name (EPF) - Designation"
+                        const epf = (opt.textContent.match(/\(([^)]+)\)/) || [])[1] || '';
+                        const match = !query || epf.toLowerCase().includes(query);
+                        opt.style.display = match ? '' : 'none';
+                        if (match) anyVisible = true;
+                    });
+                    if (noResults) noResults.style.display = anyVisible ? 'none' : '';
+                });
+            }
+
+            options.forEach(function (opt) {
+                opt.addEventListener('click', function () {
+                    const value = this.dataset.value;
+                    select.value = value;
+                    triggerText.textContent = value ? this.textContent.trim() : placeholder;
+                    options.forEach(o => o.classList.remove('selected'));
+                    if (value) this.classList.add('selected');
+                    closeDropdown();
+                    select.dispatchEvent(new Event('change'));
+                });
+            });
+
+            document.addEventListener('click', function (e) {
+                if (!document.getElementById(dropdownId).contains(e.target)) {
+                    closeDropdown();
+                }
+            });
+
+            if (select.value) {
+                const preselected = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
+                if (preselected) {
+                    triggerText.textContent = preselected.textContent.trim();
+                    preselected.classList.add('selected');
+                }
+            }
+        }
+
+        initCustomDropdown({
+            selectId:      'employeeSelect',
+            triggerId:     'employeeTrigger',
+            listId:        'employeeList',
+            triggerTextId: 'employeeTriggerText',
+            dropdownId:    'employeeDropdown',
+            placeholder:   '-- All Employees --',
+            searchInputId: 'employeeSearch',
+            noResultsId:   'employeeNoResults'
+        });
+
+        initTablePagination("attendanceTable", 10);
+    </script>
+}
+
