@@ -14,8 +14,12 @@ namespace HRMS.Application.Services
     {
         Task<DeathRequestViewModel?> GetByIdAsync(int id);
         Task<List<DeathRequestViewModel>> GetAllPendingForBMAsync(string branch);
-        Task<List<DeathRequestViewModel>> GetAllPendingForAMAsync();
+        Task<List<DeathRequestViewModel>> GetAllPendingForAMAsync(List<int>? branchIds = null, string? branchName = null);
         Task<List<DeathRequestViewModel>> GetAllPendingForHRAsync();
+
+        Task<List<DeathRequestViewModel>> GetReviewedForBMAsync(string branch);
+        Task<List<DeathRequestViewModel>> GetReviewedForAMAsync(List<int>? branchIds = null, string? branchName = null);
+        Task<List<DeathRequestViewModel>> GetReviewedForHRAsync();
         
         Task<int> SubmitRequestAsync(DeathRequestViewModel model, List<IFormFile> documents, string initiatedByEmail);
 
@@ -25,7 +29,7 @@ namespace HRMS.Application.Services
         Task<bool> AMApproveAsync(int id, string comments, string amEmail);
         Task<bool> AMRejectAsync(int id, string comments, string amEmail);
 
-        Task<bool> HRManagerApproveAsync(int id, string comments, string hrEmail);
+        Task<bool> HRManagerApproveAsync(int id, string comments, string hrEmail, UserManager<ApplicationUser>? userManager = null);
         Task<bool> HRManagerRejectAsync(int id, string comments, string hrEmail);
 
         Task<(byte[] Content, string ContentType, string FileName)?> DownloadDocumentAsync(int documentId);
@@ -35,7 +39,7 @@ namespace HRMS.Application.Services
 
     /// <summary>
     /// Service responsible for managing the process following an employee's death.
-    /// Handles document submission, multi-stage approvals, and final account/payroll closure.
+    /// Handles BM initiation -> AM review & confirmation -> HR Manager finalization & closure.
     /// </summary>
     public class DeathService : IDeathService
     {
@@ -105,21 +109,36 @@ namespace HRMS.Application.Services
 
         public async Task<List<DeathRequestViewModel>> GetAllPendingForBMAsync(string branch)
         {
-            var branchLower = branch.Trim().ToLower();
+            var branchLower = (branch ?? "").Trim().ToLower();
             var data = await _context.DeathRequests
                 .Where(r => r.Status == DeathRequestStatus.SubmittedForApproval && 
                             r.Branch.Trim().ToLower() == branchLower)
-                .OrderBy(r => r.CreatedDate)
+                .OrderByDescending(r => r.CreatedDate)
                 .ToListAsync();
             return MapToVMList(data);
         }
 
-        public async Task<List<DeathRequestViewModel>> GetAllPendingForAMAsync()
+        public async Task<List<DeathRequestViewModel>> GetAllPendingForAMAsync(List<int>? branchIds = null, string? branchName = null)
         {
-            var data = await _context.DeathRequests
-                .Where(r => r.Status == DeathRequestStatus.BMApproved)
-                .OrderBy(r => r.CreatedDate)
-                .ToListAsync();
+            var query = _context.DeathRequests
+                .Where(r => r.Status == DeathRequestStatus.BMApproved || r.Status == DeathRequestStatus.SubmittedForApproval);
+
+            if (branchIds != null && branchIds.Any())
+            {
+                var branchNames = await _context.Branches
+                    .Where(b => branchIds.Contains(b.Id))
+                    .Select(b => b.Name.ToLower())
+                    .ToListAsync();
+
+                query = query.Where(r => branchNames.Contains(r.Branch.ToLower()));
+            }
+            else if (!string.IsNullOrWhiteSpace(branchName))
+            {
+                var bn = branchName.Trim().ToLower();
+                query = query.Where(r => r.Branch.ToLower() == bn);
+            }
+
+            var data = await query.OrderByDescending(r => r.CreatedDate).ToListAsync();
             return MapToVMList(data);
         }
 
@@ -132,9 +151,52 @@ namespace HRMS.Application.Services
             return MapToVMList(data);
         }
 
+        public async Task<List<DeathRequestViewModel>> GetReviewedForBMAsync(string branch)
+        {
+            var branchLower = (branch ?? "").Trim().ToLower();
+            var data = await _context.DeathRequests
+                .Where(r => r.Branch.Trim().ToLower() == branchLower)
+                .OrderByDescending(r => r.LastModifiedDate)
+                .ToListAsync();
+            return MapToVMList(data);
+        }
+
+        public async Task<List<DeathRequestViewModel>> GetReviewedForAMAsync(List<int>? branchIds = null, string? branchName = null)
+        {
+            var query = _context.DeathRequests
+                .Where(r => r.AMReviewDate.HasValue || r.Status == DeathRequestStatus.AMApproved || r.Status == DeathRequestStatus.AMRejected || r.Status == DeathRequestStatus.Completed || r.Status == DeathRequestStatus.HRApproved || r.Status == DeathRequestStatus.HRRejected);
+
+            if (branchIds != null && branchIds.Any())
+            {
+                var branchNames = await _context.Branches
+                    .Where(b => branchIds.Contains(b.Id))
+                    .Select(b => b.Name.ToLower())
+                    .ToListAsync();
+
+                query = query.Where(r => branchNames.Contains(r.Branch.ToLower()));
+            }
+            else if (!string.IsNullOrWhiteSpace(branchName))
+            {
+                var bn = branchName.Trim().ToLower();
+                query = query.Where(r => r.Branch.ToLower() == bn);
+            }
+
+            var data = await query.OrderByDescending(r => r.LastModifiedDate).ToListAsync();
+            return MapToVMList(data);
+        }
+
+        public async Task<List<DeathRequestViewModel>> GetReviewedForHRAsync()
+        {
+            var data = await _context.DeathRequests
+                .Where(r => r.HRReviewDate.HasValue || r.Status == DeathRequestStatus.Completed || r.Status == DeathRequestStatus.HRRejected)
+                .OrderByDescending(r => r.LastModifiedDate)
+                .ToListAsync();
+            return MapToVMList(data);
+        }
+
         /// <summary>
         /// Submits a new death request with supporting documentation.
-        /// Initiated by a manager and moves the request to the BM review queue.
+        /// Initiated by Branch Manager and forwards directly to Area Manager review.
         /// </summary>
         public async Task<int> SubmitRequestAsync(DeathRequestViewModel model, List<IFormFile> documents, string initiatedByEmail)
         {
@@ -155,49 +217,52 @@ namespace HRMS.Application.Services
                 HasOutstandingLoans = model.HasOutstandingLoans,
                 IsLoanGuarantor = model.IsLoanGuarantor,
                 ObligationDetails = model.ObligationDetails,
-                Status = DeathRequestStatus.SubmittedForApproval,
+                Status = DeathRequestStatus.BMApproved, // Auto-marked as initiated/approved by BM -> moves to Area Manager review
                 InitiatedBy = initiatedByEmail,
+                BMReview = "Approved",
+                BMReviewDate = DateTime.UtcNow,
+                BMComments = string.IsNullOrWhiteSpace(model.AdditionalRemarks) ? "Initiated by Branch Manager" : model.AdditionalRemarks,
+                BMEmail = initiatedByEmail,
                 CreatedDate = DateTime.UtcNow,
                 LastModifiedDate = DateTime.UtcNow
             };
 
-            foreach (var file in documents)
+            if (documents != null)
             {
-                using var ms = new MemoryStream();
-                await file.CopyToAsync(ms);
-                entity.Documents.Add(new DeathDocument
+                foreach (var file in documents)
                 {
-                    FileName = file.FileName,
-                    ContentType = file.ContentType,
-                    DocumentType = "Death Certificate/Proof",
-                    Content = ms.ToArray(),
-                    UploadedDate = DateTime.UtcNow
-                });
+                    using var ms = new MemoryStream();
+                    await file.CopyToAsync(ms);
+                    entity.Documents.Add(new DeathDocument
+                    {
+                        FileName = file.FileName,
+                        ContentType = file.ContentType,
+                        DocumentType = "Death Certificate/Proof",
+                        Content = ms.ToArray(),
+                        UploadedDate = DateTime.UtcNow
+                    });
+                }
             }
 
             _context.DeathRequests.Add(entity);
             await _context.SaveChangesAsync();
 
-            // Notify BM
-            await _notificationService.CreateNotificationAsync(
-                "BM_ROLE", // Simplified logic for role broadcast
-                "New Employee Death Request",
-                $"A death request for {entity.EmployeeName} requires your review.",
+            // Notify all Area Managers
+            await NotifyRoleUsersAsync(
+                "Area Manager",
+                "New Employee Death Process Initiated",
+                $"A death process for {entity.EmployeeName} (EPF: {entity.EpfNumber}, Branch: {entity.Branch}) has been initiated and requires Area Manager review.",
                 CoreNotificationType.Info,
-                entity.Id,
-                "/Separation/Dashboard"
+                $"/AreaManager/ReviewDeath/{entity.Id}"
             );
 
             return entity.Id;
         }
 
-        /// <summary>
-        /// Processes the Branch Manager's review of the death claim.
-        /// </summary>
         public async Task<bool> BMApproveAsync(int id, string comments, string bmEmail)
         {
             var req = await _context.DeathRequests.FindAsync(id);
-            if (req == null || req.Status != DeathRequestStatus.SubmittedForApproval) return false;
+            if (req == null) return false;
 
             req.Status = DeathRequestStatus.BMApproved;
             req.BMReview = "Approved";
@@ -207,13 +272,22 @@ namespace HRMS.Application.Services
             req.LastModifiedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await NotifyRoleUsersAsync(
+                "Area Manager",
+                "Death Request Pending Review",
+                $"Death request for {req.EmployeeName} (EPF: {req.EpfNumber}, Branch: {req.Branch}) is awaiting Area Manager review.",
+                CoreNotificationType.Info,
+                $"/AreaManager/ReviewDeath/{req.Id}"
+            );
+
             return true;
         }
 
         public async Task<bool> BMRejectAsync(int id, string comments, string bmEmail)
         {
             var req = await _context.DeathRequests.FindAsync(id);
-            if (req == null || req.Status != DeathRequestStatus.SubmittedForApproval) return false;
+            if (req == null) return false;
 
             req.Status = DeathRequestStatus.BMRejected;
             req.BMReview = "Rejected";
@@ -224,14 +298,12 @@ namespace HRMS.Application.Services
 
             await _context.SaveChangesAsync();
 
-            // notify HR or Initiator
-            await _notificationService.CreateNotificationAsync(
+            await NotifyUserByEmailAsync(
                 req.InitiatedBy,
                 "Death Request Rejected",
-                $"Your request for {req.EmployeeName} was rejected by BM.",
+                $"The death request for {req.EmployeeName} was rejected by Branch Manager. Reason: {comments}",
                 CoreNotificationType.Rejected,
-                req.Id,
-                "/Separation/Dashboard"
+                "/Separation/Dashboard?ActiveTab=Death"
             );
 
             return true;
@@ -250,6 +322,33 @@ namespace HRMS.Application.Services
             req.LastModifiedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            // Notify HR Managers and HR Officers
+            await NotifyRoleUsersAsync(
+                "HR Manager",
+                "Death Request Pending HR Finalization",
+                $"Death process for {req.EmployeeName} (EPF: {req.EpfNumber}, Branch: {req.Branch}) was confirmed by Area Manager and is awaiting HR finalization.",
+                CoreNotificationType.Info,
+                $"/HRManager/ReviewDeath/{req.Id}"
+            );
+
+            await NotifyRoleUsersAsync(
+                "HR Officer",
+                "Death Request Pending HR Finalization",
+                $"Death process for {req.EmployeeName} (EPF: {req.EpfNumber}, Branch: {req.Branch}) was confirmed by Area Manager and is awaiting HR finalization.",
+                CoreNotificationType.Info,
+                $"/HRManager/ReviewDeath/{req.Id}"
+            );
+
+            // Notify Branch Manager (Initiator)
+            await NotifyUserByEmailAsync(
+                req.InitiatedBy,
+                "Death Process Confirmed by Area Manager",
+                $"Death process for {req.EmployeeName} was confirmed by Area Manager and forwarded to HR Manager for finalization.",
+                CoreNotificationType.Info,
+                "/Separation/Dashboard?ActiveTab=Death"
+            );
+
             return true;
         }
 
@@ -266,32 +365,93 @@ namespace HRMS.Application.Services
             req.LastModifiedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            // Notify Branch Manager
+            await NotifyUserByEmailAsync(
+                req.InitiatedBy,
+                "Death Request Rejected by Area Manager",
+                $"Death request for {req.EmployeeName} was rejected by Area Manager. Reason: {comments}",
+                CoreNotificationType.Rejected,
+                "/Separation/Dashboard?ActiveTab=Death"
+            );
+
             return true;
         }
 
         /// <summary>
-        /// Processes the final HR Manager review for the death claim.
+        /// Processes final HR Manager review and automatically finalizes system closure.
         /// </summary>
-        public async Task<bool> HRManagerApproveAsync(int id, string comments, string hrEmail)
+        public async Task<bool> HRManagerApproveAsync(int id, string comments, string hrEmail, UserManager<ApplicationUser>? userManager = null)
         {
             var req = await _context.DeathRequests.FindAsync(id);
-            if (req == null || req.Status != DeathRequestStatus.AMApproved) return false;
+            if (req == null || (req.Status != DeathRequestStatus.AMApproved && req.Status != DeathRequestStatus.HRApproved)) return false;
 
-            req.Status = DeathRequestStatus.HRApproved;
+            req.Status = DeathRequestStatus.Completed;
             req.HRReview = "Approved";
             req.HRReviewDate = DateTime.UtcNow;
             req.HRComments = comments;
             req.HREmail = hrEmail;
             req.LastModifiedDate = DateTime.UtcNow;
 
+            // System closure
+            req.AccountDeactivated = true;
+            req.AccountDeactivatedDate = DateTime.UtcNow;
+            req.AccountDeactivatedBy = hrEmail;
+            req.PayrollStopped = true;
+            req.FinanceClearanceTriggered = true;
+
+            // Update Employee Record in database
+            var emp = await _context.Employees.FirstOrDefaultAsync(e => 
+                (!string.IsNullOrEmpty(req.EmployeeEmail) && e.Email == req.EmployeeEmail) || 
+                (!string.IsNullOrEmpty(req.EpfNumber) && e.EPFNumber == req.EpfNumber));
+
+            if (emp != null)
+            {
+                emp.Status = "Deceased";
+            }
+
+            // Lockout user credentials in Identity
+            if (userManager != null && !string.IsNullOrEmpty(req.EmployeeEmail))
+            {
+                var user = await userManager.FindByEmailAsync(req.EmployeeEmail);
+                if (user != null)
+                {
+                    user.LockoutEnabled = true;
+                    user.LockoutEnd = DateTimeOffset.MaxValue;
+                    await userManager.UpdateAsync(user);
+                }
+            }
+
             await _context.SaveChangesAsync();
+
+            // Notify Branch Manager (Initiator)
+            await NotifyUserByEmailAsync(
+                req.InitiatedBy,
+                "Employee Death Process Finalized & Completed",
+                $"The death process for {req.EmployeeName} (EPF: {req.EpfNumber}) has been finalized and closed by HR.",
+                CoreNotificationType.Approved,
+                "/Separation/Dashboard?ActiveTab=Death"
+            );
+
+            // Notify Area Manager
+            if (!string.IsNullOrEmpty(req.AMEmail))
+            {
+                await NotifyUserByEmailAsync(
+                    req.AMEmail,
+                    "Employee Death Process Finalized & Completed",
+                    $"The death process for {req.EmployeeName} ({req.Branch}) has been finalized and closed by HR.",
+                    CoreNotificationType.Approved,
+                    $"/AreaManager/ReviewDeath/{req.Id}"
+                );
+            }
+
             return true;
         }
 
         public async Task<bool> HRManagerRejectAsync(int id, string comments, string hrEmail)
         {
             var req = await _context.DeathRequests.FindAsync(id);
-            if (req == null || req.Status != DeathRequestStatus.AMApproved) return false;
+            if (req == null || (req.Status != DeathRequestStatus.AMApproved && req.Status != DeathRequestStatus.HRApproved)) return false;
 
             req.Status = DeathRequestStatus.HRRejected;
             req.HRReview = "Rejected";
@@ -301,7 +461,71 @@ namespace HRMS.Application.Services
             req.LastModifiedDate = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            // Notify BM & AM
+            await NotifyUserByEmailAsync(
+                req.InitiatedBy,
+                "Death Process Rejected by HR",
+                $"The death process for {req.EmployeeName} was rejected by HR Manager. Remarks: {comments}",
+                CoreNotificationType.Rejected,
+                "/Separation/Dashboard?ActiveTab=Death"
+            );
+
+            if (!string.IsNullOrEmpty(req.AMEmail))
+            {
+                await NotifyUserByEmailAsync(
+                    req.AMEmail,
+                    "Death Process Rejected by HR",
+                    $"The death process for {req.EmployeeName} ({req.Branch}) was rejected by HR Manager. Remarks: {comments}",
+                    CoreNotificationType.Rejected,
+                    $"/AreaManager/ReviewDeath/{req.Id}"
+                );
+            }
+
             return true;
+        }
+
+        private async Task NotifyRoleUsersAsync(string roleName, string title, string message, CoreNotificationType type, string targetUrl)
+        {
+            try
+            {
+                var role = await _context.Roles.FirstOrDefaultAsync(r => r.Name == roleName);
+                if (role == null) return;
+
+                var userIdsInRole = await _context.UserRoles
+                    .Where(ur => ur.RoleId == role.Id)
+                    .Select(ur => ur.UserId)
+                    .ToListAsync();
+
+                var users = await _context.Users
+                    .Where(u => userIdsInRole.Contains(u.Id))
+                    .ToListAsync();
+
+                foreach (var user in users)
+                {
+                    if (!string.IsNullOrWhiteSpace(user.Email))
+                    {
+                        await _notificationService.CreateNotificationAsync(user.Email, title, message, type, targetUrl);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DeathService Notification Error]: {ex.Message}");
+            }
+        }
+
+        private async Task NotifyUserByEmailAsync(string email, string title, string message, CoreNotificationType type, string targetUrl)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(email)) return;
+                await _notificationService.CreateNotificationAsync(email, title, message, type, targetUrl);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DeathService Notification Error]: {ex.Message}");
+            }
         }
 
         public async Task<(byte[] Content, string ContentType, string FileName)?> DownloadDocumentAsync(int documentId)
@@ -316,30 +540,9 @@ namespace HRMS.Application.Services
         /// </summary>
         public async Task<(bool Success, string ErrorMessage)> ProcessClosureAsync(int id, string hrEmail, UserManager<ApplicationUser> userManager)
         {
-            var req = await _context.DeathRequests.FindAsync(id);
-            if (req == null || req.Status != DeathRequestStatus.HRApproved)
-                return (false, "Request not found or not in HR Approved status.");
-
-            var user = await userManager.FindByEmailAsync(req.EmployeeEmail);
-            if (user != null)
-            {
-                user.LockoutEnabled = true;
-                user.LockoutEnd = DateTimeOffset.MaxValue; // inactivate user account
-                await userManager.UpdateAsync(user);
-            }
-
-            // Stop payroll, trigger finance manually by updating entity state
-            req.AccountDeactivated = true;
-            req.AccountDeactivatedDate = DateTime.UtcNow;
-            req.AccountDeactivatedBy = hrEmail;
-            req.PayrollStopped = true;
-            req.FinanceClearanceTriggered = true;
-            req.Status = DeathRequestStatus.Completed;
-
-            await _context.SaveChangesAsync();
-
-            // Emulate notifying nominee
-            // _emailService.SendEmail(req.NomineeContact, "...", "...") etc.
+            var success = await HRManagerApproveAsync(id, "Final system closure processed", hrEmail, userManager);
+            if (!success)
+                return (false, "Unable to complete closure for this request.");
 
             return (true, string.Empty);
         }
@@ -351,8 +554,25 @@ namespace HRMS.Application.Services
                 Id = req.Id,
                 EmployeeName = req.EmployeeName,
                 EpfNumber = req.EpfNumber,
+                EmployeeEmail = req.EmployeeEmail,
+                Branch = req.Branch,
+                Department = req.Department,
+                Designation = req.Designation,
                 DateOfDeath = req.DateOfDeath,
-                Status = req.Status
+                NatureOfDeath = req.NatureOfDeath,
+                NomineeName = req.NomineeName,
+                NomineeRelation = req.NomineeRelation,
+                NomineeContact = req.NomineeContact,
+                Status = req.Status,
+                InitiatedBy = req.InitiatedBy,
+                CreatedDate = req.CreatedDate,
+                LastModifiedDate = req.LastModifiedDate,
+                BMReview = req.BMReview,
+                BMReviewDate = req.BMReviewDate,
+                AMReview = req.AMReview,
+                AMReviewDate = req.AMReviewDate,
+                HRReview = req.HRReview,
+                HRReviewDate = req.HRReviewDate
             }).ToList();
         }
     }

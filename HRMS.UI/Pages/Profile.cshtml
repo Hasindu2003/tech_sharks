@@ -5,6 +5,12 @@
     ViewData["PageTitle"] = "My Profile";
     ViewData["ActiveNav"] = "";
     var emp = Model.Employee;
+
+    var nameParts = emp?.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
+    var avatarChars = nameParts.Length > 1 
+        ? $"{nameParts[0][0]}{nameParts[^1][0]}" 
+        : (nameParts.Length == 1 ? nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)) : "U");
+    string displayName = emp == null ? "Unknown" : (string.IsNullOrEmpty(emp.Initials) ? (emp.FullName ?? "Unknown") : emp.Initials);
 }
 
 <style>
@@ -20,7 +26,134 @@
     .profile-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .profile-info-wrapper { display: flex; gap: 16px; align-items: center; }
     
-    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .profile-avatar-container { position: relative; width: 76px; height: 76px; aspect-ratio: 1 / 1; flex-shrink: 0; }
+    .profile-avatar { width: 76px; height: 76px; aspect-ratio: 1 / 1; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); overflow: hidden; border: 2px solid #fff; position: relative; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .profile-avatar:hover { transform: scale(1.03); box-shadow: 0 6px 12px -2px rgba(0,0,0,0.15); }
+    .avatar-img-cover { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: cover; object-position: center; display: block; }
+    .btn-change-avatar { position: absolute; bottom: -2px; right: -2px; width: 26px; height: 26px; border-radius: 50%; background: #10823c; color: white; border: 2px solid #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.15); transition: background 0.15s, transform 0.15s; z-index: 2; }
+    .btn-change-avatar:hover { background: #0d6e32; transform: scale(1.08); }
+
+    /* ── Full Profile Image Lightbox Modal ── */
+    .avatar-lightbox-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.82);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+        animation: avatarFadeIn 0.2s ease-out;
+    }
+    .avatar-lightbox-modal.open {
+        display: flex;
+    }
+    .avatar-lightbox-content {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 26px 24px;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        position: relative;
+        text-align: center;
+        animation: avatarZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .avatar-lightbox-close {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: #f1f5f9;
+        border: none;
+        font-size: 24px;
+        line-height: 1;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: #475569;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, color 0.15s;
+    }
+    .avatar-lightbox-close:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .avatar-lightbox-img-wrap {
+        width: 260px;
+        height: 260px;
+        aspect-ratio: 1 / 1;
+        margin: 10px auto 16px;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.18);
+        border: 4px solid #f0fdf4;
+        background: #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .avatar-lightbox-img-wrap img {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+    .avatar-lightbox-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1e293b;
+        color: #ffffff;
+        font-size: 68px;
+        font-weight: 800;
+    }
+    .avatar-lightbox-name {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 3px;
+    }
+    .avatar-lightbox-meta {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+    }
+    .btn-lightbox-change {
+        background: #10823c;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        padding: 9px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        font-family: 'Manrope', sans-serif;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        transition: background 0.15s;
+    }
+    .btn-lightbox-change:hover {
+        background: #0d6e32;
+    }
+
+    @@keyframes avatarFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @@keyframes avatarZoomIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
     
     .profile-main-info h1 { margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: #0f172a; }
     .profile-main-info .designation { font-size: 15px; color: #64748b; font-weight: 500; margin-bottom: 12px; display: block; }
@@ -60,10 +193,10 @@
     .empty-icon svg { width: 32px; height: 32px; stroke: #94a3b8; fill: none; stroke-width: 2; border: none; }
 
     /* ── Document Upload Panel ── */
-    .doc-layout { display: grid; grid-template-columns: 1fr 1.5fr; gap: 24px; }
+    .doc-layout { display: flex; flex-direction: column; gap: 24px; }
 
     .upload-card { border: 2px dashed #e2e8f0; border-radius: 12px; padding: 24px; background: #f8fafc; }
-    .upload-title { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0; }
+    .upload-title { font-size: 15px; font-weight: 700; color: #0f172a; margin: 0 0 16px 0; }
 
     .form-group { margin-bottom: 16px; }
     .form-label { display: block; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 6px; }
@@ -116,6 +249,24 @@
     .doc-open-link { color: #10823c; font-weight: 700; text-decoration: none; }
     .doc-open-link:hover { text-decoration: underline; }
 
+    .btn-cancel-doc {
+        background: #fff;
+        border: 1px solid #fecaca;
+        color: #ef4444;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 11.5px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .btn-cancel-doc:hover {
+        background: #fee2e2;
+        border-color: #ef4444;
+        color: #dc2626;
+    }
+
     .no-docs { text-align: center; padding: 40px 16px; }
     .no-docs svg { stroke: #cbd5e1; margin-bottom: 12px; }
     .no-docs p { font-size: 13px; color: #94a3b8; margin: 0; }
@@ -139,19 +290,44 @@
     }
     else
     {
-        var nameParts = emp.FullName?.Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
-        var avatarChars = nameParts.Length > 1 
-            ? $"{nameParts[0][0]}{nameParts[^1][0]}" 
-            : (nameParts.Length == 1 ? nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)) : "U");
-        string displayName = string.IsNullOrEmpty(emp.Initials) ? (emp.FullName ?? "Unknown") : emp.Initials;
+        @if (TempData["AvatarSuccess"] != null)
+        {
+            <div class="alert-success" style="margin-bottom:16px;">@TempData["AvatarSuccess"]</div>
+        }
+        @if (TempData["AvatarError"] != null)
+        {
+            <div class="alert-error" style="margin-bottom:16px;">@TempData["AvatarError"]</div>
+        }
 
         <div class="card profile-card">
             <div class="profile-header">
                 <div class="profile-info-wrapper">
-                    <div class="profile-avatar">@avatarChars.ToUpper()</div>
+                    <div class="profile-avatar-container">
+                        <div class="profile-avatar" onclick="openAvatarModal()" title="Click to view full photo">
+                            <img id="profileAvatarImg" src="/uploads/avatars/emp_@(emp.Id).jpg?v=@DateTime.Now.Ticks" 
+                                 class="avatar-img-cover" 
+                                 onerror="this.style.display='none'; document.getElementById('profileAvatarFallback').style.display='flex';" 
+                                 alt="@displayName" />
+                            <div id="profileAvatarFallback" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:#1e293b; color:#fff; font-size:24px; font-weight:700;">
+                                @avatarChars.ToUpper()
+                            </div>
+                        </div>
+                        <button type="button" class="btn-change-avatar" onclick="document.getElementById('avatarFileInput').click()" title="Upload / Change Profile Picture">
+                            <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form id="avatarUploadForm" method="post" asp-page-handler="UploadAvatar" enctype="multipart/form-data" style="display:none;">
+                        @Html.AntiForgeryToken()
+                        <input type="file" id="avatarFileInput" name="avatarFile" accept="image/png, image/jpeg, image/jpg, image/webp" onchange="handleAvatarSelected(event)" />
+                    </form>
+
                     <div class="profile-main-info">
                         <h1>@displayName</h1>
-                        <span class="designation">@(emp.Designation?.Title ?? "No Designation")</span>
+                        <span class="designation">@(string.IsNullOrWhiteSpace(Model.DesignationTitle) ? "No Designation" : Model.DesignationTitle)</span>
                         
                         <div class="tags">
                             <span class="tag-emp">EMP-@emp.Id.ToString("D5")</span>
@@ -224,7 +400,7 @@
                             }
                             <div class="data-item">
                                 <span class="data-item-label">Designation</span>
-                                <span class="data-item-value">@(emp.Designation?.Title ?? "-")</span>
+                                <span class="data-item-value">@(string.IsNullOrWhiteSpace(Model.DesignationTitle) ? "-" : Model.DesignationTitle)</span>
                             </div>
                             <div class="data-item">
                                 <span class="data-item-label">Department</span>
@@ -270,7 +446,7 @@
 
                 <div class="right-col">
                     <div class="card" style="margin-bottom:0;">
-                        <h3 class="section-title">Statutory Information</h3>
+                        <h3 class="section-title">Statutory &amp; Banking Information</h3>
                         <div class="data-grid-2col">
                             <div class="data-item">
                                 <span class="data-item-label">EPF Number</span>
@@ -279,6 +455,18 @@
                             <div class="data-item">
                                 <span class="data-item-label">ETF Number</span>
                                 <span class="data-item-value">@emp.ETFNumber</span>
+                            </div>
+                            <div class="data-item" style="grid-column: 1 / span 2;">
+                                <span class="data-item-label">Bank Name</span>
+                                <span class="data-item-value">@(string.IsNullOrWhiteSpace(emp.BankName) || emp.BankName == "-" ? "—" : emp.BankName)</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Bank Account Holder</span>
+                                <span class="data-item-value">@(string.IsNullOrWhiteSpace(emp.BankAccountName) || emp.BankAccountName == "-" ? "—" : emp.BankAccountName)</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Bank Account Number</span>
+                                <span class="data-item-value" style="font-family: monospace; font-weight: 700; color: #10823c;">@(string.IsNullOrWhiteSpace(emp.BankAccountNumber) || emp.BankAccountNumber == "-" ? "—" : emp.BankAccountNumber)</span>
                             </div>
                         </div>
                     </div>
@@ -301,15 +489,15 @@
             <div class="doc-layout">
 
                 <!-- Upload Form -->
-                <div>
-                    <div class="upload-card">
-                        <p class="upload-title">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#10823c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                            Upload New Document
-                        </p>
-                        <form method="post" asp-page-handler="Upload" enctype="multipart/form-data">
-                            @Html.AntiForgeryToken()
-                            <div class="form-group">
+                <div class="upload-card">
+                    <p class="upload-title">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#10823c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;vertical-align:-3px;margin-right:6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        Upload New Document
+                    </p>
+                    <form method="post" asp-page-handler="Upload" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:16px; margin-bottom:16px;">
+                            <div class="form-group" style="margin-bottom:0;">
                                 <label class="form-label" for="DocumentType">Document Type</label>
                                 <select id="DocumentType" name="DocumentType" class="form-select" required>
                                     <option value="">— Select type —</option>
@@ -321,31 +509,34 @@
                                     <option value="Other">Other</option>
                                 </select>
                             </div>
-                            <div class="form-group">
+                            <div class="form-group" style="margin-bottom:0;">
                                 <label class="form-label" for="UploadedFile">Select File</label>
                                 <input id="UploadedFile" name="UploadedFile" type="file" class="form-file-input"
                                        accept=".pdf,.jpg,.jpeg,.png" required onchange="previewSelectedFile(this)" />
                             </div>
+                        </div>
 
-                            <!-- Live Preview Area -->
-                            <div id="uploadPreviewArea" style="display:none; margin-bottom:14px;">
-                                <div style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:7px;">Preview</div>
-                                <div id="uploadPreviewBox" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; max-height:220px; display:flex; align-items:center; justify-content:center; padding:8px;">
-                                    <img id="uploadPreviewImg" src="" alt="Preview" style="display:none; max-width:100%; max-height:200px; object-fit:contain; border-radius:4px;" />
-                                    <div id="uploadPreviewPdf" style="display:none; text-align:center; padding:16px;">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" width="36" height="36" style="margin-bottom:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                                        <div id="uploadPdfName" style="font-size:12px; font-weight:600; color:#0f172a; word-break:break-all;"></div>
-                                        <div id="uploadPdfSize" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
-                                    </div>
+                        <!-- Live Preview Area -->
+                        <div id="uploadPreviewArea" style="display:none; margin-bottom:14px;">
+                            <div style="font-size:11px; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:7px;">Preview</div>
+                            <div id="uploadPreviewBox" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; overflow:hidden; max-height:220px; display:flex; align-items:center; justify-content:center; padding:10px;">
+                                <img id="uploadPreviewImg" src="" alt="Preview" style="display:none; max-width:100%; max-height:200px; object-fit:contain; border-radius:4px;" />
+                                <div id="uploadPreviewPdf" style="display:none; text-align:center; padding:16px;">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="1.5" width="36" height="36" style="margin-bottom:6px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                                    <div id="uploadPdfName" style="font-size:12px; font-weight:600; color:#0f172a; word-break:break-all;"></div>
+                                    <div id="uploadPdfSize" style="font-size:11px; color:#94a3b8; margin-top:2px;"></div>
                                 </div>
                             </div>
-                            <button type="submit" class="btn-upload">
+                        </div>
+
+                        <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-top:8px;">
+                            <p class="upload-hint" style="margin:0;">Supported: PDF, JPG, PNG &bull; Max 10 MB</p>
+                            <button type="submit" class="btn-upload" style="width:auto; padding:10px 24px;">
                                 <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                                 Upload Document
                             </button>
-                            <p class="upload-hint">Supported: PDF, JPG, PNG &bull; Max 10 MB</p>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
 
                 <!-- Documents List -->
@@ -367,7 +558,7 @@
                                         <th>Type</th>
                                         <th>Uploaded</th>
                                         <th>Status</th>
-                                        <th>File</th>
+                                        <th style="text-align:right;">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -391,8 +582,18 @@
                                                     <div class="doc-notes">Reason: @doc.ReviewerNotes</div>
                                                 }
                                             </td>
-                                            <td>
-                                                <a href="@fileUrl" target="_blank" class="doc-open-link">Open</a>
+                                            <td style="text-align:right;">
+                                                <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px;">
+                                                    <a href="@fileUrl" class="doc-open-link js-doc-preview" data-doc-title="@doc.DocumentType" data-doc-sub="@doc.FileName">Open</a>
+                                                    @if (doc.Status == "Pending")
+                                                    {
+                                                        <form method="post" asp-page-handler="CancelDocument" style="display:inline; margin:0;" onsubmit="return confirm('Are you sure you want to cancel this document request?');">
+                                                            @Html.AntiForgeryToken()
+                                                            <input type="hidden" name="documentId" value="@doc.Id" />
+                                                            <button type="submit" class="btn-cancel-doc" title="Cancel this pending request">Cancel</button>
+                                                        </form>
+                                                    }
+                                                </div>
                                             </td>
                                         </tr>
                                     }
@@ -404,13 +605,148 @@
             </div>
         </div>
 
-        <!-- ── TAB: Salary & Benefits (placeholder) ── -->
+        <!-- ── TAB: Salary & Benefits ── -->
         <div class="tab-panel" id="tab-salary">
-            <div class="card">
-                <div style="text-align:center; padding: 40px 20px; color:#64748b;">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" width="40" height="40" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                    <p style="font-weight:700; color:#0f172a; margin-bottom:4px;">Salary & Benefits</p>
-                    <p style="font-size:13px; margin:0;">This section is under development.</p>
+            <div class="tab-grid">
+                <div class="left-col" style="display:flex; flex-direction:column; gap:24px;">
+                    @if (Model.CurrentSalary == null)
+                    {
+                        <div class="card" style="text-align: center; padding: 48px 24px; color: #64748b; margin-bottom:0;">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" width="48" height="48" style="margin: 0 auto 12px; display: block;"><rect x="2" y="7" width="20" height="14" rx="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
+                            <h4 style="font-weight: 700; color: #0f172a; margin: 0 0 6px 0;">No Salary Package Configured</h4>
+                            <p style="font-size: 13px; margin: 0; max-width: 320px; margin: 0 auto;">Your compensation package has not been configured yet. Please contact Human Resources for inquiries.</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="card" style="margin-bottom:0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Current Base Salary</h3>
+                                <a href="/Payroll/PaySlips" class="btn-edit" style="font-size: 13px; padding: 6px 12px; background: #ebf5ee; border-radius: 6px; text-decoration: none; color: #10823c; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                    View Monthly Payslips
+                                </a>
+                            </div>
+                            <div class="data-grid" style="grid-template-columns: 1fr 1fr;">
+                                <div class="data-item">
+                                    <span class="data-item-label">Basic Salary</span>
+                                    <span class="data-item-value" style="font-size: 1.25rem; font-weight: 800; color: #10823c;">Rs @Model.CurrentSalary.BasicSalary.ToString("N2")</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-item-label">Effective Date</span>
+                                    <span class="data-item-value">@Model.CurrentSalary.EffectiveDate.ToString("dd MMM, yyyy")</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.SalaryHistory.Count > 1)
+                    {
+                        <div class="card" style="margin-bottom:0;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                                <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Salary Revision History</h3>
+                                <span style="font-size: 12px; color: #64748b; font-weight: 600;">@Model.SalaryHistory.Count Records</span>
+                            </div>
+                            <div class="doc-list">
+                                @for (int i = 0; i < Model.SalaryHistory.Count; i++)
+                                {
+                                    var hist = Model.SalaryHistory[i];
+                                    var isCurrent = (i == 0);
+                                    <div class="doc-item" style="padding: 12px 16px; border-left: 4px solid @(isCurrent ? "#10823c" : "#cbd5e1"); background: @(isCurrent ? "#f0fdf4" : "#f8fafc");">
+                                        <div style="flex: 1;">
+                                            <div style="display:flex; align-items:center; gap: 8px; margin-bottom: 3px;">
+                                                <span class="doc-name" style="font-size: 14px; font-weight: 700; color: #0f172a;">Rs @hist.BasicSalary.ToString("N2") Base Salary</span>
+                                                @if (isCurrent)
+                                                {
+                                                    <span style="background: #dcfce7; color: #166534; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">Current</span>
+                                                }
+                                                else
+                                                {
+                                                    <span style="background: #f1f5f9; color: #64748b; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 9999px;">Previous</span>
+                                                }
+                                            </div>
+                                            <div class="doc-meta" style="font-size: 12px; color: #64748b;">
+                                                Effective: @hist.EffectiveDate.ToString("dd MMM yyyy, hh:mm tt")
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="right-col" style="display:flex; flex-direction:column; gap:24px;">
+                    <div class="card" style="margin-bottom:0;">
+                        <h3 class="section-title">Statutory Contributions</h3>
+                        @if (Model.CurrentSalary != null)
+                        {
+                            <div class="data-grid-2col" style="row-gap: 16px;">
+                                <div class="data-item">
+                                    <span class="data-item-label">EPF Employee (8%)</span>
+                                    <span class="data-item-value">Rs @((Model.CurrentSalary.BasicSalary * 0.08m).ToString("N2"))</span>
+                                </div>
+                                <div class="data-item">
+                                    <span class="data-item-label">EPF Employer (12%)</span>
+                                    <span class="data-item-value" style="color: #10823c;">Rs @((Model.CurrentSalary.BasicSalary * 0.12m).ToString("N2"))</span>
+                                </div>
+                                <div class="data-item" style="grid-column: 1 / span 2;">
+                                    <span class="data-item-label">ETF Employer (3%)</span>
+                                    <span class="data-item-value" style="color: #c2410c;">Rs @((Model.CurrentSalary.BasicSalary * 0.03m).ToString("N2"))</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="data-item-value" style="font-size: 13px; color: #64748b;">Awaiting basic salary configuration to compute statutory rates.</div>
+                        }
+                    </div>
+
+                    <div class="card" style="margin-bottom:0;">
+                        <h3 class="section-title">Disbursement Bank Account</h3>
+                        <div class="data-grid-2col" style="row-gap: 16px;">
+                            <div class="data-item" style="grid-column: 1 / span 2;">
+                                <span class="data-item-label">Bank Name</span>
+                                <span class="data-item-value" style="font-weight: 600;">@(string.IsNullOrWhiteSpace(emp.BankName) || emp.BankName == "-" ? "—" : emp.BankName)</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Account Holder</span>
+                                <span class="data-item-value">@(string.IsNullOrWhiteSpace(emp.BankAccountName) || emp.BankAccountName == "-" ? "—" : emp.BankAccountName)</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Account Number</span>
+                                <span class="data-item-value" style="font-family: monospace; font-weight: 700; color: #10823c;">@(string.IsNullOrWhiteSpace(emp.BankAccountNumber) || emp.BankAccountNumber == "-" ? "—" : emp.BankAccountNumber)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Full Profile Image Lightbox Modal -->
+        <div id="avatarLightboxModal" class="avatar-lightbox-modal" onclick="closeAvatarModal(event)">
+            <div class="avatar-lightbox-content" onclick="event.stopPropagation()">
+                <button type="button" class="avatar-lightbox-close" onclick="closeAvatarModal()" title="Close">&times;</button>
+                <div class="avatar-lightbox-img-wrap">
+                    <img id="avatarLightboxImg" src="/uploads/avatars/emp_@(emp.Id).jpg?v=@DateTime.Now.Ticks" 
+                         onerror="this.style.display='none'; document.getElementById('lightboxFallback').style.display='flex';"
+                         alt="@displayName" />
+                    <div id="lightboxFallback" class="avatar-lightbox-fallback" style="display:none;">
+                        <span>@avatarChars.ToUpper()</span>
+                    </div>
+                </div>
+                <div class="avatar-lightbox-footer">
+                    <div class="avatar-lightbox-name">@displayName</div>
+                    <div class="avatar-lightbox-meta">EMP-@emp.Id.ToString("D5") &middot; @(string.IsNullOrWhiteSpace(Model.DesignationTitle) ? "Employee" : Model.DesignationTitle)</div>
+                    <div style="margin-top:16px; display:flex; justify-content:center; gap:10px;">
+                        <button type="button" class="btn-lightbox-change" onclick="closeAvatarModal(); document.getElementById('avatarFileInput').click();">
+                            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                            Change Photo
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -472,8 +808,99 @@
             </text>
         }
 
+        // Handle 1:1 Aspect Ratio Cropping and Uploading
+        function handleAvatarSelected(event) {
+            var input = event.target;
+            if (!input.files || !input.files[0]) return;
+            var file = input.files[0];
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    // Center crop to a perfect 1:1 aspect ratio square
+                    var minDim = Math.min(img.width, img.height);
+                    var sx = (img.width - minDim) / 2;
+                    var sy = (img.height - minDim) / 2;
+
+                    var targetDim = Math.min(minDim, 800);
+                    var canvas = document.createElement('canvas');
+                    canvas.width = targetDim;
+                    canvas.height = targetDim;
+                    var ctx = canvas.getContext('2d');
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = 'high';
+                    ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, targetDim, targetDim);
+
+                    canvas.toBlob(function(blob) {
+                        if (!blob) {
+                            document.getElementById('avatarUploadForm').submit();
+                            return;
+                        }
+                        var formData = new FormData();
+                        formData.append('avatarFile', blob, 'avatar.jpg');
+                        var token = document.querySelector('#avatarUploadForm input[name="__RequestVerificationToken"]')?.value;
+                        if (token) formData.append('__RequestVerificationToken', token);
+
+                        // Update local preview immediately
+                        var preview = document.getElementById('profileAvatarImg');
+                        if (preview) {
+                            preview.src = canvas.toDataURL('image/jpeg', 0.95);
+                            preview.style.display = 'block';
+                            var fb = document.getElementById('profileAvatarFallback');
+                            if (fb) fb.style.display = 'none';
+                        }
+
+                        fetch('?handler=UploadAvatar', {
+                            method: 'POST',
+                            body: formData
+                        }).then(function() {
+                            window.location.reload();
+                        }).catch(function() {
+                            document.getElementById('avatarUploadForm').submit();
+                        });
+                    }, 'image/jpeg', 0.95);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Avatar Lightbox Modal Functions
+        function openAvatarModal() {
+            var modal = document.getElementById('avatarLightboxModal');
+            if (modal) {
+                var mainImg = document.getElementById('profileAvatarImg');
+                var modalImg = document.getElementById('avatarLightboxImg');
+                if (mainImg && modalImg && mainImg.style.display !== 'none' && mainImg.src) {
+                    modalImg.src = mainImg.src;
+                    modalImg.style.display = 'block';
+                    var fb = document.getElementById('lightboxFallback');
+                    if (fb) fb.style.display = 'none';
+                }
+                modal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeAvatarModal(e) {
+            if (e && e.target !== e.currentTarget && !e.target.classList.contains('avatar-lightbox-close')) return;
+            var modal = document.getElementById('avatarLightboxModal');
+            if (modal) {
+                modal.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Close modal on Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeAvatarModal();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function () {
-            initTablePagination('tbl-profile-docs', 8);
+            initTablePagination('tbl-profile-docs', 10);
         });
     </script>
 }

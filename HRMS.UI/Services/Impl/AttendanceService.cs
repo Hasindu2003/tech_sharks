@@ -51,6 +51,9 @@ namespace HRMS.UI.Services.Impl
                 return;
             }
 
+            var existingAttendance = await _context.Attendances
+                .FirstOrDefaultAsync(a => a.EmployeeId == biometricLog.EmployeeId && a.Date == date);
+
             var todayLogCount = await _context.BiometricLogs
                 .CountAsync(x => x.EmployeeId == biometricLog.EmployeeId && x.LogDateTime.Date == date);
 
@@ -60,30 +63,56 @@ namespace HRMS.UI.Services.Impl
             await _context.SaveChangesAsync();
             _logger.LogInformation("BiometricLog saved - Id: {Id}, Type: {LogType}", biometricLog.Id, biometricLog.LogType);
 
-            var attendance = await _context.Attendances
-                .FirstOrDefaultAsync(a => a.EmployeeId == biometricLog.EmployeeId && a.Date == date);
-
-            if (attendance == null)
+            if (existingAttendance == null)
             {
-                attendance = new Attendance
+                bool isLate = logTime.TimeOfDay > new TimeSpan(8, 30, 0);
+                var attendance = new Attendance
                 {
                     EmployeeId = biometricLog.EmployeeId,
                     Date = date,
-                    TimeIn = biometricLog.LogDateTime,
-                    Status = "Present"
+                    TimeIn = logTime,
+                    Status = isLate ? "Late" : "Present"
                 };
                 _context.Attendances.Add(attendance);
-                _logger.LogInformation("Attendance created - First CheckIn at {TimeIn}", attendance.TimeIn);
+                _logger.LogInformation("Attendance created - CheckIn at {TimeIn}", attendance.TimeIn);
             }
             else
             {
-                attendance.TimeOut = biometricLog.LogDateTime;
-                if (attendance.TimeIn.HasValue)
+                // Case 1: TimeIn is null or a 00:00:00 placeholder date
+                if (!existingAttendance.TimeIn.HasValue || existingAttendance.TimeIn.Value.TimeOfDay == TimeSpan.Zero)
                 {
-                    attendance.TotalHours = (biometricLog.LogDateTime - attendance.TimeIn.Value).TotalHours;
+                    existingAttendance.TimeIn = logTime;
+                    bool isLate = logTime.TimeOfDay > new TimeSpan(8, 30, 0);
+                    existingAttendance.Status = isLate ? "Late" : "Present";
                 }
-                _logger.LogInformation("Attendance updated - TimeOut: {TimeOut}, TotalHours: {Hours}", 
-                    attendance.TimeOut, attendance.TotalHours?.ToString("F2"));
+                // Case 2: Punch is earlier than existing TimeIn -> Update TimeIn to the earlier check-in
+                else if (logTime.TimeOfDay < existingAttendance.TimeIn.Value.TimeOfDay)
+                {
+                    if (!existingAttendance.TimeOut.HasValue && existingAttendance.TimeIn.Value.TimeOfDay >= new TimeSpan(12, 0, 0))
+                    {
+                        existingAttendance.TimeOut = existingAttendance.TimeIn;
+                    }
+                    existingAttendance.TimeIn = logTime;
+                    bool isLate = logTime.TimeOfDay > new TimeSpan(8, 30, 0);
+                    existingAttendance.Status = isLate ? "Late" : "Present";
+                }
+                // Case 3: Punch is later than TimeIn -> Set or update TimeOut (check-out)
+                else if (logTime.TimeOfDay > existingAttendance.TimeIn.Value.TimeOfDay)
+                {
+                    if (!existingAttendance.TimeOut.HasValue || logTime.TimeOfDay > existingAttendance.TimeOut.Value.TimeOfDay)
+                    {
+                        existingAttendance.TimeOut = logTime;
+                    }
+                }
+
+                // Recalculate TotalHours if both TimeIn and TimeOut are valid times
+                if (existingAttendance.TimeIn.HasValue && existingAttendance.TimeOut.HasValue && existingAttendance.TimeIn.Value.TimeOfDay > TimeSpan.Zero)
+                {
+                    existingAttendance.TotalHours = Math.Max(0, (existingAttendance.TimeOut.Value - existingAttendance.TimeIn.Value).TotalHours);
+                }
+
+                _logger.LogInformation("Attendance updated - In: {TimeIn}, Out: {TimeOut}, Hours: {Hours}", 
+                    existingAttendance.TimeIn, existingAttendance.TimeOut, existingAttendance.TotalHours?.ToString("F2"));
             }
 
             await _context.SaveChangesAsync();

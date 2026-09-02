@@ -1,199 +1,817 @@
 @page
+@using Microsoft.AspNetCore.Authorization
+@using HRMS.Application.Models
+@attribute [Authorize(Roles = "Department Head,Branch Manager,Area Manager,HR Manager,HR Officer")]
 @model HRMS.UI.Pages.Separation.DashboardModel
 @{
-    ViewData["Title"] = "Separation Management Hub";
-    ViewData["PageTitle"] = "Separation Management Hub";
+    ViewData["Title"] = "Separation Management";
+    ViewData["PageTitle"] = "Separation Management";
     ViewData["ActiveNav"] = "Separation";
 }
 
 <style>
     .sep-wrap { background: #ffffff; min-height: calc(100vh - 62px); }
-
     .sep-page-title  { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
     .sep-page-sub    { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0 0 22px 0; }
-    .sep-section-title { font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 12px 0; }
+    .sec-heading     { font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
 
-    .sep-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 14px;
+    /* Tabs */
+    .sep-tabs-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #e2e5dc;
+        padding-bottom: 14px;
+        flex-wrap: wrap;
+    }
+    .sep-tab-group { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .sep-tab {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 15px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid #e2e5dc;
+        background: #ffffff;
+        color: #374151;
+    }
+    .sep-tab:hover { background: #f9fafb; color: #151811; text-decoration: none; }
+    .sep-tab.active {
+        background: #10823c;
+        border-color: #10823c;
+        color: #ffffff;
+        box-shadow: 0 1px 3px rgba(16,130,60,0.25);
+    }
+    .tab-badge {
+        background: #ef4444;
+        color: #ffffff;
+        padding: 1px 6px;
+        border-radius: 9999px;
+        font-size: 10.5px;
+        font-weight: 800;
+        margin-left: 2px;
+    }
+    .sep-tab.active .tab-badge {
+        background: #ffffff;
+        color: #10823c;
     }
 
-    .sep-card {
+    /* Table & Cards */
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 28px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .employee-cell { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .emp-info .name { font-size: 14px; font-weight: 700; color: #151811; display: block; }
+    .emp-info .sub  { font-size: 12px; color: #7a8863; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; text-decoration: none; }
+
+    /* Badges */
+    .k-badge, .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .k-badge-pending  { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .k-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .k-badge-rejected { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .k-badge-info     { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+
+    /* Empty state */
+    .empty-caught-up-card {
         background: #ffffff;
         border: 1px solid #e2e5dc;
         border-radius: 10px;
-        padding: 16px;
-        display: flex;
-        align-items: flex-start;
-        gap: 14px;
-        text-decoration: none;
-        color: inherit;
-        box-shadow: 0 1px 2px rgba(0,0,0,.05);
-        transition: box-shadow 0.2s;
+        text-align: center;
+        padding: 44px 20px;
+        margin-bottom: 28px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.03);
     }
-    .sep-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); color: inherit; text-decoration: none; }
-
-    .sep-icon {
-        width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
-        display: flex; align-items: center; justify-content: center;
+    .check-icon-circle {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #f0fdf4;
+        border: 1.5px solid #86efac;
+        color: #10823c;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 12px;
+        font-size: 22px;
     }
-    .sep-icon svg { width: 20px; height: 20px; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-
-    .sep-icon.green  { background: rgba(16,130,60,0.1); }
-    .sep-icon.green svg  { stroke: #10823c; }
-    .sep-icon.orange { background: rgba(249,115,22,0.1); }
-    .sep-icon.orange svg { stroke: #f97316; }
-    .sep-icon.blue   { background: rgba(59,130,246,0.1); }
-    .sep-icon.blue svg   { stroke: #3b82f6; }
-    .sep-icon.purple { background: rgba(168,85,247,0.1); }
-    .sep-icon.purple svg { stroke: #a855f7; }
-    .sep-icon.red    { background: rgba(239,68,68,0.1); }
-    .sep-icon.red svg    { stroke: #ef4444; }
-
-    .sep-card-title { font-size: 13px; font-weight: 700; color: #151811; margin: 0 0 3px 0; }
-    .sep-card-desc  { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0; line-height: 1.5; }
-
-    .sep-card.danger { background: #fff5f5; border-color: #fecaca; }
-    .sep-card.danger .sep-card-title { color: #b91c1c; }
-    .sep-card.danger .sep-card-desc  { color: #ef4444; }
 </style>
 
 <div class="sep-wrap">
     <h2 class="sep-page-title">Separation Management</h2>
-    <p class="sep-page-sub">Central hub for reviewing transfers, resignations, terminations, and death processes.</p>
+    <p class="sep-page-sub">@Model.ScopeSubtitle</p>
 
-    <h3 class="sep-section-title">Process Queues</h3>
-    <div class="sep-grid">
+    <!-- Separation Topics Navigation Tabs -->
+    <div class="sep-tabs-bar">
+        <div class="sep-tab-group">
+            @if (Model.AvailableTabs.Contains("Transfers"))
+            {
+                <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Transfers" 
+                   class="sep-tab @(Model.ActiveTab == "Transfers" ? "active" : "")">
+                    <i class="bi bi-arrow-left-right"></i> Transfers
+                    @if (Model.PendingTransfers.Any())
+                    {
+                        <span class="tab-badge">@Model.PendingTransfers.Count</span>
+                    }
+                </a>
+            }
+            @if (Model.AvailableTabs.Contains("Terminations"))
+            {
+                <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Terminations" 
+                   class="sep-tab @(Model.ActiveTab == "Terminations" ? "active" : "")">
+                    <i class="bi bi-person-x"></i> Terminations
+                    @if (Model.PendingTerminations.Any())
+                    {
+                        <span class="tab-badge">@Model.PendingTerminations.Count</span>
+                    }
+                </a>
+            }
+            @if (Model.AvailableTabs.Contains("Resignations"))
+            {
+                <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Resignations" 
+                   class="sep-tab @(Model.ActiveTab == "Resignations" ? "active" : "")">
+                    <i class="bi bi-box-arrow-right"></i> Resignations
+                    @if (Model.PendingResignations.Any())
+                    {
+                        <span class="tab-badge">@Model.PendingResignations.Count</span>
+                    }
+                </a>
+            }
+            @if (Model.AvailableTabs.Contains("Death"))
+            {
+                <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Death" 
+                   class="sep-tab @(Model.ActiveTab == "Death" ? "active" : "")">
+                    <i class="bi bi-heart-pulse"></i> Death Process
+                    @if (Model.PendingDeathRequests.Any())
+                    {
+                        <span class="tab-badge">@Model.PendingDeathRequests.Count</span>
+                    }
+                </a>
+            }
+        </div>
 
-        @if (User.IsInRole("Branch Manager"))
-        {
-            <a asp-page="/BranchManager/ReviewTransfers" class="sep-card">
-                <div class="sep-icon blue">
-                    <svg viewBox="0 0 24 24"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Transfers</p>
-                    <p class="sep-card-desc">Review employee transfer requests in your branch.</p>
-                </div>
-            </a>
-            <a asp-page="/BranchManager/ReviewResignations" class="sep-card">
-                <div class="sep-icon orange">
-                    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Resignations</p>
-                    <p class="sep-card-desc">Acknowledge submitted resignations from your branch.</p>
-                </div>
-            </a>
-            <a asp-page="/BranchManager/ReviewDeathRequests" class="sep-card">
-                <div class="sep-icon purple">
-                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Death Process</p>
-                    <p class="sep-card-desc">Review pending employee death applications.</p>
-                </div>
-            </a>
-            <a asp-page="/DeathProcess/Apply" class="sep-card danger">
-                <div class="sep-icon red">
-                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Initiate Death Request</p>
-                    <p class="sep-card-desc">Start a death separation process for an employee.</p>
-                </div>
-            </a>
-        }
-
-        @if (User.IsInRole("Area Manager"))
-        {
-            <a asp-page="/AreaManager/ReviewTransfers" class="sep-card">
-                <div class="sep-icon blue">
-                    <svg viewBox="0 0 24 24"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Transfers</p>
-                    <p class="sep-card-desc">Approve branch-cleared transfer requests.</p>
-                </div>
-            </a>
-            <a asp-page="/Termination/ApprovalQueue" class="sep-card">
-                <div class="sep-icon red">
-                    <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Terminations</p>
-                    <p class="sep-card-desc">Review HR-initiated terminations.</p>
-                </div>
-            </a>
-            <a asp-page="/AreaManager/ReviewResignations" class="sep-card">
-                <div class="sep-icon orange">
-                    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Resignations</p>
-                    <p class="sep-card-desc">Provide operations approval for resignations.</p>
-                </div>
-            </a>
-            <a asp-page="/AreaManager/ReviewDeathRequests" class="sep-card">
-                <div class="sep-icon purple">
-                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Death Process</p>
-                    <p class="sep-card-desc">Review branch-approved death applications.</p>
-                </div>
-            </a>
-        }
-
-        @if (User.IsInRole("HR Manager"))
-        {
-            <a asp-page="/HRManager/ReviewTransfers" class="sep-card">
-                <div class="sep-icon blue">
-                    <svg viewBox="0 0 24 24"><path d="M8 3L4 7l4 4"/><path d="M4 7h16"/><path d="M16 21l4-4-4-4"/><path d="M20 17H4"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Transfers</p>
-                    <p class="sep-card-desc">Manage transfer eligibility and allocations.</p>
-                </div>
-            </a>
-            <a asp-page="/Termination/Requests" class="sep-card">
-                <div class="sep-icon red">
-                    <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="18" y1="8" x2="23" y2="13"/><line x1="23" y1="8" x2="18" y2="13"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Terminations</p>
-                    <p class="sep-card-desc">Initiate or finalize employee terminations.</p>
-                </div>
-            </a>
-            <a asp-page="/HRManager/ReviewResignations" class="sep-card">
-                <div class="sep-icon orange">
-                    <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Resignations</p>
-                    <p class="sep-card-desc">Final HR approval and offboarding.</p>
-                </div>
-            </a>
-            <a asp-page="/HRManager/ReviewDeathRequests" class="sep-card">
-                <div class="sep-icon purple">
-                    <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.84-8.84 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Death Process</p>
-                    <p class="sep-card-desc">Perform system closure and finalize payouts.</p>
-                </div>
-            </a>
-            <a asp-page="/DeathProcess/Apply" class="sep-card danger">
-                <div class="sep-icon red">
-                    <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                </div>
-                <div>
-                    <p class="sep-card-title">Initiate Death Request</p>
-                    <p class="sep-card-desc">Start a death separation process for an employee.</p>
-                </div>
-            </a>
-        }
-
+        <!-- Role Action Buttons -->
+        <div style="display:flex;gap:8px;align-items:center">
+            @if (Model.ActiveTab == "Transfers" && (User.IsInRole("HR Manager") || User.IsInRole("HR Officer")))
+            {
+                <a asp-page="/HRManager/InitiateTransfer" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm" style="display:inline-flex;align-items:center;gap:6px">
+                    <i class="bi bi-plus-lg"></i> Initiate Transfer
+                </a>
+            }
+            @if (Model.ActiveTab == "Terminations" && (User.IsInRole("HR Manager") || User.IsInRole("HR Officer")))
+            {
+                <a asp-page="/Termination/CreateRequest" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm" style="display:inline-flex;align-items:center;gap:6px">
+                    <i class="bi bi-plus-lg"></i> Create Termination
+                </a>
+            }
+            @if (Model.ActiveTab == "Death" && User.IsInRole("Branch Manager"))
+            {
+                <a asp-page="/DeathProcess/Apply" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm" style="display:inline-flex;align-items:center;gap:6px">
+                    <i class="bi bi-plus-lg"></i> Initiate Death Request
+                </a>
+            }
+        </div>
     </div>
+
+    @if (TempData["SuccessMessage"] is string sMsg)
+    {
+        <div class="k-alert k-alert-success" style="background:#ecfdf5;color:#065f46;padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid #10b981;display:flex;align-items:center;gap:8px">
+            <i class="bi bi-check-circle-fill"></i> @sMsg
+        </div>
+    }
+    @if (TempData["ErrorMessage"] is string eMsg)
+    {
+        <div class="k-alert k-alert-danger" style="background:#fef2f2;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid #fca5a5;display:flex;align-items:center;gap:8px">
+            <i class="bi bi-exclamation-triangle-fill"></i> @eMsg
+        </div>
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 1: TRANSFERS                                                        -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    @if (Model.ActiveTab == "Transfers")
+    {
+        <!-- Pending Section -->
+        <div class="sec-heading">
+            <span>Awaiting Your Review</span>
+            @if (Model.PendingTransfers.Any())
+            {
+                <span class="tab-badge">@Model.PendingTransfers.Count</span>
+            }
+        </div>
+
+        @if (Model.PendingTransfers.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Current Branch</th>
+                            <th>Requested Branch</th>
+                            <th>Submitted</th>
+                            <th>Overall Status</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.PendingTransfers)
+                        {
+                            var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            var reviewUrl = User.IsInRole("Department Head") ? $"/DepartmentHead/ReviewTransfer/{r.Id}" :
+                                            User.IsInRole("Branch Manager") ? $"/BranchManager/ReviewTransfer/{r.Id}" :
+                                            User.IsInRole("Area Manager") ? $"/AreaManager/ReviewTransfer/{r.Id}" :
+                                            $"/HRManager/ReviewTransfer/{r.Id}";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@r.EmployeeName</span>
+                                            <span class="sub">EPF: @r.EpfNumber · @r.CurrentDesignation</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@r.CurrentBranch</td>
+                                <td style="font-weight:600">@r.RequestedBranch</td>
+                                <td style="color:#7a8863">@r.RequestedDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="k-badge @(r.Status == TransferStatus.FullyApproved ? "k-badge-approved" : (r.Status.ToString().Contains("Rejected") ? "k-badge-rejected" : "k-badge-pending"))">@r.Status</span></td>
+                                <td style="text-align:right">
+                                    <a href="@reviewUrl" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                        Review &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-caught-up-card">
+                <div class="check-icon-circle">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:#151811;margin-bottom:4px">All Caught Up!</div>
+                <div style="font-size:12.5px;color:#7a8863">No pending transfer requests awaiting your review.</div>
+            </div>
+        }
+
+        <!-- Reviewed History Section -->
+        <div class="sec-heading">
+            <span>Recently Reviewed Transfers</span>
+            <span style="background:#f3f4f6;color:#7a8863;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800">@Model.ReviewedTransfers.Count</span>
+        </div>
+
+        @if (Model.ReviewedTransfers.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Requested Branch</th>
+                            <th>Overall Status</th>
+                            <th>Your Decision</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.ReviewedTransfers)
+                        {
+                            var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@r.EmployeeName</span>
+                                            <span class="sub">EPF: @r.EpfNumber · @r.CurrentDesignation</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-weight:600">@r.RequestedBranch</td>
+                                <td><span class="k-badge @r.StatusBadgeClass">@r.StatusDisplay</span></td>
+                                <td>
+                                    @if (User.IsInRole("Department Head"))
+                                    {
+                                        <span class="k-badge @(r.DeptHeadReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">
+                                            @(r.DeptHeadReview == "Approved" ? "✓ Approved" : "✕ Rejected")
+                                        </span>
+                                    }
+                                    else if (User.IsInRole("Branch Manager"))
+                                    {
+                                        var isApp = r.CurrentBMReview == "Approved" || r.TargetBMReview == "Approved";
+                                        <span class="k-badge @(isApp ? "k-badge-approved" : "k-badge-rejected")">
+                                            @(isApp ? "✓ Approved" : (r.CurrentBMReview ?? r.TargetBMReview ?? "Reviewed"))
+                                        </span>
+                                    }
+                                    else if (User.IsInRole("Area Manager"))
+                                    {
+                                        <span class="k-badge @(r.AreaManagerReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">
+                                            @(r.AreaManagerReview == "Approved" ? "✓ Approved" : "✕ Rejected")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        if (r.Status == TransferStatus.ManagerReviewed || r.HRManagerReview == "Reviewed")
+                                        {
+                                            <span class="k-badge k-badge-approved">
+                                                ✓ Reviewed
+                                            </span>
+                                        }
+                                        else if (r.HRManagerReview == "Approved" || r.Status == TransferStatus.FullyApproved)
+                                        {
+                                            <span class="k-badge k-badge-approved">
+                                                ✓ Finalized
+                                            </span>
+                                        }
+                                        else if (r.HRManagerReview == "Rejected" || r.Status == TransferStatus.HRFinalRejected)
+                                        {
+                                            <span class="k-badge k-badge-rejected">
+                                                ✕ Rejected
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="k-badge @r.StatusBadgeClass">
+                                                @r.StatusDisplay
+                                            </span>
+                                        }
+                                    }
+                                </td>
+                                <td style="text-align:right">
+                                    <a asp-page="/Transfer/Details" asp-route-id="@r.Id" class="btn-action">
+                                        View Details &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="table-card" style="padding:24px;text-align:center;color:#7a8863;font-size:13px">
+                No reviewed transfer records found.
+            </div>
+        }
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 2: RESIGNATIONS                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    @if (Model.ActiveTab == "Resignations")
+    {
+        <!-- Pending Section -->
+        <div class="sec-heading">
+            <span>Awaiting Your Review</span>
+            @if (Model.PendingResignations.Any())
+            {
+                <span class="tab-badge">@Model.PendingResignations.Count</span>
+            }
+        </div>
+
+        @if (Model.PendingResignations.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Designation</th>
+                            <th>Last Working Day</th>
+                            <th>Notice Period</th>
+                            <th>Branch Clearances</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.PendingResignations)
+                        {
+                            var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            var reviewUrl = User.IsInRole("Department Head") ? $"/DepartmentHead/ReviewResignation/{r.Id}" :
+                                            User.IsInRole("Branch Manager") ? $"/BranchManager/ReviewResignation/{r.Id}" :
+                                            User.IsInRole("Area Manager") ? $"/AreaManager/ReviewResignation/{r.Id}" :
+                                            $"/HRManager/ReviewResignation/{r.Id}";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@r.EmployeeName</span>
+                                            <span class="sub">EPF: @r.EpfNumber · @r.Branch</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@r.Designation</td>
+                                <td style="font-weight:600;color:#10823c">@r.EffectiveDate.ToString("dd MMM yyyy")</td>
+                                <td style="color:#7a8863">@r.NoticePeriodDays days</td>
+                                <td>
+                                    <span class="k-badge @(r.AreAllDeptHeadsApproved ? "k-badge-approved" : "k-badge-pending")">
+                                        <i class="bi bi-people"></i> @r.DeptHeadsApprovedCount/@r.TotalDeptHeadsCount Dept Heads
+                                    </span>
+                                </td>
+                                <td style="text-align:right">
+                                    <a href="@reviewUrl" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                        Review &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-caught-up-card">
+                <div class="check-icon-circle">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:#151811;margin-bottom:4px">All Caught Up!</div>
+                <div style="font-size:12.5px;color:#7a8863">No pending resignation requests awaiting your review.</div>
+            </div>
+        }
+
+        <!-- Reviewed History Section -->
+        <div class="sec-heading">
+            <span>Recently Reviewed Resignations</span>
+            <span style="background:#f3f4f6;color:#7a8863;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800">@Model.ReviewedResignations.Count</span>
+        </div>
+
+        @if (Model.ReviewedResignations.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Designation</th>
+                            <th>Last Working Day</th>
+                            <th>Overall Status</th>
+                            <th>Your Decision</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model.ReviewedResignations)
+                        {
+                            var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@r.EmployeeName</span>
+                                            <span class="sub">EPF: @r.EpfNumber · @r.Branch</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@r.Designation</td>
+                                <td style="color:#10823c;font-weight:600">@r.EffectiveDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="k-badge @r.StatusBadgeClass">@r.StatusDisplay</span></td>
+                                <td>
+                                    @if (User.IsInRole("Department Head"))
+                                    {
+                                        var deptReview = r.DepartmentReviews.FirstOrDefault(dr => string.Equals(dr.DepartmentName?.Trim(), Model.UserDepartment?.Trim(), StringComparison.OrdinalIgnoreCase));
+                                        var isApp = deptReview?.Status == "Approved";
+                                        <span class="k-badge @(isApp ? "k-badge-approved" : "k-badge-rejected")">
+                                            @(isApp ? "✓ Approved" : (deptReview?.Status ?? "Reviewed"))
+                                        </span>
+                                    }
+                                    else if (User.IsInRole("Branch Manager"))
+                                    {
+                                        <span class="k-badge @(r.BMReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">
+                                            @(r.BMReview == "Approved" ? "✓ Approved" : "✕ Rejected")
+                                        </span>
+                                    }
+                                    else if (User.IsInRole("Area Manager"))
+                                    {
+                                        <span class="k-badge @(r.AMReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">
+                                            @(r.AMReview == "Approved" ? "✓ Approved" : "✕ Rejected")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        if (r.Status == ResignationStatusEnum.ManagerReviewed || r.HRReview == "Reviewed")
+                                        {
+                                            <span class="k-badge k-badge-approved">
+                                                ✓ Reviewed
+                                            </span>
+                                        }
+                                        else if (r.HRReview == "Approved" || r.Status == ResignationStatusEnum.HRApproved || r.Status == ResignationStatusEnum.Completed)
+                                        {
+                                            <span class="k-badge k-badge-approved">
+                                                ✓ Finalized
+                                            </span>
+                                        }
+                                        else if (r.HRReview == "Rejected" || r.Status == ResignationStatusEnum.HRRejected)
+                                        {
+                                            <span class="k-badge k-badge-rejected">
+                                                ✕ Rejected
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="k-badge @r.StatusBadgeClass">
+                                                @r.StatusDisplay
+                                            </span>
+                                        }
+                                    }
+                                </td>
+                                <td style="text-align:right">
+                                    <a asp-page="/Resignation/Details" asp-route-id="@r.Id" class="btn-action">
+                                        View Details &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="table-card" style="padding:24px;text-align:center;color:#7a8863;font-size:13px">
+                No reviewed resignation records found.
+            </div>
+        }
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 3: TERMINATIONS                                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    @if (Model.ActiveTab == "Terminations")
+    {
+        <!-- Pending Section -->
+        <div class="sec-heading">
+            <span>Awaiting Your Review</span>
+            @if (Model.PendingTerminations.Any())
+            {
+                <span class="tab-badge">@Model.PendingTerminations.Count</span>
+            }
+        </div>
+
+        @if (Model.PendingTerminations.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Designation</th>
+                            <th>Reason</th>
+                            <th>Effective Date</th>
+                            <th>Status</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.PendingTerminations)
+                        {
+                            var nameParts = (t.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle" style="background:#fee2e2;color:#b91c1c">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@t.EmployeeName</span>
+                                            <span class="sub">EPF: @t.EpfNumber · @t.Branch</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@t.Designation</td>
+                                <td style="color:#374151;font-size:13px">@t.ReasonForTermination</td>
+                                <td style="font-weight:600;color:#b91c1c">@t.EffectiveTerminationDate.ToString("dd MMM yyyy")</td>
+                                @{
+                                    var reviewUrl = User.IsInRole("Department Head") ? $"/DepartmentHead/ReviewTermination/{t.Id}" :
+                                                    User.IsInRole("Branch Manager") ? $"/BranchManager/ReviewTermination/{t.Id}" :
+                                                    User.IsInRole("Area Manager") ? $"/AreaManager/ReviewTermination/{t.Id}" :
+                                                    $"/Termination/ReviewTermination/{t.Id}";
+                                }
+                                <td style="text-align:right">
+                                    <a href="@reviewUrl" class="btn-kanrich btn-kanrich-danger btn-kanrich-sm">
+                                        Review &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-caught-up-card">
+                <div class="check-icon-circle">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:#151811;margin-bottom:4px">All Caught Up!</div>
+                <div style="font-size:12.5px;color:#7a8863">No pending termination requests awaiting your review.</div>
+            </div>
+        }
+
+        <!-- Reviewed Section -->
+        <div class="sec-heading">
+            <span>Recently Reviewed Terminations</span>
+            <span style="background:#f3f4f6;color:#7a8863;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800">@Model.ReviewedTerminations.Count</span>
+        </div>
+
+        @if (Model.ReviewedTerminations.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Designation</th>
+                            <th>Effective Date</th>
+                            <th>Status</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model.ReviewedTerminations)
+                        {
+                            var nameParts = (t.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle" style="background:#fee2e2;color:#b91c1c">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@t.EmployeeName</span>
+                                            <span class="sub">EPF: @t.EpfNumber · @t.Branch</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@t.Designation</td>
+                                <td style="color:#7a8863">@t.EffectiveTerminationDate.ToString("dd MMM yyyy")</td>
+                                <td><span class="k-badge @t.StatusBadgeClass">@t.StatusDisplay</span></td>
+                                <td style="text-align:right">
+                                    <a asp-page="/Termination/Details" asp-route-id="@t.Id" class="btn-action">
+                                        View Details &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="table-card" style="padding:24px;text-align:center;color:#7a8863;font-size:13px">
+                No reviewed termination records found.
+            </div>
+        }
+    }
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 4: DEATH PROCESS                                                    -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    @if (Model.ActiveTab == "Death")
+    {
+        <!-- Pending Section -->
+        <div class="sec-heading">
+            <span>Awaiting Your Review</span>
+            @if (Model.PendingDeathRequests.Any())
+            {
+                <span class="tab-badge">@Model.PendingDeathRequests.Count</span>
+            }
+        </div>
+
+        @if (Model.PendingDeathRequests.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Date of Death</th>
+                            <th>Reported Nominee</th>
+                            <th>Status</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.PendingDeathRequests)
+                        {
+                            var nameParts = (d.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            var reviewUrl = User.IsInRole("Branch Manager") ? $"/BranchManager/ReviewDeath/{d.Id}" :
+                                            User.IsInRole("Area Manager") ? $"/AreaManager/ReviewDeath/{d.Id}" :
+                                            $"/HRManager/ReviewDeath/{d.Id}";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle" style="background:#f3e8ff;color:#9333ea">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@d.EmployeeName</span>
+                                            <span class="sub">EPF: @d.EpfNumber · @d.Branch</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@d.DateOfDeath.ToString("dd MMM yyyy")</td>
+                                <td style="color:#7a8863">@d.NomineeName (@d.NomineeRelation)</td>
+                                <td><span class="k-badge @d.StatusBadgeClass">@d.StatusDisplay</span></td>
+                                <td style="text-align:right">
+                                    <a href="@reviewUrl" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                        @(User.IsInRole("HR Manager") || User.IsInRole("HR Officer") ? "Finalize →" : "Review →")
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-caught-up-card">
+                <div class="check-icon-circle">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <div style="font-size:15px;font-weight:700;color:#151811;margin-bottom:4px">All Caught Up!</div>
+                <div style="font-size:12.5px;color:#7a8863">No pending death process applications awaiting your review.</div>
+            </div>
+        }
+
+        <!-- Reviewed Death Records Section -->
+        <div class="sec-heading">
+            <span>Recently Reviewed / Completed Death Records</span>
+            <span style="background:#f3f4f6;color:#7a8863;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800">@Model.ReviewedDeathRequests.Count</span>
+        </div>
+
+        @if (Model.ReviewedDeathRequests.Any())
+        {
+            <div class="table-card">
+                <table class="emp-table">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th>Date of Death</th>
+                            <th>Nominee</th>
+                            <th>Status</th>
+                            <th style="text-align:right"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model.ReviewedDeathRequests)
+                        {
+                            var nameParts = (d.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            var viewUrl = User.IsInRole("Area Manager") ? $"/AreaManager/ReviewDeath/{d.Id}" :
+                                          User.IsInRole("Branch Manager") ? $"/BranchManager/ReviewDeath/{d.Id}" :
+                                          $"/HRManager/ReviewDeath/{d.Id}";
+                            <tr>
+                                <td>
+                                    <div class="employee-cell">
+                                        <div class="avatar-circle" style="background:#f3e8ff;color:#9333ea">@initials</div>
+                                        <div class="emp-info">
+                                            <span class="name">@d.EmployeeName</span>
+                                            <span class="sub">EPF: @d.EpfNumber · @d.Branch</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="color:#7a8863">@d.DateOfDeath.ToString("dd MMM yyyy")</td>
+                                <td style="color:#7a8863">@d.NomineeName (@d.NomineeRelation)</td>
+                                <td><span class="k-badge @d.StatusBadgeClass">@d.StatusDisplay</span></td>
+                                <td style="text-align:right">
+                                    <a href="@viewUrl" class="btn-action">
+                                        View Details &rarr;
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="table-card" style="padding:24px;text-align:center;color:#7a8863;font-size:13px">
+                No reviewed death records found.
+            </div>
+        }
+    }
 </div>

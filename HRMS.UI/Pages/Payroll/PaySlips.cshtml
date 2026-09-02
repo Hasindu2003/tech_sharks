@@ -1,0 +1,488 @@
+@page
+@model HRMS.UI.Pages.Payroll.PayslipsModel
+@{
+    ViewData["Title"] = "Employee Payslips";
+    ViewData["PageTitle"] = "Payroll / Payslips";
+    ViewData["ActiveNav"] = "Payroll";
+}
+
+@section Styles {
+    <style>
+        .payroll-shell {
+            padding: 26px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+        .controls-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .btn-action-small {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+        }
+        /* Modal Overlay Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        .payslip-detail-section {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            padding: 14px;
+            margin-bottom: 12px;
+        }
+        .payslip-detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 6px;
+        }
+        .payslip-detail-row:last-child {
+            margin-bottom: 0;
+        }
+        .payslip-detail-label {
+            color: var(--text-secondary);
+        }
+        .payslip-detail-val {
+            font-weight: 600;
+        }
+        @@media print {
+            body * {
+                visibility: hidden;
+            }
+            #printArea, #printArea * {
+                visibility: visible;
+            }
+            #printArea {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .modal-overlay {
+                background: none;
+                position: static;
+                display: block;
+            }
+            .btn-print-hide {
+                display: none !important;
+            }
+        }
+    </style>
+}
+
+<div class="payroll-shell">
+
+    @if (!Model.IsEmployee)
+    {
+        <!-- Sub-navigation Tabs with Branch Switcher -->
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <a href="/Payroll/Index?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">Dashboard</a>
+                <a href="/Payroll/AttendanceReview?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">Attendance Review</a>
+                <a href="/Payroll/Bonuses?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">Allowances</a>
+                <a href="/Payroll/EpfEtf?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">EPF & ETF</a>
+                <a href="/Payroll/Payslips?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-primary" style="padding: 6px 16px; font-size: 0.85rem;">Payslips</a>
+            </div>
+
+            @if (Model.ManagedBranchesList.Count > 1)
+            {
+                <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                    <label style="font-size: 12px; font-weight: 700; color: #475569; margin: 0; display: flex; align-items: center; gap: 4px;">
+                        <i class="bi bi-geo-alt-fill" style="color: #10823c;"></i> Branch:
+                    </label>
+                    <select onchange="location.href='?branchId=' + this.value" style="font-size: 13px; font-weight: 700; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #0f172a; cursor: pointer;">
+                        @foreach (var b in Model.ManagedBranchesList)
+                        {
+                            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+            else if (Model.CurrentBranch != null)
+            {
+                <div style="font-size: 12px; font-weight: 700; color: #10823c; background: #ebf5ee; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-geo-alt-fill"></i> Branch: @Model.CurrentBranch.Name
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Header block -->
+    <div class="page-header">
+        <h2 style="margin: 0; display: inline-flex; align-items: center; gap: 10px;">
+            Employee Payslip Records
+            @if (!Model.IsEmployee && Model.CurrentBranch != null)
+            {
+                <span style="font-size: 1.1rem; color: #64748b; font-weight: 600;">— @Model.CurrentBranch.Name</span>
+            }
+        </h2>
+        <p class="page-subtitle" style="margin-top: 4px;">
+            @(Model.IsEmployee ? "View your personal payslips and salary breakdown" : $"View generated payslips and calculations for {Model.CurrentBranch?.Name ?? "Selected Branch"}")
+        </p>
+    </div>
+
+    <!-- Controls Row -->
+    <div class="controls-row">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <select id="runFilter" onchange="filterPayslips()" class="k-form-control" style="width: auto; padding: 6px 12px; font-size: 0.8rem;">
+                <option value="">All Runs</option>
+                @foreach (var run in Model.PayrollRuns)
+                {
+                    <option value="@run.Id">@run.MonthName</option>
+                }
+            </select>
+            <input id="payslipSearch" oninput="filterPayslips()" class="k-form-control" style="width: 220px; padding: 6px 12px; font-size: 0.8rem;" placeholder="Search employee..." />
+        </div>
+        <div style="font-size: 0.8rem; color: var(--text-secondary);">
+            Total Payslips: <strong style="color: var(--text-primary);">@Model.Payslips.Count</strong>
+        </div>
+    </div>
+
+    <!-- Payslips List Table -->
+    <div class="k-card" style="padding: 0; overflow: hidden;">
+        @if (!Model.Payslips.Any())
+        {
+            <div style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                <i class="bi bi-receipt" style="font-size: 3rem; color: var(--border-color); display: block; margin-bottom: 12px;"></i>
+                <p style="font-weight: 600; margin: 0 0 4px 0;">No Payslips Available</p>
+                <p style="font-size: 0.8rem; margin: 0;">No payslips have been processed or generated yet.</p>
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="k-table" id="payslipTable" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; padding-left: 20px; width: 24%;">Employee</th>
+                            <th style="text-align: left; width: 14%;">Month</th>
+                            <th style="text-align: left; width: 14%;">Basic Salary</th>
+                            <th style="text-align: left; width: 14%;">Gross Pay</th>
+                            <th style="text-align: left; width: 14%; color: var(--accent-red);">Deductions</th>
+                            <th style="text-align: left; width: 14%; color: var(--primary);">Net Pay</th>
+                            <th style="text-align: right; padding-right: 20px; width: 6%;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payslipBody">
+                        @foreach (var ps in Model.Payslips)
+                        {
+                            <tr class="payslip-row" data-name="@(ps.Employee?.NameWithInitials.ToLower() ?? "") @(ps.Employee?.FullName.ToLower() ?? "")" data-run="@ps.PayrollRunId">
+                                <td style="text-align: left; padding-left: 20px;">
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0;">
+                                            @(ps.Employee?.NameWithInitials.FirstOrDefault() ?? 'E')
+                                        </div>
+                                        <div>
+                                            <p style="font-weight: 700; margin: 0; font-size: 0.84rem; color: #0f172a;" title="@ps.Employee?.FullName">@ps.Employee?.NameWithInitials</p>
+                                            <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;">@(ps.Employee?.Designation?.Title ?? "—")</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="text-align: left; color: var(--text-secondary); font-size: 0.84rem; white-space: nowrap;">
+                                    @ps.PayrollRun?.MonthName
+                                </td>
+                                <td style="text-align: left; font-weight: 600; white-space: nowrap; font-size: 0.84rem;">
+                                    Rs @ps.BasicSalary.ToString("N2")
+                                </td>
+                                <td style="text-align: left; font-weight: 600; white-space: nowrap; font-size: 0.84rem;">
+                                    Rs @ps.GrossPay.ToString("N2")
+                                </td>
+                                <td style="text-align: left; font-weight: 600; color: var(--accent-red); white-space: nowrap; font-size: 0.84rem;">
+                                    Rs @ps.TotalDeductions.ToString("N2")
+                                </td>
+                                <td style="text-align: left; font-weight: 700; color: var(--primary); white-space: nowrap; font-size: 0.86rem;">
+                                    Rs @ps.NetPay.ToString("N2")
+                                </td>
+                                <td style="text-align: right; padding-right: 20px; white-space: nowrap;">
+                                    <div style="display: inline-flex; gap: 6px; justify-content: flex-end;">
+                                        <button onclick="viewPayslip(@ps.Id)" class="btn-kanrich btn-kanrich-primary btn-action-small">
+                                            View
+                                        </button>
+                                        <a href="/Payroll/PaySlipPdf/@ps.Id" target="_blank" class="btn-kanrich btn-kanrich-outline btn-action-small">
+                                            <i class="bi bi-file-earmark-pdf"></i> PDF
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>
+
+<!-- Payslip Detail Modal -->
+<div class="modal-overlay" id="payslipModal" onclick="closePayslipModal(event)">
+    <div class="modal-card" id="printArea" onclick="event.stopPropagation()">
+        
+        <!-- Modal Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-body);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="background: var(--primary); border-radius: 6px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 0.8rem;">K</div>
+                <div>
+                    <p style="font-weight: 800; margin: 0; font-size: 0.85rem; line-height: 1.1;">Kanrich Finance</p>
+                    <p style="font-size: 0.7rem; color: var(--text-secondary); margin: 0;">Employee Payslip</p>
+                </div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+                <a id="psModalPdfLink" href="#" target="_blank" class="btn-kanrich btn-kanrich-outline btn-action-small btn-print-hide" style="display:inline-flex; align-items:center; gap:4px; text-decoration:none;">
+                    <i class="bi bi-file-earmark-pdf"></i> PDF
+                </a>
+                <button onclick="window.print()" class="btn-kanrich btn-kanrich-outline btn-action-small btn-print-hide">
+                    <i class="bi bi-printer"></i> Print
+                </button>
+                <button onclick="closePayslipModal()" class="btn-kanrich btn-kanrich-outline btn-action-small btn-print-hide" style="padding: 4px 6px;">
+                    <i class="bi bi-x"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div style="padding: 20px;">
+            
+            <!-- Employee Info Box -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1rem;" id="psAvatar">A</div>
+                    <div>
+                        <p style="font-weight: 800; margin: 0; font-size: 0.88rem;" id="psName">—</p>
+                        <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;" id="psRole">—</p>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <p style="font-size: 0.68rem; color: var(--text-secondary); margin: 0;">Period</p>
+                    <p style="font-weight: 700; margin: 2px 0 0 0; font-size: 0.85rem;" id="psMonth">—</p>
+                </div>
+            </div>
+
+            <!-- Basic Earnings -->
+            <div style="margin-bottom: 16px;">
+                <p style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Basic Earnings</p>
+                <div class="payslip-detail-section">
+                    <div class="payslip-detail-row"><span class="payslip-detail-label">Basic Salary</span><span class="payslip-detail-val" id="psBasic">—</span></div>
+                </div>
+            </div>
+
+            <!-- Bonuses & Additions -->
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <p style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin: 0; letter-spacing: 0.5px;">Bonuses &amp; Additions</p>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-secondary);" id="psBonusTotalBadge">Rs 0.00</span>
+                </div>
+                <div class="payslip-detail-section" id="psBonusesList">
+                    <!-- Itemized bonuses and welfare additions list -->
+                </div>
+                <div class="payslip-detail-section" style="margin-top: 6px;">
+                    <div class="payslip-detail-row" style="font-weight: 700;">
+                        <span class="payslip-detail-label" style="color: var(--text-primary);">Gross Pay (Basic + Additions)</span>
+                        <span class="payslip-detail-val" style="color: var(--primary); font-size: 0.95rem;" id="psGross">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deductions -->
+            <div style="margin-bottom: 16px;">
+                <p style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Deductions</p>
+                <div class="payslip-detail-section" id="psDeductionsList">
+                    <div class="payslip-detail-row"><span class="payslip-detail-label">EPF (Employee 8%)</span><span class="payslip-detail-val" style="color: var(--accent-red);" id="psEpfEmp">—</span></div>
+                    <div class="payslip-detail-row" id="psTaxRow"><span class="payslip-detail-label">Income Tax (APIT)</span><span class="payslip-detail-val" style="color: var(--accent-red);" id="psTax">—</span></div>
+                    <div id="psWelfareDedItems"></div>
+                    <div style="height: 1px; background: var(--border-color); margin: 6px 0;"></div>
+                    <div class="payslip-detail-row" style="font-weight: 700;"><span class="payslip-detail-label" style="color: var(--text-primary);">Total Deductions</span><span class="payslip-detail-val" style="color: var(--accent-red);" id="psTotalDed">—</span></div>
+                </div>
+            </div>
+
+            <!-- Contributions -->
+            <div style="margin-bottom: 20px;">
+                <p style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px;">Employer Contributions</p>
+                <div class="payslip-detail-section">
+                    <div class="payslip-detail-row"><span class="payslip-detail-label">EPF (Employer 12%)</span><span class="payslip-detail-val" style="color: var(--accent-blue);" id="psEpfEr">—</span></div>
+                    <div class="payslip-detail-row"><span class="payslip-detail-label">ETF (Employer 3%)</span><span class="payslip-detail-val" style="color: var(--accent-orange);" id="psEtf">—</span></div>
+                </div>
+            </div>
+
+            <!-- Net Pay -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--primary); color: white; border-radius: var(--border-radius-sm);">
+                <span style="font-weight: 800; font-size: 0.95rem;">Net Pay</span>
+                <span style="font-size: 1.5rem; font-weight: 900;" id="psNetPay">—</span>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const payslips = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Payslips.Select(p => {
+            var itemized = Model.AllBonuses
+                .Where(b => b.EmployeeId == p.EmployeeId 
+                         && p.PayrollRun != null 
+                         && b.Month == p.PayrollRun.Month 
+                         && b.Year == p.PayrollRun.Year)
+                .ToList();
+
+            var welfareAdditions = p.PayrollRun != null 
+                ? HRMS.Application.Services.WelfarePayrollHelper.GetWelfareAdditions(Model.AllWelfareRequests, p.EmployeeId, p.PayrollRun.Month, p.PayrollRun.Year) 
+                : new List<HRMS.Application.Services.WelfarePayrollItem>();
+
+            var welfareDeductions = p.PayrollRun != null 
+                ? HRMS.Application.Services.WelfarePayrollHelper.GetWelfareDeductions(Model.AllWelfareRequests, p.EmployeeId, p.PayrollRun.Month, p.PayrollRun.Year) 
+                : new List<HRMS.Application.Services.WelfarePayrollItem>();
+
+            var bonusSum = itemized.Any() ? itemized.Sum(b => b.Amount) : p.Bonuses;
+            var wAddSum = welfareAdditions.Sum(w => w.Amount);
+            var wDedSum = welfareDeductions.Sum(w => w.Amount);
+            var gross = p.BasicSalary + bonusSum + wAddSum;
+            var tax = p.TaxDeduction > 0 ? p.TaxDeduction : HRMS.Application.Services.TaxCalculationService.CalculateMonthlyApitTax(gross);
+            var totalDed = (p.EpfEmployee > 0 ? p.EpfEmployee : Math.Round(p.BasicSalary * 0.08m, 2)) + tax + wDedSum;
+            var net = gross - totalDed;
+
+            return new {
+                id              = p.Id,
+                name            = p.Employee?.NameWithInitials ?? "—",
+                role            = p.Employee?.Designation?.Title ?? "—",
+                month           = p.PayrollRun?.MonthName ?? "—",
+                basicSalary     = p.BasicSalary,
+                bonuses         = bonusSum + wAddSum,
+                bonusList       = itemized.Select(b => new {
+                                    type   = b.BonusType,
+                                    amount = b.Amount,
+                                    reason = b.Reason
+                                  }).ToList(),
+                welfareAdditions = welfareAdditions.Select(w => new {
+                                    type   = w.WelfareTypeName,
+                                    amount = w.Amount,
+                                    desc   = w.Description
+                                  }).ToList(),
+                welfareDeductions = welfareDeductions.Select(w => new {
+                                    type   = w.WelfareTypeName,
+                                    amount = w.Amount,
+                                    desc   = w.Description
+                                  }).ToList(),
+                grossPay        = gross,
+                epfEmployee     = p.EpfEmployee > 0 ? p.EpfEmployee : Math.Round(p.BasicSalary * 0.08m, 2),
+                epfEmployer     = p.EpfEmployer > 0 ? p.EpfEmployer : Math.Round(p.BasicSalary * 0.12m, 2),
+                etf             = p.Etf > 0 ? p.Etf : Math.Round(p.BasicSalary * 0.03m, 2),
+                taxDeduction    = tax,
+                totalDeductions = totalDed,
+                netPay          = net
+            };
+        })));
+
+        function fmt(n) { return 'Rs ' + parseFloat(n || 0).toLocaleString('en-LK', { minimumFractionDigits: 2 }); }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function viewPayslip(id) {
+            const ps = payslips.find(p => p.id === id);
+            if (!ps) return;
+
+            document.getElementById('psModalPdfLink').href     = '/Payroll/PaySlipPdf/' + ps.id;
+            document.getElementById('psAvatar').textContent    = ps.name[0];
+            document.getElementById('psName').textContent      = ps.name;
+            document.getElementById('psRole').textContent      = ps.role;
+            document.getElementById('psMonth').textContent     = ps.month;
+            document.getElementById('psBasic').textContent     = fmt(ps.basicSalary);
+            document.getElementById('psGross').textContent     = fmt(ps.grossPay);
+            document.getElementById('psBonusTotalBadge').textContent = fmt(ps.bonuses);
+            document.getElementById('psEpfEmp').textContent    = fmt(ps.epfEmployee);
+            document.getElementById('psTax').textContent       = ps.taxDeduction > 0 ? fmt(ps.taxDeduction) : 'Rs 0.00 (Tax-Free)';
+            document.getElementById('psTotalDed').textContent  = fmt(ps.totalDeductions);
+            document.getElementById('psEpfEr').textContent     = fmt(ps.epfEmployer);
+            document.getElementById('psEtf').textContent       = fmt(ps.etf);
+            document.getElementById('psNetPay').textContent    = fmt(ps.netPay);
+
+            const bonusContainer = document.getElementById('psBonusesList');
+            bonusContainer.innerHTML = '';
+
+            let hasAdditions = false;
+
+            if (ps.bonusList && ps.bonusList.length > 0) {
+                ps.bonusList.forEach(b => {
+                    hasAdditions = true;
+                    const row = document.createElement('div');
+                    row.className = 'payslip-detail-row';
+                    const labelText = b.reason ? `${b.type} — ${b.reason}` : b.type;
+                    row.innerHTML = `<span class="payslip-detail-label">${escapeHtml(labelText)}</span><span class="payslip-detail-val" style="color: #7e22ce; font-weight: 700;">${fmt(b.amount)}</span>`;
+                    bonusContainer.appendChild(row);
+                });
+            }
+
+            if (ps.welfareAdditions && ps.welfareAdditions.length > 0) {
+                ps.welfareAdditions.forEach(w => {
+                    hasAdditions = true;
+                    const row = document.createElement('div');
+                    row.className = 'payslip-detail-row';
+                    row.innerHTML = `<span class="payslip-detail-label"><i class="bi bi-gift-fill" style="color:#16a34a;margin-right:4px;"></i> ${escapeHtml(w.desc || w.type)}</span><span class="payslip-detail-val" style="color: #16a34a; font-weight: 700;">+ ${fmt(w.amount)}</span>`;
+                    bonusContainer.appendChild(row);
+                });
+            }
+
+            if (!hasAdditions) {
+                const row = document.createElement('div');
+                row.style.cssText = 'font-size: 11.5px; color: #94a3b8; padding: 3px 0;';
+                row.textContent = 'No additions recorded for this period';
+                bonusContainer.appendChild(row);
+            }
+
+            const welfareDedContainer = document.getElementById('psWelfareDedItems');
+            welfareDedContainer.innerHTML = '';
+
+            if (ps.welfareDeductions && ps.welfareDeductions.length > 0) {
+                ps.welfareDeductions.forEach(w => {
+                    const row = document.createElement('div');
+                    row.className = 'payslip-detail-row';
+                    row.innerHTML = `<span class="payslip-detail-label"><i class="bi bi-wallet2" style="color:#dc2626;margin-right:4px;"></i> ${escapeHtml(w.desc || w.type)}</span><span class="payslip-detail-val" style="color: #dc2626; font-weight: 700;">- ${fmt(w.amount)}</span>`;
+                    welfareDedContainer.appendChild(row);
+                });
+            }
+
+            document.getElementById('payslipModal').classList.add('open');
+        }
+
+        function closePayslipModal(e) {
+            if (!e || e.target === document.getElementById('payslipModal'))
+                document.getElementById('payslipModal').classList.remove('open');
+        }
+
+        function filterPayslips() {
+            const search = document.getElementById('payslipSearch').value.toLowerCase();
+            const run    = document.getElementById('runFilter').value;
+            document.querySelectorAll('.payslip-row').forEach(row => {
+                const matchName = !search || row.dataset.name.includes(search);
+                const matchRun  = !run    || row.dataset.run === run;
+                row.style.display = matchName && matchRun ? '' : 'none';
+            });
+        }
+    </script>
+}

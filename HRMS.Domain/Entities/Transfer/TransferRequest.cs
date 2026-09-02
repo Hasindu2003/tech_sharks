@@ -113,6 +113,10 @@ namespace HRMS.Domain.Entities.Transfer
 
         // Stage 5: HR Finalization
         FullyApproved = 10,
-        HRFinalRejected = 11
+        HRFinalRejected = 11,
+
+        // Direct Managerial Notification Workflow (Dept Head, BM, AM)
+        PendingHRReview = 12,
+        ManagerReviewed = 13
     }
 }

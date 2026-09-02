@@ -45,11 +45,15 @@
 else
 {
     var req = Model.TransferRequest;
-    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
 
-    <a asp-page="/Transfer/MyRequests" class="back-link">
+    var isDutyAccount = User.IsInRole("Department Head") || User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager") || User.IsInRole("HR Officer") || User.IsInRole("Admin");
+    var backUrl = isDutyAccount ? "/Separation/Dashboard?ActiveTab=Transfers" : "/Transfer/Separation?ActiveTab=Transfers";
+
+    <a href="@backUrl" class="back-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to My Requests
+        Back
     </a>
 
     <div class="avatar-header">
@@ -76,7 +80,7 @@ else
                         @switch (req.Status)
                         {
                             case TransferStatus.Pending:
-                                <span class="k-badge k-badge-pending">Pending HR Review</span>
+                                <span class="k-badge k-badge-pending">Awaiting Department Head</span>
                                 break;
                             case TransferStatus.DeptHeadApproved:
                                 <span class="k-badge k-badge-info">Dept Head Approved — Awaiting BMs</span>
@@ -109,11 +113,27 @@ else
                             case TransferStatus.FullyApproved:
                                 <span class="k-badge k-badge-approved">Transfer Fully Approved</span>
                                 break;
+                            case TransferStatus.PendingHRReview:
+                                <span class="k-badge k-badge-pending">Pending HR Review (Manager Notice)</span>
+                                break;
+                            case TransferStatus.ManagerReviewed:
+                                <span class="k-badge k-badge-info">Seen by HR Manager (Notice)</span>
+                                break;
                         }
                     </dd>
                 </div>
                 <div class="dl"><dt>Reason</dt><dd><div class="reason-box" style="margin-top:6px">@req.Reason</div></dd></div>
             </div>
+
+            @if (req.IsManagerialNotification)
+            {
+                <div style="background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13.5px;display:flex;align-items:flex-start;gap:10px">
+                    <i class="bi bi-info-circle-fill" style="font-size:1.1rem;margin-top:1px;flex-shrink:0"></i>
+                    <div>
+                        <strong>Administrative Notice:</strong> This transfer request is an informational notice submitted by a managerial employee. Marking as reviewed confirms it has been seen and acknowledged by the HR Manager. Further transfer proceedings and official approvals take place outside of this system.
+                    </div>
+                </div>
+            }
 
             @if (req.HasDocument)
             {
@@ -131,83 +151,112 @@ else
             <div class="detail-card">
                 <div class="dlt">Approval Timeline</div>
 
-                @{
-                    string StepState(string? review) =>
-                        review == "Approved" ? "done" : review == "Rejected" ? "rejected" : "pending";
+                @if (req.IsManagerialNotification)
+                {
+                    <div class="tstep">
+                        <div class="tstep-num done">1</div>
+                        <div>
+                            <div class="tstep-lbl">Manager Submission (Notice)</div>
+                            <div class="tstep-meta">@req.RequestedDate.ToString("MMM dd, yyyy") — by @req.RequestedByRole</div>
+                        </div>
+                    </div>
+
+                    <div class="tstep">
+                        <div class="tstep-num @(req.Status == TransferStatus.ManagerReviewed ? "done" : "pending")">2</div>
+                        <div>
+                            <div class="tstep-lbl">Seen by HR Manager</div>
+                            @if (req.Status == TransferStatus.ManagerReviewed)
+                            {
+                                <div class="tstep-meta">Seen &amp; Acknowledged — @req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                                if (!string.IsNullOrEmpty(req.HRManagerComments)) { <div class="tstep-comment">@req.HRManagerComments</div> }
+                            }
+                            else
+                            {
+                                <div class="tstep-meta">Awaiting HR acknowledgment</div>
+                            }
+                        </div>
+                    </div>
                 }
+                else
+                {
+                    string StepState(string? review) =>
+                        review == "Rejected" ? "rejected"
+                        : string.IsNullOrEmpty(review) ? "pending"
+                        : "done";
 
-                <div class="tstep">
-                    <div class="tstep-num done">1</div>
-                    <div>
-                        <div class="tstep-lbl">Request Submitted</div>
-                        <div class="tstep-meta">@req.RequestedDate.ToString("MMM dd, yyyy") — by @req.RequestedByRole</div>
+                    <div class="tstep">
+                        <div class="tstep-num done">1</div>
+                        <div>
+                            <div class="tstep-lbl">Request Submitted</div>
+                            <div class="tstep-meta">@req.RequestedDate.ToString("MMM dd, yyyy") — by @req.RequestedByRole</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="tstep">
-                    <div class="tstep-num @StepState(req.DeptHeadReview)">2</div>
-                    <div>
-                        <div class="tstep-lbl">Department Head</div>
-                        @if (!string.IsNullOrEmpty(req.DeptHeadReview))
-                        {
-                            <div class="tstep-meta">@req.DeptHeadReview — @req.DeptHeadReviewDate?.ToString("MMM dd, yyyy")</div>
-                            if (!string.IsNullOrEmpty(req.DeptHeadComments)) { <div class="tstep-comment">@req.DeptHeadComments</div> }
-                        }
-                        else { <div class="tstep-meta">Awaiting review</div> }
+                    <div class="tstep">
+                        <div class="tstep-num @StepState(req.DeptHeadReview)">2</div>
+                        <div>
+                            <div class="tstep-lbl">Department Head</div>
+                            @if (!string.IsNullOrEmpty(req.DeptHeadReview))
+                            {
+                                <div class="tstep-meta">@req.DeptHeadReview — @req.DeptHeadReviewDate?.ToString("MMM dd, yyyy")</div>
+                                if (!string.IsNullOrEmpty(req.DeptHeadComments)) { <div class="tstep-comment">@req.DeptHeadComments</div> }
+                            }
+                            else { <div class="tstep-meta">Awaiting review</div> }
+                        </div>
                     </div>
-                </div>
 
-                <div class="tstep">
-                    <div class="tstep-num @StepState(req.CurrentBMReview)">3a</div>
-                    <div>
-                        <div class="tstep-lbl">Current BM (@req.CurrentBranch)</div>
-                        @if (!string.IsNullOrEmpty(req.CurrentBMReview))
-                        {
-                            <div class="tstep-meta">@req.CurrentBMReview — @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy")</div>
-                            if (!string.IsNullOrEmpty(req.CurrentBMComments)) { <div class="tstep-comment">@req.CurrentBMComments</div> }
-                        }
-                        else { <div class="tstep-meta">Awaiting review</div> }
+                    <div class="tstep">
+                        <div class="tstep-num @StepState(req.CurrentBMReview)">3a</div>
+                        <div>
+                            <div class="tstep-lbl">Current BM (@req.CurrentBranch)</div>
+                            @if (!string.IsNullOrEmpty(req.CurrentBMReview))
+                            {
+                                <div class="tstep-meta">@req.CurrentBMReview — @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy")</div>
+                                if (!string.IsNullOrEmpty(req.CurrentBMComments)) { <div class="tstep-comment">@req.CurrentBMComments</div> }
+                            }
+                            else { <div class="tstep-meta">Awaiting review</div> }
+                        </div>
                     </div>
-                </div>
 
-                <div class="tstep">
-                    <div class="tstep-num @StepState(req.TargetBMReview)">3b</div>
-                    <div>
-                        <div class="tstep-lbl">Target BM (@req.RequestedBranch)</div>
-                        @if (!string.IsNullOrEmpty(req.TargetBMReview))
-                        {
-                            <div class="tstep-meta">@req.TargetBMReview — @req.TargetBMReviewDate?.ToString("MMM dd, yyyy")</div>
-                            if (!string.IsNullOrEmpty(req.TargetBMComments)) { <div class="tstep-comment">@req.TargetBMComments</div> }
-                        }
-                        else { <div class="tstep-meta">Awaiting review</div> }
+                    <div class="tstep">
+                        <div class="tstep-num @StepState(req.TargetBMReview)">3b</div>
+                        <div>
+                            <div class="tstep-lbl">Target BM (@req.RequestedBranch)</div>
+                            @if (!string.IsNullOrEmpty(req.TargetBMReview))
+                            {
+                                <div class="tstep-meta">@req.TargetBMReview — @req.TargetBMReviewDate?.ToString("MMM dd, yyyy")</div>
+                                if (!string.IsNullOrEmpty(req.TargetBMComments)) { <div class="tstep-comment">@req.TargetBMComments</div> }
+                            }
+                            else { <div class="tstep-meta">Awaiting review</div> }
+                        </div>
                     </div>
-                </div>
 
-                <div class="tstep">
-                    <div class="tstep-num @StepState(req.AreaManagerReview)">4</div>
-                    <div>
-                        <div class="tstep-lbl">Area Manager</div>
-                        @if (!string.IsNullOrEmpty(req.AreaManagerReview))
-                        {
-                            <div class="tstep-meta">@req.AreaManagerReview — @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy")</div>
-                            if (!string.IsNullOrEmpty(req.AreaManagerComments)) { <div class="tstep-comment">@req.AreaManagerComments</div> }
-                        }
-                        else { <div class="tstep-meta">Awaiting review</div> }
+                    <div class="tstep">
+                        <div class="tstep-num @StepState(req.AreaManagerReview)">4</div>
+                        <div>
+                            <div class="tstep-lbl">Area Manager</div>
+                            @if (!string.IsNullOrEmpty(req.AreaManagerReview))
+                            {
+                                <div class="tstep-meta">@req.AreaManagerReview — @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                                if (!string.IsNullOrEmpty(req.AreaManagerComments)) { <div class="tstep-comment">@req.AreaManagerComments</div> }
+                            }
+                            else { <div class="tstep-meta">Awaiting review</div> }
+                        </div>
                     </div>
-                </div>
 
-                <div class="tstep">
-                    <div class="tstep-num @StepState(req.HRManagerReview)">5</div>
-                    <div>
-                        <div class="tstep-lbl">HR Finalization</div>
-                        @if (!string.IsNullOrEmpty(req.HRManagerReview))
-                        {
-                            <div class="tstep-meta">@req.HRManagerReview — @req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
-                            if (!string.IsNullOrEmpty(req.HRManagerComments)) { <div class="tstep-comment">@req.HRManagerComments</div> }
-                        }
-                        else { <div class="tstep-meta">Awaiting review</div> }
+                    <div class="tstep">
+                        <div class="tstep-num @StepState(req.HRManagerReview)">5</div>
+                        <div>
+                            <div class="tstep-lbl">HR Finalization</div>
+                            @if (!string.IsNullOrEmpty(req.HRManagerReview))
+                            {
+                                <div class="tstep-meta">@req.HRManagerReview — @req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
+                                if (!string.IsNullOrEmpty(req.HRManagerComments)) { <div class="tstep-comment">@req.HRManagerComments</div> }
+                            }
+                            else { <div class="tstep-meta">Awaiting review</div> }
+                        </div>
                     </div>
-                </div>
+                }
             </div>
         </div>
     </div>

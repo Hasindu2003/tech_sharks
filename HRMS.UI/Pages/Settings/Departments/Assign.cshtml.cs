@@ -31,6 +31,9 @@ namespace HRMS.UI.Pages.Settings.Departments
 
         public Department Department { get; set; } = default!;
         public List<BranchCheckItem> Branches { get; set; } = new();
+        public bool IsHumanResources { get; set; }
+        public bool IsWelfare { get; set; }
+        public bool IsCorporateHeadOfficeOnly => IsHumanResources || IsWelfare;
 
         [BindProperty]
         public int DepartmentId { get; set; }
@@ -57,6 +60,10 @@ namespace HRMS.UI.Pages.Settings.Departments
             if (Department == null) return NotFound();
 
             DepartmentId = Department.Id;
+            IsHumanResources = Department.Name.Equals("Human Resources", StringComparison.OrdinalIgnoreCase) ||
+                               Department.Name.Equals("HR", StringComparison.OrdinalIgnoreCase);
+            IsWelfare = Department.Name.Equals("Welfare", StringComparison.OrdinalIgnoreCase);
+
             await LoadBranchesAsync();
             return Page();
         }
@@ -68,6 +75,20 @@ namespace HRMS.UI.Pages.Settings.Departments
                 .FirstOrDefaultAsync(d => d.Id == DepartmentId);
 
             if (dept == null) return NotFound();
+
+            var isHr = dept.Name.Equals("Human Resources", StringComparison.OrdinalIgnoreCase) ||
+                       dept.Name.Equals("HR", StringComparison.OrdinalIgnoreCase);
+            var isWelfare = dept.Name.Equals("Welfare", StringComparison.OrdinalIgnoreCase);
+            var isCorporate = isHr || isWelfare;
+
+            var headOffice = await _context.Branches.FirstOrDefaultAsync(b => b.Name == "Head Office" || b.Name == "Head Office - Colombo" || b.Name.Contains("Head Office"))
+                             ?? await _context.Branches.FirstOrDefaultAsync();
+
+            if (isCorporate)
+            {
+                // Strictly enforce Head Office only for Corporate departments (HR & Welfare)
+                SelectedBranchIds = headOffice != null ? new List<int> { headOffice.Id } : new List<int>();
+            }
 
             // Detect newly added branch assignments (before we remove them)
             var previousBranchIds = dept.BranchDepartments.Select(bd => bd.BranchId).ToHashSet();
@@ -85,10 +106,10 @@ namespace HRMS.UI.Pages.Settings.Departments
             }
             await _context.SaveChangesAsync();
 
-            // Auto-create a Department Head account for each newly added branch combo
+            // Auto-create a Department Head account for each newly added branch combo (except HR, which is led by HR Manager)
             var accountsCreated = new List<string>();
 
-            if (newlyAddedBranchIds.Count > 0)
+            if (!isHr && newlyAddedBranchIds.Count > 0)
             {
                 // Find (BranchId, DepartmentId) pairs that already have a Dept Head
                 var dhEmpIds = (await _userManager.GetUsersInRoleAsync("Department Head"))
@@ -114,7 +135,10 @@ namespace HRMS.UI.Pages.Settings.Departments
                     if (branch == null) continue;
 
                     var displayName = $"Department Head - {dept.Name} - {branch.Name}";
-                    var email      = GenerateDutyEmail(displayName);
+                    var deptSlug   = Regex.Replace(dept.Name.ToLowerInvariant(), @"[^a-z0-9]", "");
+                    var branchSlug = Regex.Replace(branch.Name.ToLowerInvariant(), @"[^a-z0-9]", "");
+                    var username   = $"dh.{deptSlug}{branchSlug}";
+                    var email      = $"{username}@kanrich.lk";
                     var password   = $"Kanrich@{new Random().Next(1000, 9999)}";
                     var desigId    = await GetFallbackDesignationIdAsync(DepartmentId);
 
@@ -147,7 +171,7 @@ namespace HRMS.UI.Pages.Settings.Departments
 
                         var user = new ApplicationUser
                         {
-                            UserName       = email,
+                            UserName       = username,
                             Email          = email,
                             EmailConfirmed = true,
                             EmployeeId     = employee.Id,
@@ -172,15 +196,15 @@ namespace HRMS.UI.Pages.Settings.Departments
                         {
                             UserId    = _userManager.GetUserId(User) ?? "",
                             Title     = "Dept Head Account Auto-Created",
-                            Message   = $"Department Head account created for {dept.Name} — {branch.Name}.\nEmail: {email}\nPassword: {password}",
+                            Message   = $"Department Head account created for {dept.Name} — {branch.Name}.\nUsername: {username}\nPassword: {password}",
                             TargetUrl = $"/Employees/Details/{employee.Id}",
                             IsRead    = false,
-                            CreatedAt = DateTime.Now,
+                            CreatedAt = HRMS.Domain.Common.SriLankaTime.Now,
                         });
                         await _context.SaveChangesAsync();
                         await tx.CommitAsync();
 
-                        accountsCreated.Add($"{dept.Name} — {branch.Name}");
+                        accountsCreated.Add($"{dept.Name} — {branch.Name} ({username})");
                     }
                     catch
                     {
@@ -199,39 +223,25 @@ namespace HRMS.UI.Pages.Settings.Departments
 
         private async Task LoadBranchesAsync()
         {
+            var isCorporate = Department.Name.Equals("Human Resources", StringComparison.OrdinalIgnoreCase) ||
+                              Department.Name.Equals("HR", StringComparison.OrdinalIgnoreCase) ||
+                              Department.Name.Equals("Welfare", StringComparison.OrdinalIgnoreCase);
             var assignedIds = Department.BranchDepartments.Select(bd => bd.BranchId).ToHashSet();
-            var branches    = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
+            
+            var branchesQuery = _context.Branches.AsQueryable();
+            if (isCorporate)
+            {
+                branchesQuery = branchesQuery.Where(b => b.Name == "Head Office" || b.Name == "Head Office - Colombo" || b.Name.Contains("Head Office"));
+            }
+
+            var branches = await branchesQuery.OrderBy(b => b.Name).ToListAsync();
             Branches = branches.Select(b => new BranchCheckItem
             {
                 Id         = b.Id,
                 Name       = b.Name,
                 Location   = b.Location,
-                IsAssigned = assignedIds.Contains(b.Id)
+                IsAssigned = isCorporate || assignedIds.Contains(b.Id)
             }).ToList();
-        }
-
-        private string GenerateDutyEmail(string displayName)
-        {
-            const string roleSlug = "departmenthead";
-
-            // Extract the part after the first " - " separator
-            var namePart = displayName;
-            var idx = displayName.IndexOf(" - ", StringComparison.Ordinal);
-            if (idx >= 0)
-                namePart = displayName[(idx + 3)..].Trim();
-
-            var nameSlug = Regex.Replace(namePart.ToLowerInvariant(), @"[^a-z0-9]", "");
-            if (string.IsNullOrEmpty(nameSlug))
-                nameSlug = Regex.Replace(displayName.ToLowerInvariant(), @"[^a-z0-9]", "");
-
-            var baseEmail = $"{roleSlug}.{nameSlug}@kanrich.lk";
-            var counter   = 1;
-            var email     = baseEmail;
-            while (_context.Employees.Any(e => e.Email == email))
-            {
-                email = $"{roleSlug}.{nameSlug}{counter++}@kanrich.lk";
-            }
-            return email;
         }
 
         private async Task<int> GetFallbackDesignationIdAsync(int departmentId)

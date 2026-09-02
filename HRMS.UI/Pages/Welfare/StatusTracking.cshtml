@@ -1,0 +1,309 @@
+@page
+@model HRMS.UI.Pages.Welfare.StatusTrackingModel
+@{
+    ViewData["Title"] = "Request Status Tracking";
+    ViewData["PageTitle"] = $"Welfare / Request WF-{Model.WelfareRequest?.RequestId.ToString("D4")}";
+    ViewData["ActiveNav"] = "Welfare";
+    var req = Model.WelfareRequest!;
+}
+
+@section Styles {
+    <style>
+        .tracking-shell {
+            padding: 26px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+        .flex-main {
+            display: flex;
+            gap: 24px;
+            align-items: start;
+        }
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .right-panel {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .info-item span {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+    </style>
+}
+
+<div class="tracking-shell">
+
+    <!-- Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h2 style="display: inline-flex; align-items: center; gap: 10px;">
+                Request Status Tracking
+                <span class="k-badge k-badge-info" style="font-size: 0.8rem; border-radius: 6px;">WF-@req.RequestId.ToString("D4")</span>
+            </h2>
+            <p class="page-subtitle">Detailed lifecycle progression of the submitted welfare request</p>
+        </div>
+        <div>
+            <a href="/Welfare/RequestList" class="btn-kanrich btn-kanrich-outline">
+                <i class="bi bi-arrow-left"></i> Back to My Requests
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Layout -->
+    <div class="flex-main">
+
+        <!-- Left Column -->
+        <div class="left-panel">
+
+            <!-- Employee Info -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <i class="bi bi-person-fill"></i> Employee Information
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Full Name</label>
+                        <span>@req.Employee?.FullName</span>
+                    </div>
+                    <div class="info-item">
+                        <label>NIC</label>
+                        <span>@req.Employee?.NIC</span>
+                    </div>
+                    <div class="info-item">
+                        <label>EPF Number</label>
+                        <span>@req.Employee?.EPFNumber</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Designation</label>
+                        <span>@(req.Employee?.Designation?.Title ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Department</label>
+                        <span>@(req.Employee?.Department?.Name ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Branch</label>
+                        <span>@(req.Employee?.Branch?.Name ?? "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Email</label>
+                        <span>@req.Employee?.Email</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Phone</label>
+                        <span>@req.Employee?.PhoneNumber</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Bank Account</label>
+                        <span>@req.Employee?.BankAccountNumber</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Request Details -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <i class="bi bi-file-earmark-text-fill"></i> Request Details
+                </div>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <label>Assistance Type</label>
+                        <span>@req.WelfareType?.TypeName</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Request Date</label>
+                        <span>@req.RequestDate.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Submitted On</label>
+                        <span>@req.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Requested Amount</label>
+                        <span style="color: var(--primary); font-weight: 700;">LKR @req.RequestedAmount.ToString("N2")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Approved / Disbursed Amount</label>
+                        <span style="color: #16a34a; font-weight: 800;">@(req.ApprovedAmount.HasValue ? "LKR " + req.ApprovedAmount.Value.ToString("N2") : "—")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Current Status</label>
+                        @{
+                            var (stClass, stTxt) = (req.CurrentStatus, req.Status) switch
+                            {
+                                ("PaymentCompleted", _) or (_, "Paid") => ("k-badge-approved", "Payment Completed"),
+                                ("PendingPayment", _) or ("Approved", "Approved") => ("k-badge-info", "Approved — Pending Payment"),
+                                ("Rejected", _) or (_, "Rejected") => ("k-badge-rejected", "Rejected"),
+                                ("Pending", _) or (_, "Pending") => ("k-badge-pending", "Pending Welfare Head Review"),
+                                _ => ("k-badge-secondary", req.CurrentStatus)
+                            };
+                        }
+                        <span class="k-badge @stClass">@stTxt</span>
+                    </div>
+
+                    <!-- 3-Step Lifecycle Visual Progress -->
+                    <div class="info-item" style="grid-column: span 3; margin: 12px 0; background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 16px 20px;">
+                        <label style="margin-bottom: 12px; display: block; font-size: 0.72rem; letter-spacing: 0.5px;">Workflow Lifecycle Progress</label>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; position: relative;">
+                            
+                            <!-- Step 1 -->
+                            <div style="display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid #bbf7d0; border-radius: 6px; padding: 10px 12px;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: #16a34a; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;">1</div>
+                                <div>
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: #15803d;">Request Submitted</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-secondary);">@req.CreatedAt.ToString("MMM dd, yyyy")</div>
+                                </div>
+                            </div>
+
+                            <!-- Step 2 -->
+                            @{
+                                var isWelfareApproved = req.CurrentStatus == "PendingPayment" || req.CurrentStatus == "PaymentCompleted" || req.Status == "Approved" || req.Status == "Paid";
+                                var isWelfareRejected = req.CurrentStatus == "Rejected" && req.CurrentLevel != "HRManager";
+                                var step2Bg = isWelfareApproved ? "#16a34a" : isWelfareRejected ? "#dc2626" : "#f59e0b";
+                                var step2Border = isWelfareApproved ? "#bbf7d0" : isWelfareRejected ? "#fecaca" : "#fde68a";
+                                var step2Title = isWelfareApproved ? "Welfare Head Approved" : isWelfareRejected ? "Welfare Head Rejected" : "Welfare Head Review";
+                            }
+                            <div style="display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid @step2Border; border-radius: 6px; padding: 10px 12px;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: @step2Bg; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;">2</div>
+                                <div>
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">@step2Title</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                        @(isWelfareApproved ? "Approved & Forwarded to HR" : isWelfareRejected ? "Declined" : "Under Review")
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Step 3 -->
+                            @{
+                                var isPaid = req.CurrentStatus == "PaymentCompleted" || req.Status == "Paid";
+                                var isHrRejected = req.CurrentStatus == "Rejected" && req.CurrentLevel == "HRManager";
+                                var step3Bg = isPaid ? "#16a34a" : isHrRejected ? "#dc2626" : (isWelfareApproved ? "#ea580c" : "#94a3b8");
+                                var step3Border = isPaid ? "#bbf7d0" : isHrRejected ? "#fecaca" : (isWelfareApproved ? "#ffedd5" : "#e2e8f0");
+                                var step3Title = isPaid ? "Payment Disbursed" : isHrRejected ? "Payment Declined" : "HR Payment";
+                            }
+                            <div style="display: flex; align-items: center; gap: 10px; background: #ffffff; border: 1px solid @step3Border; border-radius: 6px; padding: 10px 12px;">
+                                <div style="width: 28px; height: 28px; border-radius: 50%; background: @step3Bg; color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700;">3</div>
+                                <div>
+                                    <div style="font-size: 0.82rem; font-weight: 700; color: var(--text-primary);">@step3Title</div>
+                                    <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                        @(isPaid ? "Bank Transfer Completed" : isHrRejected ? "Declined by HR" : (isWelfareApproved ? "Awaiting HR Disbursement" : "Pending Approval"))
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div class="info-item" style="grid-column: span 3; margin-top: 6px;">
+                        <label>Reason / Request Description</label>
+                        <div style="font-size: 0.88rem; padding: 12px 16px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); line-height: 1.5;">
+                            @(string.IsNullOrEmpty(req.Remark) ? "No reason provided." : req.Remark)
+                        </div>
+                    </div>
+
+                    @if (Model.Approvals.Any())
+                    {
+                        <div class="info-item" style="grid-column: span 3; margin-top: 10px;">
+                            <label>Approval &amp; Disbursement History</label>
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                @foreach (var decision in Model.Approvals.OrderBy(a => a.ActionDate))
+                                {
+                                    var isApproval = decision.Action == "Approved" || decision.Action == "Paid";
+                                    var approverRoleTitle = decision.ApproverLevel == "DepartmentHead" ? "Welfare Department Head" : decision.ApproverLevel == "HRManager" ? "HR Department / Payment Processing" : decision.ApproverLevel;
+                                    <div style="font-size: 0.88rem; padding: 12px 16px; background: #f8fafc; border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); line-height: 1.5;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                            <strong style="color: @(isApproval ? "#10823c" : "#dc2626");">
+                                                @approverRoleTitle — @decision.Action (@decision.ActionDate.ToString("MMM dd, yyyy HH:mm"))
+                                            </strong>
+                                        </div>
+                                        <div style="color: var(--text-primary); font-size: 0.85rem;">
+                                            @(string.IsNullOrEmpty(decision.Comments) ? "No additional remarks provided." : decision.Comments)
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Right Column -->
+        <div class="right-panel">
+
+            <!-- Summary Card -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <i class="bi bi-info-circle"></i> Summary
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Request ID</span><span style="font-weight: 700;">WF-@req.RequestId.ToString("D4")</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Type</span><span style="font-weight: 700;">@req.WelfareType?.TypeName</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Requested</span><span style="font-weight: 700; color: var(--primary);">LKR @req.RequestedAmount.ToString("N2")</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Approved</span><span style="font-weight: 700; color: var(--primary);">@(req.ApprovedAmount.HasValue ? "LKR " + req.ApprovedAmount.Value.ToString("N2") : "—")</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Current Level</span><span style="font-weight: 700;">@(req.CurrentLevel == "DepartmentHead" ? "Welfare Manager" : req.CurrentLevel == "BranchManager" ? "Branch Manager" : req.CurrentLevel == "AreaManager" ? "Area Manager" : req.CurrentLevel == "HRManager" ? "HR Manager" : req.CurrentLevel)</span></div>
+                    <div style="height: 1px; background: var(--border-color); margin: 4px 0;"></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Approvals</span><span style="font-weight: 700; color: var(--primary);">@Model.Approvals.Count(a => a.Action == "Approved")</span></div>
+                    <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-secondary);">Documents</span><span style="font-weight: 700;">@Model.Documents.Count</span></div>
+                </div>
+            </div>
+
+            <!-- Documents Card -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <i class="bi bi-paperclip"></i> Documents
+                </div>
+                @if (!Model.Documents.Any())
+                {
+                    <div style="text-align: center; padding: 24px; color: var(--text-secondary);">
+                        <i class="bi bi-folder-x" style="font-size: 2rem; color: var(--border-color); display: block; margin-bottom: 6px;"></i>
+                        <p style="font-size: 0.8rem; margin: 0;">No documents uploaded.</p>
+                    </div>
+                }
+                else
+                {
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        @foreach (var doc in Model.Documents)
+                        {
+                            <a href="@doc.FilePath" class="js-doc-preview" data-doc-title="@doc.FileName" data-doc-sub="@doc.FileType" style="display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); text-decoration: none; color: var(--text-primary); transition: background 0.15s;" onmouseover="this.style.background='var(--primary-light)'" onmouseout="this.style.background='var(--bg-body)'">
+                                <i class="bi bi-file-earmark-text" style="font-size: 1.1rem; color: var(--primary);"></i>
+                                <div style="flex: 1; min-width: 0;">
+                                    <p style="font-size: 0.8rem; font-weight: 600; margin: 0; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">@doc.FileName</p>
+                                    <p style="font-size: 0.7rem; color: var(--text-secondary); margin: 0;">@doc.FileType</p>
+                                </div>
+                                <i class="bi bi-box-arrow-up-right" style="font-size: 0.8rem; color: var(--text-secondary);"></i>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+
+        </div>
+
+    </div>
+
+</div>

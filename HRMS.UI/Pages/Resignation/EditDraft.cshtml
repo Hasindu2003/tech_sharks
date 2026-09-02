@@ -26,14 +26,6 @@
     .checkbox-label input[type="checkbox"] { width: 15px; height: 15px; accent-color: #10823c; }
     .draft-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; display:flex; align-items:center; gap:10px; font-size:13px; color:#1d4ed8; }
     .draft-banner i { font-size:1.1rem; flex-shrink:0; }
-    .approval-panel { background: #f6f8f7; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px; }
-    .approval-panel h5 { font-size: 13px; font-weight: 700; color: #151811; margin: 0 0 4px 0; display:flex; align-items:center; gap:7px; }
-    .ap-sub { font-size: 12px; color: #7a8863; margin: 0 0 18px 0; }
-    .ap-step { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
-    .ap-step:last-child { margin-bottom: 0; }
-    .ap-dot { width: 10px; height: 10px; border-radius: 50%; background: #10823c; margin-top: 4px; flex-shrink: 0; box-shadow: 0 0 0 3px rgba(16,130,60,0.15); }
-    .ap-label { font-size: 13px; font-weight: 700; color: #151811; margin-bottom: 2px; }
-    .ap-desc  { font-size: 12px; color: #7a8863; }
 </style>
 
 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:22px;">
@@ -58,41 +50,23 @@
     <span>This resignation is saved as a <strong>Draft</strong>. You can edit it freely and submit when you're ready. Last modified: <strong>@Model.Draft.LastModifiedDate.ToString("MMM dd, yyyy HH:mm")</strong></span>
 </div>
 
-<div style="display:grid; grid-template-columns:1fr 340px; gap:20px; align-items:start;">
-    <!-- Edit Form -->
-    <div class="form-card">
+<!-- Edit Form -->
+<div class="form-card">
         <div class="form-card-header">Resignation Details</div>
         <div class="form-card-body">
             <form method="post" enctype="multipart/form-data">
                 @Html.AntiForgeryToken()
                 <input type="hidden" name="Id" value="@Model.Draft.Id" />
 
-                <div class="grid-2">
-                    <div class="fg">
-                        <label class="fl">Last Working Day <span class="req">*</span></label>
-                        <input type="date" name="EffectiveDate" class="fi" required
-                               value="@Model.Draft.EffectiveDate.ToString("yyyy-MM-dd")"
-                               min="@DateTime.Today.AddDays(14).ToString("yyyy-MM-dd")"
-                               id="effectiveDateInput" />
-                        <div class="fi-hint">
-                            Minimum 14 days notice required.
-                            Notice period: <strong id="noticeDays" style="color:#10823c">@Model.Draft.NoticePeriodDays days</strong>
-                        </div>
-                    </div>
-                    <div class="fg">
-                        <label class="fl">Financial Obligations</label>
-                        <div style="display:flex; flex-direction:column; gap:10px; padding-top:6px;">
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="HasOutstandingLoans" value="true"
-                                       @(Model.Draft.HasOutstandingLoans ? "checked" : "") />
-                                I have outstanding loans
-                            </label>
-                            <label class="checkbox-label">
-                                <input type="checkbox" name="IsLoanGuarantor" value="true"
-                                       @(Model.Draft.IsLoanGuarantor ? "checked" : "") />
-                                I am a loan guarantor
-                            </label>
-                        </div>
+                <div class="fg">
+                    <label class="fl">Last Working Day <span class="req">*</span></label>
+                    <input type="date" name="EffectiveDate" class="fi" required
+                           value="@Model.Draft.EffectiveDate.ToString("yyyy-MM-dd")"
+                           min="@DateTime.Today.AddMonths(1).ToString("yyyy-MM-dd")"
+                           id="effectiveDateInput" />
+                    <div class="fi-hint">
+                        Minimum 1 month notice required.
+                        Notice period: <strong id="noticeDays" style="color:#10823c">@Model.Draft.NoticePeriodDays days</strong>
                     </div>
                 </div>
 
@@ -131,45 +105,26 @@
                     </div>
                 }
 
-                <div style="display:flex; gap:10px; margin-top:8px;">
-                    <button type="submit" name="action" value="submit" class="btn-kanrich btn-kanrich-primary">
-                        <i class="bi bi-send"></i> Submit Resignation
-                    </button>
-                    <button type="submit" name="action" value="draft" class="btn-kanrich btn-kanrich-outline">
-                        <i class="bi bi-floppy"></i> Save as Draft
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap;">
+                    <div style="display:flex; gap:10px;">
+                        <button type="submit" name="action" value="submit" class="btn-kanrich btn-kanrich-primary">
+                            <i class="bi bi-send"></i> Submit Resignation
+                        </button>
+                        <button type="submit" name="action" value="draft" formnovalidate class="btn-kanrich btn-kanrich-outline">
+                            <i class="bi bi-floppy"></i> Save as Draft
+                        </button>
+                    </div>
+                    <button type="submit" form="deleteDraftForm" class="btn-kanrich" style="background:#fee2e2; color:#b91c1c; border:1px solid #fecaca;">
+                        <i class="bi bi-trash"></i> Delete Draft
                     </button>
                 </div>
             </form>
-        </div>
-    </div>
 
-    <!-- Approval Flow -->
-    <div class="approval-panel">
-        <h5><i class="bi bi-diagram-3" style="color:#10823c"></i> Approval Flow</h5>
-        <p class="ap-sub">Your resignation passes through 3 review stages before being finalised.</p>
-        <div class="ap-step">
-            <div class="ap-dot"></div>
-            <div>
-                <div class="ap-label">Stage 1 — Branch Manager</div>
-                <div class="ap-desc">Acknowledges and plans for operational continuity.</div>
-            </div>
-        </div>
-        <div class="ap-step">
-            <div class="ap-dot"></div>
-            <div>
-                <div class="ap-label">Stage 2 — Area Manager</div>
-                <div class="ap-desc">Reviews based on regional staffing requirements.</div>
-            </div>
-        </div>
-        <div class="ap-step">
-            <div class="ap-dot"></div>
-            <div>
-                <div class="ap-label">Stage 3 — HR Manager</div>
-                <div class="ap-desc">Final approval. Generates your acceptance letter.</div>
-            </div>
+            <form id="deleteDraftForm" method="post" asp-page-handler="Delete" asp-route-id="@Model.Draft.Id" onsubmit="return confirm('Are you sure you want to delete this draft resignation? This action cannot be undone.');">
+                @Html.AntiForgeryToken()
+            </form>
         </div>
     </div>
-</div>
 
 @section Scripts {
 <script>

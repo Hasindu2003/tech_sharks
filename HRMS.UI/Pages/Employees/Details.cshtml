@@ -1,4 +1,4 @@
-@page "{id:int}"
+@page "{id:int?}"
 @model HRMS.UI.Pages.Employees.DetailsModel
 @{
     ViewData["Title"] = "Employee Details";
@@ -26,7 +26,113 @@
 
     .profile-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .profile-info-wrapper { display: flex; gap: 16px; align-items: center; }
-    .profile-avatar { width: 72px; height: 72px; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+    .profile-avatar { width: 72px; height: 72px; aspect-ratio: 1 / 1; border-radius: 50%; background: #1e293b; color: white; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 700; flex-shrink: 0; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); overflow: hidden; border: 2px solid #fff; position: relative; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; }
+    .profile-avatar:hover { transform: scale(1.04); box-shadow: 0 6px 14px -2px rgba(0,0,0,0.18); }
+    .avatar-img-cover { width: 100%; height: 100%; aspect-ratio: 1 / 1; object-fit: cover; object-position: center; display: block; }
+
+    /* ── Full Profile Image Lightbox Modal ── */
+    .avatar-lightbox-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.82);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+        padding: 20px;
+        animation: avatarFadeIn 0.2s ease-out;
+    }
+    .avatar-lightbox-modal.open {
+        display: flex;
+    }
+    .avatar-lightbox-content {
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 26px 24px;
+        max-width: 440px;
+        width: 100%;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        position: relative;
+        text-align: center;
+        animation: avatarZoomIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .avatar-lightbox-close {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: #f1f5f9;
+        border: none;
+        font-size: 24px;
+        line-height: 1;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        color: #475569;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, color 0.15s;
+    }
+    .avatar-lightbox-close:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+    .avatar-lightbox-img-wrap {
+        width: 260px;
+        height: 260px;
+        aspect-ratio: 1 / 1;
+        margin: 10px auto 16px;
+        border-radius: 50%;
+        overflow: hidden;
+        box-shadow: 0 10px 25px -5px rgba(0,0,0,0.18);
+        border: 4px solid #f0fdf4;
+        background: #1e293b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .avatar-lightbox-img-wrap img {
+        width: 100%;
+        height: 100%;
+        aspect-ratio: 1 / 1;
+        object-fit: cover;
+        object-position: center;
+        display: block;
+    }
+    .avatar-lightbox-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #1e293b;
+        color: #ffffff;
+        font-size: 68px;
+        font-weight: 800;
+    }
+    .avatar-lightbox-name {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 3px;
+    }
+    .avatar-lightbox-meta {
+        font-size: 13px;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    @@keyframes avatarFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    @@keyframes avatarZoomIn {
+        from { transform: scale(0.92); opacity: 0; }
+        to { transform: scale(1); opacity: 1; }
+    }
     .profile-main-info h1 { margin: 0 0 2px 0; font-size: 20px; font-weight: 700; color: #0f172a; }
     .profile-main-info .designation { font-size: 15px; color: #64748b; font-weight: 500; margin-bottom: 12px; display: block; }
 
@@ -68,6 +174,37 @@
     .doc-status.rejected { background: #fee2e2; color: #991b1b; }
     .doc-link { font-size: 13px; font-weight: 700; color: #10823c; text-decoration: none; white-space: nowrap; }
     .doc-link:hover { text-decoration: underline; }
+
+    /* Modal Overlay & Dialog Styles */
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(15, 23, 42, 0.5);
+        backdrop-filter: blur(2px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+    }
+    .modal-overlay.open {
+        display: flex;
+    }
+    .modal-card {
+        background: white;
+        border-radius: 12px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @@keyframes modalIn {
+        from { transform: translateY(12px) scale(0.98); opacity: 0; }
+        to { transform: translateY(0) scale(1); opacity: 1; }
+    }
 </style>
 
 <div class="details-page">
@@ -80,7 +217,15 @@
     <div class="card profile-card">
         <div class="profile-header">
             <div class="profile-info-wrapper">
-                <div class="profile-avatar">@avatarChars.ToUpper()</div>
+                <div class="profile-avatar" onclick="openAvatarModal()" title="Click to view full photo">
+                    <img id="profileAvatarImg" src="/uploads/avatars/emp_@(emp.Id).jpg" 
+                         class="avatar-img-cover" 
+                         onerror="this.style.display='none'; document.getElementById('profileAvatarFallback').style.display='flex';" 
+                         alt="@displayName" />
+                    <div id="profileAvatarFallback" style="display:none; width:100%; height:100%; align-items:center; justify-content:center; background:#1e293b; color:#fff; font-size:24px; font-weight:700;">
+                        @avatarChars.ToUpper()
+                    </div>
+                </div>
                 <div class="profile-main-info">
                     <h1>@displayName</h1>
                     <span class="designation">@(emp.Designation?.Title ?? "No Designation")</span>
@@ -232,7 +377,7 @@
 
             <div class="right-col">
                 <div class="card" style="margin-bottom:0;">
-                    <h3 class="section-title">Statutory Information</h3>
+                    <h3 class="section-title">Statutory &amp; Banking Information</h3>
                     <div class="data-grid-2col">
                         <div class="data-item">
                             <span class="data-item-label">EPF Number</span>
@@ -241,6 +386,18 @@
                         <div class="data-item">
                             <span class="data-item-label">ETF Number</span>
                             <span class="data-item-value">@emp.ETFNumber</span>
+                        </div>
+                        <div class="data-item" style="grid-column: 1 / span 2;">
+                            <span class="data-item-label">Bank Name</span>
+                            <span class="data-item-value">@(string.IsNullOrWhiteSpace(emp.BankName) || emp.BankName == "-" ? "—" : emp.BankName)</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Bank Account Holder</span>
+                            <span class="data-item-value">@(string.IsNullOrWhiteSpace(emp.BankAccountName) || emp.BankAccountName == "-" ? "—" : emp.BankAccountName)</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Bank Account Number</span>
+                            <span class="data-item-value" style="font-family: monospace; font-weight: 700; color: #10823c;">@(string.IsNullOrWhiteSpace(emp.BankAccountNumber) || emp.BankAccountNumber == "-" ? "—" : emp.BankAccountNumber)</span>
                         </div>
                     </div>
                 </div>
@@ -263,7 +420,7 @@
                             </div>
                             <div style="display:flex; align-items:center; gap:12px;">
                                 <span class="doc-status @doc.Status.ToLowerInvariant()">@doc.Status</span>
-                                <a class="doc-link" href="/uploads/documents/@doc.StoredFileName" target="_blank">Open</a>
+                                <a class="doc-link js-doc-preview" href="/uploads/documents/@doc.StoredFileName" data-doc-title="@doc.DocumentType" data-doc-sub="@doc.FileName">Open</a>
                             </div>
                         </div>
                     }
@@ -277,15 +434,223 @@
     </div>
 
     <div class="tab-panel" id="tab-salary">
-        <div class="card">
-            <div style="text-align:center; padding: 40px 20px; color:#64748b;">
-                <svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" width="40" height="40" style="margin-bottom:12px;display:block;margin-left:auto;margin-right:auto;"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                <p style="font-weight:700; color:#0f172a; margin-bottom:4px;">Salary & Benefits</p>
-                <p style="font-size:13px; margin:0;">This section is under development.</p>
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success" style="margin-bottom: 20px; padding: 12px 16px; border-radius: 8px; font-size: 0.9rem; font-weight: 600;">
+                ✓ @TempData["Success"]
+            </div>
+        }
+
+        <div class="info-grid">
+            <div class="left-col" style="display:flex; flex-direction:column; gap:24px;">
+                @if (Model.CurrentSalary == null)
+                {
+                    <div class="card" style="margin-bottom:0; text-align:center; padding: 48px 24px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" width="48" height="48" style="margin-bottom:12px; display:block; margin-left:auto; margin-right:auto;">
+                            <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                        <p style="font-weight:700; color:#0f172a; margin-bottom:4px;">No Salary Base Configured</p>
+                        <p style="font-size:13px; color:#64748b; margin:0 0 16px 0;">
+                            @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer"))
+                            {
+                                <text>No salary base has been defined for this employee yet. Click the button below to configure salary details.</text>
+                            }
+                            else
+                            {
+                                <text>No salary base has been defined for this employee yet.</text>
+                            }
+                        </p>
+                        @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer"))
+                        {
+                            <button type="button" class="btn-kanrich btn-kanrich-primary" onclick="openSalaryModal()" style="display:inline-flex; align-items:center; gap:8px; margin:0 auto; padding: 9px 20px; font-size: 13px; font-weight: 700; border-radius: 8px; border:none; cursor:pointer;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="15" height="15"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                Configure Salary
+                            </button>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="card" style="margin-bottom:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Current Base Salary</h3>
+                            @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer"))
+                            {
+                                <button type="button" class="btn-edit" onclick="openSalaryModal()" style="font-size: 13px; padding: 6px 12px; background: #ebf5ee; border-radius: 6px;">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                                    Update Salary
+                                </button>
+                            }
+                        </div>
+                        <div class="data-grid" style="grid-template-columns: 1fr 1fr;">
+                            <div class="data-item">
+                                <span class="data-item-label">Basic Salary</span>
+                                <span class="data-item-value" style="font-size: 1.25rem; font-weight: 800; color: #10823c;">Rs @Model.CurrentSalary.BasicSalary.ToString("N2")</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">Effective Date</span>
+                                <span class="data-item-value">@Model.CurrentSalary.EffectiveDate.ToString("dd MMM, yyyy")</span>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.SalaryHistory.Any())
+                {
+                    <div class="card" style="margin-bottom:0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;">
+                            <h3 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Salary Update History</h3>
+                            <span style="font-size: 12px; color: #64748b; font-weight: 600;">@Model.SalaryHistory.Count @(Model.SalaryHistory.Count == 1 ? "Record" : "Records")</span>
+                        </div>
+                        <div class="doc-list">
+                            @for (int i = 0; i < Model.SalaryHistory.Count; i++)
+                            {
+                                var hist = Model.SalaryHistory[i];
+                                var isCurrent = (i == 0);
+                                <div class="doc-item" style="padding: 12px 16px; border-left: 4px solid @(isCurrent ? "#10823c" : "#cbd5e1"); background: @(isCurrent ? "#f0fdf4" : "#f8fafc");">
+                                    <div style="flex: 1;">
+                                        <div style="display:flex; align-items:center; gap: 8px; margin-bottom: 3px;">
+                                            <span class="doc-name" style="font-size: 14px; font-weight: 700; color: #0f172a;">Rs @hist.BasicSalary.ToString("N2") Base Salary</span>
+                                            @if (isCurrent)
+                                            {
+                                                <span style="background: #dcfce7; color: #166534; font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 9999px;">Current</span>
+                                            }
+                                            else
+                                            {
+                                                <span style="background: #f1f5f9; color: #64748b; font-size: 10.5px; font-weight: 600; padding: 2px 8px; border-radius: 9999px;">Previous</span>
+                                            }
+                                        </div>
+                                        <div class="doc-meta" style="font-size: 12px; color: #64748b;">
+                                            Effective: @hist.EffectiveDate.ToString("dd MMM yyyy, hh:mm tt")
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="right-col" style="display:flex; flex-direction:column; gap:24px;">
+                <div class="card" style="margin-bottom:0;">
+                    <h3 class="section-title">Statutory Contributions</h3>
+                    @if (Model.CurrentSalary != null)
+                    {
+                        <div class="data-grid-2col" style="row-gap: 16px;">
+                            <div class="data-item">
+                                <span class="data-item-label">EPF Employee (8%)</span>
+                                <span class="data-item-value">Rs @((Model.CurrentSalary.BasicSalary * 0.08m).ToString("N2"))</span>
+                            </div>
+                            <div class="data-item">
+                                <span class="data-item-label">EPF Employer (12%)</span>
+                                <span class="data-item-value" style="color: #10823c;">Rs @((Model.CurrentSalary.BasicSalary * 0.12m).ToString("N2"))</span>
+                            </div>
+                            <div class="data-item" style="grid-column: 1 / span 2;">
+                                <span class="data-item-label">ETF Employer (3%)</span>
+                                <span class="data-item-value" style="color: #c2410c;">Rs @((Model.CurrentSalary.BasicSalary * 0.03m).ToString("N2"))</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="data-item-value" style="font-size: 13px; color: #64748b;">Awaiting basic salary configuration to compute.</div>
+                    }
+                </div>
+
+                <div class="card" style="margin-bottom:0;">
+                    <h3 class="section-title">Disbursement Bank Account</h3>
+                    <div class="data-grid-2col" style="row-gap: 16px;">
+                        <div class="data-item" style="grid-column: 1 / span 2;">
+                            <span class="data-item-label">Bank Name</span>
+                            <span class="data-item-value" style="font-weight: 600;">@(string.IsNullOrWhiteSpace(emp.BankName) || emp.BankName == "-" ? "—" : emp.BankName)</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Account Holder</span>
+                            <span class="data-item-value">@(string.IsNullOrWhiteSpace(emp.BankAccountName) || emp.BankAccountName == "-" ? "—" : emp.BankAccountName)</span>
+                        </div>
+                        <div class="data-item">
+                            <span class="data-item-label">Account Number</span>
+                            <span class="data-item-value" style="font-family: monospace; font-weight: 700; color: #10823c;">@(string.IsNullOrWhiteSpace(emp.BankAccountNumber) || emp.BankAccountNumber == "-" ? "—" : emp.BankAccountNumber)</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+@if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer"))
+{
+    <!-- Salary Configuration Modal -->
+    <div class="modal-overlay" id="salaryModal" onclick="closeSalaryModal(event)">
+        <div class="modal-card" onclick="event.stopPropagation()">
+            <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">
+                        @(Model.CurrentSalary == null ? "Configure Salary" : "Update Salary Details")
+                    </h3>
+                    <p style="margin: 2px 0 0 0; font-size: 12.5px; color: #64748b;">
+                        Set base salary &amp; banking details for @displayName
+                    </p>
+                </div>
+                <button type="button" onclick="closeSalaryModal()" style="background: none; border: none; font-size: 24px; line-height: 1; color: #94a3b8; cursor: pointer; padding: 2px 6px;">&times;</button>
+            </div>
+
+            <form method="post" asp-page-handler="UpdateSalary" asp-route-id="@Model.Employee.Id" style="margin: 0;">
+                @Html.AntiForgeryToken()
+                <div style="padding: 24px; display:flex; flex-direction:column; gap:16px;">
+                    <div class="data-item">
+                        <label class="data-item-label" style="margin-bottom: 4px; color: #475569;">Basic Salary (LKR) *</label>
+                        <input type="number" id="BasicSalary" name="BasicSalary" value="@(Model.BasicSalary > 0 ? Model.BasicSalary.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : "")" min="1" step="0.01" required class="k-form-control" style="font-size: 0.85rem; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box;" placeholder="e.g. 50000" />
+                    </div>
+
+                    <div style="border-top: 1px dashed #e2e8f0; margin-top: 6px; padding-top: 14px;">
+                        <h4 style="margin: 0 0 10px 0; font-size: 13px; font-weight: 700; color: #1e293b;">Disbursement Bank Account</h4>
+                        <div style="display:flex; flex-direction:column; gap:12px;">
+                            <div class="data-item">
+                                <label class="data-item-label" style="margin-bottom: 4px; color: #475569;">Bank Name</label>
+                                <input type="text" id="BankName" name="BankName" value="@Model.BankName" list="bankList" class="k-form-control" style="font-size: 0.85rem; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box;" placeholder="e.g. Commercial Bank of Ceylon" />
+                                <datalist id="bankList">
+                                    <option value="Bank of Ceylon" />
+                                    <option value="Commercial Bank of Ceylon" />
+                                    <option value="People's Bank" />
+                                    <option value="Sampath Bank" />
+                                    <option value="Hatton National Bank" />
+                                    <option value="Seylan Bank" />
+                                    <option value="Nations Trust Bank" />
+                                    <option value="DFCC Bank" />
+                                    <option value="National Savings Bank" />
+                                    <option value="Pan Asia Bank" />
+                                    <option value="Union Bank" />
+                                    <option value="Standard Chartered Bank" />
+                                    <option value="HSBC Sri Lanka" />
+                                </datalist>
+                            </div>
+                            <div class="data-item">
+                                <label class="data-item-label" style="margin-bottom: 4px; color: #475569;">Bank Account Holder Name</label>
+                                <input type="text" id="BankAccountName" name="BankAccountName" value="@Model.BankAccountName" class="k-form-control" style="font-size: 0.85rem; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box;" placeholder="e.g. K.R. Perera" />
+                            </div>
+                            <div class="data-item">
+                                <label class="data-item-label" style="margin-bottom: 4px; color: #475569;">Bank Account Number</label>
+                                <input type="text" id="BankAccountNumber" name="BankAccountNumber" value="@Model.BankAccountNumber" class="k-form-control" style="font-size: 0.85rem; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; width: 100%; box-sizing: border-box;" placeholder="e.g. 100234567890" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" onclick="closeSalaryModal()" style="padding: 8px 16px; border: 1px solid #cbd5e1; background: white; border-radius: 6px; font-weight: 600; font-size: 13px; color: #475569; cursor: pointer;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 8px 20px; font-size: 13px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        Save Details
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
 
 @section Scripts {
     <script>
@@ -293,12 +658,98 @@
             document.querySelectorAll('.details-tab').forEach(function (tab) {
                 tab.classList.remove('active');
             });
-            el.classList.add('active');
+            if (el) {
+                el.classList.add('active');
+            } else {
+                var target = document.querySelector('.details-tab[data-tab="' + tabId + '"]');
+                if (target) target.classList.add('active');
+            }
 
             document.querySelectorAll('.tab-panel').forEach(function (panel) {
                 panel.classList.remove('active');
             });
-            document.getElementById('tab-' + tabId).classList.add('active');
+            var activePanel = document.getElementById('tab-' + tabId);
+            if (activePanel) activePanel.classList.add('active');
+
+            if (history.replaceState) {
+                history.replaceState(null, null, '#' + tabId);
+            }
         }
+
+        function openSalaryModal() {
+            var modal = document.getElementById('salaryModal');
+            if (modal) modal.classList.add('open');
+        }
+
+        function closeSalaryModal(e) {
+            if (!e || e.target === document.getElementById('salaryModal') || e.target.closest('button')) {
+                var modal = document.getElementById('salaryModal');
+                if (modal) modal.classList.remove('open');
+            }
+        }
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeSalaryModal();
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            var hash = window.location.hash.replace('#', '');
+            if (hash) {
+                switchTab(hash);
+            }
+        });
+
+        // Avatar Lightbox Modal Functions
+        function openAvatarModal() {
+            var modal = document.getElementById('avatarLightboxModal');
+            if (modal) {
+                var mainImg = document.getElementById('profileAvatarImg');
+                var modalImg = document.getElementById('avatarLightboxImg');
+                if (mainImg && modalImg && mainImg.style.display !== 'none' && mainImg.src) {
+                    modalImg.src = mainImg.src;
+                    modalImg.style.display = 'block';
+                    var fb = document.getElementById('lightboxFallback');
+                    if (fb) fb.style.display = 'none';
+                }
+                modal.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeAvatarModal(e) {
+            if (e && e.target !== e.currentTarget && !e.target.classList.contains('avatar-lightbox-close')) return;
+            var modal = document.getElementById('avatarLightboxModal');
+            if (modal) {
+                modal.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeAvatarModal();
+            }
+        });
     </script>
+
+    <!-- Full Profile Image Lightbox Modal -->
+    <div id="avatarLightboxModal" class="avatar-lightbox-modal" onclick="closeAvatarModal(event)">
+        <div class="avatar-lightbox-content" onclick="event.stopPropagation()">
+            <button type="button" class="avatar-lightbox-close" onclick="closeAvatarModal()" title="Close">&times;</button>
+            <div class="avatar-lightbox-img-wrap">
+                <img id="avatarLightboxImg" src="/uploads/avatars/emp_@(emp.Id).jpg" 
+                     onerror="this.style.display='none'; document.getElementById('lightboxFallback').style.display='flex';"
+                     alt="@displayName" />
+                <div id="lightboxFallback" class="avatar-lightbox-fallback" style="display:none;">
+                    <span>@avatarChars.ToUpper()</span>
+                </div>
+            </div>
+            <div class="avatar-lightbox-footer">
+                <div class="avatar-lightbox-name">@displayName</div>
+                <div class="avatar-lightbox-meta">EMP-@emp.Id.ToString("D5") &middot; @(emp.Designation?.Title ?? "Employee") &middot; @(emp.Department?.Name ?? "")</div>
+            </div>
+        </div>
+    </div>
 }

@@ -1,0 +1,603 @@
+@page
+@model HRMS.UI.Pages.CVBank.CreateModel
+@{
+    ViewData["Title"] = "Add Candidate to CV Bank";
+    Layout = "_Layout";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; font-family: 'Manrope', sans-serif; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; font-family: 'Manrope', sans-serif; }
+
+    /* Form card */
+    .form-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .form-card-body { padding: 20px; }
+
+    .fg { margin-bottom: 14px; position: relative; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; font-family: 'Manrope', sans-serif; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1.5px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: all 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+
+    /* Live validation state classes */
+    .fi.is-invalid {
+        border-color: #dc2626 !important;
+        background-color: #fffbfa !important;
+    }
+    .fi.is-invalid:focus {
+        box-shadow: 0 0 0 2px rgba(220,38,38,0.15) !important;
+    }
+    .fi.is-valid {
+        border-color: #10823c !important;
+        background-color: #f9fdfa !important;
+    }
+
+    .input-feedback {
+        font-size: 11.5px;
+        font-weight: 600;
+        margin-top: 4px;
+        display: none;
+    }
+    .input-feedback.error {
+        color: #dc2626;
+        display: block;
+    }
+    .input-feedback.success {
+        color: #10823c;
+        display: block;
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+
+    .sub-section-header {
+        font-size: 12px;
+        font-weight: 800;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 20px 0 10px 0;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e2e5dc;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+        font-family: 'Manrope', sans-serif;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+
+    /* Live Score Card */
+    .live-score-card {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+    }
+
+    .checkbox-box {
+        background: #f9fafb;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+    .checkbox-box:hover { background: #f0fdf4; border-color: #bbf7d0; }
+    .checkbox-box input[type="checkbox"] { width: 16px; height: 16px; accent-color: #10823c; cursor: pointer; }
+</style>
+
+<div>
+    <a href="/CVBank/Index" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to CV Bank
+    </a>
+
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h1 class="page-h">Add Candidate to CV Bank</h1>
+        <p class="page-s">Enter details to calculate rank and save candidate CV.</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+                <i class="bi bi-exclamation-circle me-1"></i> Please correct the errors below.
+                <div asp-validation-summary="All" class="small mt-1"></div>
+                <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="form-card" style="margin: 0;">
+            <div class="form-card-header">
+                <i class="bi bi-person-plus-fill text-success"></i> Candidate Registration Form
+            </div>
+            <div class="form-card-body">
+                <form method="post" enctype="multipart/form-data" novalidate onsubmit="return validateCreateForm(this);">
+                    
+                    <!-- Live Score Preview -->
+                    <div class="live-score-card">
+                        <div>
+                            <div style="font-size: 12.5px; font-weight: 700; color: #15803d;">
+                                <i class="bi bi-lightning-charge-fill me-1"></i> Live Automated Ranking Score
+                            </div>
+                            <span class="text-muted" style="font-size: 11px;">Experience (5 pts/yr, max 50) + Degree (+25) + Master's (+25)</span>
+                        </div>
+                        <div class="text-end">
+                            <div id="liveScoreVal" style="font-size: 20px; font-weight: 800; color: #10823c;">0 / 100</div>
+                            <span id="liveScoreBadge" class="badge bg-light text-muted border" style="font-size: 10px;">Baseline</span>
+                        </div>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Full Name <span class="req">*</span></label>
+                        <input asp-for="CVInput.CandidateName" 
+                               id="hrCandidateName"
+                               class="fi" 
+                               placeholder="Ex: Imesha Herath" 
+                               minlength="2" 
+                               maxlength="100" 
+                               required />
+                        <div id="hrNameFeedback" class="input-feedback"></div>
+                        <span asp-validation-for="CVInput.CandidateName" class="input-feedback error"></span>
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="fg">
+                            <label class="fl">Email Address <span class="req">*</span></label>
+                            <input asp-for="CVInput.Email" 
+                                   id="hrCandidateEmail"
+                                   type="email" 
+                                   class="fi" 
+                                   placeholder="name@example.com" 
+                                   maxlength="100" 
+                                   required />
+                            <div id="hrEmailFeedback" class="input-feedback"></div>
+                            <span asp-validation-for="CVInput.Email" class="input-feedback error"></span>
+                        </div>
+                        <div class="fg">
+                            <label class="fl">Contact Number</label>
+                            <input asp-for="CVInput.ContactNumber" 
+                                   id="hrCandidatePhone"
+                                   type="tel" 
+                                   class="fi" 
+                                   placeholder="+94 77 123 4567" 
+                                   maxlength="20" />
+                            <div id="hrPhoneFeedback" class="input-feedback"></div>
+                            <span asp-validation-for="CVInput.ContactNumber" class="input-feedback error"></span>
+                        </div>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Target Job Vacancy (Optional)</label>
+                        <select asp-for="CVInput.JobOpeningId" id="hrJobOpening" class="fi" onchange="onJobOpeningChange(this);">
+                            <option value="" data-skills="Credit Analysis, Financial Reporting, Risk Assessment, Auditing & Compliance, Loan Operations, Customer Service, MS Excel & Modeling">-- General Talent Pool (No Specific Vacancy) --</option>
+                            @foreach (var job in Model.JobOpenings)
+                            {
+                                <option value="@job.Id" data-title="@job.Title" data-skills="@job.RequiredSkills">[@job.JobCode] @job.Title (@(job.Branch?.Name ?? "All Branches"))</option>
+                            }
+                        </select>
+                        <small class="text-muted" style="font-size: 11px;">Selecting a vacancy dynamically loads that role's required skills checklist for evaluation.</small>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Applied Position <span class="req">*</span></label>
+                        <select asp-for="CVInput.AppliedPosition" id="hrCandidatePos" class="fi" required>
+                            <option value="">-- Select Position --</option>
+                            @foreach (var pos in Model.PositionOptions)
+                            {
+                                <option value="@pos">@pos</option>
+                            }
+                        </select>
+                        <div id="hrPosFeedback" class="input-feedback"></div>
+                        <span asp-validation-for="CVInput.AppliedPosition" class="input-feedback error"></span>
+                    </div>
+
+                    <div class="sub-section-header">Scoring Criteria & Experience</div>
+
+                    <div class="fg">
+                        <label class="fl">Experience (Years - Max 10) <span class="req">*</span></label>
+                        <input asp-for="CVInput.ExperienceYears" 
+                               type="number" 
+                               id="expInput"
+                               class="fi" 
+                               min="0" 
+                               max="50" 
+                               value="0"
+                               style="max-width: 240px;"
+                               oninput="calcScore();" 
+                               required />
+                        <div id="hrExpFeedback" class="input-feedback"></div>
+                        <span class="text-muted" style="font-size: 11px;">Awards 5 points per year (max 50 points).</span>
+                        <span asp-validation-for="CVInput.ExperienceYears" class="input-feedback error"></span>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Skills & Competencies Checklist</label>
+                        <p style="font-size: 12px; color: #475569; margin-bottom: 8px;">Check off the skills candidate possesses:</p>
+                        
+                        <div id="hrSkillsChecklistContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; margin-bottom: 10px;">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+
+                        <div class="mt-2">
+                            <label class="fl" style="font-size: 11.5px; color: #64748b;">Other / Additional Skills</label>
+                            <input type="text" id="hrExtraSkillsInput" class="fi" placeholder="e.g. Python, SQL, Project Management" oninput="syncHrSkills();" />
+                        </div>
+
+                        <input asp-for="CVInput.Skills" id="hrCandidateSkillsHidden" type="hidden" />
+                    </div>
+
+                    <div class="grid-2 mb-3">
+                        <label class="checkbox-box">
+                            <input asp-for="CVInput.HasDegree" type="checkbox" id="degInput" />
+                            <div>
+                                <strong style="font-size: 12.5px; color: #151811; display: block;">Bachelor's Degree</strong>
+                                <span class="text-muted" style="font-size: 11px;">Adds +25 points</span>
+                            </div>
+                        </label>
+
+                        <label class="checkbox-box">
+                            <input asp-for="CVInput.HasMasters" type="checkbox" id="mastInput" />
+                            <div>
+                                <strong style="font-size: 12.5px; color: #151811; display: block;">Master's / Postgraduate</strong>
+                                <span class="text-muted" style="font-size: 11px;">Adds +25 points</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="sub-section-header">Attach Resume / CV</div>
+
+                    <div class="fg">
+                        <label class="fl">Upload CV Document (PDF, DOCX, Max 15MB)</label>
+                        <input asp-for="UploadedCV" id="hrCandidateFile" type="file" class="fi" accept=".pdf,.docx,.doc" />
+                        <div id="hrFileFeedback" class="input-feedback"></div>
+                        <span asp-validation-for="UploadedCV" class="input-feedback error"></span>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e5dc;">
+                        <a href="/CVBank/Index" class="btn-kanrich btn-kanrich-outline" style="padding: 9px 18px; text-decoration: none;">Cancel</a>
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 9px 20px;">
+                            <i class="bi bi-check-circle me-1"></i> Register & Calculate Rank
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const atChar = String.fromCharCode(64);
+        const emailPattern = '^[a-zA-Z0-9._%+-]+' + atChar + '[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
+        const emailRegex = new RegExp(emailPattern);
+        const phoneRegex = new RegExp('^\\+?[0-9\\s\\-]{9,15}$');
+        const nameRegex = new RegExp('^[a-zA-Z\\s\\.\\,\'\\-]+$');
+
+        function setHrFeedback(inputEl, feedbackEl, isValid, message) {
+            if (isValid) {
+                inputEl.classList.remove('is-invalid');
+                inputEl.classList.add('is-valid');
+                feedbackEl.className = 'input-feedback success';
+                feedbackEl.innerHTML = '';
+            } else {
+                inputEl.classList.remove('is-valid');
+                inputEl.classList.add('is-invalid');
+                feedbackEl.className = 'input-feedback error';
+                feedbackEl.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i>' + message;
+            }
+        }
+
+        function validateHrName() {
+            const el = document.getElementById('hrCandidateName');
+            const fb = document.getElementById('hrNameFeedback');
+            const val = el.value.trim();
+            if (val.length === 0) {
+                setHrFeedback(el, fb, false, 'Candidate full name is required.');
+                return false;
+            }
+            if (val.length < 2) {
+                setHrFeedback(el, fb, false, 'Full Name must be at least 2 characters.');
+                return false;
+            }
+            if (!nameRegex.test(val)) {
+                setHrFeedback(el, fb, false, 'Full Name can only contain letters, spaces, dots, and hyphens.');
+                return false;
+            }
+            setHrFeedback(el, fb, true, '');
+            return true;
+        }
+
+        function validateHrEmail() {
+            const el = document.getElementById('hrCandidateEmail');
+            const fb = document.getElementById('hrEmailFeedback');
+            const val = el.value.trim();
+            if (val.length === 0) {
+                setHrFeedback(el, fb, false, 'Email address is required.');
+                return false;
+            }
+            if (!emailRegex.test(val)) {
+                setHrFeedback(el, fb, false, 'Please enter a valid email address (e.g. name@example.com).');
+                return false;
+            }
+            setHrFeedback(el, fb, true, '');
+            return true;
+        }
+
+        function validateHrPhone() {
+            const el = document.getElementById('hrCandidatePhone');
+            const fb = document.getElementById('hrPhoneFeedback');
+            const val = el.value.trim();
+            if (val && val !== 'N/A') {
+                if (!phoneRegex.test(val)) {
+                    setHrFeedback(el, fb, false, 'Phone number must contain 9 to 15 digits (e.g. 0771234567 or +94 77 123 4567).');
+                    return false;
+                }
+            }
+            setHrFeedback(el, fb, true, '');
+            return true;
+        }
+
+        function validateHrPos() {
+            const el = document.getElementById('hrCandidatePos');
+            const fb = document.getElementById('hrPosFeedback');
+            if (!el.value || el.value === '-- Select Position --') {
+                setHrFeedback(el, fb, false, 'Please select an applied position.');
+                return false;
+            }
+            setHrFeedback(el, fb, true, '');
+            return true;
+        }
+
+        function validateHrExp() {
+            const el = document.getElementById('expInput');
+            const fb = document.getElementById('hrExpFeedback');
+            const val = parseInt(el.value, 10);
+            if (isNaN(val) || val < 0 || val > 50) {
+                setHrFeedback(el, fb, false, 'Experience must be a number between 0 and 50 years.');
+                return false;
+            }
+            setHrFeedback(el, fb, true, '');
+            return true;
+        }
+
+        function validateHrFile() {
+            const el = document.getElementById('hrCandidateFile');
+            const fb = document.getElementById('hrFileFeedback');
+            const files = el.files;
+            if (files && files.length > 0) {
+                const allowedExts = ['.pdf', '.docx', '.doc'];
+                const fileName = files[0].name.toLowerCase();
+                const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+                if (!isValidExt) {
+                    setHrFeedback(el, fb, false, 'Invalid format. Only PDF (.pdf) or Word (.docx, .doc) files are accepted.');
+                    return false;
+                }
+                if (files[0].size > 15 * 1024 * 1024) {
+                    setHrFeedback(el, fb, false, 'File size exceeds 15MB limit.');
+                    return false;
+                }
+                el.classList.remove('is-invalid');
+                el.classList.add('is-valid');
+                fb.className = 'input-feedback success';
+                fb.innerHTML = '<i class="bi bi-check-circle me-1"></i> Document attached: ' + files[0].name + ' (' + (files[0].size / (1024*1024)).toFixed(2) + ' MB)';
+                return true;
+            }
+            el.classList.remove('is-invalid');
+            fb.innerHTML = '';
+            return true;
+        }
+
+        function populateHrSkills(skillsString) {
+            const container = document.getElementById('hrSkillsChecklistContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!skillsString) {
+                skillsString = "Credit Analysis, Financial Reporting, Risk Assessment, Auditing & Compliance, Loan Operations, Customer Service, MS Excel & Modeling";
+            }
+
+            const skills = skillsString.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+            
+            skills.forEach((skill, idx) => {
+                const label = document.createElement('label');
+                label.className = 'checkbox-box';
+                label.style.padding = '8px 12px';
+                label.style.cursor = 'pointer';
+                label.style.marginBottom = '0';
+
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.className = 'hr-skill-cb';
+                cb.value = skill;
+                cb.id = 'hrSkill_' + idx;
+                cb.onchange = syncHrSkills;
+
+                const textSpan = document.createElement('span');
+                textSpan.style.fontSize = '12px';
+                textSpan.style.fontWeight = '600';
+                textSpan.style.color = '#151811';
+                textSpan.textContent = skill;
+
+                label.appendChild(cb);
+                label.appendChild(textSpan);
+                container.appendChild(label);
+            });
+
+            syncHrSkills();
+        }
+
+        function syncHrSkills() {
+            const checkedBoxes = document.querySelectorAll('.hr-skill-cb:checked');
+            const checkedValues = Array.from(checkedBoxes).map(cb => cb.value.trim());
+
+            const extraInput = document.getElementById('hrExtraSkillsInput');
+            if (extraInput && extraInput.value.trim().length > 0) {
+                const extras = extraInput.value.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+                extras.forEach(ext => {
+                    if (!checkedValues.some(v => v.toLowerCase() === ext.toLowerCase())) {
+                        checkedValues.push(ext);
+                    }
+                });
+            }
+
+            const hidden = document.getElementById('hrCandidateSkillsHidden');
+            if (hidden) {
+                hidden.value = checkedValues.length > 0 ? checkedValues.join(', ') : 'Not Specified';
+            }
+        }
+
+        function onJobOpeningChange(selectEl) {
+            const selectedOpt = selectEl.options[selectEl.selectedIndex];
+            if (selectedOpt && selectedOpt.dataset) {
+                if (selectedOpt.dataset.title) {
+                    const title = selectedOpt.dataset.title;
+                    const posSelect = document.getElementById('hrCandidatePos');
+                    if (posSelect) {
+                        for (let i = 0; i < posSelect.options.length; i++) {
+                            if (posSelect.options[i].value === title) {
+                                posSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                populateHrSkills(selectedOpt.dataset.skills);
+            }
+        }
+
+        function calcScore() {
+            const exp = Math.min(10, Math.max(0, parseInt(document.getElementById('expInput').value) || 0));
+            if (exp > 10) exp = 10;
+            if (exp < 0) exp = 0;
+
+            let total = exp * 5;
+            if (document.getElementById('degInput').checked) total += 25;
+            if (document.getElementById('mastInput').checked) total += 25;
+
+            document.getElementById('liveScoreVal').textContent = total + " / 100";
+            const badge = document.getElementById('liveScoreBadge');
+
+            if (total >= 75) {
+                badge.textContent = "Top Tier Priority";
+                badge.className = "badge bg-success";
+            } else if (total >= 50) {
+                badge.textContent = "Qualified Candidate";
+                badge.className = "badge bg-primary";
+            } else {
+                badge.textContent = "Baseline Entry";
+                badge.className = "badge bg-light text-muted border";
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const nameEl = document.getElementById('hrCandidateName');
+            const emailEl = document.getElementById('hrCandidateEmail');
+            const phoneEl = document.getElementById('hrCandidatePhone');
+            const posEl = document.getElementById('hrCandidatePos');
+            const expEl = document.getElementById('expInput');
+            const fileEl = document.getElementById('hrCandidateFile');
+
+            if (nameEl) {
+                nameEl.addEventListener('input', validateHrName);
+                nameEl.addEventListener('blur', validateHrName);
+            }
+            if (emailEl) {
+                emailEl.addEventListener('input', validateHrEmail);
+                emailEl.addEventListener('blur', validateHrEmail);
+            }
+            if (phoneEl) {
+                phoneEl.addEventListener('input', validateHrPhone);
+                phoneEl.addEventListener('blur', validateHrPhone);
+            }
+            if (posEl) {
+                posEl.addEventListener('change', validateHrPos);
+                posEl.addEventListener('blur', validateHrPos);
+            }
+            if (expEl) {
+                expEl.addEventListener('input', function () {
+                    validateHrExp();
+                    calcScore();
+                });
+                expEl.addEventListener('blur', validateHrExp);
+            }
+            if (fileEl) {
+                fileEl.addEventListener('change', validateHrFile);
+            }
+
+            document.getElementById('degInput').addEventListener('change', calcScore);
+            document.getElementById('mastInput').addEventListener('change', calcScore);
+            calcScore();
+
+            const jobSelect = document.getElementById('hrJobOpening');
+            if (jobSelect) {
+                const opt = jobSelect.options[jobSelect.selectedIndex];
+                populateHrSkills(opt ? opt.dataset.skills : '');
+            } else {
+                populateHrSkills('');
+            }
+        });
+
+        function validateCreateForm(form) {
+            syncHrSkills();
+            const isNameValid = validateHrName();
+            const isEmailValid = validateHrEmail();
+            const isPhoneValid = validateHrPhone();
+            const isPosValid = validateHrPos();
+            const isExpValid = validateHrExp();
+            const isFileValid = validateHrFile();
+
+            if (!isNameValid || !isEmailValid || !isPhoneValid || !isPosValid || !isExpValid || !isFileValid) {
+                const firstInvalid = document.querySelector('.fi.is-invalid');
+                if (firstInvalid) firstInvalid.focus();
+                return false;
+            }
+            return true;
+        }
+    </script>
+}

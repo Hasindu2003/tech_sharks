@@ -1,4 +1,4 @@
-﻿using HRMS.Application.Models;
+using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,10 +40,10 @@ namespace HRMS.UI.Pages.AreaManager
                 : await _deathService.AMRejectAsync(id, comments, email);
 
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success 
-                ? $"Death request {action}d successfully." 
+                ? $"Death process for {RequestModel?.EmployeeName ?? "employee"} {(action == "approve" ? "confirmed and forwarded to HR Manager" : "rejected")}." 
                 : "Failed to process request.";
                 
-            return RedirectToPage("./ReviewDeathRequests");
+            return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Death" });
         }
     }
 }

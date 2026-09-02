@@ -1,6 +1,6 @@
 @page
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "HR Manager,Area Manager")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer,Area Manager")]
 @model HRMS.UI.Pages.Termination.RequestsModel
 @{
     ViewData["Title"] = "Employee Termination";
@@ -75,10 +75,10 @@
 
 @{
     var totalCount = Model.Requests.Count;
-    var newCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.New);
-    var submittedCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.SubmittedForApproval);
-    var terminatedCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.Terminated);
-    var rejectedCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.Rejected);
+    var newCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.Draft);
+    var submittedCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.SubmittedForApproval || r.Status == HRMS.Application.Models.TerminationStatusEnum.DeptHeadsApproved || r.Status == HRMS.Application.Models.TerminationStatusEnum.BMApproved || r.Status == HRMS.Application.Models.TerminationStatusEnum.AMApproved);
+    var terminatedCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.Terminated || r.Status == HRMS.Application.Models.TerminationStatusEnum.HRApproved);
+    var rejectedCount = Model.Requests.Count(r => r.Status == HRMS.Application.Models.TerminationStatusEnum.DeptHeadRejected || r.Status == HRMS.Application.Models.TerminationStatusEnum.BMRejected || r.Status == HRMS.Application.Models.TerminationStatusEnum.AMRejected || r.Status == HRMS.Application.Models.TerminationStatusEnum.HRRejected);
 }
 <div class="stat-row">
     <div class="stat-mini">
@@ -140,7 +140,8 @@
             <tbody>
                 @foreach (var req in Model.Requests)
                 {
-                    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td style="font-weight:600;color:#7a8863">#@req.Id</td>
                         <td>
@@ -157,7 +158,7 @@
                         <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
                         <td style="color:#7a8863">@req.CreatedDate.ToString("MMM dd, yyyy")</td>
                         <td style="text-align:right">
-                            @if (req.Status == HRMS.Application.Models.TerminationStatusEnum.New || req.Status == HRMS.Application.Models.TerminationStatusEnum.Rejected)
+                            @if (req.Status == HRMS.Application.Models.TerminationStatusEnum.Draft || req.Status == HRMS.Application.Models.TerminationStatusEnum.HRRejected || req.Status == HRMS.Application.Models.TerminationStatusEnum.DeptHeadRejected || req.Status == HRMS.Application.Models.TerminationStatusEnum.BMRejected || req.Status == HRMS.Application.Models.TerminationStatusEnum.AMRejected)
                             {
                                 <a asp-page="/Termination/EditRequest" asp-route-id="@req.Id" class="btn-action-primary">Edit</a>
                             }

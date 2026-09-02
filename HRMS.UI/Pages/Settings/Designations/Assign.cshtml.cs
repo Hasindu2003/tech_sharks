@@ -36,19 +36,10 @@ namespace HRMS.UI.Pages.Settings.Designations
             public bool IsAssigned { get; set; }
         }
 
-        public async Task<IActionResult> OnGetAsync(int? id)
+        public IActionResult OnGet(int? id)
         {
-            if (id == null) return NotFound();
-
-            Designation = await _context.Designations
-                .Include(d => d.DepartmentDesignations)
-                .FirstOrDefaultAsync(d => d.Id == id) ?? default!;
-
-            if (Designation == null) return NotFound();
-
-            DesignationId = Designation.Id;
-            await LoadDepartmentsAsync();
-            return Page();
+            if (id == null) return RedirectToPage("./Index");
+            return RedirectToPage("./Edit", new { id = id.Value });
         }
 
         public async Task<IActionResult> OnPostAsync()

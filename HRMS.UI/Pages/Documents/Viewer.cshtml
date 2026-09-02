@@ -1,0 +1,243 @@
+@page
+@model HRMS.UI.Pages.Documents.ViewerModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@Model.DocTitle – Kanrich HRMS</title>
+    <link rel="icon" type="image/png" href="/images/logo-title.png" />
+    <link rel="shortcut icon" href="/images/logo-title.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body {
+            height: 100%;
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* ── Top Header Bar ── */
+        .viewer-header {
+            height: 56px;
+            background: #1e293b;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+        .viewer-brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            min-width: 0;
+        }
+        .viewer-logo {
+            height: 28px;
+            width: auto;
+        }
+        .viewer-divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(255,255,255,0.15);
+        }
+        .viewer-title-box {
+            min-width: 0;
+        }
+        .viewer-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #f8fafc;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.2;
+        }
+        .viewer-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .viewer-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .viewer-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 12px;
+            border-radius: 7px;
+            font-size: 12.5px;
+            font-weight: 600;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            font-family: inherit;
+        }
+        .viewer-btn-primary {
+            background: #10823c;
+            color: #ffffff;
+        }
+        .viewer-btn-primary:hover {
+            background: #0d6e32;
+            color: #ffffff;
+        }
+        .viewer-btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #e2e8f0;
+        }
+        .viewer-btn-secondary:hover {
+            background: rgba(255,255,255,0.18);
+            color: #ffffff;
+        }
+        .viewer-btn-close {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            padding: 7px 11px;
+        }
+        .viewer-btn-close:hover {
+            background: #ef4444;
+            color: #ffffff;
+        }
+
+        /* ── Main Viewer Content Area ── */
+        .viewer-body {
+            flex: 1;
+            position: relative;
+            background: #090d16;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .viewer-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #ffffff;
+        }
+        .viewer-image-wrap {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .viewer-image-wrap img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .viewer-fallback {
+            text-align: center;
+            padding: 40px 24px;
+            max-width: 420px;
+            background: #1e293b;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+        }
+        .viewer-fallback h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #f8fafc;
+            margin: 16px 0 8px;
+        }
+        .viewer-fallback p {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <header class="viewer-header">
+        <div class="viewer-brand">
+            <img src="/images/logo-title.png" alt="Kanrich Finance" class="viewer-logo" />
+            <div class="viewer-divider"></div>
+            <div class="viewer-title-box">
+                <h1 class="viewer-title">@Model.DocTitle</h1>
+                <span class="viewer-sub">@Model.FileName</span>
+            </div>
+        </div>
+        <div class="viewer-actions">
+            @if (Model.IsPdf)
+            {
+                <button type="button" onclick="printDoc()" class="viewer-btn viewer-btn-secondary" title="Print Document">
+                    <i class="bi bi-printer"></i>
+                    <span>Print</span>
+                </button>
+            }
+            <a href="@Model.DocUrl" download="@Model.FileName" class="viewer-btn viewer-btn-primary" title="Download Document">
+                <i class="bi bi-download"></i>
+                <span>Download</span>
+            </a>
+            <button type="button" onclick="window.close()" class="viewer-btn viewer-btn-close" title="Close Viewer">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="viewer-body">
+        @if (Model.IsImage)
+        {
+            <div class="viewer-image-wrap">
+                <img src="@Model.DocUrl" alt="@Model.DocTitle" />
+            </div>
+        }
+        else if (Model.IsPdf || Model.FileExtension == ".txt")
+        {
+            <iframe id="docFrame" src="@Model.DocUrl" class="viewer-frame"></iframe>
+        }
+        else
+        {
+            <div class="viewer-fallback">
+                <i class="bi bi-file-earmark-arrow-down" style="font-size: 48px; color: #10823c;"></i>
+                <h3>Direct Preview Unavailable</h3>
+                <p>This file format (@Model.FileExtension) cannot be rendered directly in the browser. You can download it below.</p>
+                <a href="@Model.DocUrl" download="@Model.FileName" class="viewer-btn viewer-btn-primary" style="padding: 9px 18px; font-size: 13.5px;">
+                    <i class="bi bi-download"></i> Download File
+                </a>
+            </div>
+        }
+    </main>
+
+    <script>
+        function printDoc() {
+            var frame = document.getElementById('docFrame');
+            if (frame && frame.contentWindow) {
+                try {
+                    frame.contentWindow.print();
+                } catch(e) {
+                    window.print();
+                }
+            } else {
+                window.print();
+            }
+        }
+    </script>
+</body>
+</html>

@@ -15,6 +15,10 @@ namespace HRMS.Domain.Entities.Training
         public int? TrainerId { get; set; }                // FK to Trainer
         public Trainer? Trainer { get; set; }
 
+        // Plain text properties mapped to database columns for Imesha's modules compatibility
+        public string? TrainerName { get; set; }
+        public string? Location { get; set; }
+
         public string Status { get; set; } = null!;       // Scheduled / Completed / Cancelled
 
         // Navigation properties

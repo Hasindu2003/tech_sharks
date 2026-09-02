@@ -1,0 +1,162 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.DepartmentHead.ReviewTerminationModel
+@{
+    ViewData["Title"] = "Review Termination Clearance";
+    var req = Model.TerminationRequest;
+}
+
+<div class="page-header" style="margin-bottom: 24px;">
+    <a asp-page="/DepartmentHead/ReviewTerminations" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="border: none; padding-left: 0; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">
+        <i class="bi bi-arrow-left"></i> Back to Review Terminations
+    </a>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+            <h2>Review Termination Clearance</h2>
+            <p class="page-subtitle">Request #@req?.Id &bull; @req?.EmployeeName (@req?.EpfNumber)</p>
+        </div>
+        <div>
+            <span class="k-badge @req?.StatusBadgeClass" style="font-size:14px;padding:6px 14px">@req?.StatusDisplay</span>
+        </div>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom:20px">
+        <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+@if (req != null)
+{
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:24px;align-items:start">
+        <!-- Left Column: Details & Action -->
+        <div>
+            <!-- Employee & Termination Info Card -->
+            <div class="k-card" style="margin-bottom:24px">
+                <div class="k-card-header"><i class="bi bi-person-badge" style="color:#dc2626;margin-right:6px"></i> Termination Request Details</div>
+                
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted)">Employee Name</div>
+                        <div style="font-weight:600;font-size:15px">@req.EmployeeName</div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted)">EPF Number</div>
+                        <div style="font-weight:600;font-size:15px">@req.EpfNumber</div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted)">Branch</div>
+                        <div style="font-weight:600">@req.Branch</div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted)">Designation</div>
+                        <div style="font-weight:600">@req.Designation</div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted)">Termination Type</div>
+                        <div style="font-weight:600"><span class="badge" style="background:#fee2e2;color:#dc2626">@req.TerminationTypeDisplay</span></div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text-muted)">Effective Termination Date</div>
+                        <div style="font-weight:600;color:#dc2626">@req.EffectiveTerminationDate.ToString("MMMM dd, yyyy")</div>
+                    </div>
+                </div>
+
+                <div style="border-top:1px solid var(--border-color);padding-top:14px;margin-bottom:14px">
+                    <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Reason for Termination</div>
+                    <div style="background:#f8fafc;padding:12px;border-radius:6px;font-size:14px;line-height:1.5">@req.ReasonForTermination</div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(req.SupervisorRemarks))
+                {
+                    <div style="margin-bottom:14px">
+                        <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">Supervisor Remarks</div>
+                        <div style="background:#f8fafc;padding:10px;border-radius:6px;font-size:13px">@req.SupervisorRemarks</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Department Clearances Table -->
+            <div class="k-card" style="margin-bottom:24px">
+                <div class="k-card-header"><i class="bi bi-diagram-3" style="color:#10823c;margin-right:6px"></i> Branch Department Clearances</div>
+                <div class="k-table-responsive">
+                    <table class="k-table">
+                        <thead>
+                            <tr>
+                                <th>Department</th>
+                                <th>Reviewer</th>
+                                <th>Status</th>
+                                <th>Review Date</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var dept in req.DepartmentReviews)
+                            {
+                                <tr>
+                                    <td style="font-weight:600">@dept.DepartmentName</td>
+                                    <td>@(string.IsNullOrWhiteSpace(dept.ReviewerName) ? "-" : dept.ReviewerName)</td>
+                                    <td><span class="k-badge @dept.StatusBadgeClass">@dept.Status</span></td>
+                                    <td>@(dept.ReviewDate.HasValue ? dept.ReviewDate.Value.ToString("yyyy-MM-dd HH:mm") : "-")</td>
+                                    <td style="font-size:13px;max-width:200px">@(string.IsNullOrWhiteSpace(dept.Comments) ? "-" : dept.Comments)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Review Action Form -->
+            @if (Model.CanReview)
+            {
+                <div class="k-card">
+                    <div class="k-card-header"><i class="bi bi-pencil-square" style="color:#2563eb;margin-right:6px"></i> Provide Department Clearance (@Model.DeptHeadDepartment)</div>
+                    <form method="post">
+                        <div class="k-form-group">
+                            <label for="comments">Clearance Remarks / Handover Notes <span style="color:#ef4444">*</span></label>
+                            <textarea name="comments" id="comments" class="k-form-control" rows="4" placeholder="Enter clearance remarks, asset return confirmation, or reasons for rejection..." required minlength="5"></textarea>
+                        </div>
+                        <div style="display:flex;gap:12px;margin-top:16px">
+                            <button type="submit" name="action" value="approve" class="btn-kanrich btn-kanrich-primary" style="flex:1" onclick="return confirm('Are you sure you want to APPROVE clearance for this termination request?');">
+                                <i class="bi bi-check-circle"></i> Approve Clearance
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn-kanrich btn-kanrich-danger" style="flex:1" onclick="return confirm('Are you sure you want to REJECT this termination request?');">
+                                <i class="bi bi-x-circle"></i> Reject Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            }
+        </div>
+
+        <!-- Right Column: Documents & Status Tracking -->
+        <div>
+            <!-- Documents Card -->
+            <div class="k-card" style="margin-bottom:24px">
+                <div class="k-card-header"><i class="bi bi-paperclip" style="color:#6b7280;margin-right:6px"></i> Supporting Documents (@req.Documents.Count)</div>
+                @if (!req.Documents.Any())
+                {
+                    <p style="color:var(--text-muted);font-size:13px;margin:0">No documents attached.</p>
+                }
+                else
+                {
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                        @foreach (var doc in req.Documents)
+                        {
+                            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px">
+                                <div>
+                                    <div style="font-weight:600;font-size:13px">@doc.FileName</div>
+                                    <div style="font-size:11px;color:var(--text-muted)">@doc.DocumentType</div>
+                                </div>
+                                <a asp-page="/Termination/DownloadDocument" asp-route-id="@doc.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" target="_blank">
+                                    <i class="bi bi-download"></i>
+                                </a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

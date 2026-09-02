@@ -1,0 +1,707 @@
+@page "{id:int?}"
+@model HRMS.UI.Pages.Training.EditSessionModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Edit Training Session";
+}
+
+<style>
+    .d-none, .is-hidden { display: none !important; }
+
+    .page-h { font-size: 20px; font-weight: 800; color: #151811; margin: 0 0 4px 0; }
+    .page-s { font-size: 13px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Form card */
+    .form-card {
+        max-width: 980px;
+        margin: 0 auto 24px auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .form-card-body { padding: 22px; }
+    
+    .fg { margin-bottom: 16px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 6px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 13.5px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    .req { color: #ef4444; }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+
+    /* Employee Selector Section */
+    .filter-toolbar {
+        background: #f6f8f7;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        padding: 14px;
+        margin-bottom: 16px;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr 1fr;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .filter-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px dashed #e2e5dc;
+    }
+
+    .input-icon-wrap {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    .input-icon-wrap i {
+        position: absolute;
+        left: 12px;
+        color: #9ca3af;
+        font-size: 15px;
+        pointer-events: none;
+    }
+    .input-icon-wrap .fi {
+        padding-left: 36px;
+    }
+
+    .emp-table-container {
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        max-height: 420px;
+        overflow-y: auto;
+        background: #fff;
+    }
+    .emp-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    .emp-table th {
+        background: #f9fafb;
+        padding: 12px 14px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        border-bottom: 1px solid #e2e5dc;
+        text-align: left;
+    }
+    .emp-table td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f0f2ed;
+        font-size: 13.5px;
+        color: #151811;
+        vertical-align: middle;
+        text-align: left;
+    }
+    
+    .emp-table .col-chk { width: 44px; text-align: center; padding-left: 10px; padding-right: 6px; }
+    .emp-table .col-emp { width: 28%; }
+    .emp-table .col-epf { width: 14%; }
+    .emp-table .col-desig { width: 22%; }
+    .emp-table .col-dept { width: 18%; }
+    .emp-table .col-type { width: 18%; }
+
+    .emp-table tr.selected { background-color: #f0fdf4 !important; }
+    .emp-table tr:hover { background-color: #f8faf9; cursor: pointer; }
+
+    .tag-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .tag-dept { background: #e0f2fe; color: #0369a1; }
+    .tag-permanent { background: #dcfce7; color: #15803d; }
+    .tag-probation { background: #fef3c7; color: #b45309; }
+    .tag-intern { background: #ede9fe; color: #6d28d9; }
+    .tag-general { background: #f3f4f6; color: #4b5563; }
+
+    .selection-counter {
+        background: #10823c;
+        color: #fff;
+        padding: 3px 10px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .visible-counter {
+        font-size: 12px;
+        color: #4b5563;
+        font-weight: 600;
+    }
+
+    .btn-quick-action {
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #fff;
+        color: #374151;
+        cursor: pointer;
+        transition: 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-quick-action:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+
+    .empty-state-box {
+        text-align: center;
+        padding: 35px 20px;
+        color: #6b7280;
+    }
+</style>
+
+<div>
+    <a href="/Training/SessionDetails?id=@Model.Id" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Session Details
+    </a>
+
+    <h1 class="page-h">Edit Training Session</h1>
+    <p class="page-s">Modify session logistics, venue, status, and target attendee enrollments.</p>
+
+    <form method="post" id="editSessionForm">
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger shadow-sm py-2 px-3 mb-3" style="font-size: 13px;"></div>
+
+        <!-- 1. Session Logistics Card -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <span><i class="bi bi-calendar-event me-2"></i> Session Logistics & Status</span>
+            </div>
+            <div class="form-card-body">
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Training Program Title <span class="req">*</span></label>
+                        <select asp-for="SelectedProgramTitle" id="programSelector" class="fi" required>
+                            @foreach (var program in Model.ApprovedPrograms)
+                            {
+                                <option value="@program">@program</option>
+                            }
+                            <option value="Other">-- Other / Custom Program (Type Below) --</option>
+                        </select>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Session Status <span class="req">*</span></label>
+                        <select asp-for="Status" class="fi" required>
+                            <option value="Scheduled">Scheduled</option>
+                            @if (Model.SessionDate.Date < DateTime.Today || Model.Status == "Completed")
+                            {
+                                <option value="Completed">Completed</option>
+                            }
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="fg" id="customProgramWrap" style="display: none; margin-top: -4px;">
+                    <label class="fl">Custom Program Title <span class="req">*</span></label>
+                    <input type="text" asp-for="CustomProgramTitle" id="customProgramInput" class="fi" placeholder="e.g. Executive Negotiation & Deal Structuring" />
+                    <span class="text-muted" style="font-size: 11.5px;">Specify the custom training program title.</span>
+                </div>
+
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Trainer Name <span class="req">*</span></label>
+                        <input type="text" asp-for="TrainerName" class="fi" placeholder="e.g. Senior Appraiser / Faculty" required />
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Venue / Location <span class="req">*</span></label>
+                        <input type="text" asp-for="Location" id="sessionLocation" class="fi" placeholder="e.g. Branch Training Room / Zoom Link" required />
+                    </div>
+                </div>
+
+                <div class="grid-3">
+                    <div class="fg">
+                        <label class="fl">Session Date <span class="req">*</span></label>
+                        <input type="date" asp-for="SessionDate" id="editSessionDateInput" class="fi" required min="@(Model.Status == "Scheduled" ? HRMS.Domain.Common.SriLankaTime.Now.AddDays(1).ToString("yyyy-MM-dd") : null)" />
+                        <span asp-validation-for="SessionDate" class="text-danger" style="font-size: 12px; display: block;"></span>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Start Time <span class="req">*</span></label>
+                        <input type="time" asp-for="StartTimeValue" class="fi" required />
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Branch Scope</label>
+                        <select asp-for="SelectedBranchId" id="branchSelector" class="fi">
+                            <option value="0">All Assigned Branches</option>
+                            @foreach (var b in Model.AvailableBranches)
+                            {
+                                <option value="@b.Id" data-location="@b.Location">@b.Name (@b.Location)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="fg mt-2">
+                    <label class="fl">Session Overview / Description</label>
+                    <textarea asp-for="Description" class="fi" rows="3" placeholder="Additional notes or topics covered in this training session..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. Employee Attendees Selection Card -->
+        <div class="form-card">
+            <div class="form-card-header">
+                <span><i class="bi bi-people me-2"></i> Manage Enrolled Attendees</span>
+                <span id="selectedBadge" class="selection-counter">@Model.SelectedEmployeeIds.Count Selected</span>
+            </div>
+            <div class="form-card-body">
+                <!-- Filter Bar -->
+                <div class="filter-toolbar">
+                    <div class="filter-grid" style="@(Model.AvailableBranches.Count > 1 ? "grid-template-columns: 1.3fr 1fr 1fr 1fr;" : "grid-template-columns: 1.4fr 1fr 1fr;")">
+                        <div class="input-icon-wrap">
+                            <i class="bi bi-search"></i>
+                            <input type="text" id="filterSearchInput" class="fi" placeholder="Search by EPF or Name..." autocomplete="off" />
+                        </div>
+                        @if (Model.AvailableBranches.Count > 1)
+                        {
+                            <div>
+                                <select id="filterBranch" class="fi">
+                                    <option value="">All Branches (@Model.AvailableBranches.Count)</option>
+                                    @foreach (var b in Model.AvailableBranches)
+                                    {
+                                        <option value="@b.Id">@b.Name</option>
+                                    }
+                                </select>
+                            </div>
+                        }
+                        <div>
+                            <select id="filterDepartment" class="fi">
+                                <option value="">All Departments</option>
+                                @foreach (var d in Model.AvailableDepartments)
+                                {
+                                    <option value="@d">@d</option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <select id="filterEmployeeType" class="fi">
+                                <option value="">All Employee Types</option>
+                                @foreach (var t in Model.AvailableEmployeeTypes)
+                                {
+                                    <option value="@t">@t</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="filter-actions">
+                        <div id="visibleCountDisplay" class="visible-counter">
+                            Showing @Model.BranchEmployees.Count employees
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button type="button" id="btnSelectAll" class="btn-quick-action" title="Select all currently visible employees">
+                                <i class="bi bi-check-all"></i> Select Filtered
+                            </button>
+                            <button type="button" id="btnClearSelection" class="btn-quick-action" title="Clear selection">
+                                <i class="bi bi-x-circle"></i> Clear Selection
+                            </button>
+                            <button type="button" id="btnResetFilters" class="btn-quick-action" title="Reset all search and filter inputs">
+                                <i class="bi bi-arrow-counterclockwise"></i> Reset Search
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employees Table -->
+                <div class="emp-table-container">
+                    <table class="emp-table" id="employeesTable">
+                        <thead>
+                            <tr>
+                                <th class="col-chk">
+                                    <input type="checkbox" id="masterCheckbox" title="Toggle selection for visible rows" />
+                                </th>
+                                <th class="col-emp">Employee</th>
+                                <th class="col-epf">EPF</th>
+                                <th class="col-desig">Designation</th>
+                                @if (Model.AvailableBranches.Count > 1)
+                                {
+                                    <th class="col-branch" style="width: 140px;">Branch</th>
+                                }
+                                <th class="col-dept">Department</th>
+                                <th class="col-type">Type</th>
+                            </tr>
+                        </thead>
+                        <tbody id="empTableBody">
+                            @if (!Model.BranchEmployees.Any())
+                            {
+                                <tr>
+                                    <td colspan="@(Model.AvailableBranches.Count > 1 ? 7 : 6)" class="empty-state-box">
+                                        <i class="bi bi-people fs-2 d-block mb-2 text-muted"></i>
+                                        No active employees found for the selected branch.
+                                    </td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var emp in Model.BranchEmployees)
+                                {
+                                    var isChecked = Model.SelectedEmployeeIds.Contains(emp.Id);
+                                    var typeClass = "tag-general";
+                                    if (emp.EmployeeType.Contains("Permanent", StringComparison.OrdinalIgnoreCase)) { typeClass = "tag-permanent"; }
+                                    else if (emp.EmployeeType.Contains("Probation", StringComparison.OrdinalIgnoreCase)) { typeClass = "tag-probation"; }
+                                    else if (emp.EmployeeType.Contains("Intern", StringComparison.OrdinalIgnoreCase)) { typeClass = "tag-intern"; }
+
+                                    <tr class="emp-row @(isChecked ? "selected" : "")" 
+                                        data-branch-id="@emp.BranchId"
+                                        data-dept="@emp.DepartmentName"
+                                        data-type="@emp.EmployeeType"
+                                        data-name="@(emp.NameWithInitials.ToLower().Trim() + " " + emp.FullName.ToLower().Trim())"
+                                        data-epf="@(emp.EPFNumber?.ToLower().Trim() ?? "")">
+                                        <td class="col-chk" onclick="event.stopPropagation();">
+                                            <input type="checkbox" 
+                                                   name="SelectedEmployeeIds" 
+                                                   value="@emp.Id" 
+                                                   class="emp-checkbox" 
+                                                   id="chk_@emp.Id" 
+                                                   @(isChecked ? "checked" : "") />
+                                        </td>
+                                        <td class="col-emp">
+                                            <label for="chk_@emp.Id" style="margin: 0; cursor: pointer; font-weight: 700;">@emp.NameWithInitials</label>
+                                        </td>
+                                        <td class="col-epf emp-epf-cell" style="font-family: monospace; font-size: 13px; font-weight: 700; color: #151811;">
+                                            @emp.EPFNumber
+                                        </td>
+                                        <td class="col-desig">@emp.DesignationName</td>
+                                        @if (Model.AvailableBranches.Count > 1)
+                                        {
+                                            <td class="col-branch">
+                                                <span class="tag-badge" style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 11px;">@emp.BranchName</span>
+                                            </td>
+                                        }
+                                        <td class="col-dept">
+                                            <span class="tag-badge tag-dept">@emp.DepartmentName</span>
+                                        </td>
+                                        <td class="col-type">
+                                            <span class="tag-badge @typeClass">@emp.EmployeeType</span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="noMatchMessage" class="empty-state-box" style="display: none;">
+                    <i class="bi bi-search fs-3 d-block mb-2 text-muted"></i>
+                    No employees match the current search or filter criteria.
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; max-width: 980px; margin: 0 auto 30px auto;">
+            <a href="/Training/SessionDetails?id=@Model.Id" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+            <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                <i class="bi bi-check2-circle me-1"></i> Save Changes & Update Attendees
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            function initEditTrainingScheduler() {
+                var branchSelector = document.getElementById("branchSelector");
+                var filterBranch = document.getElementById("filterBranch");
+                var searchInput = document.getElementById("filterSearchInput");
+                var deptSelector = document.getElementById("filterDepartment");
+                var typeSelector = document.getElementById("filterEmployeeType");
+                var btnSelectAll = document.getElementById("btnSelectAll");
+                var btnClearSelection = document.getElementById("btnClearSelection");
+                var btnResetFilters = document.getElementById("btnResetFilters");
+                var masterCheckbox = document.getElementById("masterCheckbox");
+                var selectedBadge = document.getElementById("selectedBadge");
+                var visibleCountDisplay = document.getElementById("visibleCountDisplay");
+                var noMatchMsg = document.getElementById("noMatchMessage");
+                var rows = Array.from(document.querySelectorAll(".emp-row"));
+
+                var dateInput = document.getElementById("editSessionDateInput") || document.querySelector("input[name='SessionDate']");
+                var statusSelector = document.querySelector("select[name='Status']");
+                if (dateInput) {
+                    var tomorrow = new Date();
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    var yyyy = tomorrow.getFullYear();
+                    var mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+                    var dd = String(tomorrow.getDate()).padStart(2, '0');
+                    var minDateStr = yyyy + '-' + mm + '-' + dd;
+
+                    function checkDateForStatus() {
+                        if (statusSelector && statusSelector.value === 'Scheduled') {
+                            dateInput.min = minDateStr;
+                        } else {
+                            dateInput.removeAttribute('min');
+                        }
+                    }
+
+                    if (statusSelector) {
+                        statusSelector.addEventListener('change', checkDateForStatus);
+                    }
+                    checkDateForStatus();
+
+                    dateInput.addEventListener('change', function () {
+                        if (statusSelector && statusSelector.value === 'Scheduled' && this.value && this.value < minDateStr) {
+                            alert("Scheduled training session date must be tomorrow or later. Today or past dates are not permitted.");
+                            this.value = minDateStr;
+                        }
+                    });
+                }
+
+                function cleanStr(s) {
+                    return (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+                }
+
+                function filterRows() {
+                    var branchVal = filterBranch ? filterBranch.value : "";
+                    var query = (searchInput ? searchInput.value : "").trim().toLowerCase();
+                    var queryClean = cleanStr(query);
+                    var deptVal = deptSelector ? deptSelector.value : "";
+                    var typeVal = typeSelector ? typeSelector.value : "";
+
+                    var visibleCount = 0;
+
+                    rows.forEach(function (row) {
+                        var rowBranch = row.getAttribute("data-branch-id") || "";
+                        var rowDept = row.getAttribute("data-dept") || "";
+                        var rowType = row.getAttribute("data-type") || "";
+                        var rowName = row.getAttribute("data-name") || "";
+                        var rowEpf = row.getAttribute("data-epf") || "";
+                        var rowEpfClean = cleanStr(rowEpf);
+
+                        var matchBranch = (!branchVal || branchVal === "0" || rowBranch === branchVal);
+
+                        // Search by EPF or Name
+                        var matchSearch = true;
+                        if (query) {
+                            matchSearch = rowEpf.indexOf(query) !== -1 ||
+                                          rowName.indexOf(query) !== -1 ||
+                                          (queryClean.length > 0 && rowEpfClean.indexOf(queryClean) !== -1);
+                        }
+
+                        var matchDept = (!deptVal || rowDept === deptVal);
+                        var matchType = (!typeVal || rowType === typeVal);
+
+                        var isVisible = (matchBranch && matchSearch && matchDept && matchType);
+
+                        if (isVisible) {
+                            row.style.display = "";
+                            row.classList.remove("is-hidden", "d-none");
+                            visibleCount++;
+                        } else {
+                            row.style.display = "none";
+                            row.classList.add("is-hidden", "d-none");
+                        }
+                    });
+
+                    if (visibleCountDisplay) {
+                        visibleCountDisplay.textContent = "Showing " + visibleCount + " of " + rows.length + " employees";
+                    }
+
+                    if (noMatchMsg) {
+                        if (visibleCount === 0 && rows.length > 0) {
+                            noMatchMsg.style.display = "block";
+                        } else {
+                            noMatchMsg.style.display = "none";
+                        }
+                    }
+
+                    updateSelectionCounter();
+                }
+
+                function updateSelectionCounter() {
+                    var checkedBoxes = document.querySelectorAll(".emp-checkbox:checked");
+                    if (selectedBadge) {
+                        selectedBadge.textContent = checkedBoxes.length + " Selected";
+                    }
+
+                    rows.forEach(function (row) {
+                        var chk = row.querySelector(".emp-checkbox");
+                        if (chk && chk.checked) {
+                            row.classList.add("selected");
+                        } else {
+                            row.classList.remove("selected");
+                        }
+                    });
+                }
+
+                // Row click handler to toggle checkbox
+                rows.forEach(function (row) {
+                    row.addEventListener("click", function (e) {
+                        if (e.target.tagName !== "INPUT" && e.target.tagName !== "LABEL") {
+                            var chk = this.querySelector(".emp-checkbox");
+                            if (chk) {
+                                chk.checked = !chk.checked;
+                                updateSelectionCounter();
+                            }
+                        }
+                    });
+                });
+
+                document.querySelectorAll(".emp-checkbox").forEach(function (chk) {
+                    chk.addEventListener("change", updateSelectionCounter);
+                });
+
+                if (branchSelector) {
+                    branchSelector.addEventListener("change", function () {
+                        var selVal = branchSelector.value;
+                        if (filterBranch) {
+                            filterBranch.value = (selVal === "0" ? "" : selVal);
+                            filterRows();
+                        }
+                    });
+                }
+
+                if (filterBranch) {
+                    filterBranch.addEventListener("change", filterRows);
+                }
+
+                // REALTIME LISTENERS
+                if (searchInput) {
+                    ["input", "keyup", "paste", "search", "change"].forEach(function (evt) {
+                        searchInput.addEventListener(evt, filterRows);
+                    });
+                }
+
+                if (deptSelector) {
+                    deptSelector.addEventListener("change", filterRows);
+                }
+
+                if (typeSelector) {
+                    typeSelector.addEventListener("change", filterRows);
+                }
+
+                if (btnSelectAll) {
+                    btnSelectAll.addEventListener("click", function () {
+                        rows.forEach(function (row) {
+                            if (row.style.display !== "none" && !row.classList.contains("is-hidden")) {
+                                var chk = row.querySelector(".emp-checkbox");
+                                if (chk) chk.checked = true;
+                            }
+                        });
+                        updateSelectionCounter();
+                    });
+                }
+
+                if (btnClearSelection) {
+                    btnClearSelection.addEventListener("click", function () {
+                        rows.forEach(function (row) {
+                            var chk = row.querySelector(".emp-checkbox");
+                            if (chk) chk.checked = false;
+                        });
+                        updateSelectionCounter();
+                    });
+                }
+
+                if (btnResetFilters) {
+                    btnResetFilters.addEventListener("click", function () {
+                        if (searchInput) searchInput.value = "";
+                        if (filterBranch) filterBranch.value = "";
+                        if (deptSelector) deptSelector.value = "";
+                        if (typeSelector) typeSelector.value = "";
+                        filterRows();
+                    });
+                }
+
+                if (masterCheckbox) {
+                    masterCheckbox.addEventListener("change", function () {
+                        var checked = this.checked;
+                        rows.forEach(function (row) {
+                            if (row.style.display !== "none" && !row.classList.contains("is-hidden")) {
+                                var chk = row.querySelector(".emp-checkbox");
+                                if (chk) chk.checked = checked;
+                            }
+                        });
+                        updateSelectionCounter();
+                    });
+                }
+
+                var progSelector = document.getElementById("programSelector");
+                var customWrap = document.getElementById("customProgramWrap");
+                var customInput = document.getElementById("customProgramInput");
+
+                function toggleCustomProgram() {
+                    if (progSelector && progSelector.value === "Other") {
+                        if (customWrap) customWrap.style.display = "block";
+                        if (customInput) customInput.setAttribute("required", "required");
+                    } else {
+                        if (customWrap) customWrap.style.display = "none";
+                        if (customInput) customInput.removeAttribute("required");
+                    }
+                }
+
+                if (progSelector) {
+                    progSelector.addEventListener("change", toggleCustomProgram);
+                }
+
+                toggleCustomProgram();
+                filterRows();
+                updateSelectionCounter();
+            }
+
+            if (document.readyState === "loading") {
+                document.addEventListener("DOMContentLoaded", initEditTrainingScheduler);
+            } else {
+                initEditTrainingScheduler();
+            }
+        })();
+    </script>
+}

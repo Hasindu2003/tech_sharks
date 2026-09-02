@@ -1,0 +1,765 @@
+@page
+@model HRMS.UI.Pages.Training.SessionDetailsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.SessionDetails?.Title ?? "Session Details";
+}
+
+<style>
+    .page-h { font-size: 21px; font-weight: 800; color: #151811; margin: 0 0 4px 0; }
+    .page-s { font-size: 13px; color: #7a8863; margin: 0 0 20px 0; }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+        transition: 0.2s;
+        font-weight: 600;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #10823c; text-decoration: none; }
+
+    /* Session Logistics Hero Card */
+    .logistics-hero-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .logistics-header {
+        background: linear-gradient(135deg, #f7faf8 0%, #ffffff 100%);
+        border-bottom: 1px solid #e2e5dc;
+        padding: 16px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .logistics-header-title {
+        font-size: 12.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #10823c;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Modern Logistics Grid */
+    .logistics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        padding: 22px;
+        background: #fff;
+    }
+    .logistics-item {
+        background: #fbfcfb;
+        border: 1px solid #eef0eb;
+        border-radius: 10px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        transition: 0.2s ease;
+    }
+    .logistics-item:hover {
+        background: #f6f9f6;
+        border-color: #d1e7dd;
+    }
+    .logistics-icon-box {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: #e8f5e9;
+        color: #10823c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .logistics-meta { flex-grow: 1; }
+    .logistics-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #7a8863;
+        margin-bottom: 3px;
+    }
+    .logistics-val {
+        font-size: 14px;
+        font-weight: 700;
+        color: #151811;
+        line-height: 1.3;
+        margin-bottom: 2px;
+    }
+    .logistics-sub {
+        font-size: 11.5px;
+        color: #8c9878;
+        font-weight: 500;
+    }
+
+    .overview-container {
+        padding: 0 22px 20px 22px;
+    }
+    .overview-box {
+        background: #f8faf9;
+        border-left: 3.5px solid #10823c;
+        border-radius: 0 8px 8px 0;
+        padding: 14px 18px;
+        font-size: 13.5px;
+        color: #27272a;
+        line-height: 1.55;
+    }
+    .overview-title {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #10823c;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    /* Table & Roster Card */
+    .roster-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        overflow: hidden;
+        margin-bottom: 24px;
+    }
+    .roster-card-header {
+        background: #f9fafb;
+        border-bottom: 1px solid #e2e5dc;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .roster-title {
+        font-size: 12.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .status-badge {
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .status-scheduled { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .status-completed { background: #e0f2fe; color: #0369a1; }
+    .status-cancelled { background: #fee2e2; color: #b91c1c; }
+
+    .emp-table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
+    .emp-table th {
+        background: #f9fafb;
+        padding: 12px 16px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #e2e5dc;
+        text-align: left;
+    }
+    .emp-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f0f2ed;
+        font-size: 13.5px;
+        color: #151811;
+        vertical-align: middle;
+        text-align: left;
+    }
+    .emp-table tr:hover { background-color: #fbfcfb; }
+
+    .tag-badge {
+        display: inline-block;
+        padding: 3px 9px;
+        border-radius: 12px;
+        font-size: 11.5px;
+        font-weight: 600;
+        line-height: 1.2;
+    }
+    .tag-dept { background: #e0f2fe; color: #0369a1; }
+    .tag-permanent { background: #dcfce7; color: #15803d; }
+    .tag-probation { background: #fef3c7; color: #b45309; }
+    .tag-intern { background: #ede9fe; color: #6d28d9; }
+    .tag-general { background: #f3f4f6; color: #4b5563; }
+
+    .col-idx { width: 44px; text-align: center; color: #9ca3af; }
+    .col-name { width: 30%; }
+    .col-branch-dept { width: 28%; }
+    .col-desig { width: 26%; }
+    .col-type { width: 14%; }
+
+    /* Participant Feedback Styles */
+    .feedback-hero-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 12px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.04);
+        overflow: hidden;
+        margin-top: 24px;
+        margin-bottom: 24px;
+    }
+    .feedback-header {
+        background: linear-gradient(135deg, #f7faf8 0%, #ffffff 100%);
+        border-bottom: 1px solid #e2e5dc;
+        padding: 16px 22px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .feedback-header-title {
+        font-size: 12.5px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #10823c;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .feedback-body {
+        padding: 22px;
+    }
+    .rating-summary-container {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 16px 20px;
+        background: #f8faf9;
+        border: 1px solid #eef0eb;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+    .rating-score-box {
+        text-align: center;
+        padding-right: 20px;
+        border-right: 1px solid #e2e5dc;
+        flex-shrink: 0;
+    }
+    .rating-big-num {
+        font-size: 32px;
+        font-weight: 800;
+        color: #151811;
+        line-height: 1;
+    }
+    .rating-stars {
+        color: #f59e0b;
+        font-size: 15px;
+        margin-top: 4px;
+    }
+    .feedback-form-box {
+        background: #fbfcfb;
+        border: 1px solid #d1e7dd;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+    .feedback-textarea {
+        width: 100%;
+        min-height: 95px;
+        padding: 12px 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-family: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+        color: #0f172a;
+        background: #ffffff;
+        box-sizing: border-box;
+        line-height: 1.5;
+        resize: vertical;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        display: block;
+    }
+    .feedback-textarea:focus {
+        outline: none;
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.12);
+        background: #ffffff;
+    }
+    .feedback-textarea::placeholder {
+        color: #94a3b8;
+        font-size: 13px;
+    }
+    .star-rating-input {
+        display: flex;
+        gap: 8px;
+        font-size: 26px;
+        color: #d1d5db;
+        cursor: pointer;
+        margin: 6px 0 10px 0;
+    }
+    .star-rating-input i:hover,
+    .star-rating-input i.active {
+        color: #f59e0b;
+    }
+    .feedback-card-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+    .feedback-review-card {
+        background: #fbfcfb;
+        border: 1px solid #eef0eb;
+        border-radius: 10px;
+        padding: 16px 18px;
+        transition: 0.15s ease;
+    }
+    .feedback-review-card:hover {
+        background: #f6f9f6;
+        border-color: #d1e7dd;
+    }
+
+</style>
+
+<div>
+    <a href="/Training/Sessions" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Sessions
+    </a>
+
+    @if (Model.SessionDetails == null)
+    {
+        <div class="alert alert-warning">
+            Training session details could not be found. <a href="/Training/Sessions">Return to sessions list</a>.
+        </div>
+    }
+    else
+    {
+        var s = Model.SessionDetails;
+        var statusClass = s.Status == "Completed" ? "status-completed" : (s.Status == "Cancelled" ? "status-cancelled" : "status-scheduled");
+
+        <!-- Top Header Action Row -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px; flex-wrap:wrap; gap:12px;">
+            <div>
+                <h1 class="page-h">@s.Title</h1>
+                <p class="page-s">Training program schedule, venue logistics, and enrolled employee roster.</p>
+            </div>
+            <div class="header-actions" style="display: flex; gap: 8px; align-items: center; flex-wrap:wrap;">
+                <span class="status-badge @statusClass">
+                    <i class="bi @(s.Status == "Completed" ? "bi-check-circle" : (s.Status == "Cancelled" ? "bi-x-circle" : "bi-calendar-check"))"></i>
+                    @s.Status
+                </span>
+                @if (User.IsInRole("Area Manager") || User.IsInRole("Branch Manager"))
+                {
+                    <a href="/Training/EditSession?id=@s.Id" class="btn-kanrich btn-kanrich-primary" style="padding: 7px 16px; font-size: 12.5px;">
+                        <i class="bi bi-pencil-square me-1"></i> Edit Session & Attendees
+                    </a>
+                }
+            </div>
+        </div>
+
+        <!-- 1. Redesigned Session Logistics Section -->
+        <div class="logistics-hero-card">
+            <div class="logistics-header">
+                <span class="logistics-header-title">
+                    <i class="bi bi-calendar2-range"></i> Program Logistics & Scheduling
+                </span>
+                <span class="text-muted" style="font-size: 12px;">Session ID #@s.Id</span>
+            </div>
+
+            <div class="logistics-grid">
+                <!-- Date Tile -->
+                <div class="logistics-item">
+                    <div class="logistics-icon-box">
+                        <i class="bi bi-calendar-event"></i>
+                    </div>
+                    <div class="logistics-meta">
+                        <div class="logistics-label">Session Date</div>
+                        <div class="logistics-val">@s.Date.ToString("dd MMM yyyy")</div>
+                        <div class="logistics-sub">@s.Date.ToString("dddd")</div>
+                    </div>
+                </div>
+
+                <!-- Time Tile -->
+                <div class="logistics-item">
+                    <div class="logistics-icon-box">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="logistics-meta">
+                        <div class="logistics-label">Start Time</div>
+                        <div class="logistics-val">@DateTime.Today.Add(s.StartTime).ToString("hh:mm tt")</div>
+                        <div class="logistics-sub">@(s.DurationHours > 0 ? $"{s.DurationHours} Hours Allocated" : "Scheduled Session")</div>
+                    </div>
+                </div>
+
+                <!-- Trainer Tile -->
+                <div class="logistics-item">
+                    <div class="logistics-icon-box">
+                        <i class="bi bi-person-badge"></i>
+                    </div>
+                    <div class="logistics-meta">
+                        <div class="logistics-label">Trainer / Faculty</div>
+                        <div class="logistics-val">@s.TrainerName</div>
+                        <div class="logistics-sub">Lead Facilitator</div>
+                    </div>
+                </div>
+
+                <!-- Location Tile -->
+                <div class="logistics-item">
+                    <div class="logistics-icon-box">
+                        <i class="bi bi-geo-alt"></i>
+                    </div>
+                    <div class="logistics-meta">
+                        <div class="logistics-label">Location / Venue</div>
+                        <div class="logistics-val">@s.Location</div>
+                        <div class="logistics-sub">Training Venue</div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(s.Description))
+            {
+                <div class="overview-container">
+                    <div class="overview-box">
+                        <div class="overview-title">
+                            <i class="bi bi-card-text"></i> Session Overview & Objectives
+                        </div>
+                        <div>@s.Description</div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- 2. Enrolled Employees List Card -->
+        <div class="roster-card">
+            <div class="roster-card-header">
+                <span class="roster-title">
+                    <i class="bi bi-people"></i> Enrolled Attendee Roster
+                </span>
+                <span class="badge bg-success" style="font-size: 11.5px; border-radius: 12px; padding: 4px 10px;">
+                    @s.Attendees.Count Attendees Enrolled
+                </span>
+            </div>
+            <div class="table-responsive">
+                <table class="emp-table" id="tblSessionAttendees">
+                    <thead>
+                        <tr>
+                            <th class="col-idx">#</th>
+                            <th class="col-name">Employee</th>
+                            <th class="col-branch-dept">Branch & Department</th>
+                            <th class="col-desig">Designation</th>
+                            <th class="col-type">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (!s.Attendees.Any())
+                        {
+                            <tr class="empty-row">
+                                <td colspan="5" class="text-center py-4 text-muted">
+                                    <i class="bi bi-people fs-3 d-block mb-2 text-muted"></i>
+                                    No employees are currently enrolled in this training session.
+                                </td>
+                            </tr>
+                        }
+                        else
+                        {
+                            var idx = 1;
+                            foreach (var att in s.Attendees)
+                            {
+                                var typeClass = "tag-general";
+                                if (att.EmployeeType.Contains("Permanent", StringComparison.OrdinalIgnoreCase)) { typeClass = "tag-permanent"; }
+                                else if (att.EmployeeType.Contains("Probation", StringComparison.OrdinalIgnoreCase)) { typeClass = "tag-probation"; }
+                                else if (att.EmployeeType.Contains("Intern", StringComparison.OrdinalIgnoreCase)) { typeClass = "tag-intern"; }
+
+                                <tr>
+                                    <td class="col-idx">@(idx++)</td>
+                                    <td class="col-name">
+                                        <strong style="color: #151811; display: block; line-height: 1.3;">@att.NameWithInitials</strong>
+                                        <div style="font-family: monospace; font-size: 11.5px; font-weight: 600; color: #64748b; margin-top: 2px;">
+                                            EPF: @att.EPFNumber
+                                        </div>
+                                    </td>
+                                    <td class="col-branch-dept">
+                                        <div style="display: flex; flex-direction: column; gap: 4px; align-items: flex-start;">
+                                            <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="bi bi-geo-alt" style="font-size: 10.5px;"></i> @att.BranchName
+                                            </span>
+                                            <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 11.5px; font-weight: 600; padding: 2px 8px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                                <i class="bi bi-building" style="font-size: 10.5px;"></i> @att.DepartmentName
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="col-desig">@att.DesignationName</td>
+                                    <td class="col-type">
+                                        <span class="tag-badge @typeClass">@att.EmployeeType</span>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. Participant Feedback Section (Visible when session is Completed) -->
+        @if (s.Status == "Completed")
+        {
+            <div class="feedback-hero-card" id="feedbackSection">
+                <div class="feedback-header">
+                    <span class="feedback-header-title">
+                        <i class="bi bi-star-fill"></i> Participant Feedback & Ratings
+                    </span>
+                    <span class="badge" style="background: #e8f5e9; color: #10823c; font-size: 11.5px; border-radius: 12px; padding: 4px 10px; font-weight: 700;">
+                        @Model.TotalFeedbackCount @(Model.TotalFeedbackCount == 1 ? "Review" : "Reviews")
+                    </span>
+                </div>
+                <div class="feedback-body">
+                    <!-- Rating Summary Box -->
+                    <div class="rating-summary-container">
+                        <div class="rating-score-box">
+                            <div class="rating-big-num">@(Model.TotalFeedbackCount > 0 ? Model.AverageRating.ToString("0.0") : "—")</div>
+                            <div class="rating-stars">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Round(Model.AverageRating))
+                                    {
+                                        <i class="bi bi-star-fill"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="bi bi-star" style="color: #cbd5e1;"></i>
+                                    }
+                                }
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 700; color: #151811;">Overall Participant Satisfaction</div>
+                            <div style="font-size: 12.5px; color: #7a8863; margin-top: 2px;">
+                                @if (Model.TotalFeedbackCount > 0)
+                                {
+                                    <span>Based on @Model.TotalFeedbackCount participant feedback @(Model.TotalFeedbackCount == 1 ? "submission" : "submissions")</span>
+                                }
+                                else
+                                {
+                                    <span>Waiting for participants to submit their feedback</span>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Enrolled Employee Feedback Submission Form -->
+                    @if (Model.IsEnrolledAttendee)
+                    {
+                        @if (Model.HasSubmittedFeedback && Model.UserFeedback != null)
+                        {
+                            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 20px; margin-bottom: 22px;">
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px;">
+                                    <div>
+                                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                                            <span style="font-size: 12px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.04em;">Your Submitted Feedback</span>
+                                            <span style="font-size: 11.5px; color: #7a8863;">· @Model.UserFeedback.SubmissionDate.ToString("dd MMM yyyy, hh:mm tt")</span>
+                                        </div>
+                                        <div style="color: #f59e0b; font-size: 16px; margin-bottom: 6px;">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                <i class="bi bi-star@(i <= Model.UserFeedback.Rating ? "-fill" : "")"></i>
+                                            }
+                                            <span style="font-size: 13px; font-weight: 700; color: #151811; margin-left: 6px;">@Model.UserFeedback.Rating / 5</span>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(Model.UserFeedback.Comments))
+                                        {
+                                            <div style="font-size: 13.5px; color: #334155; line-height: 1.5; font-style: italic;">
+                                                "@Model.UserFeedback.Comments"
+                                            </div>
+                                        }
+                                    </div>
+                                    <button type="button" class="btn-kanrich btn-kanrich-outline" style="padding: 4px 12px; font-size: 12px;" onclick="document.getElementById('feedbackFormWrapper').style.display = document.getElementById('feedbackFormWrapper').style.display === 'none' ? 'block' : 'none';">
+                                        <i class="bi bi-pencil-square me-1"></i> Edit Feedback
+                                    </button>
+                                </div>
+                            </div>
+                        }
+
+                        <div id="feedbackFormWrapper" class="feedback-form-box" style="display: @(Model.HasSubmittedFeedback ? "none" : "block");">
+                            <form method="post" asp-page-handler="SubmitFeedback">
+                                <input type="hidden" name="trainingId" value="@s.Id" />
+                                <input type="hidden" name="rating" id="ratingInput" value="@(Model.UserFeedback?.Rating ?? 5)" />
+
+                                <div style="font-size: 14px; font-weight: 800; color: #151811; margin-bottom: 4px;">
+                                    @(Model.HasSubmittedFeedback ? "Update Your Feedback" : "Share Your Training Experience")
+                                </div>
+                                <div style="font-size: 12.5px; color: #7a8863; margin-bottom: 12px;">
+                                    Please rate the session quality, trainer effectiveness, and provide your feedback.
+                                </div>
+
+                                <div style="margin-bottom: 14px;">
+                                    <label style="font-size: 12px; font-weight: 700; color: #334155; display: block;">Your Rating *</label>
+                                    <div class="star-rating-input" id="starRatingContainer">
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            var activeClass = i <= (Model.UserFeedback?.Rating ?? 5) ? "active bi-star-fill" : "bi-star";
+                                            <i class="bi @activeClass" data-val="@i" onclick="setRating(@i)"></i>
+                                        }
+                                        <span id="ratingLabel" style="font-size: 13px; font-weight: 700; color: #10823c; align-self: center; margin-left: 8px;">
+                                            @(Model.UserFeedback?.Rating switch { 1 => "1 - Poor", 2 => "2 - Fair", 3 => "3 - Good", 4 => "4 - Very Good", _ => "5 - Excellent" })
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 16px;">
+                                    <label style="font-size: 12.5px; font-weight: 700; color: #334155; display: block; margin-bottom: 6px;">
+                                        Comments & Key Learnings <span style="font-size: 11.5px; font-weight: 500; color: #7a8863;">(Optional)</span>
+                                    </label>
+                                    <textarea name="comments" rows="3" class="feedback-textarea" placeholder="Share what went well, key takeaways from the program, or suggestions for future sessions...">@(Model.UserFeedback?.Comments ?? "")</textarea>
+                                </div>
+
+                                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                                    @if (Model.HasSubmittedFeedback)
+                                    {
+                                        <button type="button" class="btn-kanrich btn-kanrich-outline" onclick="document.getElementById('feedbackFormWrapper').style.display = 'none';">Cancel</button>
+                                    }
+                                    <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                                        <i class="bi bi-send-fill me-1"></i> Submit Feedback
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    }
+
+                    <!-- All Participant Reviews (Visible to all viewers) -->
+                    <div style="margin-top: 10px;">
+                        <div style="font-size: 13px; font-weight: 800; color: #151811; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px;">
+                            Participant Reviews (@Model.Feedbacks.Count)
+                        </div>
+
+                        @if (!Model.Feedbacks.Any())
+                        {
+                            <div style="text-align: center; padding: 28px 14px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; font-size: 13px;">
+                                <i class="bi bi-chat-square-quote fs-3 d-block mb-2 text-muted"></i>
+                                No feedback has been submitted yet by participating employees.
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="feedback-card-list">
+                                @foreach (var f in Model.Feedbacks)
+                                {
+                                    <div class="feedback-review-card">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="width: 36px; height: 36px; border-radius: 50%; background: #e8f5e9; color: #10823c; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;">
+                                                    @(f.EmployeeName.Length > 0 ? f.EmployeeName.Substring(0, 1) : "E")
+                                                </div>
+                                                <div>
+                                                    <div style="font-size: 13.5px; font-weight: 700; color: #151811;">@f.EmployeeName</div>
+                                                    <div style="font-size: 11.5px; color: #7a8863;">@f.DesignationName · @f.DepartmentName</div>
+                                                </div>
+                                            </div>
+                                            <div style="text-align: right;">
+                                                <div style="color: #f59e0b; font-size: 14px;">
+                                                    @for (int i = 1; i <= 5; i++)
+                                                    {
+                                                        <i class="bi bi-star@(i <= f.Rating ? "-fill" : "")"></i>
+                                                    }
+                                                </div>
+                                                <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">
+                                                    @f.SubmissionDate.ToString("dd MMM yyyy")
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @if (!string.IsNullOrWhiteSpace(f.Comments))
+                                        {
+                                            <div style="font-size: 13px; color: #334155; line-height: 1.5; background: #fff; border: 1px solid #f1f5f9; border-radius: 8px; padding: 10px 14px; margin-top: 6px;">
+                                                @f.Comments
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="header-actions" style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; border-top: 1px solid #e2e5dc; padding-top: 18px; flex-wrap:wrap;">
+            @if (User.IsInRole("Area Manager") || User.IsInRole("Branch Manager"))
+            {
+                @if (s.Status == "Scheduled")
+                {
+                    @if (s.Date.Date < DateTime.Today)
+                    {
+                        <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@s.Id" asp-route-status="Completed" style="display:inline;">
+                            <button type="submit" class="btn-kanrich btn-kanrich-primary" onclick="return confirm('Mark this training session as Completed?');">
+                                <i class="bi bi-check2-circle me-1"></i> Mark Completed
+                            </button>
+                        </form>
+                    }
+
+                    <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@s.Id" asp-route-status="Cancelled" style="display:inline;">
+                        <button type="submit" class="btn-kanrich btn-kanrich-danger" onclick="return confirm('Are you sure you want to Cancel this training session?');">
+                            <i class="bi bi-x-circle me-1"></i> Cancel Session
+                        </button>
+                    </form>
+                }
+                <a href="/Training/EditSession?id=@s.Id" class="btn-kanrich btn-kanrich-outline">
+                    <i class="bi bi-pencil-square me-1"></i> Edit Session & Attendees
+                </a>
+            }
+            <a href="/Training/Sessions" class="btn-kanrich btn-kanrich-outline">Return to Sessions</a>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('tblSessionAttendees', 10);
+            }
+        });
+
+        function setRating(val) {
+            document.getElementById('ratingInput').value = val;
+            const stars = document.querySelectorAll('#starRatingContainer i');
+            const labels = {
+                1: '1 - Poor',
+                2: '2 - Fair',
+                3: '3 - Good',
+                4: '4 - Very Good',
+                5: '5 - Excellent'
+            };
+            stars.forEach((star, idx) => {
+                const starVal = idx + 1;
+                if (starVal <= val) {
+                    star.classList.add('active', 'bi-star-fill');
+                    star.classList.remove('bi-star');
+                } else {
+                    star.classList.remove('active', 'bi-star-fill');
+                    star.classList.add('bi-star');
+                }
+            });
+            const lbl = document.getElementById('ratingLabel');
+            if (lbl) {
+                lbl.textContent = labels[val] || (val + ' Stars');
+            }
+        }
+    </script>
+}

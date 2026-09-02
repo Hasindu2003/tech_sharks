@@ -1,6 +1,6 @@
 @page
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "HR Manager")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer")]
 @model HRMS.UI.Pages.Termination.CreateRequestModel
 @{
     ViewData["Title"] = "Employee Termination";
@@ -30,11 +30,28 @@
     .text-danger.small { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
     .emp-info-panel { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 12px; }
     .override-block { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-top: 12px; }
+    .search-select-wrapper { position: relative; width: 100%; }
+    .search-select-trigger { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; }
+    .search-select-trigger:focus, .search-select-trigger.active { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.12); }
+    .search-select-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 50; max-height: 320px; display: flex; flex-direction: column; overflow: hidden; }
+    .search-select-header { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; background: #fafafa; position: sticky; top: 0; }
+    .search-select-input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; font-family: 'Manrope', sans-serif; }
+    .search-select-input:focus { border-color: #10823c; }
+    .search-select-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; }
+    .search-select-list { overflow-y: auto; max-height: 250px; padding: 4px 0; margin: 0; list-style: none; }
+    .search-select-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: background 0.15s; }
+    .search-select-item:hover, .search-select-item.highlighted { background: #f0fdf4; }
+    .search-select-item.selected { background: #dcfce7; }
+    .search-select-avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #334155; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .search-select-name { font-size: 13.5px; font-weight: 600; color: #151811; line-height: 1.2; }
+    .search-select-sub { font-size: 11.5px; color: #7a8863; line-height: 1.2; margin-top: 2px; }
+    .search-select-epf-badge { background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; border: 1px solid #e2e8f0; }
+    .search-select-empty { padding: 16px; text-align: center; font-size: 13px; color: #9ca3af; }
 </style>
 
-<a asp-page="/Termination/Requests" class="back-link">
+<a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Terminations" class="back-link">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to List
+    Back to Separation Hub
 </a>
 <h2 class="page-h">New Termination Request</h2>
 <p class="page-s">Initiate an employee termination process</p>
@@ -44,14 +61,17 @@
     <div class="error-banner">@errorMsg</div>
 }
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="terminationForm">
     <div asp-validation-summary="ModelOnly" class="error-banner" style="display:none"></div>
 
     <div class="form-section">
         <div class="fst">Employee Selection</div>
+        
         <div class="fg" style="margin-bottom:0">
-            <label asp-for="Input.SelectedEmployeeEmail" class="fl">Select Employee <span class="req">*</span></label>
-            <select asp-for="Input.SelectedEmployeeEmail" class="fi" id="employeeSelect" onchange="populateEmployeeInfo()">
+            <label asp-for="Input.SelectedEmployeeEmail" class="fl">Select Employee to Terminate <span class="req">*</span></label>
+            
+            <!-- Hidden native select for standard model binding & validation -->
+            <select asp-for="Input.SelectedEmployeeEmail" id="employeeSelect" style="display:none">
                 <option value="">-- Select an employee --</option>
                 @foreach (var emp in Model.Employees)
                 {
@@ -65,6 +85,52 @@
                     </option>
                 }
             </select>
+
+            <!-- Custom Searchable Dropdown with Search Inside -->
+            <div class="search-select-wrapper" id="searchSelectWrapper">
+                <div class="search-select-trigger" id="searchSelectTrigger" tabindex="0">
+                    <span id="searchSelectTriggerText" style="color:#7a8863">
+                        <i class="bi bi-search" style="margin-right:4px"></i> Search employee by EPF or Name...
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8863" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+
+                <div class="search-select-menu" id="searchSelectMenu" style="display:none">
+                    <div class="search-select-header" style="position:relative">
+                        <svg class="search-select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="internalSearchInput" class="search-select-input" placeholder="Type EPF (e.g. 1045) or name..." autocomplete="off" />
+                        <span id="searchCountBadge" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:11px;color:#7a8863;font-weight:700"></span>
+                    </div>
+                    <ul class="search-select-list" id="searchSelectList">
+                        @foreach (var emp in Model.Employees)
+                        {
+                            var nameParts = (emp.FullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            <li class="search-select-item"
+                                data-value="@emp.Email"
+                                data-name="@emp.FullName"
+                                data-epf="@emp.EpfNumber"
+                                data-branch="@emp.Branch"
+                                data-dept="@emp.Department"
+                                data-desig="@emp.Designation"
+                                onclick="selectEmployeeOption('@emp.Email')">
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <div class="search-select-avatar">@initials</div>
+                                    <div>
+                                        <div class="search-select-name">@emp.FullName</div>
+                                        <div class="search-select-sub">@emp.Designation &bull; @emp.Department &bull; @emp.Branch</div>
+                                    </div>
+                                </div>
+                                <div class="search-select-epf-badge">EPF: @emp.EpfNumber</div>
+                            </li>
+                        }
+                    </ul>
+                    <div id="searchSelectEmpty" class="search-select-empty" style="display:none">
+                        No employees found matching your search.
+                    </div>
+                </div>
+            </div>
+
             <span asp-validation-for="Input.SelectedEmployeeEmail" class="text-danger small"></span>
 
             <div id="employeeInfoPanel" style="display:none" class="emp-info-panel">
@@ -95,13 +161,8 @@
                 <span asp-validation-for="Input.TerminationType" class="text-danger small"></span>
             </div>
             <div class="fg">
-                <label asp-for="Input.InitiationDate" class="fl">Initiation Date <span class="req">*</span></label>
-                <input asp-for="Input.InitiationDate" type="date" class="fi" />
-                <span asp-validation-for="Input.InitiationDate" class="text-danger small"></span>
-            </div>
-            <div class="fg">
                 <label asp-for="Input.EffectiveTerminationDate" class="fl">Effective Termination Date <span class="req">*</span></label>
-                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" />
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" min="@SriLankaTime.Today.ToString("yyyy-MM-dd")" />
                 <span asp-validation-for="Input.EffectiveTerminationDate" class="text-danger small"></span>
             </div>
         </div>
@@ -110,75 +171,39 @@
             <textarea asp-for="Input.ReasonForTermination" class="fi" rows="3" placeholder="Provide a detailed reason for the termination..."></textarea>
             <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
         </div>
-        <div class="grid-2">
-            <div class="fg">
-                <label asp-for="Input.SupervisorRemarks" class="fl">Supervisor Remarks</label>
-                <textarea asp-for="Input.SupervisorRemarks" class="fi" rows="2" placeholder="Optional supervisor remarks..."></textarea>
-            </div>
-            <div class="fg">
-                <label asp-for="Input.SpecialRemarks" class="fl">Special Remarks / Notes</label>
-                <textarea asp-for="Input.SpecialRemarks" class="fi" rows="2" placeholder="Any special notes..."></textarea>
-            </div>
-        </div>
     </div>
 
     <div class="form-section">
-        <div class="fst">Employee Obligations</div>
-        <div class="grid-2" style="margin-bottom:14px">
-            <div class="fg">
-                <label asp-for="Input.DirectObligations" class="fl">Direct Obligations (e.g. outstanding loans)</label>
-                <textarea asp-for="Input.DirectObligations" class="fi" rows="2" placeholder="List any direct financial obligations..."></textarea>
-            </div>
-            <div class="fg">
-                <label asp-for="Input.IndirectObligations" class="fl">Indirect Obligations (e.g. loan guarantor)</label>
-                <textarea asp-for="Input.IndirectObligations" class="fi" rows="2" placeholder="List any indirect obligations..."></textarea>
-            </div>
-        </div>
-        <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:12px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
-                Employee has outstanding loan balances
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
-                Employee is a loan guarantor
-            </label>
-        </div>
-        <div class="override-block">
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#92400e">
-                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b" />
-                Senior Management Override (allows termination despite outstanding obligations)
-            </label>
-        </div>
-    </div>
-
-    <div class="form-section">
-        <div class="fst">Supporting Documents</div>
+        <div class="fst">Supporting Documents <span class="req">*</span></div>
         <div class="grid-2">
             <div class="fg">
-                <label asp-for="Input.DocumentType" class="fl">Document Type</label>
+                <label asp-for="Input.DocumentType" class="fl">Document Type <span class="req">*</span></label>
                 <select asp-for="Input.DocumentType" class="fi">
                     <option value="TerminationLetter">Termination Letter</option>
-                    <option value="DisciplinaryReport">Disciplinary Investigation Report</option>
-                    <option value="WarningLetter">Warning Letter</option>
-                    <option value="Other" selected>Other</option>
+                    <option value="InquiryReport">Inquiry / Investigation Report</option>
+                    <option value="MedicalReport">Medical Report</option>
+                    <option value="ContractDocument">Contract Document</option>
+                    <option value="ClearanceForm">Clearance Form</option>
+                    <option value="Other" selected>Other Supporting Document</option>
                 </select>
             </div>
             <div class="fg">
-                <label asp-for="Input.Documents" class="fl">Upload Files</label>
-                <input asp-for="Input.Documents" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
-                <span class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</span>
+                <label asp-for="Input.Documents" class="fl">Upload Files <span class="req">*</span></label>
+                <input asp-for="Input.Documents" id="terminationDocInput" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
+                <span class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each (Mandatory)</span>
+                <span id="docValidationMsg" class="text-danger small" style="display:none;font-weight:600;margin-top:5px"><i class="bi bi-exclamation-circle me-1"></i>At least one supporting document must be attached to submit a termination request.</span>
+                <span asp-validation-for="Input.Documents" class="text-danger small"></span>
             </div>
         </div>
     </div>
 
     <div style="display:flex;gap:12px;justify-content:flex-end">
-        <a asp-page="/Termination/Requests" class="btn-outline">Cancel</a>
-        <button type="submit" asp-page-handler="SaveDraft" class="btn-outline">
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Terminations" class="btn-outline">Cancel</a>
+        <button type="submit" asp-page-handler="SaveDraft" id="btnSaveDraft" class="btn-outline">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Save as Draft
         </button>
-        <button type="submit" asp-page-handler="Submit" class="btn-create">
+        <button type="submit" asp-page-handler="Submit" id="btnSubmitForApproval" class="btn-create">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             Submit for Approval
         </button>
@@ -187,24 +212,177 @@
 
 @section Scripts {
     <script>
+        const trigger = document.getElementById('searchSelectTrigger');
+        const triggerText = document.getElementById('searchSelectTriggerText');
+        const menu = document.getElementById('searchSelectMenu');
+        const searchInput = document.getElementById('internalSearchInput');
+        const searchCountBadge = document.getElementById('searchCountBadge');
+        const list = document.getElementById('searchSelectList');
+        const emptyState = document.getElementById('searchSelectEmpty');
+        const nativeSelect = document.getElementById('employeeSelect');
+        const panel = document.getElementById('employeeInfoPanel');
+
+        let isDropdownOpen = false;
+
+        function openDropdown() {
+            menu.style.display = 'flex';
+            trigger.classList.add('active');
+            isDropdownOpen = true;
+            searchInput.value = '';
+            filterInsideDropdown('');
+            setTimeout(() => searchInput.focus(), 50);
+        }
+
+        function closeDropdown() {
+            menu.style.display = 'none';
+            trigger.classList.remove('active');
+            isDropdownOpen = false;
+        }
+
+        function toggleDropdown(e) {
+            if (e) e.stopPropagation();
+            if (isDropdownOpen) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+        }
+
+        if (trigger) {
+            trigger.addEventListener('click', toggleDropdown);
+            trigger.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    openDropdown();
+                }
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                filterInsideDropdown(this.value);
+            });
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeDropdown();
+                    trigger.focus();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    // Select first visible item
+                    const visibleItems = Array.from(list.querySelectorAll('.search-select-item')).filter(i => i.style.display !== 'none');
+                    if (visibleItems.length > 0) {
+                        const val = visibleItems[0].getAttribute('data-value');
+                        selectEmployeeOption(val);
+                    }
+                }
+            });
+        }
+
+        function filterInsideDropdown(term) {
+            const cleanTerm = (term || '').trim().toLowerCase();
+            const items = list.querySelectorAll('.search-select-item');
+            let matchCount = 0;
+
+            items.forEach(item => {
+                const epf = (item.getAttribute('data-epf') || '').toLowerCase();
+                const name = (item.getAttribute('data-name') || '').toLowerCase();
+                const branch = (item.getAttribute('data-branch') || '').toLowerCase();
+                const dept = (item.getAttribute('data-dept') || '').toLowerCase();
+                const desig = (item.getAttribute('data-desig') || '').toLowerCase();
+
+                if (!cleanTerm || epf.includes(cleanTerm) || name.includes(cleanTerm) || branch.includes(cleanTerm) || dept.includes(cleanTerm) || desig.includes(cleanTerm)) {
+                    item.style.display = 'flex';
+                    matchCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (searchCountBadge) {
+                searchCountBadge.textContent = cleanTerm ? `${matchCount} found` : '';
+            }
+
+            if (emptyState) {
+                emptyState.style.display = (matchCount === 0) ? 'block' : 'none';
+            }
+        }
+
+        function selectEmployeeOption(email) {
+            nativeSelect.value = email;
+            
+            // Mark selected item in list
+            list.querySelectorAll('.search-select-item').forEach(item => {
+                if (item.getAttribute('data-value') === email) {
+                    item.classList.add('selected');
+                    const name = item.getAttribute('data-name');
+                    const epf = item.getAttribute('data-epf');
+                    const branch = item.getAttribute('data-branch');
+                    triggerText.innerHTML = `<span style="font-weight:700;color:#151811">${name}</span> <span style="font-size:12px;color:#7a8863">(EPF: ${epf} &bull; ${branch})</span>`;
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+
+            populateEmployeeInfo();
+            closeDropdown();
+            trigger.focus();
+        }
+
         function populateEmployeeInfo() {
-            var select = document.getElementById('employeeSelect');
-            var option = select.options[select.selectedIndex];
-            var panel = document.getElementById('employeeInfoPanel');
-            if (option.value) {
+            var option = nativeSelect.options[nativeSelect.selectedIndex];
+            if (option && option.value) {
                 panel.style.display = 'block';
-                document.getElementById('infoName').textContent = option.getAttribute('data-name');
-                document.getElementById('infoEpf').textContent = option.getAttribute('data-epf');
-                document.getElementById('infoBranch').textContent = option.getAttribute('data-branch');
-                document.getElementById('infoDept').textContent = option.getAttribute('data-dept');
-                document.getElementById('infoDesig').textContent = option.getAttribute('data-desig');
+                document.getElementById('infoName').textContent = option.getAttribute('data-name') || '—';
+                document.getElementById('infoEpf').textContent = option.getAttribute('data-epf') || '—';
+                document.getElementById('infoBranch').textContent = option.getAttribute('data-branch') || '—';
+                document.getElementById('infoDept').textContent = option.getAttribute('data-dept') || '—';
+                document.getElementById('infoDesig').textContent = option.getAttribute('data-desig') || '—';
             } else {
                 panel.style.display = 'none';
             }
         }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('searchSelectWrapper');
+            if (wrapper && !wrapper.contains(e.target) && isDropdownOpen) {
+                closeDropdown();
+            }
+        });
+
         document.addEventListener('DOMContentLoaded', function() {
-            var select = document.getElementById('employeeSelect');
-            if (select.value) populateEmployeeInfo();
+            if (nativeSelect.value) {
+                selectEmployeeOption(nativeSelect.value);
+            }
+
+            // Document input mandatory validation before submit
+            const docInput = document.getElementById('terminationDocInput');
+            const docMsg = document.getElementById('docValidationMsg');
+            const btnSubmit = document.getElementById('btnSubmitForApproval');
+            const form = docInput ? docInput.closest('form') : null;
+
+            if (docInput && docMsg) {
+                docInput.addEventListener('change', function() {
+                    if (docInput.files && docInput.files.length > 0) {
+                        docMsg.style.display = 'none';
+                        docInput.style.borderColor = '';
+                    }
+                });
+            }
+
+            if (btnSubmit && docInput && docMsg) {
+                btnSubmit.addEventListener('click', function(e) {
+                    if (!docInput.files || docInput.files.length === 0) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        docMsg.style.display = 'block';
+                        docInput.style.borderColor = '#ef4444';
+                        docInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        docInput.focus();
+                        return false;
+                    }
+                });
+            }
         });
     </script>
 }

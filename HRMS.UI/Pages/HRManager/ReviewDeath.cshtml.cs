@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -9,7 +9,7 @@ using System.Security.Claims;
 
 namespace HRMS.UI.Pages.HRManager
 {
-    [Authorize(Roles = "HR Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer")]
     public class ReviewDeathModel : PageModel
     {
         private readonly IDeathService _deathService;
@@ -34,25 +34,25 @@ namespace HRMS.UI.Pages.HRManager
         {
             if (string.IsNullOrWhiteSpace(comments))
             {
-                TempData["ErrorMessage"] = "Comments are required to review.";
+                TempData["ErrorMessage"] = "Comments are required for HR finalization.";
                 return RedirectToPage(new { id });
             }
 
-            var email = User.FindFirstValue(ClaimTypes.Email)!;
+            var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name ?? "HR";
             bool success = action == "approve" 
-                ? await _deathService.HRManagerApproveAsync(id, comments, email)
+                ? await _deathService.HRManagerApproveAsync(id, comments, email, _userManager)
                 : await _deathService.HRManagerRejectAsync(id, comments, email);
 
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success 
-                ? $"Death request {action}d successfully. You must now process final closure." 
+                ? $"Death process for employee {(action == "approve" ? "finalized, account deactivated, and system closure completed successfully" : "rejected")}." 
                 : "Failed to process request.";
                 
-            return RedirectToPage(new { id });
+            return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Death" });
         }
 
         public async Task<IActionResult> OnPostProcessClosureAsync(int id)
         {
-            var email = User.FindFirstValue(ClaimTypes.Email)!;
+            var email = User.FindFirstValue(ClaimTypes.Email) ?? User.Identity?.Name ?? "HR";
             var (success, msg) = await _deathService.ProcessClosureAsync(id, email, _userManager);
 
             if (success)
@@ -64,7 +64,7 @@ namespace HRMS.UI.Pages.HRManager
                 TempData["ErrorMessage"] = "Closure failed: " + msg;
             }
 
-            return RedirectToPage(new { id });
+            return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Death" });
         }
     }
 }

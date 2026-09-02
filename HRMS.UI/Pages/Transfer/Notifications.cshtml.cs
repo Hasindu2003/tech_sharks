@@ -22,9 +22,9 @@ namespace HRMS.UI.Pages.Transfer
 
         public async Task OnGetAsync()
         {
-            var email = User.Identity!.Name!;
-            Notifications = await _notificationService.GetNotificationsAsync(email);
-            UnreadCount = await _notificationService.GetUnreadCountAsync(email);
+            var identifier = User.Identity?.Name ?? "";
+            Notifications = await _notificationService.GetNotificationsAsync(identifier);
+            UnreadCount = await _notificationService.GetUnreadCountAsync(identifier);
         }
 
         public async Task<IActionResult> OnPostMarkReadAsync(int id)
@@ -35,8 +35,8 @@ namespace HRMS.UI.Pages.Transfer
 
         public async Task<IActionResult> OnPostMarkAllReadAsync()
         {
-            var email = User.Identity!.Name!;
-            await _notificationService.MarkAllAsReadAsync(email);
+            var identifier = User.Identity?.Name ?? "";
+            await _notificationService.MarkAllAsReadAsync(identifier);
             return RedirectToPage();
         }
     }

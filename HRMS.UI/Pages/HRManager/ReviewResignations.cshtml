@@ -49,14 +49,14 @@
                     <th>Employee</th>
                     <th>Submitted</th>
                     <th>Last Working Day</th>
-                    <th>Obligations</th>
                     <th style="text-align:right"></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var req in Model.PendingRequests)
                 {
-                    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">
@@ -69,16 +69,6 @@
                         </td>
                         <td style="color:#7a8863">@req.ResignationDate.ToString("MMM dd, yyyy")</td>
                         <td style="font-weight:600;color:#10823c">@req.EffectiveDate.ToString("MMM dd, yyyy")</td>
-                        <td>
-                            @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
-                            {
-                                <span class="status-badge badge-warn"><span class="dot"></span> Yes</span>
-                            }
-                            else
-                            {
-                                <span class="status-badge badge-ok"><span class="dot"></span> None</span>
-                            }
-                        </td>
                         <td style="text-align:right">
                             <a asp-page="/HRManager/ReviewResignation" asp-route-id="@req.Id" class="btn-action">Review</a>
                         </td>
@@ -110,7 +100,8 @@ else
             <tbody>
                 @foreach (var req in Model.ApprovedRequests)
                 {
-                    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">

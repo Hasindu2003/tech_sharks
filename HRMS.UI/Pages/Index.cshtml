@@ -1,37 +1,53 @@
 @page
 @model HRMS.UI.Pages.IndexModel
 @{
-    ViewData["Title"] = "Dashboard Overview";
-    ViewData["PageTitle"] = "Dashboard Overview";
+    ViewData["Title"] = Model.IsEmployeeView ? "Employee Dashboard" : "Dashboard Overview";
+    ViewData["PageTitle"] = Model.IsEmployeeView ? "Employee Dashboard" : "Dashboard Overview";
     ViewData["ActiveNav"] = "Dashboard";
 }
 
 <style>
     .dash-wrap { padding: 26px; background: #ffffff; min-height: calc(100vh - 62px); }
 
-    .dash-greeting { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
-    .dash-greeting-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
-    .dash-greeting-sub { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0; }
+    /* Greeting Bar */
+    .dash-greeting { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; flex-wrap: wrap; gap: 14px; }
+    .dash-greeting-title { font-size: 20px; font-weight: 800; color: #151811; margin: 0 0 4px 0; }
+    .dash-greeting-sub { font-size: 12.5px; font-weight: 500; color: #64748b; margin: 0; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .emp-meta-tag { background: #f1f5f9; color: #334155; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 11.5px; border: 1px solid #e2e8f0; }
+
+    .dash-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .dash-date {
         display: flex; align-items: center; gap: 6px;
-        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 6px;
-        padding: 7px 12px; white-space: nowrap;
+        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 8px;
+        padding: 7px 14px; white-space: nowrap;
     }
     .dash-date svg { width: 14px; height: 14px; stroke: #7a8863; fill: none; flex-shrink: 0; }
-    .dash-date span { font-size: 12px; font-weight: 500; color: #7a8863; }
+    .dash-date span { font-size: 12px; font-weight: 600; color: #475569; }
 
-    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    @@media (max-width: 1024px) {
+        .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 640px) {
+        .stats-grid { grid-template-columns: 1fr; }
+    }
+
     .stat-card {
-        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 10px;
-        padding: 16px; height: 120px;
+        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 12px;
+        padding: 18px; min-height: 124px;
         display: flex; flex-direction: column; justify-content: space-between;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
     }
-    .stat-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+    .stat-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
     .s-icon {
-        width: 32px; height: 32px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
+        width: 36px; height: 36px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    .s-icon svg { width: 17px; height: 17px; fill: none; stroke-width: 2; }
+    .s-icon svg { width: 19px; height: 19px; fill: none; stroke-width: 2; }
     .s-icon.green  { background: rgba(16,130,60,0.1); }
     .s-icon.green svg  { stroke: #10823c; }
     .s-icon.orange { background: rgba(249,115,22,0.1); }
@@ -42,36 +58,55 @@
     .s-icon.purple svg { stroke: #a855f7; }
 
     .s-badge {
-        font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 9999px;
+        font-size: 10.5px; font-weight: 700; padding: 2px 8px; border-radius: 9999px;
         display: inline-flex; align-items: center; gap: 3px;
     }
     .s-badge.up    { background: rgba(7,136,26,0.1); color: #07881a; }
     .s-badge.alert { background: rgba(231,27,8,0.1); color: #e71b08; }
+    .s-badge.info  { background: rgba(59,130,246,0.1); color: #2563eb; }
+    .s-badge.purple{ background: rgba(168,85,247,0.1); color: #7e22ce; }
     .s-badge svg { width: 10px; height: 10px; }
 
-    .s-label { font-size: 11px; font-weight: 500; color: #7a8863; margin: 0 0 1px 0; }
-    .s-value { font-size: 24px; font-weight: 800; color: #151811; margin: 0; line-height: 1.15; }
+    .s-label { font-size: 11.5px; font-weight: 600; color: #64748b; margin: 0 0 3px 0; text-transform: uppercase; letter-spacing: 0.3px; }
+    .s-value { font-size: 23px; font-weight: 800; color: #0f172a; margin: 0 0 3px 0; line-height: 1.2; }
+    .s-sub   { font-size: 11px; font-weight: 500; color: #64748b; margin: 0; }
+    .s-sub a { color: #10823c; font-weight: 700; text-decoration: none; }
+    .s-sub a:hover { text-decoration: underline; }
 
-    .dash-bottom { display: flex; gap: 22px; }
-    .dash-left  { flex: 2; display: flex; flex-direction: column; gap: 20px; }
-    .dash-right { flex: 1; display: flex; flex-direction: column; gap: 10px; min-width: 260px; }
+    /* Layout Columns */
+    .dash-bottom { display: flex; gap: 24px; }
+    @@media (max-width: 1024px) {
+        .dash-bottom { flex-direction: column; }
+    }
+    .dash-left  { flex: 2; display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+    .dash-right { flex: 1; display: flex; flex-direction: column; gap: 20px; min-width: 280px; }
 
-    .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .sec-title { font-size: 14px; font-weight: 700; color: #151811; margin: 0; }
+    .sec-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .sec-title { font-size: 14.5px; font-weight: 800; color: #0f172a; margin: 0; }
     .sec-link {
-        font-size: 11px; font-weight: 700; color: #10823c; text-decoration: none;
+        font-size: 11.5px; font-weight: 700; color: #10823c; text-decoration: none;
         display: flex; align-items: center; gap: 3px;
     }
     .sec-link:hover { text-decoration: underline; }
     .sec-link svg { width: 12px; height: 12px; stroke: #10823c; fill: none; }
 
-    .qa-row { display: flex; gap: 10px; }
-    .qa-card {
-        flex: 1; background: #ffffff; border: 1px solid #e2e5dc; border-radius: 10px;
-        height: 58px; display: flex; align-items: center; padding: 0 12px; gap: 10px;
-        text-decoration: none; color: inherit; transition: box-shadow 0.2s;
+    /* Quick Actions */
+    .qa-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
     }
-    .qa-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .qa-card {
+        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 10px;
+        padding: 12px; display: flex; align-items: center; gap: 10px;
+        text-decoration: none; color: inherit; transition: all 0.15s ease;
+    }
+    .qa-card:hover {
+        border-color: #10823c;
+        box-shadow: 0 4px 12px rgba(16,130,60,0.08);
+        transform: translateY(-1px);
+        color: inherit; text-decoration: none;
+    }
     .qa-ic {
         width: 34px; height: 34px; border-radius: 8px;
         background: rgba(16,130,60,0.1);
@@ -79,42 +114,73 @@
     }
     .qa-ic svg { width: 17px; height: 17px; stroke: #10823c; fill: none; }
     .qa-t { font-size: 12px; font-weight: 700; color: #151811; margin: 0; }
-    .qa-s { font-size: 10px; font-weight: 400; color: #7a8863; margin: 1px 0 0 0; }
+    .qa-s { font-size: 10px; font-weight: 500; color: #64748b; margin: 1px 0 0 0; }
 
-    .appr-card { background: #ffffff; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; }
-    .appr-tbl { width: 100%; border-collapse: collapse; }
-    .appr-tbl thead tr { background: #f9fafb; border-bottom: 1px solid #e2e5dc; }
-    .appr-tbl th { padding: 10px 16px; font-size: 11px; font-weight: 600; color: #7a8863; text-align: left; }
+    /* Content Cards & Tables */
+    .appr-card {
+        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 12px;
+        overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .appr-tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .appr-tbl thead tr { background: #f8fafc; border-bottom: 1px solid #e2e5dc; }
+    .appr-tbl th { padding: 11px 16px; font-size: 11px; font-weight: 700; color: #475569; text-align: left; text-transform: uppercase; letter-spacing: 0.3px; }
     .appr-tbl th:last-child { text-align: right; }
-    .appr-tbl td { padding: 10px 16px; font-size: 12px; }
-    .appr-tbl tbody tr { border-top: 1px solid #e2e5dc; }
-    .appr-tbl tbody tr:first-child { border-top: none; }
-    .appr-tbl tbody tr:hover { background: #fafafa; }
+    .appr-tbl td { padding: 11px 16px; border-top: 1px solid #f1f5f9; vertical-align: middle; }
+    .appr-tbl tbody tr:first-child td { border-top: none; }
+    .appr-tbl tbody tr:hover { background: #fafcfa; }
 
     .e-cell { display: flex; align-items: center; gap: 8px; }
     .e-av {
         width: 28px; height: 28px; border-radius: 50%;
-        background: linear-gradient(135deg, #d1d5db, #9ca3af);
+        background: linear-gradient(135deg, #10823c, #07881a);
         display: flex; align-items: center; justify-content: center;
         color: #fff; font-size: 11px; font-weight: 700; flex-shrink: 0;
     }
-    .e-nm { font-weight: 600; color: #151811; font-size: 12px; }
-    .td-m { color: #7a8863; }
-    .st-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10px; font-weight: 600; }
-    .st-badge.pending { background: #fef3c7; color: #92400e; }
+    .e-nm { font-weight: 700; color: #0f172a; font-size: 12.5px; }
+    .td-m { color: #64748b; font-size: 12px; }
+
+    /* Badges */
+    .st-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 10.5px; font-weight: 700; text-transform: capitalize; }
+    .st-badge.st-pending, .st-badge.pending { background: #fef3c7; color: #92400e; }
+    .st-badge.st-approved, .st-badge.approved { background: #dcfce7; color: #166534; }
+    .st-badge.st-rejected, .st-badge.rejected { background: #fee2e2; color: #991b1b; }
+
+    .k-badge-approved { background: #dcfce7; color: #166534; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .k-badge-warning  { background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+    .k-badge-secondary{ background: #f1f5f9; color: #64748b; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+
     .btn-rv {
-        background: rgba(16,130,60,0.05); border: 1px solid rgba(16,130,60,0.2);
-        color: #10823c; font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 700;
-        padding: 5px 14px; border-radius: 6px; cursor: pointer; transition: background 0.15s;
-        text-decoration: none;
+        background: rgba(16,130,60,0.06); border: 1px solid rgba(16,130,60,0.25);
+        color: #10823c; font-size: 11px; font-weight: 700;
+        padding: 4px 12px; border-radius: 6px; cursor: pointer; transition: background 0.15s;
+        text-decoration: none; display: inline-block;
     }
-    .btn-rv:hover { background: rgba(16,130,60,0.1); color: #10823c; }
+    .btn-rv:hover { background: #10823c; color: #ffffff; text-decoration: none; }
     .td-r { text-align: right; }
-    .td-e { text-align: center; padding: 24px; color: #7a8863; font-size: 12px; }
+    .td-e { text-align: center; padding: 24px; color: #94a3b8; font-size: 12px; }
+
+    /* Right Column Widgets */
+    .today-shift-card {
+        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 12px;
+        padding: 16px; display: flex; flex-direction: column; gap: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .shift-header { display: flex; justify-content: space-between; align-items: center; }
+    .shift-title { font-size: 13.5px; font-weight: 800; color: #0f172a; margin: 0; }
+    .shift-badge { font-size: 11px; font-weight: 700; color: #10823c; background: rgba(16,130,60,0.08); padding: 2px 8px; border-radius: 6px; }
+
+    .punch-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px;
+    }
+    .punch-box { display: flex; flex-direction: column; }
+    .punch-lbl { font-size: 10.5px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+    .punch-val { font-size: 15px; font-weight: 800; color: #0f172a; margin-top: 2px; }
 
     .ev-card {
-        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 10px;
-        padding: 14px; display: flex; flex-direction: column; gap: 10px;
+        background: #ffffff; border: 1px solid #e2e5dc; border-radius: 12px;
+        padding: 16px; display: flex; flex-direction: column; gap: 10px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
     .ev-item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 10px; }
     .ev-item.event-green  { background: #ffffff; border: 1px solid #e2e5dc; }
@@ -129,40 +195,372 @@
     .event-orange .ev-date { background: rgba(234,88,12,0.08); color: #ea580c; }
     .event-blue .ev-date   { background: rgba(37,99,235,0.08); color: #2563eb; }
 
-    .ev-mon { font-size: 8px; font-weight: 700; line-height: 1.4; }
+    .ev-mon { font-size: 8px; font-weight: 800; line-height: 1.4; text-transform: uppercase; }
     .ev-day { font-size: 15px; font-weight: 800; line-height: 1; }
     .ev-ti  { font-size: 12px; font-weight: 700; color: #151811; margin: 0; }
-    .ev-tm  { font-size: 10px; font-weight: 400; color: #7a8863; margin: 2px 0 0 0; }
+    .ev-tm  { font-size: 10.5px; font-weight: 500; color: #64748b; margin: 2px 0 0 0; }
 
-    .ev-footer { border-top: 1px solid #e2e5dc; padding-top: 10px; margin-top: 2px; text-align: center; }
+    .ev-footer { border-top: 1px solid #e2e5dc; padding-top: 10px; margin-top: 4px; text-align: center; }
     .btn-cal {
         display: block; width: 100%; padding: 7px; border: 1px solid rgba(16,130,60,0.2);
         border-radius: 8px; background: transparent;
-        font-family: 'Manrope', sans-serif; font-size: 11px; font-weight: 700; color: #10823c;
+        font-size: 11.5px; font-weight: 700; color: #10823c;
         text-decoration: none; text-align: center; transition: background 0.15s;
     }
-    .btn-cal:hover { background: rgba(16,130,60,0.05); }
+    .btn-cal:hover { background: rgba(16,130,60,0.05); text-decoration: none; }
 </style>
 
 <div class="dash-wrap">
 
-    <!-- Greeting -->
+    <!-- Top Greeting Area -->
     <div class="dash-greeting">
         <div>
-            <h2 class="dash-greeting-title">@Model.GreetingTime, @Model.GreetingName</h2>
-            <p class="dash-greeting-sub">Here's what's happening at Kanrich Limited today.</p>
+            <h2 class="dash-greeting-title">@Model.GreetingTime, @Model.GreetingName 👋</h2>
+            @if (Model.IsEmployeeView && Model.EmployeeInfo != null)
+            {
+                <div class="dash-greeting-sub">
+                    <span class="emp-meta-tag">@Model.EmployeeInfo.EmpCode</span>
+                    <span>@Model.EmployeeInfo.DesignationTitle</span>
+                    <span>•</span>
+                    <span>@Model.EmployeeInfo.DepartmentName</span>
+                    <span>•</span>
+                    <span>@Model.EmployeeInfo.BranchName</span>
+                </div>
+            }
+            else
+            {
+                <p class="dash-greeting-sub" style="margin-top:2px;">Here's your operational overview at Kanrich Limited today.</p>
+            }
         </div>
-        <div class="dash-date">
-            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-            </svg>
-            <span>@DateTime.Now.ToString("MMM dd, yyyy")</span>
+        <div class="dash-header-right">
+            <div class="dash-date">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                <span>@SriLankaTime.Now.ToString("MMM dd, yyyy")</span>
+            </div>
         </div>
     </div>
 
-    @if (!User.IsInRole("Admin"))
+    @if (Model.IsEmployeeView)
     {
+        <!-- ==================== EMPLOYEE DASHBOARD VIEW ==================== -->
+        
+        <!-- 4 Key Employee Stats -->
+        <div class="stats-grid">
+            <!-- 1. Monthly Attendance -->
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="s-icon green">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                            <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                            <path d="m9 16 2 2 4-4"/>
+                        </svg>
+                    </div>
+                    <span class="s-badge up">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                        @Model.AttendanceRatePercent% Rate
+                    </span>
+                </div>
+                <div>
+                    <p class="s-label">Working Days (This Month)</p>
+                    <p class="s-value">@Model.DaysWorkedThisMonth <span style="font-size: 15px; color: #64748b; font-weight: 600;">/ @Model.TotalWorkingDaysThisMonth Days</span></p>
+                    <p class="s-sub">Total Duration: <strong>@Model.MonthlyWorkedHours hrs</strong></p>
+                </div>
+            </div>
+
+            <!-- 2. Leave Balance -->
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="s-icon orange">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                            <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+                        </svg>
+                    </div>
+                    @if (Model.PendingLeavesCount > 0)
+                    {
+                        <span class="s-badge alert">@Model.PendingLeavesCount Pending</span>
+                    }
+                    else
+                    {
+                        <span class="s-badge info">Available</span>
+                    }
+                </div>
+                <div>
+                    <p class="s-label">Available Leave Balance</p>
+                    <p class="s-value">@(Model.AvailableLeaveBalance % 1 == 0 ? $"{Model.AvailableLeaveBalance:0}" : $"{Model.AvailableLeaveBalance:0.0}") <span style="font-size: 15px; color: #64748b; font-weight: 600;">Days</span></p>
+                    <p class="s-sub">Annual: <strong>@(Model.AnnualLeavesRemaining % 1 == 0 ? $"{Model.AnnualLeavesRemaining:0}" : $"{Model.AnnualLeavesRemaining:0.0}")</strong> • Casual: <strong>@(Model.CasualLeavesRemaining % 1 == 0 ? $"{Model.CasualLeavesRemaining:0}" : $"{Model.CasualLeavesRemaining:0.0}")</strong> • Med: <strong>@(Model.MedicalLeavesRemaining % 1 == 0 ? $"{Model.MedicalLeavesRemaining:0}" : $"{Model.MedicalLeavesRemaining:0.0}")</strong></p>
+                </div>
+            </div>
+
+            <!-- 3. Overtime & Extra Pay -->
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="s-icon blue">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                    <span class="s-badge info">+@Model.MonthlyOvertimeHours hrs OT</span>
+                </div>
+                <div>
+                    <p class="s-label">Estimated Overtime Pay</p>
+                    <p class="s-value">@(Model.MonthlyEstimatedOtPay > 0 ? $"Rs {Model.MonthlyEstimatedOtPay:N0}" : "Rs 0")</p>
+                    <p class="s-sub">Calculated for <strong>@SriLankaTime.Now.ToString("MMMM yyyy")</strong></p>
+                </div>
+            </div>
+
+            <!-- 4. Latest Payslip -->
+            <div class="stat-card">
+                <div class="stat-top">
+                    <div class="s-icon purple">
+                        <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                        </svg>
+                    </div>
+                    @if (Model.HasPayslip)
+                    {
+                        <span class="s-badge purple">@Model.LatestPayslipStatus</span>
+                    }
+                    else
+                    {
+                        <span class="s-badge info">Active</span>
+                    }
+                </div>
+                <div>
+                    <p class="s-label">Latest Salary (@(Model.HasPayslip ? Model.LatestPayslipMonth : "Recent"))</p>
+                    <p class="s-value">@(Model.HasPayslip ? $"Rs {Model.LatestNetPay:N0}" : "Processed")</p>
+                    <p class="s-sub"><a href="/Payroll/Payslips">View Payslip Statement →</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Body -->
+        <div class="dash-bottom">
+            <div class="dash-left">
+                <!-- Self-Service Quick Actions -->
+                <div>
+                    <div class="sec-header">
+                        <h3 class="sec-title">Employee Self-Service Actions</h3>
+                    </div>
+                    <div class="qa-grid">
+                        <a href="/Employee/Leave/Dashboard" class="qa-card">
+                            <div class="qa-ic">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="qa-t">Apply for Leave</p>
+                                <p class="qa-s">Submit leave request</p>
+                            </div>
+                        </a>
+
+                        <a href="/Attendance" class="qa-card">
+                            <div class="qa-ic">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="qa-t">My Attendance</p>
+                                <p class="qa-s">Check-in logs & hours</p>
+                            </div>
+                        </a>
+
+                        <a href="/Payroll/Payslips" class="qa-card">
+                            <div class="qa-ic">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="qa-t">My Payslips</p>
+                                <p class="qa-s">Download salary sheets</p>
+                            </div>
+                        </a>
+
+                        <a href="/Training/Sessions" class="qa-card">
+                            <div class="qa-ic">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="qa-t">Training Sessions</p>
+                                <p class="qa-s">Programs & workshops</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- My Recent Applications & Requests -->
+                <div>
+                    <div class="sec-header">
+                        <h3 class="sec-title">My Recent Applications & Requests</h3>
+                        <a href="/Employee/Leave/Dashboard" class="sec-link">
+                            View All Leaves
+                            <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="appr-card">
+                        <table class="appr-tbl">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Category</th>
+                                    <th style="width: 30%;">Request Details</th>
+                                    <th style="width: 20%;">Submitted On</th>
+                                    <th style="width: 15%;">Status</th>
+                                    <th style="width: 10%;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RecentRequests.Any())
+                                {
+                                    @foreach (var req in Model.RecentRequests)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <span style="font-weight: 700; color: #0f172a;">@req.Category</span>
+                                            </td>
+                                            <td class="td-m">
+                                                <strong style="color: #334155;">@req.Title</strong>
+                                                <div style="font-size: 11px; color: #94a3b8;">@req.DateRange</div>
+                                            </td>
+                                            <td class="td-m">@req.SubmittedDate</td>
+                                            <td>
+                                                <span class="st-badge @req.BadgeClass">@req.Status</span>
+                                            </td>
+                                            <td class="td-r">
+                                                <a href="@req.ActionUrl" class="btn-rv">View</a>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="td-e">
+                                            No recent requests submitted. Use Quick Actions above to submit leave, transfer, or welfare requests.
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Recent Attendance Logs (Last 5 Days) -->
+                <div>
+                    <div class="sec-header">
+                        <h3 class="sec-title">Recent Attendance History (Last 5 Days)</h3>
+                        <a href="/Attendance" class="sec-link">
+                            View Full Sheet
+                            <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                        </a>
+                    </div>
+                    <div class="appr-card">
+                        <table class="appr-tbl">
+                            <thead>
+                                <tr>
+                                    <th style="width: 25%;">Date & Day</th>
+                                    <th style="width: 20%; text-align: center;">Clock In</th>
+                                    <th style="width: 20%; text-align: center;">Clock Out</th>
+                                    <th style="width: 15%; text-align: center;">Duration</th>
+                                    <th style="width: 20%; text-align: right;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RecentAttendanceLogs.Any())
+                                {
+                                    @foreach (var log in Model.RecentAttendanceLogs)
+                                    {
+                                        <tr>
+                                            <td>
+                                                <strong style="color: #0f172a;">@log.DateStr</strong>
+                                                <span style="font-size: 11px; color: #64748b; font-weight: 600; margin-left: 4px;">(@log.DayName)</span>
+                                            </td>
+                                            <td style="text-align: center; font-weight: 600; color: #334155;">@log.TimeIn</td>
+                                            <td style="text-align: center; font-weight: 600; color: #334155;">@log.TimeOut</td>
+                                            <td style="text-align: center;">
+                                                @if (log.TotalHours > 0)
+                                                {
+                                                    <strong style="color: #0f172a;">@log.TotalHours hrs</strong>
+                                                }
+                                                else
+                                                {
+                                                    <span style="color: #94a3b8;">—</span>
+                                                }
+                                            </td>
+                                            <td style="text-align: right;">
+                                                <span class="@log.StatusClass">@log.Status</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr>
+                                        <td colspan="5" class="td-e">No recent attendance records found for this period.</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="dash-right">
+                <!-- Upcoming Events & Calendar -->
+                <div class="ev-card">
+                    <div class="sec-header" style="margin-bottom: 4px;">
+                        <h3 class="sec-title">Upcoming Events & Calendar</h3>
+                    </div>
+                    @if (Model.UpcomingEvents.Any())
+                    {
+                        @foreach (var evt in Model.UpcomingEvents)
+                        {
+                            <div class="ev-item @evt.ThemeClass">
+                                <div class="ev-date">
+                                    <span class="ev-mon">@evt.Month</span>
+                                    <span class="ev-day">@evt.Day</span>
+                                </div>
+                                <div>
+                                    <p class="ev-ti">@evt.Title</p>
+                                    <p class="ev-tm">@evt.Time</p>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 22px 12px; color: #94a3b8; font-size: 12px;">
+                            No upcoming events or workshops scheduled.
+                        </div>
+                    }
+                    <div class="ev-footer">
+                        <a href="/Calendar/Index" class="btn-cal">View Company Calendar</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else if (!User.IsInRole("Admin"))
+    {
+        <!-- ==================== MANAGER / CORPORATE DASHBOARD VIEW ==================== -->
+        
         <!-- Stats Cards -->
         <div class="stats-grid">
             <div class="stat-card">
@@ -175,7 +573,7 @@
                     </div>
                     <span class="s-badge up">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
-                        3%
+                        Active
                     </span>
                 </div>
                 <div><p class="s-label">Total Employees</p><p class="s-value">@Model.TotalEmployees</p></div>
@@ -188,6 +586,7 @@
                             <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
                         </svg>
                     </div>
+                    <span class="s-badge alert">Today</span>
                 </div>
                 <div><p class="s-label">On Leave Today</p><p class="s-value">@Model.OnLeaveToday</p></div>
             </div>
@@ -203,7 +602,7 @@
                         <span class="s-badge alert">+@Model.PendingRequests new</span>
                     }
                 </div>
-                <div><p class="s-label">Pending Requests</p><p class="s-value">@Model.PendingRequests</p></div>
+                <div><p class="s-label">Pending Approvals</p><p class="s-value">@Model.PendingRequests</p></div>
             </div>
             <div class="stat-card">
                 <div class="stat-top">
@@ -215,10 +614,10 @@
                     </div>
                     @if (Model.OpenPositions > 0)
                     {
-                        <span class="s-badge up">+@Model.OpenPositions role</span>
+                        <span class="s-badge up">@Model.OpenPositions Active</span>
                     }
                 </div>
-                <div><p class="s-label">Open Positions</p><p class="s-value">@Model.OpenPositions</p></div>
+                <div><p class="s-label">Scheduled Trainings</p><p class="s-value">@Model.OpenPositions</p></div>
             </div>
         </div>
 
@@ -227,21 +626,34 @@
             <div class="dash-left">
                 <!-- Quick Actions -->
                 <div>
-                    <div class="sec-header"><h3 class="sec-title">Quick Actions</h3></div>
-                    <div class="qa-row">
-                        @if (User.IsInRole("Employee") || User.IsInRole("Branch Manager") || User.IsInRole("HR Manager"))
+                    <div class="sec-header"><h3 class="sec-title">Management Quick Actions</h3></div>
+                    <div class="qa-grid">
+                        @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer") || User.IsInRole("Admin"))
                         {
-                            <a href="/Transfer/Apply" class="qa-card">
+                            <a href="/Employees/Create" class="qa-card">
                                 <div class="qa-ic">
                                     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/>
                                         <line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
                                     </svg>
                                 </div>
-                                <div><p class="qa-t">New Transfer</p><p class="qa-s">Submit request</p></div>
+                                <div><p class="qa-t">Create Employee</p><p class="qa-s">Add new profile</p></div>
                             </a>
                         }
-                        <a href="/Transfer/Separation" class="qa-card">
+                        @if (User.IsInRole("HR Manager"))
+                        {
+                            <a href="/HRManager/AssignBranches" class="qa-card">
+                                <div class="qa-ic">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <circle cx="12" cy="12" r="10"/>
+                                        <line x1="2" y1="12" x2="22" y2="12"/>
+                                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                                    </svg>
+                                </div>
+                                <div><p class="qa-t">HR Officers</p><p class="qa-s">Branch allocations</p></div>
+                            </a>
+                        }
+                        <a href="/Separation/Dashboard" class="qa-card">
                             <div class="qa-ic">
                                 <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/>
@@ -250,22 +662,42 @@
                             </div>
                             <div><p class="qa-t">Separation</p><p class="qa-s">Resignations & transfers</p></div>
                         </a>
-                        <a href="/Employees/Profile" class="qa-card">
+                        <a href="/Training/Dashboard" class="qa-card">
                             <div class="qa-ic">
                                 <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                                    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                                    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
                                 </svg>
                             </div>
-                            <div><p class="qa-t">My Profile</p><p class="qa-s">View your records</p></div>
+                            <div><p class="qa-t">Training</p><p class="qa-s">Workshops & requests</p></div>
                         </a>
+                        <a href="/Attendance/Dashboard" class="qa-card">
+                            <div class="qa-ic">
+                                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                                </svg>
+                            </div>
+                            <div><p class="qa-t">Attendance & Leave</p><p class="qa-s">Approvals & records</p></div>
+                        </a>
+                        @if (User.IsInRole("Welfare Manager"))
+                        {
+                            <a href="/Welfare/Approvals/DepartmentHeadApproval" class="qa-card">
+                                <div class="qa-ic">
+                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                                    </svg>
+                                </div>
+                                <div><p class="qa-t">Welfare</p><p class="qa-s">Approvals & benefits</p></div>
+                            </a>
+                        }
                     </div>
                 </div>
 
                 <!-- Pending Approvals -->
                 <div>
                     <div class="sec-header">
-                        <h3 class="sec-title">@(User.IsInRole("Employee") ? "My Transfer Requests" : "Pending Approvals")</h3>
-                        <a href="@(User.IsInRole("Employee") ? "/Transfer/MyRequests" : User.IsInRole("Branch Manager") ? "/BranchManager/ReviewTransfers" : User.IsInRole("HR Manager") ? "/HRManager/ReviewTransfers" : "/AreaManager/ReviewTransfers")" class="sec-link">
+                        <h3 class="sec-title">Pending Approvals Queue</h3>
+                        <a href="@(User.IsInRole("Welfare Manager") ? "/Welfare/Approvals/DepartmentHeadApproval" : User.IsInRole("Branch Manager") ? "/BranchManager/ReviewTransfers" : User.IsInRole("HR Manager") ? "/HRManager/ReviewTransfers" : "/AreaManager/ReviewTransfers")" class="sec-link">
                             View All
                             <svg viewBox="0 0 24 24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
@@ -294,7 +726,7 @@
                                             <td class="td-m">@a.DateRange</td>
                                             <td><span class="st-badge pending">@a.Status</span></td>
                                             <td class="td-r">
-                                                <a href="/Transfer/Details/@a.RequestId" class="btn-rv">Review</a>
+                                                <a href="@(string.IsNullOrEmpty(a.ActionUrl) ? $"/Transfer/Details/{a.RequestId}" : a.ActionUrl)" class="btn-rv">Review</a>
                                             </td>
                                         </tr>
                                     }
@@ -313,21 +745,30 @@
             <div class="dash-right">
                 <div class="sec-header"><h3 class="sec-title">Upcoming Events</h3></div>
                 <div class="ev-card">
-                    @foreach (var evt in Model.UpcomingEvents)
+                    @if (Model.UpcomingEvents.Any())
                     {
-                        <div class="ev-item @evt.ThemeClass">
-                            <div class="ev-date">
-                                <span class="ev-mon">@evt.Month</span>
-                                <span class="ev-day">@evt.Day</span>
+                        @foreach (var evt in Model.UpcomingEvents)
+                        {
+                            <div class="ev-item @evt.ThemeClass">
+                                <div class="ev-date">
+                                    <span class="ev-mon">@evt.Month</span>
+                                    <span class="ev-day">@evt.Day</span>
+                                </div>
+                                <div>
+                                    <p class="ev-ti">@evt.Title</p>
+                                    <p class="ev-tm">@evt.Time</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="ev-ti">@evt.Title</p>
-                                <p class="ev-tm">@evt.Time</p>
-                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div style="text-align: center; padding: 22px 12px; color: #94a3b8; font-size: 12px;">
+                            No upcoming events or workshops scheduled.
                         </div>
                     }
                     <div class="ev-footer">
-                        <a href="#" class="btn-cal">View Full Calendar</a>
+                        <a href="/Calendar/Index" class="btn-cal">View Full Calendar</a>
                     </div>
                 </div>
             </div>
@@ -337,7 +778,7 @@
     {
         <!-- Admin view -->
         <div style="text-align:center;padding:60px;color:#7a8863;font-size:14px;">
-            Admin portal. Use Settings to manage branches, departments and designations.
+            Admin portal. Use Settings to manage branches, departments, overtime policies, and designations.
         </div>
     }
 

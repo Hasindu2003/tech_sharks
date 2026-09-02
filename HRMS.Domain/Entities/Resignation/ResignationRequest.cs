@@ -100,18 +100,25 @@ namespace HRMS.Domain.Entities.Resignation
 
         // ── Navigation ──
         public ICollection<ResignationDocument> Documents { get; set; } = new List<ResignationDocument>();
+        public ICollection<ResignationDepartmentReview> DepartmentReviews { get; set; } = new List<ResignationDepartmentReview>();
     }
 
     public enum ResignationStatus
     {
         Draft = 0,
-        SubmittedForApproval = 1,
-        BMApproved = 2,
-        BMRejected = 3,
-        AMApproved = 4,
-        AMRejected = 5,
-        HRApproved = 6,
-        HRRejected = 7,
-        Completed = 8
+        SubmittedForApproval = 1,  // Pending Department Heads
+        DeptHeadRejected = 2,
+        DeptHeadsApproved = 3,     // Awaiting Branch Manager
+        BMApproved = 4,            // Awaiting Area Manager
+        BMRejected = 5,
+        AMApproved = 6,            // Awaiting HR Finalization
+        AMRejected = 7,
+        HRApproved = 8,            // Finalized by HR
+        HRRejected = 9,
+        Completed = 10,            // Account Deactivated
+
+        // Direct Managerial Notification Workflow (Dept Head, BM, AM)
+        PendingHRReview = 11,
+        ManagerReviewed = 12
     }
 }

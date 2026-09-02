@@ -68,31 +68,82 @@
         <p class="page-s" style="margin-bottom: 20px;">Simulate or record a biometric device check-in/out log</p>
 
         <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger" style="margin-bottom: 16px;"></div>
+            <div asp-validation-summary="All" class="text-danger" style="margin-bottom: 16px;"></div>
+
+            @if (Model.IsBranchManager)
+            {
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Branch</label>
+                        <input type="text" class="fi" value="@Model.FixedBranchName" readonly style="background:#f9fafb;color:#4b5563;font-weight:600;" />
+                    </div>
+
+                    <div class="fg">
+                        <label asp-for="BiometricLog.EmployeeId" class="fl">Select Employee <span class="req">*</span></label>
+                        <select asp-for="BiometricLog.EmployeeId" id="employeeSelect" class="fi" required>
+                            <option value="">-- Choose Employee --</option>
+                            @foreach (var emp in Model.Employees)
+                            {
+                                var empDisplayName = !string.IsNullOrWhiteSpace(emp.NameWithInitials) ? emp.NameWithInitials : emp.FullName;
+                                <option value="@emp.Id">@empDisplayName (@emp.EPFNumber)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="BiometricLog.EmployeeId" class="text-danger"></span>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Select Branch <span class="req">*</span></label>
+                        <select id="branchFilterSelect" class="fi" onchange="filterEmployeesByBranch(this.value)">
+                            <option value="">-- Choose Branch First --</option>
+                            @foreach (var br in Model.Branches)
+                            {
+                                <option value="@br.Id">@br.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="fg">
+                        <label asp-for="BiometricLog.EmployeeId" class="fl">Select Employee <span class="req">*</span></label>
+                        <select asp-for="BiometricLog.EmployeeId" id="employeeSelect" class="fi" required>
+                            <option value="">-- Choose Branch First --</option>
+                            @foreach (var emp in Model.Employees)
+                            {
+                                var empDisplayName = !string.IsNullOrWhiteSpace(emp.NameWithInitials) ? emp.NameWithInitials : emp.FullName;
+                                <option value="@emp.Id" data-branch-id="@emp.BranchId">@empDisplayName (@emp.EPFNumber)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="BiometricLog.EmployeeId" class="text-danger"></span>
+                    </div>
+                </div>
+            }
 
             <div class="grid-2">
                 <div class="fg">
-                    <label asp-for="BiometricLog.EmployeeId" class="fl">Select Employee <span class="req">*</span></label>
-                    <select asp-for="BiometricLog.EmployeeId" class="fi" required>
-                        <option value="">-- Choose Employee --</option>
-                        @foreach (var emp in Model.Employees)
-                        {
-                            <option value="@emp.Id">@emp.FullName (@emp.EPFNumber)</option>
-                        }
-                    </select>
-                    <span asp-validation-for="BiometricLog.EmployeeId" class="text-danger"></span>
+                    <label asp-for="BiometricLog.LogDateTime" class="fl">Scan Timestamp <span class="req">*</span></label>
+                    <input asp-for="BiometricLog.LogDateTime" class="fi" type="datetime-local" 
+                           value="@Model.BiometricLog.LogDateTime.ToString("yyyy-MM-ddTHH:mm")" 
+                           max="@SriLankaTime.Now.ToString("yyyy-MM-ddTHH:mm")" required />
+                    <span asp-validation-for="BiometricLog.LogDateTime" class="text-danger"></span>
                 </div>
 
                 <div class="fg">
-                    <label asp-for="BiometricLog.LogDateTime" class="fl">Scan Timestamp <span class="req">*</span></label>
-                    <input asp-for="BiometricLog.LogDateTime" class="fi" type="datetime-local" required />
-                    <span asp-validation-for="BiometricLog.LogDateTime" class="text-danger"></span>
+                    <label asp-for="BiometricLog.LogType" class="fl">Punch Type</label>
+                    <select asp-for="BiometricLog.LogType" class="fi">
+                        <option value="">Auto Detect (Check-In / Check-Out)</option>
+                        <option value="checkIn">Check-In (Arrival)</option>
+                        <option value="checkOut">Check-Out (Departure)</option>
+                    </select>
+                    <span asp-validation-for="BiometricLog.LogType" class="text-danger"></span>
                 </div>
             </div>
 
             <div class="fg">
                 <label asp-for="BiometricLog.DeviceId" class="fl">Scanner Device ID <span class="req">*</span></label>
-                <input asp-for="BiometricLog.DeviceId" class="fi" placeholder="e.g., DEVICE-01" required />
+                <input asp-for="BiometricLog.DeviceId" class="fi" placeholder="e.g., MANUAL-01" value="MANUAL-01" required />
                 <span asp-validation-for="BiometricLog.DeviceId" class="text-danger"></span>
             </div>
 
@@ -105,18 +156,18 @@
 </div>
 
 <div class="form-card" style="margin-top: 24px; margin-bottom: 40px;">
-    <div class="form-card-header">Import Biometric Logs from CSV</div>
+    <div class="form-card-header">Import Biometric Logs from File (Excel / CSV)</div>
     <div class="form-card-body">
         <h2 class="page-h" style="margin-bottom: 4px;">Upload Punch Export File</h2>
-        <p class="page-s" style="margin-bottom: 20px;">Upload a CSV file exported from a biometric device (e.g. fingerprint scanner)</p>
+        <p class="page-s" style="margin-bottom: 20px;">Upload an Excel (.xlsx) or CSV file exported from a biometric device (e.g. fingerprint scanner)</p>
 
         <form method="post" enctype="multipart/form-data" asp-page-handler="ImportCsv">
             <div class="fg" style="margin-bottom: 20px;">
-                <label asp-for="CsvFile" class="fl">Select CSV File <span class="req">*</span></label>
-                <input asp-for="CsvFile" type="file" class="fi" accept=".csv" required />
+                <label asp-for="CsvFile" class="fl">Select Excel (.xlsx) or CSV (.csv) File <span class="req">*</span></label>
+                <input asp-for="CsvFile" type="file" class="fi" accept=".csv,.xlsx" required />
                 <span asp-validation-for="CsvFile" class="text-danger"></span>
-                <div style="font-size: 12px; color: #7a8863; margin-top: 6px;">
-                    Expected format: CSV containing headers <code>UserID</code>, <code>VerifyTime</code>, <code>VerifyState</code>, and <code>DeviceID</code>.
+                <div style="font-size: 12px; color: #7a8863; margin-top: 6px; line-height: 1.5;">
+                    Supported formats: Biometric machine export with headers <code>ID</code> (Employee ID), <code>Date</code>, <code>Time</code>, <code>Device Serial No.</code>, or legacy format with <code>UserID</code>, <code>VerifyTime</code>.
                 </div>
             </div>
 
@@ -133,14 +184,58 @@
 
     <script>
         const dateTimeInput = document.querySelector('input[type="datetime-local"]');
-        if (dateTimeInput && !dateTimeInput.value) {
+        if (dateTimeInput) {
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
-            dateTimeInput.value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            const formattedNow = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            dateTimeInput.max = formattedNow;
+            if (!dateTimeInput.value) {
+                dateTimeInput.value = formattedNow;
+            }
         }
+
+        function filterEmployeesByBranch(branchId) {
+            const empSelect = document.getElementById('employeeSelect');
+            if (!empSelect) return;
+            
+            const selectedBranch = branchId ? String(branchId) : '';
+            
+            for (let i = 0; i < empSelect.options.length; i++) {
+                const opt = empSelect.options[i];
+                if (!opt.value) {
+                    opt.textContent = selectedBranch ? '-- Choose Employee --' : '-- Choose Branch First --';
+                    continue;
+                }
+                const optBranch = opt.getAttribute('data-branch-id') || '';
+                if (!selectedBranch) {
+                    opt.style.display = 'none';
+                    opt.disabled = true;
+                } else if (optBranch === selectedBranch) {
+                    opt.style.display = '';
+                    opt.disabled = false;
+                } else {
+                    opt.style.display = 'none';
+                    opt.disabled = true;
+                }
+            }
+            
+            const currentOpt = empSelect.options[empSelect.selectedIndex];
+            if (currentOpt && currentOpt.disabled) {
+                empSelect.value = '';
+            }
+        }
+
+        // Initialize filtering on page load for non-branch managers
+        document.addEventListener('DOMContentLoaded', function() {
+            const branchSelect = document.getElementById('branchFilterSelect');
+            if (branchSelect) {
+                filterEmployeesByBranch(branchSelect.value);
+            }
+        });
     </script>
 }

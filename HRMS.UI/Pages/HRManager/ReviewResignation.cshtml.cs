@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.HRManager
 {
-    [Authorize(Roles = "HR Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer")]
     public class ReviewResignationModel : PageModel
     {
         private readonly IResignationService _resignationService;
@@ -29,25 +29,35 @@ namespace HRMS.UI.Pages.HRManager
             return Page();
         }
 
-        public async Task<IActionResult> OnPostAsync(int id, string action, string comments)
+        public async Task<IActionResult> OnPostAsync(int id, string action, string? comments = null)
         {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            bool success;
+            if (action == "mark_reviewed")
+            {
+                var remark = string.IsNullOrWhiteSpace(comments) ? "Seen and acknowledged by HR Manager" : comments.Trim();
+                success = await _resignationService.HRManagerMarkAsReviewedAsync(id, remark, user.Email!);
+                TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
+                    ? "Managerial resignation notice marked as reviewed successfully."
+                    : "Unable to process review.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Resignations" });
+            }
+
             if (string.IsNullOrWhiteSpace(comments) || comments.Trim().Length < 5)
             {
                 TempData["ErrorMessage"] = "Comments are required (minimum 5 characters).";
                 return RedirectToPage(new { id });
             }
 
-            var user = await _userManager.GetUserAsync(User);
-            if (user == null) return Challenge();
-
-            bool success;
             if (action == "approve")
-                success = await _resignationService.HRManagerApproveAsync(id, comments, user.Email!);
+                success = await _resignationService.HRManagerApproveAsync(id, comments.Trim(), user.Email!);
             else
-                success = await _resignationService.HRManagerRejectAsync(id, comments, user.Email!);
+                success = await _resignationService.HRManagerRejectAsync(id, comments.Trim(), user.Email!);
 
             TempData[success ? "SuccessMessage" : "ErrorMessage"] = success
-                ? (action == "approve" ? "Resignation officially approved. Acceptance letter generated and employee notified." : "Resignation request has been rejected.")
+                ? (action == "approve" ? "Resignation officially approved and employee notified." : "Resignation request has been rejected.")
                 : "Unable to process.";
 
             return RedirectToPage("/HRManager/ReviewResignations");

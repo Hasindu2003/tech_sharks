@@ -1,4 +1,5 @@
 using HRMS.Domain.Entities.Core;
+using HRMS.Domain.Common;
 using HRMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,8 +26,22 @@ namespace HRMS.Application.Services
 
         public async Task CreateNotificationAsync(string recipientEmail, string title, string message, CoreNotificationType type, int transferRequestId, string targetUrl = "")
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == recipientEmail);
+            if (string.IsNullOrWhiteSpace(recipientEmail)) return;
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => 
+                u.UserName == recipientEmail || 
+                u.Email == recipientEmail || 
+                u.Id == recipientEmail);
             if (user == null) return;
+
+            // Deduplication guard: prevent identical notifications created within 15 seconds
+            var cutoff = SriLankaTime.Now.AddSeconds(-15);
+            var duplicateExists = await _context.Notifications.AnyAsync(n => 
+                n.UserId == user.Id && 
+                n.Title == title && 
+                n.Message == message && 
+                n.CreatedAt >= cutoff);
+            if (duplicateExists) return;
 
             var resolvedUrl = string.IsNullOrEmpty(targetUrl)
                 ? $"/Transfer/Details?id={transferRequestId}"
@@ -41,7 +56,7 @@ namespace HRMS.Application.Services
                 TransferRequestId = transferRequestId,
                 TargetUrl = resolvedUrl,
                 IsRead = false,
-                CreatedAt = DateTime.Now
+                CreatedAt = SriLankaTime.Now
             });
 
             await _context.SaveChangesAsync();
@@ -49,8 +64,22 @@ namespace HRMS.Application.Services
 
         public async Task CreateNotificationAsync(string recipientEmail, string title, string message, CoreNotificationType type, string targetUrl)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == recipientEmail);
+            if (string.IsNullOrWhiteSpace(recipientEmail)) return;
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => 
+                u.UserName == recipientEmail || 
+                u.Email == recipientEmail || 
+                u.Id == recipientEmail);
             if (user == null) return;
+
+            // Deduplication guard: prevent identical notifications created within 15 seconds
+            var cutoff = SriLankaTime.Now.AddSeconds(-15);
+            var duplicateExists = await _context.Notifications.AnyAsync(n => 
+                n.UserId == user.Id && 
+                n.Title == title && 
+                n.Message == message && 
+                n.CreatedAt >= cutoff);
+            if (duplicateExists) return;
 
             _context.Notifications.Add(new Notification
             {
@@ -60,7 +89,7 @@ namespace HRMS.Application.Services
                 Type = type,
                 TargetUrl = targetUrl,
                 IsRead = false,
-                CreatedAt = DateTime.Now
+                CreatedAt = SriLankaTime.Now
             });
 
             await _context.SaveChangesAsync();
@@ -68,7 +97,12 @@ namespace HRMS.Application.Services
 
         public async Task<List<Notification>> GetNotificationsAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (string.IsNullOrWhiteSpace(email)) return new List<Notification>();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => 
+                u.UserName == email || 
+                u.Email == email || 
+                u.Id == email);
             if (user == null) return new List<Notification>();
 
             return await _context.Notifications
@@ -79,7 +113,12 @@ namespace HRMS.Application.Services
 
         public async Task<int> GetUnreadCountAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (string.IsNullOrWhiteSpace(email)) return 0;
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => 
+                u.UserName == email || 
+                u.Email == email || 
+                u.Id == email);
             if (user == null) return 0;
 
             return await _context.Notifications
@@ -98,7 +137,12 @@ namespace HRMS.Application.Services
 
         public async Task MarkAllAsReadAsync(string email)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+            if (string.IsNullOrWhiteSpace(email)) return;
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => 
+                u.UserName == email || 
+                u.Email == email || 
+                u.Id == email);
             if (user == null) return;
 
             var unread = await _context.Notifications

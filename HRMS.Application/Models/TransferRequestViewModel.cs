@@ -79,6 +79,47 @@ namespace HRMS.Application.Models
         public string? HRManagerReview { get; set; }
         public DateTime? HRManagerReviewDate { get; set; }
         public string? HRManagerComments { get; set; }
+
+        // ── Managerial Notification Properties ──
+        public bool IsManagerialNotification => Status == TransferStatus.PendingHRReview || Status == TransferStatus.ManagerReviewed;
+
+        public string StatusDisplay => Status switch
+        {
+            TransferStatus.Pending => "Pending Department Head",
+            TransferStatus.DeptHeadApproved => "Department Head Approved",
+            TransferStatus.DeptHeadRejected => "Rejected by Department Head",
+            TransferStatus.CurrentBMApproved => "Approved by Current BM",
+            TransferStatus.CurrentBMRejected => "Rejected by Current BM",
+            TransferStatus.TargetBMApproved => "Approved by Target BM",
+            TransferStatus.TargetBMRejected => "Rejected by Target BM",
+            TransferStatus.BothBMsApproved => "Approved by Both BMs",
+            TransferStatus.AreaManagerApproved => "Approved by Area Manager",
+            TransferStatus.AreaManagerRejected => "Rejected by Area Manager",
+            TransferStatus.FullyApproved => "Approved by HR",
+            TransferStatus.HRFinalRejected => "Rejected by HR",
+            TransferStatus.PendingHRReview => "Pending HR Review (Notice)",
+            TransferStatus.ManagerReviewed => "Reviewed by HR Manager (Notice)",
+            _ => "Unknown"
+        };
+
+        public string StatusBadgeClass => Status switch
+        {
+            TransferStatus.Pending => "k-badge-pending",
+            TransferStatus.DeptHeadApproved => "k-badge-info",
+            TransferStatus.DeptHeadRejected => "k-badge-rejected",
+            TransferStatus.CurrentBMApproved => "k-badge-info",
+            TransferStatus.CurrentBMRejected => "k-badge-rejected",
+            TransferStatus.TargetBMApproved => "k-badge-info",
+            TransferStatus.TargetBMRejected => "k-badge-rejected",
+            TransferStatus.BothBMsApproved => "k-badge-info",
+            TransferStatus.AreaManagerApproved => "k-badge-info",
+            TransferStatus.AreaManagerRejected => "k-badge-rejected",
+            TransferStatus.FullyApproved => "k-badge-approved",
+            TransferStatus.HRFinalRejected => "k-badge-rejected",
+            TransferStatus.PendingHRReview => "k-badge-pending",
+            TransferStatus.ManagerReviewed => "k-badge-approved",
+            _ => "k-badge-secondary"
+        };
     }
 
     public enum TransferStatus
@@ -94,6 +135,10 @@ namespace HRMS.Application.Models
         AreaManagerApproved = 8,
         AreaManagerRejected = 9,
         FullyApproved = 10,
-        HRFinalRejected = 11
+        HRFinalRejected = 11,
+
+        // Direct Managerial Notification Workflow (Dept Head, BM, AM)
+        PendingHRReview = 12,
+        ManagerReviewed = 13
     }
 }

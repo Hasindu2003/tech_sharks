@@ -1,0 +1,421 @@
+@page
+@model HRMS.UI.Pages.CVBank.CreateJobModel
+@{
+    ViewData["Title"] = "Open New Job Position - CV Bank";
+    Layout = "_Layout";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; font-family: 'Manrope', sans-serif; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; font-family: 'Manrope', sans-serif; }
+
+    .form-card {
+        max-width: 840px;
+        margin: 0 auto 30px auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        overflow: hidden;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 22px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .form-card-body { padding: 24px; }
+
+    .fg { margin-bottom: 16px; position: relative; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; font-family: 'Manrope', sans-serif; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1.5px solid #d1d5db; border-radius: 6px;
+        font-size: 13.5px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: all 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @@media (max-width: 768px) {
+        .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .req { color: #ef4444; }
+
+    .sub-section-header {
+        font-size: 12px;
+        font-weight: 800;
+        color: #10823c;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin: 22px 0 14px 0;
+        padding-bottom: 6px;
+        border-bottom: 1px solid #e2e5dc;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+        font-family: 'Manrope', sans-serif;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+
+    .info-banner {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .suggestion-chip {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 12px;
+        padding: 3px 9px;
+        font-size: 11px;
+        font-weight: 600;
+        color: #334155;
+        cursor: pointer;
+        margin-right: 4px;
+        margin-bottom: 4px;
+        display: inline-block;
+        transition: all 0.15s;
+    }
+    .suggestion-chip:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+        border-color: #94a3b8;
+    }
+    .skill-tag-pill {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        color: #15803d;
+        font-size: 12.5px;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 16px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .skill-tag-pill button {
+        background: transparent;
+        border: none;
+        color: #15803d;
+        cursor: pointer;
+        font-size: 14px;
+        padding: 0;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+    }
+    .skill-tag-pill button:hover {
+        color: #dc2626;
+    }
+</style>
+
+<div>
+    <a href="/CVBank/Index" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to CV Bank & Openings
+    </a>
+
+    <div style="max-width: 840px; margin: 0 auto;">
+        <h1 class="page-h">Open New Job Position</h1>
+        <p class="page-s">Publish a targeted recruitment opening. A unique application QR Code and flyer will be generated automatically.</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+                <i class="bi bi-exclamation-circle me-1"></i> Please correct the errors below.
+                <div asp-validation-summary="All" class="small mt-1"></div>
+                <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="info-banner">
+            <i class="bi bi-qr-code text-success" style="font-size: 24px; flex-shrink: 0; margin-top: 2px;"></i>
+            <div>
+                <strong style="color: #15803d; font-size: 13.5px;">Automated QR Code & Adaptive Candidate Scoring</strong>
+                <p style="margin: 3px 0 0 0; font-size: 12px; color: #475569; line-height: 1.4;">
+                    Once published, this job position will generate its own dedicated QR Code and application link. Candidates scanning that QR code will apply specifically for this opening, and their competency score will automatically adapt to the minimum experience, education, and individual skills you enter below.
+                </p>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <div class="form-card-header">
+                <i class="bi bi-briefcase-fill text-success"></i> Vacancy Specification Form
+            </div>
+            <div class="form-card-body">
+                <form method="post" novalidate onsubmit="return syncSkillsBeforeSubmit();">
+                    
+                    <!-- 1. Position Basics -->
+                    <div class="fg">
+                        <label class="fl">Job Title / Designation <span class="req">*</span></label>
+                        <input asp-for="JobInput.Title" class="fi" list="designationList" placeholder="e.g. Senior Credit Officer, Financial Analyst" required />
+                        <datalist id="designationList">
+                            @foreach (var d in Model.DesignationSuggestions)
+                            {
+                                <option value="@d" />
+                            }
+                        </datalist>
+                    </div>
+
+                    <div class="grid-3">
+                        <div class="fg">
+                            <label class="fl">Department</label>
+                            <select asp-for="JobInput.DepartmentId" class="fi">
+                                <option value="">-- All / Organization-wide --</option>
+                                @foreach (var dept in Model.Departments)
+                                {
+                                    <option value="@dept.Id">@dept.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="fg">
+                            <label class="fl">Target Branch @if (Model.IsBranchRestricted) { <span class="req">*</span> }</label>
+                            <select asp-for="JobInput.BranchId" class="fi">
+                                @if (!Model.IsBranchRestricted)
+                                {
+                                    <option value="">-- Head Office / All Branches --</option>
+                                }
+                                else if (Model.Branches.Count > 1 || !Model.Branches.Any())
+                                {
+                                    <option value="">-- Select Assigned Branch --</option>
+                                }
+                                @foreach (var b in Model.Branches)
+                                {
+                                    <option value="@b.Id">@b.Name (@b.Location)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="JobInput.BranchId" class="text-danger small d-block mt-1"></span>
+                            @if (Model.IsBranchRestricted)
+                            {
+                                <small class="text-muted" style="font-size: 11px;">You are authorized to publish job positions for your assigned branches.</small>
+                            }
+                        </div>
+
+                        <div class="fg">
+                            <label class="fl">Employment Type</label>
+                            <select asp-for="JobInput.EmploymentType" class="fi">
+                                <option value="Full-Time">Full-Time</option>
+                                <option value="Part-Time">Part-Time</option>
+                                <option value="Contract">Contract</option>
+                                <option value="Internship">Internship</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- 2. Minimum Qualification Benchmarks (For Adaptive Scoring Engine) -->
+                    <div class="sub-section-header">
+                        <i class="bi bi-sliders"></i> Minimum Qualification Benchmarks (Adaptive Scoring)
+                    </div>
+
+                    <div class="grid-2">
+                        <div class="fg">
+                            <label class="fl">Minimum Work Experience (Years) <span class="req">*</span></label>
+                            <input asp-for="JobInput.MinimumExperienceYears" type="number" min="0" max="40" class="fi" placeholder="0 for Entry Level / Fresh Grads" required />
+                            <small class="text-muted" style="font-size: 11px;">Applicants meeting this benchmark receive full base points + bonus for surplus experience.</small>
+                        </div>
+
+                        <div class="fg">
+                            <label class="fl">Minimum Education Level <span class="req">*</span></label>
+                            <select asp-for="JobInput.MinimumEducationLevel" class="fi">
+                                <option value="None">None / High School / Diploma</option>
+                                <option value="Degree">Bachelor's Degree Required</option>
+                                <option value="Masters">Master's Degree Required</option>
+                            </select>
+                            <small class="text-muted" style="font-size: 11px;">Scoring dynamically rewards candidates holding or exceeding the required degree level.</small>
+                        </div>
+                    </div>
+
+                    <!-- Required Skills Entered Separately -->
+                    <div class="fg">
+                        <label class="fl">Required Skills & Competencies (Added Separately)</label>
+                        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                            <input type="text" id="skillInput" class="fi" placeholder="Type a required skill (e.g. Credit Appraisal) and press Enter or click '+ Add'" style="flex: 1;" onkeydown="handleSkillKeyDown(event)" />
+                            <button type="button" class="btn-kanrich btn-kanrich-outline" onclick="addSkillFromInput()" style="padding: 0 16px; height: 38px; font-size: 13px; font-weight: 700; flex-shrink: 0; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="bi bi-plus-circle"></i> Add Skill
+                            </button>
+                        </div>
+
+                        <!-- Active Skills Chips Container -->
+                        <div id="skillsTagsContainer" style="display: flex; flex-wrap: wrap; gap: 6px; min-height: 42px; padding: 8px 12px; background: #f8fafc; border: 1.5px dashed #cbd5e1; border-radius: 6px; margin-bottom: 8px; align-items: center;">
+                            <span id="noSkillsPrompt" class="text-muted" style="font-size: 12px;">No required skills added yet. Type individual skills above and press Enter or click '+ Add'.</span>
+                        </div>
+
+                        <!-- Hidden input bound to model -->
+                        <input asp-for="JobInput.RequiredSkills" id="requiredSkillsHidden" type="hidden" />
+                    </div>
+
+                    <!-- 3. Job Description & Logistics -->
+                    <div class="sub-section-header">
+                        <i class="bi bi-file-text"></i> Description & Timeline
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Application Closing Deadline (Optional)</label>
+                        <input asp-for="JobInput.ClosingDate" type="date" class="fi" style="max-width: 260px;" min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        <span asp-validation-for="JobInput.ClosingDate" class="text-danger small d-block mt-1"></span>
+                        <small class="text-muted" style="font-size: 11px;">Leave blank for rolling / continuous recruitment.</small>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Role Overview & Responsibilities</label>
+                        <textarea asp-for="JobInput.Description" class="fi" rows="3" placeholder="Provide a brief overview of key responsibilities and day-to-day duties..."></textarea>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Additional Candidate Requirements</label>
+                        <textarea asp-for="JobInput.Requirements" class="fi" rows="3" placeholder="List any additional certifications, communication skills, or eligibility criteria..."></textarea>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                        <a href="/CVBank/Index" class="btn-kanrich btn-kanrich-outline" style="padding: 9px 18px; text-decoration: none;">Cancel</a>
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 9px 24px; font-weight: 700;">
+                            <i class="bi bi-check2-circle me-1"></i> Publish Job & Generate QR Code
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentSkills = [];
+
+        function renderSkillsTags() {
+            const container = document.getElementById('skillsTagsContainer');
+            const hiddenInput = document.getElementById('requiredSkillsHidden');
+
+            if (!container || !hiddenInput) return;
+
+            container.innerHTML = '';
+
+            if (currentSkills.length === 0) {
+                container.innerHTML = '<span id="noSkillsPrompt" class="text-muted" style="font-size: 12px;">No required skills added yet. Type individual skills above or click quick suggestions below.</span>';
+                hiddenInput.value = '';
+                return;
+            }
+
+            currentSkills.forEach((skill, index) => {
+                const pill = document.createElement('span');
+                pill.className = 'skill-tag-pill';
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = skill;
+                pill.appendChild(textSpan);
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.title = 'Remove skill';
+                removeBtn.onclick = function () {
+                    removeSkillTag(index);
+                };
+                pill.appendChild(removeBtn);
+
+                container.appendChild(pill);
+            });
+
+            hiddenInput.value = currentSkills.join(', ');
+        }
+
+        function addSkillTag(skillName) {
+            if (!skillName) return;
+            const cleaned = skillName.trim();
+            if (cleaned.length === 0) return;
+
+            // Handle comma-separated bulk paste/input
+            const parts = cleaned.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+            
+            parts.forEach(part => {
+                if (!currentSkills.some(s => s.toLowerCase() === part.toLowerCase())) {
+                    currentSkills.push(part);
+                }
+            });
+
+            renderSkillsTags();
+        }
+
+        function addSkillFromInput() {
+            const input = document.getElementById('skillInput');
+            if (!input) return;
+            addSkillTag(input.value);
+            input.value = '';
+            input.focus();
+        }
+
+        function removeSkillTag(index) {
+            if (index >= 0 && index < currentSkills.length) {
+                currentSkills.splice(index, 1);
+                renderSkillsTags();
+            }
+        }
+
+        function handleSkillKeyDown(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addSkillFromInput();
+            }
+        }
+
+        function syncSkillsBeforeSubmit() {
+            // Also pick up whatever is currently typed in the skillInput box if user didn't press Enter
+            const input = document.getElementById('skillInput');
+            if (input && input.value.trim().length > 0) {
+                addSkillTag(input.value);
+                input.value = '';
+            }
+            renderSkillsTags();
+
+            // Client-side Closing Date validation
+            const closingDateInput = document.querySelector('input[type="date"][name="JobInput.ClosingDate"]');
+            if (closingDateInput && closingDateInput.value) {
+                const todayStr = new Date().toISOString().split('T')[0];
+                if (closingDateInput.value < todayStr) {
+                    alert('Application closing deadline cannot be in the past. Please select today or a future date.');
+                    closingDateInput.focus();
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const hiddenInput = document.getElementById('requiredSkillsHidden');
+            if (hiddenInput && hiddenInput.value) {
+                addSkillTag(hiddenInput.value);
+            }
+        });
+    </script>
+}

@@ -11,11 +11,12 @@
 else
 {
     var req = Model.TransferRequest;
-    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
 
     <div style="margin-bottom:20px">
-        <a asp-page="/HRManager/ReviewTransfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
-            <i class="bi bi-arrow-left"></i> Back to Review Transfers
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Transfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request ID: #@req.Id</span>
     </div>
@@ -78,38 +79,51 @@ else
                 </div>
             </div>
 
-            <!-- Prior Reviews Chain -->
-            <div class="review-card approved" style="margin-bottom:12px">
-                <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-check"></i> Step 1 — Employee Submission</h6>
-                <div style="font-size:0.88rem">Submitted by <strong>@req.RequestedByRole</strong> on @req.RequestedDate.ToString("MMM dd, yyyy")</div>
-            </div>
-            @if (!string.IsNullOrEmpty(req.DeptHeadReview))
+            @if (req.IsManagerialNotification)
             {
-                <div class="review-card @(req.DeptHeadReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-workspace"></i> Step 2 — Department Head</h6>
-                    <div style="font-size:0.88rem"><strong>@req.DeptHeadReview</strong> on @req.DeptHeadReviewDate?.ToString("MMM dd, yyyy") — @req.DeptHeadComments</div>
+                <div class="review-card approved" style="margin-bottom:12px;background:#eff6ff;border-color:#bfdbfe">
+                    <h6 style="font-weight:700;margin-bottom:6px;color:#1e40af"><i class="bi bi-info-circle-fill"></i> Managerial Notification Protocol</h6>
+                    <div style="font-size:0.88rem;color:#1e3a8a">
+                        Submitted by <strong>@req.RequestedByRole</strong> (@req.CurrentDesignation). This is an administrative notification routed directly to the HR Manager.
+                        <div style="margin-top:4px;font-size:0.82rem;color:#3b82f6"><strong>Note:</strong> Marking as reviewed confirms HR has seen the request; any further approvals or relocation procedures are processed outside this system.</div>
+                    </div>
                 </div>
             }
-            @if (!string.IsNullOrEmpty(req.CurrentBMReview))
+            else
             {
-                <div class="review-card @(req.CurrentBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 3a — Current Branch Manager (@req.CurrentBranch)</h6>
-                    <div style="font-size:0.88rem"><strong>@req.CurrentBMReview</strong> on @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy") — @req.CurrentBMComments</div>
+                <!-- Prior Reviews Chain -->
+                <div class="review-card approved" style="margin-bottom:12px">
+                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-check"></i> Step 1 — Employee Submission</h6>
+                    <div style="font-size:0.88rem">Submitted by <strong>@req.RequestedByRole</strong> on @req.RequestedDate.ToString("MMM dd, yyyy")</div>
                 </div>
-            }
-            @if (!string.IsNullOrEmpty(req.TargetBMReview))
-            {
-                <div class="review-card @(req.TargetBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 3b — Target Branch Manager (@req.RequestedBranch)</h6>
-                    <div style="font-size:0.88rem"><strong>@req.TargetBMReview</strong> on @req.TargetBMReviewDate?.ToString("MMM dd, yyyy") — @req.TargetBMComments</div>
-                </div>
-            }
-            @if (!string.IsNullOrEmpty(req.AreaManagerReview))
-            {
-                <div class="review-card @(req.AreaManagerReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
-                    <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-badge"></i> Step 4 — Area Manager</h6>
-                    <div style="font-size:0.88rem"><strong>@req.AreaManagerReview</strong> on @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy") — @req.AreaManagerComments</div>
-                </div>
+                @if (!string.IsNullOrEmpty(req.DeptHeadReview))
+                {
+                    <div class="review-card @(req.DeptHeadReview == "Rejected" ? "rejected" : "approved")" style="margin-bottom:12px">
+                        <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-workspace"></i> Step 2 — Department Head</h6>
+                        <div style="font-size:0.88rem"><strong>@req.DeptHeadReview</strong> on @req.DeptHeadReviewDate?.ToString("MMM dd, yyyy") — @req.DeptHeadComments</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(req.CurrentBMReview))
+                {
+                    <div class="review-card @(req.CurrentBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                        <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 3a — Current Branch Manager (@req.CurrentBranch)</h6>
+                        <div style="font-size:0.88rem"><strong>@req.CurrentBMReview</strong> on @req.CurrentBMReviewDate?.ToString("MMM dd, yyyy") — @req.CurrentBMComments</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(req.TargetBMReview))
+                {
+                    <div class="review-card @(req.TargetBMReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                        <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-building"></i> Step 3b — Target Branch Manager (@req.RequestedBranch)</h6>
+                        <div style="font-size:0.88rem"><strong>@req.TargetBMReview</strong> on @req.TargetBMReviewDate?.ToString("MMM dd, yyyy") — @req.TargetBMComments</div>
+                    </div>
+                }
+                @if (!string.IsNullOrEmpty(req.AreaManagerReview))
+                {
+                    <div class="review-card @(req.AreaManagerReview == "Approved" ? "approved" : "rejected")" style="margin-bottom:12px">
+                        <h6 style="font-weight:700;margin-bottom:6px"><i class="bi bi-person-badge"></i> Step 4 — Area Manager</h6>
+                        <div style="font-size:0.88rem"><strong>@req.AreaManagerReview</strong> on @req.AreaManagerReviewDate?.ToString("MMM dd, yyyy") — @req.AreaManagerComments</div>
+                    </div>
+                }
             }
 
             @if (req.HasDocument)
@@ -137,7 +151,31 @@ else
         </div>
 
         <div>
-            @if (req.Status == TransferStatus.AreaManagerApproved)
+            @if (req.Status == TransferStatus.PendingHRReview)
+            {
+                <div class="k-card" style="padding:22px;border:1px solid #e2e5dc;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                        <i class="bi bi-bell-fill" style="color:#10823c;font-size:18px"></i>
+                        <h5 style="margin:0;font-size:15px;font-weight:800;color:#151811">Managerial Transfer Notice</h5>
+                    </div>
+                    <p style="font-size:12.5px;color:#7a8863;margin-bottom:16px;line-height:1.5">
+                        Submitted by <strong>@req.CurrentDesignation</strong>. This is an administrative notification routed directly to HR. Click below to mark this request as reviewed.
+                    </p>
+
+                    <form method="post">
+                        <input type="hidden" name="id" value="@req.Id" />
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-size:11.5px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:6px">Acknowledgement Remarks (Optional)</label>
+                            <textarea name="comments" placeholder="Add remarks or notes (optional)..."
+                                      style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#151811;font-family:inherit;font-size:13px;resize:vertical;min-height:70px;box-sizing:border-box"></textarea>
+                        </div>
+                        <button type="submit" name="action" value="mark_reviewed" style="background:#10823c;border:none;color:#fff;width:100%;padding:12px 18px;font-size:14px;font-weight:700;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 4px rgba(16,130,60,0.2)">
+                            <i class="bi bi-check-circle-fill"></i> Mark as Reviewed
+                        </button>
+                    </form>
+                </div>
+            }
+            else if (req.Status == TransferStatus.AreaManagerApproved)
             {
                 <div class="eligibility-panel">
                     <h5><i class="bi bi-shield-check"></i> Final Decision (HR Manager)</h5>
@@ -195,14 +233,15 @@ else
             {
                 <div class="k-card">
                     <div style="padding:4px 0 12px">
-                        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px"><i class="bi bi-clipboard-check"></i> Step 5 — Your Decision</div>
+                        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px"><i class="bi bi-clipboard-check"></i> HR Manager Decision</div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:0.88rem;color:#374151">
                             <div>
-                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;font-weight:600;margin-bottom:3px">Decision</div>
+                                <div style="font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;font-weight:600;margin-bottom:3px">Status</div>
                                 <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
-                                             background:@(req.HRManagerReview == "Approved" ? "#e8f3ec" : "#fff0f0");color:@(req.HRManagerReview == "Approved" ? "#10823c" : "#dc3545")">
-                                    <i class="bi bi-@(req.HRManagerReview == "Approved" ? "check-circle" : "x-circle")"></i>
-                                    @req.HRManagerReview
+                                             background:@(req.Status == TransferStatus.ManagerReviewed ? "#dcfce7" : (req.HRManagerReview == "Rejected" ? "#fff0f0" : "#e8f3ec"));
+                                             color:@(req.Status == TransferStatus.ManagerReviewed ? "#10823c" : (req.HRManagerReview == "Rejected" ? "#dc3545" : "#10823c"))">
+                                    <i class="bi bi-@(req.Status == TransferStatus.ManagerReviewed ? "check-circle" : (req.HRManagerReview == "Rejected" ? "x-circle" : "check-circle"))"></i>
+                                    @(req.Status == TransferStatus.ManagerReviewed ? "Reviewed (Notice)" : req.HRManagerReview)
                                 </span>
                             </div>
                             <div>
@@ -210,6 +249,12 @@ else
                                 <div style="font-weight:600">@req.HRManagerReviewDate?.ToString("MMM dd, yyyy")</div>
                             </div>
                         </div>
+                        @if (req.Status == TransferStatus.ManagerReviewed)
+                        {
+                            <div style="margin-top:10px;font-size:12px;color:#6b7280;font-style:italic">
+                                <i class="bi bi-info-circle"></i> This managerial notice has been seen by the HR Manager. Any subsequent transfer process is handled outside the system.
+                            </div>
+                        }
                         @if (!string.IsNullOrEmpty(req.HRManagerComments))
                         {
                             <div style="margin-top:10px;font-size:0.88rem;color:#374151">

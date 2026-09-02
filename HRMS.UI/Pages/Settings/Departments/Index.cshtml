@@ -28,13 +28,16 @@
         .emp-table td { padding: 13px 19px; vertical-align: middle; border-bottom: 1px solid var(--border-color); font-size: 14px; color: var(--text-main); }
         .emp-table tr:last-child td { border-bottom: none; }
         .emp-table tbody tr:hover { background: #fafafa; }
-        .emp-table col.col-id      { width: 120px; }
-        .emp-table col.col-name    { width: 150px; }
+        .emp-table col.col-id      { width: 130px; }
+        .emp-table col.col-name    { width: 280px; }
         .emp-table col.col-badges  { width: auto; }
-        .emp-table col.col-actions { width: 210px; }
+        .emp-table col.col-actions { width: 230px; }
         .btn-view { color: var(--primary-green); font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background 0.2s; }
         .btn-view:hover { background: #e8f3ec; }
         .badge-branch { display: inline-block; background: #e8f3ec; color: #10823c; border-radius: 12px; padding: 2px 9px; font-size: 12px; font-weight: 600; margin: 2px; white-space: nowrap; }
+        .badge-more { display: inline-flex; align-items: center; background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; border-radius: 12px; padding: 2px 8px; font-size: 11px; font-weight: 700; margin: 2px; cursor: pointer; transition: all 0.15s ease; user-select: none; }
+        .badge-more:hover { background: #e2e8f0; color: #0f172a; border-color: #94a3b8; }
+        .branches-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
     </style>
 }
 
@@ -65,6 +68,21 @@
             </div>
         }
 
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div id="infoBanner" style="background: #eff6ff; color: #1e40af; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #bfdbfe; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="background: #3b82f6; border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                    <span>@TempData["InfoMessage"]</span>
+                </div>
+                <button type="button" onclick="document.getElementById('infoBanner').style.display='none'" style="background:none;border:none;color:#1e40af;cursor:pointer;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+        }
+
         <div class="table-card">
             <table class="emp-table" id="tbl-departments">
                 <colgroup>
@@ -88,24 +106,71 @@
                     }
                     @foreach (var item in Model.Departments)
                     {
+                        var isHr = item.Name.Equals("Human Resources", StringComparison.OrdinalIgnoreCase) ||
+                                   item.Name.Equals("HR", StringComparison.OrdinalIgnoreCase);
+                        var isWelfare = item.Name.Equals("Welfare", StringComparison.OrdinalIgnoreCase);
+                        var isCorporate = isHr || isWelfare;
                         <tr>
                             <td style="font-weight: 600;">DEP-@item.Id.ToString("D4")</td>
-                            <td>@item.Name</td>
                             <td>
-                                @if (item.BranchDepartments.Count == 0)
+                                <div style="display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <span>@item.Name</span>
+                                    @if (isCorporate)
+                                    {
+                                        <span style="font-size:11px; background:#eff6ff; color:#1d4ed8; font-weight:700; padding:2px 7px; border-radius:10px; border:1px solid #bfdbfe;">Corporate</span>
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (isCorporate)
+                                {
+                                    <span class="badge-branch" style="background:#dbeafe; color:#1e40af; border:1px solid #bfdbfe; font-weight:700;">Head Office (Permanent)</span>
+                                }
+                                else if (item.BranchDepartments.Count == 0)
                                 {
                                     <span style="color:#7a8863; font-size:12px;">Not assigned</span>
                                 }
                                 else
                                 {
-                                    @foreach (var bd in item.BranchDepartments)
-                                    {
-                                        <span class="badge-branch">@bd.Branch.Name</span>
-                                    }
+                                    const int limit = 3;
+                                    var displayed = item.BranchDepartments.Take(limit).ToList();
+                                    var remaining = item.BranchDepartments.Skip(limit).ToList();
+
+                                    <div class="branches-wrap">
+                                        @foreach (var bd in displayed)
+                                        {
+                                            <span class="badge-branch">@bd.Branch.Name</span>
+                                        }
+                                        @if (remaining.Any())
+                                        {
+                                            var moreNames = string.Join(", ", remaining.Select(b => b.Branch.Name));
+                                            <button type="button" 
+                                                    class="badge-more" 
+                                                    onclick="toggleMoreBranches(this)" 
+                                                    title="Click to expand (or hover to view): @moreNames" 
+                                                    data-count="@remaining.Count" 
+                                                    data-expanded="false">
+                                                +@remaining.Count more
+                                            </button>
+                                            <span class="remaining-branches-box" style="display: none;">
+                                                @foreach (var bd in remaining)
+                                                {
+                                                    <span class="badge-branch">@bd.Branch.Name</span>
+                                                }
+                                            </span>
+                                        }
+                                    </div>
                                 }
                             </td>
                             <td style="text-align: right; white-space: nowrap;">
-                                <a href="/Settings/Departments/Assign?id=@item.Id" class="btn-view">Assign Branches</a>
+                                @if (isCorporate)
+                                {
+                                    <span style="color:#6b7280; font-size:12px; font-weight:600; padding:5px 8px; background:#f3f4f6; border-radius:5px; margin-right:4px;">Permanent Station</span>
+                                }
+                                else
+                                {
+                                    <a href="/Settings/Departments/Assign?id=@item.Id" class="btn-view">Assign Branches</a>
+                                }
                                 <a href="/Settings/Departments/Edit?id=@item.Id" class="btn-view">Edit</a>
                             </td>
                         </tr>
@@ -118,8 +183,23 @@
 
 @section Scripts {
 <script>
+function toggleMoreBranches(btn) {
+    var nextBox = btn.nextElementSibling;
+    if (!nextBox) return;
+    var isExp = btn.getAttribute('data-expanded') === 'true';
+    if (isExp) {
+        nextBox.style.display = 'none';
+        btn.textContent = '+' + btn.getAttribute('data-count') + ' more';
+        btn.setAttribute('data-expanded', 'false');
+    } else {
+        nextBox.style.display = 'inline';
+        btn.textContent = 'Show less';
+        btn.setAttribute('data-expanded', 'true');
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-departments', 8);
+    initTablePagination('tbl-departments', 10);
 });
 </script>
 }

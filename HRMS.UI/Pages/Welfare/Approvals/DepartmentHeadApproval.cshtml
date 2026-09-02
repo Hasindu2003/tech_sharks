@@ -1,0 +1,1315 @@
+@page
+@model HRMS.UI.Pages.Welfare.Approvals.DepartmentHeadApprovalModel
+@using HRMS.Application.Services
+@{
+    ViewData["Title"] = "Welfare Approvals";
+    ViewData["PageTitle"] = "Welfare / Welfare Manager Approvals";
+    ViewData["ActiveNav"] = "WelfareApprovals";
+}
+
+<style>
+    .welfare-page-wrap {
+        background: transparent;
+        padding: 0;
+    }
+
+    /* Page Header */
+    .page-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .page-h {
+        font-size: 20px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.3px;
+    }
+    .page-s {
+        font-size: 13px;
+        color: #7a8863;
+        margin: 0;
+        line-height: 1.5;
+    }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* Action Buttons */
+    .btn-sys-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #10823c;
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(16, 130, 60, 0.2);
+    }
+    .btn-sys-primary:hover {
+        background: #0d6e32;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(16, 130, 60, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-sys-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #ffffff;
+        color: #151811;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .btn-sys-outline:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #151811;
+    }
+
+    /* Stat Cards Grid */
+    .stat-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .k-metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .k-metric-card:hover {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.07);
+        transform: translateY(-1px);
+    }
+    .k-metric-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 20px;
+    }
+    .k-metric-icon.orange { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    .k-metric-icon.green  { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .k-metric-icon.red    { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+    .k-metric-icon.blue   { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+
+    .k-metric-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .k-metric-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #7a8863;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .k-metric-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: #151811;
+        line-height: 1.2;
+    }
+    .k-metric-sub {
+        font-size: 11px;
+        color: #64748b;
+        margin-top: 2px;
+        font-weight: 500;
+    }
+
+    /* Filter Toolbar */
+    .filter-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .filter-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 300px;
+        flex-wrap: wrap;
+    }
+    .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 220px;
+        max-width: 360px;
+    }
+    .search-wrap svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 15px;
+        height: 15px;
+        stroke: #7a8863;
+        fill: none;
+        pointer-events: none;
+    }
+    .search-input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        color: #151811;
+        background: #fafbfa;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .search-input:focus {
+        background: #ffffff;
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.1);
+    }
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        color: #151811;
+        background: #ffffff;
+        outline: none;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+    .filter-select:focus {
+        border-color: #10823c;
+    }
+
+    /* Tab Filters */
+    .tab-pills-wrap {
+        display: inline-flex;
+        background: #f1f5f9;
+        padding: 3px;
+        border-radius: 8px;
+        gap: 2px;
+    }
+    .tab-pill-btn {
+        border: none;
+        background: transparent;
+        color: #475569;
+        font-family: 'Manrope', sans-serif;
+        font-size: 12.5px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .tab-pill-btn.active {
+        background: #ffffff;
+        color: #10823c;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+    .tab-badge {
+        font-size: 10.5px;
+        padding: 1px 6px;
+        border-radius: 999px;
+        background: #e2e8f0;
+        color: #334155;
+    }
+    .tab-pill-btn.active .tab-badge {
+        background: #eef7f0;
+        color: #10823c;
+    }
+
+    .results-count {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #7a8863;
+        white-space: nowrap;
+    }
+
+    /* Table Container */
+    .table-container-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        margin-bottom: 20px;
+    }
+    .welfare-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .welfare-table th {
+        background: #f9fafb;
+        padding: 13px 16px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #e2e5dc;
+        white-space: nowrap;
+    }
+    .welfare-table td {
+        padding: 14px 16px;
+        font-size: 13px;
+        color: #151811;
+        border-bottom: 1px solid #e2e5dc;
+        vertical-align: middle;
+    }
+    .welfare-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .welfare-table tbody tr {
+        transition: background 0.12s ease;
+    }
+    .welfare-table tbody tr:hover {
+        background: #fbfcfb;
+    }
+
+    /* Cell Elements */
+    .ref-code-badge {
+        display: inline-block;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 12px;
+        font-weight: 700;
+        color: #10823c;
+        background: #eef7f0;
+        padding: 3px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.3px;
+    }
+    .emp-info-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .emp-avatar-wrapper {
+        position: relative;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 1px solid #e2e8f0;
+        background: #f1f5f9;
+    }
+    .emp-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .emp-avatar-fallback {
+        width: 100%;
+        height: 100%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 13px;
+        color: #10823c;
+        background: #f1f5f9;
+    }
+    .emp-name {
+        font-weight: 700;
+        color: #151811;
+        line-height: 1.2;
+    }
+    .emp-meta {
+        font-size: 11px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2px;
+    }
+    .emp-meta-pill {
+        background: #f1f5f9;
+        padding: 1px 5px;
+        border-radius: 4px;
+        font-size: 10.5px;
+        color: #475569;
+        font-weight: 600;
+    }
+
+    .type-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    .amount-val {
+        font-weight: 800;
+        color: #10823c;
+        font-size: 13.5px;
+    }
+
+    .docs-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        padding: 3px 8px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #475569;
+    }
+    .docs-chip i { color: #10823c; }
+
+    /* Badges */
+    .st-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 9px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+    }
+    .st-pending   { background: #fef3c7; color: #b45309; }
+    .st-approved  { background: #dcfce7; color: #15803d; }
+    .st-disbursed { background: #e0e7ff; color: #4338ca; }
+    .st-rejected  { background: #fee2e2; color: #b91c1c; }
+
+    .stage-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 7px;
+        border-radius: 4px;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        white-space: nowrap;
+        margin-right: 4px;
+    }
+    .stage-badge.welfare { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .stage-badge.branch  { background: #eff6ff; color: #1e40af; border-color: #dbeafe; }
+    .stage-badge.area    { background: #f5f3ff; color: #5b21b6; border-color: #ede9fe; }
+    .stage-badge.hr      { background: #ecfdf5; color: #065f46; border-color: #a7f3d0; }
+
+    .urgency-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2.5px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        white-space: nowrap;
+    }
+    .urgency-badge.high   { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+    .urgency-badge.medium { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+    .urgency-badge.normal { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+
+    .btn-review-act {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #ffffff;
+        background: #10823c;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+    .btn-review-act:hover {
+        background: #0d6e32;
+        transform: translateY(-1px);
+        color: #ffffff;
+    }
+    .btn-view-act {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #475569;
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-decoration: none;
+    }
+    .btn-view-act:hover {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    /* Modal Overlay & Card */
+    .wf-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .wf-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .wf-modal-card {
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        width: 94vw;
+        max-width: 680px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transform: scale(0.96) translateY(10px);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .wf-modal-overlay.active .wf-modal-card {
+        transform: scale(1) translateY(0);
+    }
+    .wf-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 22px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        flex-shrink: 0;
+    }
+    .wf-modal-body {
+        padding: 20px 22px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+    .wf-modal-foot {
+        padding: 14px 22px;
+        border-top: 1px solid #e2e8f0;
+        background: #f8fafc;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    /* Modal Content Blocks */
+    .profile-card-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .dg-item {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 10px 12px;
+    }
+    .dg-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        margin-bottom: 2px;
+    }
+    .dg-val {
+        font-size: 13.5px;
+        font-weight: 700;
+        color: #0f172a;
+    }
+    .reason-quote-box {
+        background: #f8fafc;
+        border-left: 3px solid #10823c;
+        border-radius: 0 8px 8px 0;
+        padding: 12px 16px;
+        font-size: 13px;
+        color: #334155;
+        line-height: 1.5;
+    }
+
+    .doc-preview-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+    }
+    .doc-preview-chip:hover {
+        border-color: #10823c;
+    }
+    .doc-link-btn {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .alert-banner {
+        padding: 12px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .alert-banner.success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .alert-banner.error   { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+</style>
+
+<div class="welfare-page-wrap">
+
+    <!-- Header Row -->
+    <div class="page-header-row">
+        <div>
+            <h1 class="page-h">Welfare Manager Approvals</h1>
+            <p class="page-s">Review, verify, approve, and track employee welfare assistance requests centrally for Kanrich Finance.</p>
+        </div>
+        <div class="header-actions">
+            <a href="/Welfare/Approvals/DepartmentHeadApproval" class="btn-sys-outline" title="Refresh list">
+                <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                Refresh
+            </a>
+        </div>
+    </div>
+
+    <!-- Alert Banners -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert-banner success">
+            <i class="bi bi-check-circle-fill"></i>
+            <span>@TempData["Success"]</span>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert-banner error">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <span>@TempData["Error"]</span>
+        </div>
+    }
+
+    <!-- Stat Metric Cards -->
+    <div class="stat-cards-grid">
+        <div class="k-metric-card">
+            <div class="k-metric-icon orange">
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Pending Review</span>
+                <span class="k-metric-val">@Model.PendingCount</span>
+                <span class="k-metric-sub">LKR @Model.TotalPendingAmount.ToString("N2") total</span>
+            </div>
+        </div>
+        <div class="k-metric-card">
+            <div class="k-metric-icon green">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Approved by Welfare</span>
+                <span class="k-metric-val">@Model.ApprovedCount</span>
+                <span class="k-metric-sub">Awaiting HR Payment / Disbursed</span>
+            </div>
+        </div>
+        <div class="k-metric-card">
+            <div class="k-metric-icon red">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Rejected Requests</span>
+                <span class="k-metric-val">@Model.RejectedCount</span>
+                <span class="k-metric-sub">Declined applications</span>
+            </div>
+        </div>
+        <div class="k-metric-card">
+            <div class="k-metric-icon blue">
+                <i class="bi bi-clipboard-data"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Total Processed</span>
+                <span class="k-metric-val">@Model.TotalProcessedCount</span>
+                <span class="k-metric-sub">Reviewed by Welfare Dept</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Toolbar -->
+    <div class="filter-toolbar">
+        <div class="filter-left">
+            <div class="search-wrap">
+                <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input type="text" id="welfareSearchInput" class="search-input" placeholder="Search by name, EPF, ref no, branch…" />
+            </div>
+
+            <select id="welfareTypeFilter" class="filter-select">
+                <option value="">All Assistance Types</option>
+                @foreach (var wt in Model.WelfareTypes)
+                {
+                    <option value="@wt.TypeName">@wt.TypeName</option>
+                }
+            </select>
+
+            <div class="tab-pills-wrap">
+                <button type="button" class="tab-pill-btn active" data-tab="pending" id="tabBtnPending">
+                    Pending Review <span class="tab-badge">@Model.PendingCount</span>
+                </button>
+                <button type="button" class="tab-pill-btn" data-tab="all" id="tabBtnAll">
+                    All Requests <span class="tab-badge">@Model.AllRequests.Count</span>
+                </button>
+                <button type="button" class="tab-pill-btn" data-tab="approved" id="tabBtnApproved">
+                    Approved <span class="tab-badge">@Model.ApprovedCount</span>
+                </button>
+                <button type="button" class="tab-pill-btn" data-tab="rejected" id="tabBtnRejected">
+                    Rejected <span class="tab-badge">@Model.RejectedCount</span>
+                </button>
+            </div>
+        </div>
+        <div class="results-count" id="welfareResultsCount">
+            Showing @Model.AllRequests.Count requests
+        </div>
+    </div>
+
+    <!-- Master Table Card -->
+    <div class="table-container-card">
+        <table class="welfare-table" id="welfareApprovalsTable">
+            <thead>
+                <tr>
+                    <th style="width: 11%;">Ref No</th>
+                    <th style="width: 22%;">Employee</th>
+                    <th style="width: 15%;">Assistance Type</th>
+                    <th style="width: 10%;">Urgency</th>
+                    <th style="width: 11%;">Request Date</th>
+                    <th style="width: 12%;">Amount</th>
+                    <th style="width: 6%; text-align: center;">Docs</th>
+                    <th style="width: 13%;">Stage / Status</th>
+                    <th style="width: 10%; text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="welfareTableBody">
+                @if (Model.AllRequests.Any())
+                {
+                    @foreach (var req in Model.AllRequests)
+                    {
+                        var isPendingHere = req.CurrentLevel == "DepartmentHead" && (req.CurrentStatus == "Pending" || req.CurrentStatus == "UnderReview");
+                        var isApproved = req.Status == "Approved" || req.Status == "Paid" || req.Status == "PaymentCompleted" || req.Status == "Disbursed" ||
+                                         req.CurrentStatus == "Approved" || req.CurrentStatus == "PendingPayment" || req.CurrentStatus == "PaymentCompleted" ||
+                                         req.CurrentStatus == "Paid" || req.CurrentStatus == "Disbursed";
+                        var isRejected = req.Status == "Rejected" || req.CurrentStatus == "Rejected";
+
+                        var empNameWithInitials = req.Employee?.NameWithInitials ?? req.Employee?.FullName ?? "Staff Member";
+                        var empFullName = req.Employee?.FullName ?? "Staff Member";
+                        var empEpf = req.Employee?.EPFNumber ?? $"EMP-{req.EmployeeId:D3}";
+                        var empDept = req.Employee?.Department?.Name ?? "General";
+                        var empBranch = req.Employee?.Branch?.Name ?? "Main Branch";
+                        var typeName = req.WelfareType?.TypeName ?? "Welfare Assistance";
+                        var docCount = req.Documents?.Count ?? 0;
+                        var initial = string.IsNullOrWhiteSpace(empNameWithInitials) ? "E" : empNameWithInitials.Substring(0, 1).ToUpperInvariant();
+                        var urgency = WelfarePayrollHelper.GetUrgency(req.Remark);
+                        var cleanedRemark = WelfarePayrollHelper.CleanRemark(req.Remark);
+
+                        // Stage Label
+                        var stageBadgeClass = req.CurrentLevel switch
+                        {
+                            "DepartmentHead" => "stage-badge welfare",
+                            "BranchManager"  => "stage-badge branch",
+                            "AreaManager"    => "stage-badge area",
+                            "HRManager"      => "stage-badge hr",
+                            _                => "stage-badge"
+                        };
+                        var stageText = req.CurrentLevel switch
+                        {
+                            "DepartmentHead" => "Welfare Review",
+                            "BranchManager"  => "Branch Review",
+                            "AreaManager"    => "Area Review",
+                            "HRManager"      => (req.CurrentStatus == "PaymentCompleted" || req.Status == "Paid" ? "Disbursed" : "HR Payment"),
+                            "Completed"      => "Disbursed",
+                            _                => req.CurrentLevel
+                        };
+
+                        // Status Label
+                        var (statusBadgeClass, statusText) = req.CurrentStatus switch
+                        {
+                            "PendingPayment" => ("st-badge st-approved", "Approved (Awaiting Payment)"),
+                            "PaymentCompleted" => ("st-badge st-disbursed", "Disbursed / Paid"),
+                            "Paid" => ("st-badge st-disbursed", "Disbursed / Paid"),
+                            "Disbursed" => ("st-badge st-disbursed", "Disbursed"),
+                            "Approved" => ("st-badge st-approved", "Approved"),
+                            "Rejected" => ("st-badge st-rejected", "Rejected"),
+                            _ => (req.Status == "Approved" ? ("st-badge st-approved", "Approved") :
+                                  req.Status == "Rejected" ? ("st-badge st-rejected", "Rejected") :
+                                  ("st-badge st-pending", "Pending"))
+                        };
+
+                        // Serialized docs JSON for modal popup
+                        var docsJson = System.Text.Json.JsonSerializer.Serialize(
+                            req.Documents?.Select(d => new { id = d.DocumentId, name = d.FileName, ext = System.IO.Path.GetExtension(d.FileName)?.ToLowerInvariant() ?? "" }) ?? Enumerable.Empty<object>()
+                        );
+
+                        <tr class="wf-row @(isPendingHere ? "row-pending" : "row-history")"
+                            data-ref="WF-@req.RequestId.ToString("D4")"
+                            data-emp-id="@req.EmployeeId"
+                            data-emp="@empNameWithInitials"
+                            data-emp-full="@empFullName"
+                            data-epf="@empEpf"
+                            data-dept="@empDept"
+                            data-branch="@empBranch"
+                            data-type="@typeName"
+                            data-urgency="@urgency"
+                            data-amount="@req.RequestedAmount.ToString("N2")"
+                            data-date="@req.RequestDate.ToString("MMM dd, yyyy")"
+                            data-created="@req.CreatedAt.ToString("MMM dd, yyyy")"
+                            data-reason="@cleanedRemark"
+                            data-stage="@stageText"
+                            data-status="@statusText"
+                            data-is-pending="@(isPendingHere ? "true" : "false")"
+                            data-is-approved="@(isApproved ? "true" : "false")"
+                            data-is-rejected="@(isRejected ? "true" : "false")"
+                            data-req-id="@req.RequestId"
+                            data-docs='@docsJson'>
+                            <td>
+                                <span class="ref-code-badge">WF-@req.RequestId.ToString("D4")</span>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="emp-name" title="@empFullName">@empNameWithInitials</div>
+                                    <div class="emp-meta">
+                                        <span class="emp-meta-pill">@empEpf</span>
+                                        <span>@empBranch</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="type-pill">@typeName</span>
+                            </td>
+                            <td>
+                                <span class="urgency-badge @(urgency.ToLowerInvariant())">@urgency</span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600; color: #334155;">@req.RequestDate.ToString("MMM dd, yyyy")</span>
+                            </td>
+                            <td>
+                                <span class="amount-val">LKR @req.RequestedAmount.ToString("N2")</span>
+                            </td>
+                            <td style="text-align: center;">
+                                @if (docCount > 0)
+                                {
+                                    <span class="docs-chip" title="@docCount attached document(s)">
+                                        <i class="bi bi-paperclip"></i> @docCount
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span style="color: #94a3b8; font-size: 11px;">—</span>
+                                }
+                            </td>
+                            <td>
+                                <div>
+                                    <span class="@stageBadgeClass">@stageText</span>
+                                    <span class="@statusBadgeClass">@statusText</span>
+                                </div>
+                            </td>
+                            <td style="text-align: right;">
+                                @if (isPendingHere)
+                                {
+                                    <button type="button" class="btn-review-act js-open-review" data-id="@req.RequestId">
+                                        <i class="bi bi-pencil-square"></i> Review
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button type="button" class="btn-view-act js-open-review" data-id="@req.RequestId">
+                                        <i class="bi bi-eye"></i> Details
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr id="emptyTableRow">
+                        <td colspan="9" style="text-align: center; padding: 48px; color: #94a3b8;">
+                            <i class="bi bi-inbox" style="font-size: 2.5rem; display: block; margin-bottom: 8px; color: #cbd5e1;"></i>
+                            <div style="font-weight: 700; font-size: 14px; color: #475569;">No welfare requests found</div>
+                            <div style="font-size: 12px; margin-top: 2px;">All requests submitted across the system will appear here.</div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- ── REVIEW & DECISION MODAL ── -->
+<div class="wf-modal-overlay" id="welfareReviewModal">
+    <div class="wf-modal-card">
+        <div class="wf-modal-head">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="ref-code-badge" id="mRefCode" style="font-size: 13px;">WF-0000</span>
+                <span class="urgency-badge normal" id="mUrgencyBadge">Normal</span>
+                <span class="st-badge st-pending" id="mStatusBadge">Pending</span>
+                <span class="stage-badge welfare" id="mStageBadge">Welfare Review</span>
+            </div>
+            <button type="button" class="btn-sys-outline" id="mCloseBtn" style="padding: 4px 10px; border-radius: 6px; font-size: 12px;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <form method="post" id="welfareDecisionForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="RequestId" id="mRequestIdInput" value="0" />
+
+            <div class="wf-modal-body">
+                
+                <!-- Employee Profile Card -->
+                <div class="profile-card-box">
+                    <div class="emp-avatar-wrapper" style="width: 48px; height: 48px; border-radius: 50%;">
+                        <img id="mAvatarImg" src="" class="emp-avatar-img" 
+                             onerror="this.style.display='none'; document.getElementById('mAvatarFallback').style.display='flex';" 
+                             alt="Avatar" />
+                        <div id="mAvatarFallback" class="emp-avatar-fallback" style="font-size: 17px;">E</div>
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                            <div>
+                                <div style="font-weight: 800; font-size: 14.5px; color: #0f172a;" id="mEmpName">Employee Name</div>
+                                <div style="font-size: 12px; color: #64748b; margin-top: 2px; display: flex; gap: 8px; flex-wrap: wrap;">
+                                    <span>EPF: <strong id="mEmpEpf">EPF-001</strong></span>
+                                    <span>•</span>
+                                    <span>Dept: <strong id="mEmpDept">General</strong></span>
+                                    <span>•</span>
+                                    <span>Branch: <strong id="mEmpBranch">Main</strong></span>
+                                </div>
+                            </div>
+                            <a id="mViewEmpBtn" href="#" target="_blank" class="btn-sys-outline" style="font-size: 12px; padding: 6px 12px; gap: 6px; border-color: #cbd5e1; background: #ffffff; text-decoration: none;" title="Open employee profile and past welfare history in a new tab">
+                                <i class="bi bi-clock-history" style="color: #10823c;"></i>
+                                <span>Employee & Welfare History</span>
+                                <i class="bi bi-box-arrow-up-right" style="font-size: 10px; color: #94a3b8;"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Request Details Grid -->
+                <div class="details-grid">
+                    <div class="dg-item">
+                        <div class="dg-label">Assistance Type</div>
+                        <div class="dg-val" id="mTypeName">Education Assistance</div>
+                    </div>
+                    <div class="dg-item">
+                        <div class="dg-label">Urgency Level</div>
+                        <div class="dg-val" id="mUrgencyVal">Normal</div>
+                    </div>
+                    <div class="dg-item">
+                        <div class="dg-label">Requested Amount</div>
+                        <div class="dg-val" style="color: #10823c; font-size: 15px;" id="mAmount">LKR 0.00</div>
+                    </div>
+                    <div class="dg-item">
+                        <div class="dg-label">Request Date</div>
+                        <div class="dg-val" id="mReqDate">—</div>
+                    </div>
+                    <div class="dg-item">
+                        <div class="dg-label">Submitted On</div>
+                        <div class="dg-val" id="mSubmittedDate">—</div>
+                    </div>
+                </div>
+
+                <!-- Reason / Description Block -->
+                <div>
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #7a8863; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.03em;">
+                        Reason & Justification
+                    </label>
+                    <div class="reason-quote-box" id="mReasonText">
+                        No description provided.
+                    </div>
+                </div>
+
+                <!-- Supporting Documents Block -->
+                <div id="mDocsSection">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #7a8863; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.03em;">
+                        <i class="bi bi-paperclip" style="color: #10823c; font-size: 14px;"></i>
+                        Supporting Documents (<span id="mDocsCount">0</span>)
+                    </label>
+                    <div id="mDocsList" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        <!-- Injected via JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Approver Decision Inputs (Only active when pending) -->
+                <div id="mActionArea" style="margin-top: 4px;">
+                    <label style="display: block; font-size: 11px; font-weight: 700; color: #7a8863; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.03em;">
+                        Welfare Manager Remarks & Notes
+                    </label>
+                    <textarea name="Comments" id="mCommentsInput" rows="2" class="search-input" style="width: 100%; border-radius: 8px; font-family: inherit; font-size: 13px;" placeholder="Add verification notes or reason for approval/rejection (Optional)..."></textarea>
+                </div>
+
+            </div>
+
+            <div class="wf-modal-foot">
+                <button type="button" class="btn-sys-outline" id="mCancelBtn">Close</button>
+
+                <div id="mPendingActions" style="display: flex; gap: 8px;">
+                    <button type="submit" name="Action" value="Rejected" onclick="return confirm('Are you sure you want to reject this welfare request?')" class="btn-sys-outline" style="color: #dc2626; border-color: #fca5a5; background: #fff5f5;">
+                        <i class="bi bi-x-circle"></i> Reject Request
+                    </button>
+                    <button type="submit" name="Action" value="Approved" class="btn-sys-primary">
+                        <i class="bi bi-check-circle"></i> Approve & Forward to HR
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── INLINE DOCUMENT PREVIEW MODAL ── -->
+<div class="wf-modal-overlay" id="welfareDocModal">
+    <div class="wf-modal-card" style="max-width: 860px; height: 86vh;">
+        <div class="wf-modal-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-file-earmark-text" style="color: #10823c; font-size: 16px;"></i>
+                <span id="docModalTitle" style="font-weight: 800; font-size: 13.5px; color: #0f172a;">Document Preview</span>
+            </div>
+            <button type="button" class="btn-sys-outline" id="docModalCloseBtn" style="padding: 4px 10px; border-radius: 6px; font-size: 12px;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div style="flex: 1; position: relative; background: #f8fafc; overflow: hidden;" id="docViewerContainer">
+            <iframe id="docViewerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const rows = Array.from(document.querySelectorAll('.wf-row'));
+        const searchInput = document.getElementById('welfareSearchInput');
+        const typeFilter = document.getElementById('welfareTypeFilter');
+        const tabBtns = document.querySelectorAll('.tab-pill-btn');
+        const resultsCount = document.getElementById('welfareResultsCount');
+        let currentTab = 'pending';
+
+        function applyFilters() {
+            const query = (searchInput.value || '').trim().toLowerCase();
+            const selectedType = typeFilter.value;
+            let visibleCount = 0;
+
+            rows.forEach(row => {
+                const ref = (row.getAttribute('data-ref') || '').toLowerCase();
+                const emp = (row.getAttribute('data-emp') || '').toLowerCase();
+                const epf = (row.getAttribute('data-epf') || '').toLowerCase();
+                const dept = (row.getAttribute('data-dept') || '').toLowerCase();
+                const branch = (row.getAttribute('data-branch') || '').toLowerCase();
+                const type = row.getAttribute('data-type') || '';
+                const reason = (row.getAttribute('data-reason') || '').toLowerCase();
+                const status = (row.getAttribute('data-status') || '').toLowerCase();
+                const isPending = row.getAttribute('data-is-pending') === 'true';
+                const isApproved = row.getAttribute('data-is-approved') === 'true';
+                const isRejected = row.getAttribute('data-is-rejected') === 'true';
+
+                // Search match
+                const matchesSearch = !query ||
+                    ref.includes(query) ||
+                    emp.includes(query) ||
+                    epf.includes(query) ||
+                    dept.includes(query) ||
+                    branch.includes(query) ||
+                    reason.includes(query);
+
+                // Type match
+                const matchesType = !selectedType || type === selectedType;
+
+                // Tab match
+                let matchesTab = true;
+                if (currentTab === 'pending') {
+                    matchesTab = isPending;
+                } else if (currentTab === 'approved') {
+                    matchesTab = isApproved;
+                } else if (currentTab === 'rejected') {
+                    matchesTab = isRejected;
+                } // 'all' matches all
+
+                if (matchesSearch && matchesType && matchesTab) {
+                    row.removeAttribute('data-filter-hidden');
+                    visibleCount++;
+                } else {
+                    row.setAttribute('data-filter-hidden', 'true');
+                }
+            });
+
+            resultsCount.textContent = `Showing ${visibleCount} requests`;
+
+            // Trigger global table pagination engine
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('welfareApprovalsTable', 10);
+            }
+        }
+
+        // Tab click handling
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+                tabBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentTab = this.getAttribute('data-tab');
+                applyFilters();
+            });
+        });
+
+        // Search & select change listeners
+        if (searchInput) searchInput.addEventListener('input', applyFilters);
+        if (typeFilter) typeFilter.addEventListener('change', applyFilters);
+
+        // Initial filter application & pagination init
+        applyFilters();
+
+        // ── REVIEW MODAL LOGIC ──
+        const modal = document.getElementById('welfareReviewModal');
+        const mCloseBtn = document.getElementById('mCloseBtn');
+        const mCancelBtn = document.getElementById('mCancelBtn');
+
+        function openModal() {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        mCloseBtn.addEventListener('click', closeModal);
+        mCancelBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeModal();
+        });
+
+        // Open modal and bind row data
+        document.querySelectorAll('.js-open-review').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const row = this.closest('tr');
+                if (!row) return;
+
+                const reqId = row.getAttribute('data-req-id');
+                const ref = row.getAttribute('data-ref');
+                const emp = row.getAttribute('data-emp');
+                const epf = row.getAttribute('data-epf');
+                const dept = row.getAttribute('data-dept');
+                const branch = row.getAttribute('data-branch');
+                const type = row.getAttribute('data-type');
+                const amount = row.getAttribute('data-amount');
+                const reqDate = row.getAttribute('data-date');
+                const submittedDate = row.getAttribute('data-created');
+                const reason = row.getAttribute('data-reason');
+                const urgency = row.getAttribute('data-urgency') || 'Normal';
+                const status = row.getAttribute('data-status');
+                const stage = row.getAttribute('data-stage');
+                const isPending = row.getAttribute('data-is-pending') === 'true';
+                const docsJson = row.getAttribute('data-docs');
+
+                document.getElementById('mRequestIdInput').value = reqId;
+                document.getElementById('mRefCode').textContent = ref;
+                
+                const mUrgencyBadge = document.getElementById('mUrgencyBadge');
+                if (mUrgencyBadge) {
+                    mUrgencyBadge.textContent = urgency;
+                    mUrgencyBadge.className = 'urgency-badge ' + urgency.toLowerCase();
+                }
+                const mUrgencyVal = document.getElementById('mUrgencyVal');
+                if (mUrgencyVal) {
+                    mUrgencyVal.textContent = urgency;
+                }
+
+                document.getElementById('mStatusBadge').textContent = status;
+                document.getElementById('mStatusBadge').className = 'st-badge ' + (status === 'Approved' ? 'st-approved' : status === 'Rejected' ? 'st-rejected' : 'st-pending');
+                document.getElementById('mStageBadge').textContent = stage;
+
+                const empId = row.getAttribute('data-emp-id');
+                const empFull = row.getAttribute('data-emp-full') || emp;
+
+                document.getElementById('mEmpName').textContent = emp;
+                document.getElementById('mEmpName').title = empFull;
+                document.getElementById('mAvatarFallback').textContent = emp ? emp.charAt(0).toUpperCase() : 'E';
+
+                const mAvatarImg = document.getElementById('mAvatarImg');
+                const mAvatarFallback = document.getElementById('mAvatarFallback');
+                if (mAvatarImg && mAvatarFallback) {
+                    mAvatarImg.style.display = 'block';
+                    mAvatarFallback.style.display = 'none';
+                    mAvatarImg.src = '/uploads/avatars/emp_' + empId + '.jpg?t=' + new Date().getTime();
+                }
+
+                const viewEmpBtn = document.getElementById('mViewEmpBtn');
+                if (viewEmpBtn) {
+                    viewEmpBtn.href = '/Welfare/EmployeeHistory?id=' + empId;
+                }
+
+                document.getElementById('mEmpEpf').textContent = epf;
+                document.getElementById('mEmpDept').textContent = dept;
+                document.getElementById('mEmpBranch').textContent = branch;
+
+                document.getElementById('mTypeName').textContent = type;
+                document.getElementById('mAmount').textContent = 'LKR ' + amount;
+                document.getElementById('mReqDate').textContent = reqDate;
+                document.getElementById('mSubmittedDate').textContent = submittedDate;
+
+                document.getElementById('mReasonText').textContent = reason || 'No specific remarks or justification provided.';
+                document.getElementById('mCommentsInput').value = '';
+
+                // Handle documents list
+                let docs = [];
+                try { docs = JSON.parse(docsJson || '[]'); } catch (e) { }
+                document.getElementById('mDocsCount').textContent = docs.length;
+                const docsListEl = document.getElementById('mDocsList');
+                docsListEl.innerHTML = '';
+
+                if (docs.length === 0) {
+                    docsListEl.innerHTML = '<span style="color: #94a3b8; font-size: 12px;">No supporting documents attached.</span>';
+                } else {
+                    docs.forEach(doc => {
+                        const chip = document.createElement('div');
+                        chip.className = 'doc-preview-chip';
+                        const isPreviewable = doc.ext === '.pdf' || doc.ext === '.jpg' || doc.ext === '.jpeg' || doc.ext === '.png';
+                        const icon = doc.ext === '.pdf' ? 'bi-file-earmark-pdf-fill' :
+                                     (doc.ext === '.jpg' || doc.ext === '.jpeg' || doc.ext === '.png') ? 'bi-file-earmark-image-fill' : 'bi-file-earmark-text-fill';
+
+                        chip.innerHTML = `
+                            <i class="bi ${icon}" style="color: #10823c; font-size: 14px;"></i>
+                            <span style="max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${doc.name}</span>
+                            <div style="display: flex; gap: 4px; margin-left: 6px;">
+                                ${isPreviewable ? `<button type="button" class="doc-link-btn" style="background: #eef7f0; color: #10823c; border: none;" onclick="openDocPreview('/Welfare/DownloadDocument?id=${doc.id}&mode=view', '${doc.name}')">View</button>` : ''}
+                                <a href="/Welfare/DownloadDocument?id=${doc.id}" class="doc-link-btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">Download</a>
+                            </div>
+                        `;
+                        docsListEl.appendChild(chip);
+                    });
+                }
+
+                // Show/hide action buttons depending on pending status
+                const pendingActions = document.getElementById('mPendingActions');
+                const actionArea = document.getElementById('mActionArea');
+                if (isPending) {
+                    pendingActions.style.display = 'flex';
+                    actionArea.style.display = 'block';
+                } else {
+                    pendingActions.style.display = 'none';
+                    actionArea.style.display = 'none';
+                }
+
+                openModal();
+            });
+        });
+
+        // ── INLINE DOCUMENT PREVIEW MODAL LOGIC ──
+        const docModal = document.getElementById('welfareDocModal');
+        const docModalCloseBtn = document.getElementById('docModalCloseBtn');
+        const docViewerIframe = document.getElementById('docViewerIframe');
+        const docModalTitle = document.getElementById('docModalTitle');
+
+        window.openDocPreview = function (url, title) {
+            docModalTitle.textContent = title || 'Document Preview';
+            docViewerIframe.src = url;
+            docModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        function closeDocModal() {
+            docModal.classList.remove('active');
+            docViewerIframe.src = '';
+            document.body.style.overflow = '';
+        }
+
+        docModalCloseBtn.addEventListener('click', closeDocModal);
+        docModal.addEventListener('click', function (e) {
+            if (e.target === docModal) closeDocModal();
+        });
+    });
+</script>
+}

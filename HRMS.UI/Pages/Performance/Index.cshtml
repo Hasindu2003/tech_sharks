@@ -1,0 +1,699 @@
+@page
+@model HRMS.UI.Pages.Performance.IndexModel
+@{
+    ViewData["Title"] = "Performance Dashboard";
+    ViewData["PageTitle"] = "Performance / Overview";
+    ViewData["ActiveNav"] = "Performance";
+}
+
+@section Styles {
+    <style>
+        .perf-shell {
+            padding: 26px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+
+        .branch-cards-scroll-container {
+            display: flex;
+            gap: 16px;
+            overflow-x: auto;
+            padding-bottom: 12px;
+            padding-top: 4px;
+            padding-left: 2px;
+            padding-right: 2px;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+        }
+        .branch-cards-scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .branch-cards-scroll-container::-webkit-scrollbar-track {
+            background: var(--bg-body);
+            border-radius: 4px;
+        }
+        .branch-cards-scroll-container::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        .branch-cards-scroll-container::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        .branch-comparison-card {
+            min-width: 320px;
+            max-width: 360px;
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 18px 20px;
+            box-shadow: var(--shadow-sm);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .branch-comparison-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary);
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            height: 320px;
+            display: flex;
+            flex-direction: column;
+        }
+        /* Custom bar chart styles */
+        .bar-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 100%;
+            gap: 8px;
+            padding-bottom: 8px;
+        }
+        .bar-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            height: 100%;
+            justify-content: flex-end;
+            position: relative;
+        }
+        .bar-outer {
+            width: 100%;
+            background: var(--bg-body);
+            border-radius: 6px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            overflow: hidden;
+            position: relative;
+        }
+        .bar-inner {
+            width: 100%;
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+            position: absolute;
+            bottom: 0;
+            transition: height 0.5s ease-out;
+        }
+        .bar-label-val {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            z-index: 10;
+        }
+        .bar-label-name {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-align: center;
+            margin-top: 6px;
+            color: var(--text-secondary);
+        }
+        .distribution-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .distribution-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 30px;
+            text-align: center;
+        }
+        .distribution-range {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            width: 44px;
+        }
+        .distribution-bar-bg {
+            flex-grow: 1;
+            height: 10px;
+            background: var(--bg-body);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .distribution-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.6s ease;
+        }
+        .distribution-count {
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 24px;
+            text-align: right;
+        }
+        .distribution-pct {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            width: 32px;
+            text-align: right;
+        }
+        /* Modal Overlay Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+    </style>
+}
+
+<div class="perf-shell">
+
+    <!-- Header block -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 24px;">
+        <div>
+            <h2>Performance Dashboard</h2>
+            @if (!string.IsNullOrEmpty(Model.ScopedBranchNames))
+            {
+                <p class="page-subtitle">Presents live weighted evaluations of active members in branch scope (<span style="color: var(--primary); font-weight: 600;">@Model.ScopedBranchNames</span>)</p>
+            }
+            else
+            {
+                <p class="page-subtitle">Presents live weighted evaluations of active company members based on statutory key indicators</p>
+            }
+        </div>
+        <div style="text-align: right;">
+            <p style="font-size: 0.7rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                Attendance 45% &nbsp;·&nbsp; Leave (Annual &amp; Casual) 30% &nbsp;·&nbsp; Punctuality 25%
+            </p>
+            <p style="font-size: 0.7rem; color: var(--text-secondary); line-height: 1.6; margin: 0;">
+                Evaluation Period: @Model.EvaluationPeriodText &nbsp;·&nbsp; Punctuality threshold: on-time before 08:30 AM
+            </p>
+        </div>
+    </div>
+
+    @if (Model.ShowBranchFilter && Model.ManagedBranchesList.Count > 1)
+    {
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; align-items: center; background: var(--bg-card); padding: 12px 18px; border: 1px solid var(--border-color); border-radius: var(--border-radius);">
+            <span style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-right: 4px;">
+                <i class="bi bi-geo-alt-fill"></i> Branch Scope:
+            </span>
+            <a href="/Performance/Index" 
+               class="btn-kanrich @(!Model.FilterBranchId.HasValue ? "btn-kanrich-primary" : "btn-kanrich-outline")" 
+               style="padding: 4px 14px; font-size: 0.8rem; border-radius: 20px; text-decoration: none;">
+                All Assigned Branches (@Model.ManagedBranchesList.Count)
+            </a>
+            @foreach (var b in Model.ManagedBranchesList)
+            {
+                var bStat = Model.BranchStats.FirstOrDefault(s => s.BranchId == b.Id);
+                <a href="/Performance/Index?FilterBranchId=@b.Id" 
+                   class="btn-kanrich @(Model.FilterBranchId == b.Id ? "btn-kanrich-primary" : "btn-kanrich-outline")" 
+                   style="padding: 4px 14px; font-size: 0.8rem; border-radius: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;">
+                    <span>@b.Name</span>
+                    @if (bStat != null)
+                    {
+                        <span style="font-size: 0.7rem; opacity: 0.9; background: rgba(0,0,0,0.12); padding: 1px 6px; border-radius: 10px; font-weight: 700;">@bStat.AvgScore%</span>
+                    }
+                </a>
+            }
+        </div>
+    }
+
+    @if (!Model.FilterBranchId.HasValue && Model.BranchStats.Count > 1)
+    {
+        <div style="margin-bottom: 24px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0;">
+                    <i class="bi bi-diagram-3-fill"></i> Branch-by-Branch Performance Comparison
+                </h3>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">Click any branch to focus evaluation</span>
+            </div>
+            <div class="branch-cards-scroll-container">
+                @foreach (var bs in Model.BranchStats)
+                {
+                    <a href="/Performance/Index?FilterBranchId=@bs.BranchId" class="branch-comparison-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <div style="font-weight: 700; font-size: 1rem; color: var(--text-primary); display: flex; align-items: center; gap: 8px;">
+                                    <i class="bi bi-building" style="color: var(--primary);"></i> @bs.BranchName
+                                </div>
+                                <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
+                                    @bs.EmployeeCount Active Member@(bs.EmployeeCount != 1 ? "s" : "")
+                                </div>
+                            </div>
+                            <div>
+                                <span class="k-badge @(bs.AvgScore >= 80 ? "k-badge-approved" : bs.AvgScore >= 70 ? "k-badge-info" : "k-badge-pending")" style="font-size: 0.9rem; font-weight: 800; padding: 4px 10px; white-space: nowrap;">
+                                    @bs.AvgScore <span style="font-size: 0.72rem; font-weight: 500; opacity: 0.85;">/ 100</span>
+                                </span>
+                            </div>
+                        </div>
+
+                        <div style="background: var(--bg-body); border-radius: 4px; height: 6px; overflow: hidden; width: 100%;">
+                            <div style="background: var(--primary); height: 100%; width: @bs.AvgScore%;"></div>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.78rem; background: var(--bg-body); padding: 10px 14px; border-radius: var(--border-radius-sm);">
+                            <div>
+                                <span style="display: block; font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 2px;">Avg Attendance</span>
+                                <span style="font-weight: 800; color: #3b82f6; font-size: 0.95rem;">@bs.AvgAttendanceRate%</span>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 0.68rem; text-transform: uppercase; font-weight: 700; color: var(--text-secondary); margin-bottom: 2px;">Top Performers</span>
+                                <span style="font-weight: 800; color: #10b981; font-size: 0.95rem;">@bs.TopPerformers</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- Metric Cards -->
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-speedometer2"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">@(string.IsNullOrEmpty(Model.ScopedBranchNames) ? "Company Average" : "Assigned Average") <span class="k-badge k-badge-approved" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">Live Data</span></div>
+                <div class="stat-value">@Model.AvgPerformanceScore<span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 500;"> / 100</span></div>
+                <div class="stat-sub">Across all @Model.TotalEmployees evaluated members</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="bi bi-trophy-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Top Performers <span class="k-badge k-badge-approved" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">Score ≥ 80</span></div>
+                <div class="stat-value">@Model.TopPerformerCount</div>
+                <div class="stat-sub">Out of @Model.TotalEmployees total members</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="bi bi-calendar-check-fill"></i></div>
+            <div class="stat-info" style="width: 100%;">
+                <div class="stat-label">Average Attendance <span class="k-badge k-badge-info" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">Active Base</span></div>
+                <div class="stat-value">@Model.AvgAttendanceRate%</div>
+                <div style="background: var(--bg-body); border-radius: 4px; height: 6px; overflow: hidden; margin-top: 8px; width: 100%;">
+                    <div style="background: var(--primary); height: 100%; width: @Model.AvgAttendanceRate%"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon red"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Total Staff Evaluated</div>
+                <div class="stat-value">@Model.TotalEmployees</div>
+                <div class="stat-sub">Active members evaluated</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+        
+        <!-- Departmental Stats Bar Chart -->
+        <div class="chart-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0;"><i class="bi bi-bar-chart-fill"></i> Department Performance</h3>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);"><span style="border-bottom: 2px dashed #0284c7; width: 20px; display: inline-block; vertical-align: middle; margin-right: 4px;"></span>Company avg (@Model.AvgPerformanceScore)</span>
+            </div>
+            @if (!Model.DepartmentStats.Any())
+            {
+                <div style="flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary); font-size: 0.8rem;">No department stats found</div>
+            }
+            else
+            {
+                var maxDept = Model.DepartmentStats.Max(d => d.AvgScore);
+                var avgLinePct = maxDept > 0 ? (int)Math.Round(Model.AvgPerformanceScore / maxDept * 100) : 50;
+                
+                <div class="bar-container">
+                    @foreach (var dept in Model.DepartmentStats)
+                    {
+                        var isAboveAvg = dept.AvgScore >= Model.AvgPerformanceScore;
+                        var barColor = isAboveAvg ? "background: var(--primary);" : "background: var(--text-secondary);";
+                        <div class="bar-wrapper">
+                            <div class="bar-outer">
+                                <div class="bar-inner" style="height: @(dept.BarHeightPercent)%; @barColor">
+                                    <div class="bar-label-val" style="bottom: calc(100% + 4px); color: @(isAboveAvg ? "var(--primary)" : "var(--text-secondary)")">@dept.AvgScore</div>
+                                </div>
+                                <div style="position: absolute; bottom: @(avgLinePct)%; left: 0; right: 0; border-top: 1px dashed #0284c7; z-index: 20; pointer-events: none;"></div>
+                            </div>
+                            <span class="bar-label-name">@((dept.DepartmentName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Grade Distribution Chart -->
+        <div class="chart-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0;"><i class="bi bi-pie-chart-fill"></i> Grade Distribution</h3>
+                <span style="font-size: 0.75rem; color: var(--text-secondary);">@Model.TotalEmployees employees total</span>
+            </div>
+            <div style="display: flex; flex-direction: column; justify-content: center; flex-grow: 1; gap: 8px;">
+                @{
+                    var distributionGrades = new[] {
+                        new { Grade="A+", Range="≥ 90", Color="#10b981" },
+                        new { Grade="A", Range="80-89", Color="#22c55e" },
+                        new { Grade="B", Range="70-79", Color="#3b82f6" },
+                        new { Grade="C", Range="60-69", Color="#eab308" },
+                        new { Grade="D", Range="< 60", Color="#ef4444" }
+                    };
+                }
+                @foreach (var g in distributionGrades)
+                {
+                    int cnt = Model.AllEmployees.Count(e => e.Grade == g.Grade);
+                    int pct = Model.TotalEmployees > 0 ? (int)Math.Round((double)cnt / Model.TotalEmployees * 100) : 0;
+                    <div class="distribution-row">
+                        <span class="distribution-label">@g.Grade</span>
+                        <span class="distribution-range">@g.Range</span>
+                        <div class="distribution-bar-bg">
+                            <div class="distribution-bar-fill" style="width: @pct%; background: @g.Color"></div>
+                        </div>
+                        <span class="distribution-count">@cnt</span>
+                        <span class="distribution-pct">@pct%</span>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Leaderboard Table -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+        <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0;"><i class="bi bi-list-ol"></i> Performance Leaderboard</h3>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            @if (Model.ManagedBranchesList.Count > 1)
+            {
+                <select id="branchFilter" onchange="filterTable()" class="k-form-control" style="width: auto; padding: 4px 10px; font-size: 0.78rem;">
+                    <option value="">All Branches</option>
+                    @foreach (var b in Model.ManagedBranchesList)
+                    {
+                        <option value="@b.Name">@b.Name</option>
+                    }
+                </select>
+            }
+            <select id="gradeFilter" onchange="filterTable()" class="k-form-control" style="width: auto; padding: 4px 10px; font-size: 0.78rem;">
+                <option value="">All Grades</option>
+                <option value="A+">A+</option>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+                <option value="D">D</option>
+            </select>
+            <select id="deptFilter" onchange="filterTable()" class="k-form-control" style="width: auto; padding: 4px 10px; font-size: 0.78rem;">
+                <option value="">All Departments</option>
+                @foreach (var dept in Model.DepartmentStats)
+                {
+                    <option value="@dept.DepartmentName">@dept.DepartmentName</option>
+                }
+            </select>
+            <input id="globalSearch" oninput="filterTable()" class="k-form-control" style="width: 180px; padding: 4px 10px; font-size: 0.78rem;" placeholder="Search employee..." />
+        </div>
+    </div>
+
+    <div class="k-card" style="padding: 0; overflow: hidden;">
+        @if (!Model.AllEmployees.Any())
+        {
+            <div style="text-align: center; padding: 48px; color: var(--text-secondary);">
+                <i class="bi bi-people" style="font-size: 3rem; color: var(--border-color); display: block; margin-bottom: 12px;"></i>
+                <p style="font-weight: 600; margin: 0;">No Employee Data Found</p>
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="k-table" id="perfTable">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Employee</th>
+                            <th>Branch</th>
+                            <th>Dept</th>
+                            <th style="color: #3b82f6;">Attend. (45%)</th>
+                            <th style="color: #a855f7;">Punct. (25%)</th>
+                            <th style="color: #f97316;">Leave (30%)</th>
+                            <th>Score</th>
+                            <th>Grade</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="perfTableBody">
+                        @foreach (var emp in Model.AllEmployees)
+                        {
+                            <tr class="perf-row" data-name="@(emp.NameWithInitials.ToLower() + " " + emp.Employee.FullName.ToLower())" data-branch="@(emp.Employee.Branch?.Name ?? "")" data-dept="@(emp.Employee.Department?.Name ?? "")" data-grade="@emp.Grade">
+                                <td>
+                                    <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 0.75rem; font-weight: 900; @emp.RankBadgeColor">@emp.Rank</span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem;">@emp.NameWithInitials[0]</div>
+                                        <div>
+                                            <p style="font-weight: 700; margin: 0; font-size: 0.8rem;" title="@emp.Employee.FullName">@emp.NameWithInitials</p>
+                                            <p style="font-size: 0.68rem; color: var(--text-secondary); margin: 0;">@(emp.Employee.Designation?.Title ?? "—")</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style="font-size: 0.78rem;">
+                                    <span class="k-badge k-badge-secondary" style="font-size: 0.72rem; padding: 2px 6px;">@(emp.Employee.Branch?.Name ?? "—")</span>
+                                </td>
+                                <td style="font-size: 0.78rem;">@(emp.Employee.Department?.Name ?? "—")</td>
+                                <td style="font-weight: 700; color: #3b82f6;">@emp.AttendanceScore%</td>
+                                <td style="font-weight: 700; color: #a855f7;">@emp.PunctualityScore%</td>
+                                <td style="font-weight: 700; color: #f97316;">@emp.LeaveScore%</td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                        <div style="background: var(--bg-body); border-radius: 4px; height: 5px; width: 40px; overflow: hidden;">
+                                            <div style="background: var(--primary); height: 100%; width: @emp.PerformanceScore%"></div>
+                                        </div>
+                                        <span style="font-weight: 700; font-size: 0.82rem;">@emp.PerformanceScore</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="k-badge @emp.GradeBadgeColor" style="font-size: 0.7rem; padding: 2px 8px;">@emp.Grade</span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <button onclick="openModal('@emp.NameWithInitials','@(emp.Employee.Designation?.Title ?? "—")','@(emp.Employee.Department?.Name ?? "—")',@emp.PerformanceScore,'@emp.Grade',@emp.AttendanceScore,@emp.PunctualityScore,@emp.LeaveScore,@emp.PresentDays,@emp.TotalDays,@emp.LateDays,@emp.OnTimeDays,@emp.LeaveDaysUsed,@emp.LeaveDaysTotal)" class="btn-kanrich btn-kanrich-primary btn-action-small">
+                                        Details
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>
+
+<!-- Details Modal -->
+<div class="modal-overlay" id="detailModal" onclick="closeModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()" style="max-height: 90vh; overflow-y: auto;">
+        
+        <!-- Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid var(--border-color); background: var(--bg-body);">
+            <h3 style="margin: 0; font-size: 0.95rem; font-weight: 800;">Employee Performance Details</h3>
+            <button onclick="closeModal()" class="btn-kanrich btn-kanrich-outline btn-action-small" style="padding: 4px 6px;">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 20px;">
+            
+            <!-- Profile pill info box -->
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 44px; height: 44px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem;" id="mAvatar">A</div>
+                    <div>
+                        <p style="font-weight: 800; margin: 0; font-size: 0.9rem;" id="mName">—</p>
+                        <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 2px 0 0 0;" id="mRole">—</p>
+                        <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 0;" id="mDept">—</p>
+                    </div>
+                </div>
+                <span class="k-badge k-badge-approved" style="font-size: 0.8rem; font-weight: 800; padding: 4px 10px;" id="mGrade">—</span>
+            </div>
+
+            <!-- Overall score box -->
+            <div style="margin-bottom: 16px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">Overall Performance Score</span>
+                    <span style="font-size: 1.4rem; font-weight: 900; color: var(--primary);" id="mScore">—</span>
+                </div>
+                <div style="background: var(--bg-body); border-radius: 6px; height: 8px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <div style="background: var(--primary); height: 100%; width: 0%; transition: width 0.6s ease;" id="mScoreBar"></div>
+                </div>
+            </div>
+
+            <!-- Breakdown fields -->
+            <div style="background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); padding: 14px; margin-bottom: 16px;">
+                <p style="font-size: 0.7rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 10px; letter-spacing: 0.5px;">Score Breakdown</p>
+                
+                <div class="detail-row">
+                    <span style="font-size: 0.72rem; color: var(--text-secondary); width: 140px;">Attendance (45%)</span>
+                    <div style="flex-grow: 1; height: 6px; background: white; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                        <div style="background: #3b82f6; height: 100%; width: 0%; transition: width 0.6s ease;" id="barAtt"></div>
+                    </div>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #3b82f6; width: 36px; text-align: right;" id="mAtt">—</span>
+                </div>
+
+                <div class="detail-row">
+                    <span style="font-size: 0.72rem; color: var(--text-secondary); width: 140px;">Leave Discipline (30%)</span>
+                    <div style="flex-grow: 1; height: 6px; background: white; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                        <div style="background: #f97316; height: 100%; width: 0%; transition: width 0.6s ease;" id="barLeave"></div>
+                    </div>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #f97316; width: 36px; text-align: right;" id="mLeave">—</span>
+                </div>
+
+                <div class="detail-row">
+                    <span style="font-size: 0.72rem; color: var(--text-secondary); width: 140px;">Punctuality (25%)</span>
+                    <div style="flex-grow: 1; height: 6px; background: white; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-color);">
+                        <div style="background: #a855f7; height: 100%; width: 0%; transition: width 0.6s ease;" id="barPunct"></div>
+                    </div>
+                    <span style="font-size: 0.75rem; font-weight: 700; color: #a855f7; width: 36px; text-align: right;" id="mPunct">—</span>
+                </div>
+
+            </div>
+
+            <!-- Detail Grid Cards -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px;">
+                <div style="padding: 10px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); text-align: center;">
+                    <p style="font-size: 0.65rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Attendance Log</p>
+                    <p style="font-size: 1.05rem; font-weight: 800; margin: 0; color: #3b82f6;" id="mAttDays">—</p>
+                </div>
+                <div style="padding: 10px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); text-align: center;">
+                    <p style="font-size: 0.65rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Punctuality Record</p>
+                    <p style="font-size: 1.05rem; font-weight: 800; margin: 0; color: #a855f7;" id="mPunctDays">—</p>
+                </div>
+                <div style="padding: 10px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: var(--border-radius-sm); text-align: center;">
+                    <p style="font-size: 0.65rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px;">Annual &amp; Casual Leaves</p>
+                    <p style="font-size: 1.05rem; font-weight: 800; margin: 0; color: #f97316;" id="mLeaveDays">—</p>
+                </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div style="display: flex; gap: 8px;">
+                <button onclick="closeModal()" class="btn-kanrich btn-kanrich-outline" style="width: 100%; justify-content: center;">
+                    Close
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const search = (document.getElementById('globalSearch').value || '').toLowerCase();
+            const grade  = document.getElementById('gradeFilter').value;
+            const dept   = document.getElementById('deptFilter').value;
+            const branch = document.getElementById('branchFilter') ? document.getElementById('branchFilter').value : '';
+            document.querySelectorAll('.perf-row').forEach(row => {
+                const ok = (!search || row.dataset.name.includes(search))
+                        && (!grade  || row.dataset.grade === grade)
+                        && (!dept   || row.dataset.dept  === dept)
+                        && (!branch || row.dataset.branch === branch);
+                row.style.display = ok ? '' : 'none';
+            });
+        }
+
+        function openModal(name, role, dept, score, grade,
+                           att, punct, leave,
+                           presentDays, totalDays, lateDays, onTimeDays,
+                           leaveDaysUsed, leaveDaysTotal) {
+
+            document.getElementById('mName').textContent   = name;
+            document.getElementById('mRole').textContent   = role;
+            document.getElementById('mDept').textContent   = dept;
+            document.getElementById('mAvatar').textContent = name[0];
+            document.getElementById('mScore').textContent  = score + ' / 100';
+
+            const gradeClasses = { 
+                'A+':'k-badge-approved',
+                'A':'k-badge-approved',
+                'B':'k-badge-info',
+                'C':'k-badge-pending',
+                'D':'k-badge-rejected' 
+            };
+            const gradeEl = document.getElementById('mGrade');
+            gradeEl.textContent = 'Grade ' + grade;
+            gradeEl.className   = 'k-badge ' + (gradeClasses[grade] || 'k-badge-secondary');
+
+            setTimeout(() => {
+                document.getElementById('mScoreBar').style.width = score    + '%';
+                document.getElementById('barAtt').style.width    = att      + '%';
+                document.getElementById('barLeave').style.width  = leave    + '%';
+                document.getElementById('barPunct').style.width  = punct    + '%';
+            }, 50);
+
+            document.getElementById('mAtt').textContent   = att      + '%';
+            document.getElementById('mLeave').textContent = leave    + '%';
+            document.getElementById('mPunct').textContent = punct    + '%';
+
+            document.getElementById('mAttDays').textContent =
+                totalDays > 0 ? `${presentDays} Present / ${totalDays} Logged` : '0 Days Logged';
+
+            document.getElementById('mPunctDays').textContent =
+                (totalDays > 0 || (onTimeDays + lateDays) > 0) ? `${onTimeDays} On-Time · ${lateDays} Late` : '0 Days Logged';
+
+            document.getElementById('mLeaveDays').textContent =
+                leaveDaysTotal > 0 ? `${leaveDaysUsed} Days Used` : '—';
+
+            document.getElementById('detailModal').classList.add('open');
+        }
+
+        function closeModal(e) {
+            if (!e || e.target === document.getElementById('detailModal')) {
+                document.getElementById('detailModal').classList.remove('open');
+                ['mScoreBar','barAtt','barPunct','barLeave'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.width = '0%';
+                });
+            }
+        }
+    </script>
+}

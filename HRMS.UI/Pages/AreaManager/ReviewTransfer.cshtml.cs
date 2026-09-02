@@ -1,4 +1,4 @@
-﻿using HRMS.Application.Models;
+using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -25,15 +25,30 @@ namespace HRMS.UI.Pages.AreaManager
             if (TransferRequest == null)
                 return NotFound();
 
+            if (TransferRequest.IsManagerialNotification)
+            {
+                TempData["ErrorMessage"] = "Managerial transfer notices are handled directly by the HR Manager.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Transfers" });
+            }
+
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(int id, string action, string comments)
         {
+            var req = await _transferService.GetRequestByIdAsync(id);
+            if (req == null) return NotFound();
+
+            if (req.IsManagerialNotification)
+            {
+                TempData["ErrorMessage"] = "Managerial transfer notices are handled directly by the HR Manager.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Transfers" });
+            }
+
             if (string.IsNullOrWhiteSpace(comments) || comments.Trim().Length < 10)
             {
                 ModelState.AddModelError(string.Empty, "Comments must be at least 10 characters.");
-                TransferRequest = await _transferService.GetRequestByIdAsync(id);
+                TransferRequest = req;
                 return Page();
             }
 

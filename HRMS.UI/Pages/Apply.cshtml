@@ -1,0 +1,934 @@
+@page
+@model HRMS.UI.Pages.ApplyModel
+@{
+    Layout = null; // Standalone public branded page for applicants
+    ViewData["Title"] = Model.TargetJob != null 
+        ? $"Apply for {Model.TargetJob.Title} (Ref: {Model.TargetJob.JobCode}) - Kanrich Finance"
+        : "Career Opportunities - Kanrich Finance Limited";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(Model.TargetJob != null ? $"{Model.TargetJob.Title} | Kanrich Finance" : "Apply for Careers | Kanrich Finance")</title>
+    <link rel="icon" type="image/png" href="/images/logo-title.png" />
+    <link rel="shortcut icon" href="/images/logo-title.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --primary: #10823c;
+            --primary-dark: #0d6e32;
+            --primary-light: #f0fdf4;
+            --border: #e2e5dc;
+            --text: #151811;
+            --muted: #7a8863;
+            --bg: #f8faf9;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Manrope', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Public Header */
+        .public-navbar {
+            background: #ffffff;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text);
+        }
+        .brand-logo {
+            height: 52px;
+            width: auto;
+            max-width: 220px;
+            object-fit: contain;
+        }
+
+        .portal-badge {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid #bbf7d0;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Page Content Wrapper */
+        .page-container {
+            max-width: 760px;
+            width: 100%;
+            margin: 32px auto 48px auto;
+            padding: 0 18px;
+            flex: 1;
+        }
+
+        /* Hero Banner */
+        .hero-banner {
+            background: linear-gradient(135deg, #10823c 0%, #064e3b 100%);
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 28px 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(16,130,60,0.15);
+            text-align: center;
+        }
+        .hero-banner h2 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        .hero-banner p {
+            font-size: 13.5px;
+            opacity: 0.9;
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        /* Form Card */
+        .form-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            overflow: hidden;
+        }
+        .form-card-header {
+            background: #f9fafb;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 24px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-card-body {
+            padding: 28px 24px;
+        }
+
+        /* Form Controls */
+        .fg { margin-bottom: 18px; position: relative; }
+        .fl {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 6px;
+        }
+        .fi {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            color: var(--text);
+            background: #ffffff;
+            transition: all 0.15s;
+            box-sizing: border-box;
+        }
+        .fi:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(16,130,60,0.12);
+        }
+
+        /* Live validation state classes */
+        .fi.is-invalid {
+            border-color: #dc2626 !important;
+            background-color: #fffbfa !important;
+        }
+        .fi.is-invalid:focus {
+            box-shadow: 0 0 0 3px rgba(220,38,38,0.15) !important;
+        }
+        .fi.is-valid {
+            border-color: var(--primary) !important;
+            background-color: #f9fdfa !important;
+        }
+
+        .input-feedback {
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 4px;
+            display: none;
+        }
+        .input-feedback.error {
+            color: #dc2626;
+            display: block;
+        }
+        .input-feedback.success {
+            color: var(--primary);
+            display: block;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        @@media (max-width: 600px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .req { color: #ef4444; }
+
+        .sub-header {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 24px 0 14px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .checkbox-card {
+            background: #f9fafb;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .checkbox-card:hover {
+            background: var(--primary-light);
+            border-color: #bbf7d0;
+        }
+        .checkbox-card input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .skills-check-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .skill-check-card {
+            background: #f8fafc;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text);
+            transition: all 0.15s;
+            user-select: none;
+        }
+        .skill-check-card:hover {
+            background: var(--primary-light);
+            border-color: #bbf7d0;
+        }
+        .skill-check-card.checked {
+            background: #f0fdf4;
+            border-color: #10823c;
+            color: #10823c;
+        }
+        .skill-check-card input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: var(--primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            padding: 14px 20px;
+            font-size: 15px;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.15s, transform 0.1s;
+            box-shadow: 0 2px 6px rgba(16,130,60,0.25);
+        }
+        .btn-submit:hover {
+            background: var(--primary-dark);
+        }
+        .btn-submit:active {
+            transform: scale(0.99);
+        }
+
+        /* Success Confirmation Screen */
+        .success-card {
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 40px 28px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .success-icon-wrap {
+            width: 72px;
+            height: 72px;
+            background: var(--primary-light);
+            color: var(--primary);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin-bottom: 20px;
+            border: 2px solid #bbf7d0;
+        }
+        .success-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .success-desc {
+            font-size: 14px;
+            color: #4b5563;
+            max-width: 500px;
+            margin: 0 auto 24px auto;
+            line-height: 1.5;
+        }
+        .summary-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 18px;
+            max-width: 460px;
+            margin: 0 auto 28px auto;
+            text-align: left;
+            font-size: 13px;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .summary-row:last-child { margin-bottom: 0; }
+        .summary-label { color: #64748b; font-weight: 600; }
+        .summary-val { color: var(--text); font-weight: 700; }
+
+        /* Public Footer */
+        .public-footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: var(--muted);
+            border-top: 1px solid var(--border);
+            background: #ffffff;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Header -->
+    <header class="public-navbar">
+        <div class="brand-wrap">
+            <img src="/images/logo.png" alt="Kanrich Finance" class="brand-logo" onerror="this.onerror=null; this.src='/images/logo.webp';" />
+        </div>
+        <div class="portal-badge">
+            <i class="bi bi-shield-check"></i> Official Application Portal
+        </div>
+    </header>
+
+    <div class="page-container">
+        @if (Model.IsSubmitted)
+        {
+            <!-- 2. Success Screen -->
+            <div class="success-card">
+                <div class="success-icon-wrap">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <h2 class="success-title">Application Submitted!</h2>
+                <p class="success-desc">
+                    Thank you for applying to Kanrich Finance, <strong>@Model.SubmittedCandidateName</strong>. 
+                    Your profile and CV document have been successfully received and submitted to our talent review board.
+                </p>
+
+                <div class="summary-box">
+                    @if (!string.IsNullOrEmpty(Model.SubmittedJobCode))
+                    {
+                        <div class="summary-row">
+                            <span class="summary-label">Job Reference:</span>
+                            <span class="summary-val" style="font-family: monospace; color: #0369a1;">@Model.SubmittedJobCode</span>
+                        </div>
+                    }
+                    <div class="summary-row">
+                        <span class="summary-label">Applied Role:</span>
+                        <span class="summary-val">@Model.SubmittedPosition</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Submission Date:</span>
+                        <span class="summary-val">@DateTime.Now.ToString("dd MMM yyyy, hh:mm tt")</span>
+                    </div>
+                    <div class="summary-row">
+                        <span class="summary-label">Application Status:</span>
+                        <span class="summary-val" style="color: #10823c;"><i class="bi bi-clock me-1"></i> Under HR Review</span>
+                    </div>
+                </div>
+
+                <a href="@(Model.TargetJob != null ? $"/Apply?jobId={Model.TargetJob.Id}" : "/Apply")" class="btn-submit" style="max-width: 260px; margin: 0 auto; text-decoration: none;">
+                    <i class="bi bi-arrow-repeat me-1"></i> Submit Another Application
+                </a>
+            </div>
+        }
+        else if (Model.IsTargetJobClosed || Model.IsTargetJobNotFound)
+        {
+            <!-- 3. Vacancy Closed / Unavailable Notice -->
+            <div class="success-card" style="border-top: 4px solid #ef4444; margin-top: 20px;">
+                <div style="width: 72px; height: 72px; background: #fef2f2; color: #dc2626; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 18px auto; border: 2px solid #fecaca;">
+                    <i class="bi bi-door-closed"></i>
+                </div>
+
+                @if (Model.IsTargetJobClosed)
+                {
+                    <span style="background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-bottom: 12px;">
+                        <i class="bi bi-slash-circle me-1"></i> VACANCY CURRENTLY CLOSED
+                    </span>
+                    <h2 style="font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 10px;">
+                        @(string.IsNullOrEmpty(Model.ClosedJobTitle) ? "Job Position Closed" : Model.ClosedJobTitle)
+                    </h2>
+                    <p style="font-size: 14px; color: #475569; max-width: 540px; margin: 0 auto 10px auto; line-height: 1.5;">
+                        Applications for this opening @(string.IsNullOrEmpty(Model.ClosedJobCode) ? "" : $"(Ref: {Model.ClosedJobCode})") are currently closed or have passed the submission deadline. Please check back later for future opportunities.
+                    </p>
+                }
+                else
+                {
+                    <span style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-bottom: 12px;">
+                        <i class="bi bi-question-circle me-1"></i> VACANCY NOT FOUND
+                    </span>
+                    <h2 style="font-size: 22px; font-weight: 800; color: #1e293b; margin-bottom: 10px;">
+                        Job Vacancy No Longer Available
+                    </h2>
+                    <p style="font-size: 14px; color: #475569; max-width: 540px; margin: 0 auto 10px auto; line-height: 1.5;">
+                        The requested recruitment vacancy link is inactive or has been removed from our talent board.
+                    </p>
+                }
+            </div>
+        }
+        else
+        {
+            <!-- 4. Targeted Job Notice Banner OR General Application Hero -->
+            @if (Model.TargetJob != null)
+            {
+                var branchName = Model.TargetJob.Branch?.Name ?? "Head Office / All Branches";
+                var deptName = Model.TargetJob.Department?.Name ?? "General Department";
+
+                <div class="hero-banner">
+                    <span style="background: rgba(255,255,255,0.2); color: #fff; font-size: 11.5px; font-weight: 800; padding: 4px 12px; border-radius: 12px; display: inline-block; margin-bottom: 8px;">
+                        <i class="bi bi-qr-code me-1"></i> TARGETED JOB OPENING • REF: @Model.TargetJob.JobCode
+                    </span>
+                    <h2>@Model.TargetJob.Title</h2>
+                    <p style="font-weight: 600; opacity: 0.95;">
+                        <i class="bi bi-geo-alt me-1"></i>@branchName &bull; <i class="bi bi-building me-1"></i>@deptName &bull; @Model.TargetJob.EmploymentType
+                    </p>
+                </div>
+
+                <!-- Job Benchmarks & Overview Box -->
+                <div style="background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="font-size: 12px; font-weight: 800; color: var(--primary); text-transform: uppercase; margin-bottom: 10px;">
+                        <i class="bi bi-sliders me-1"></i> Role Overview & Qualification Benchmarks
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
+                        <span style="background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">
+                            <i class="bi bi-clock-history me-1"></i> Min. @(Model.TargetJob.MinimumExperienceYears > 0 ? $"{Model.TargetJob.MinimumExperienceYears} Years Experience" : "Entry Level / Fresh Grads")
+                        </span>
+                        <span style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px;">
+                            <i class="bi bi-mortarboard me-1"></i> @(Model.TargetJob.MinimumEducationLevel == "None" ? "Open / Diploma" : (Model.TargetJob.MinimumEducationLevel == "Degree" ? "Bachelor's Degree Required" : "Master's Degree Required"))
+                        </span>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.TargetJob.Description))
+                    {
+                        <p style="font-size: 13px; color: #334155; margin-bottom: 8px; line-height: 1.4;">@Model.TargetJob.Description</p>
+                    }
+                    @if (!string.IsNullOrEmpty(Model.TargetJob.RequiredSkills))
+                    {
+                        <div style="font-size: 12px; color: #64748b;">
+                            <strong>Key Skills:</strong> @Model.TargetJob.RequiredSkills
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="hero-banner">
+                    <h2>Join Our Growing Team</h2>
+                    <p>Submit your application and resume to explore career growth and financial service opportunities at Kanrich Finance.</p>
+                </div>
+            }
+
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; color: #b91c1c; font-size: 13px;">
+                    <strong><i class="bi bi-exclamation-circle me-1"></i> Please check the required fields:</strong>
+                    <div asp-validation-summary="All" class="mt-1 small"></div>
+                </div>
+            }
+
+            <!-- 4. Candidate Registration Form -->
+            <div class="form-card">
+                <div class="form-card-header">
+                    <i class="bi bi-file-earmark-person-fill" style="color: var(--primary);"></i> Candidate Application Form
+                </div>
+                <div class="form-card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate onsubmit="return validateApplyForm(this);">
+                        
+                        @if (Model.TargetJob != null)
+                        {
+                            <input type="hidden" asp-for="CVInput.JobOpeningId" value="@Model.TargetJob.Id" />
+                            <input type="hidden" asp-for="CVInput.AppliedPosition" value="@Model.TargetJob.Title" />
+
+                            <div class="fg">
+                                <label class="fl">Applying Position</label>
+                                <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-weight: 700; color: #151811; display: flex; justify-content: space-between; align-items: center;">
+                                    <span><i class="bi bi-briefcase text-success me-1"></i> @Model.TargetJob.Title</span>
+                                    <span style="font-family: monospace; font-size: 11px; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px;">Ref: @Model.TargetJob.JobCode</span>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="fg">
+                                <label class="fl">Applying Position <span class="req">*</span></label>
+                                <select asp-for="CVInput.AppliedPosition" id="candidatePos" class="fi" required>
+                                    <option value="">-- Choose Position --</option>
+                                    @if (Model.ActiveOpenings.Any())
+                                    {
+                                        <optgroup label="Active Vacancies">
+                                            @foreach (var job in Model.ActiveOpenings)
+                                            {
+                                                <option value="@job.Title">[@job.JobCode] @job.Title (@(job.Branch?.Name ?? "All Branches"))</option>
+                                            }
+                                        </optgroup>
+                                    }
+                                    <optgroup label="General Roles">
+                                        @foreach (var pos in Model.PositionOptions)
+                                        {
+                                            <option value="@pos">@pos</option>
+                                        }
+                                    </optgroup>
+                                </select>
+                                <div id="posFeedback" class="input-feedback"></div>
+                                <span asp-validation-for="CVInput.AppliedPosition" class="input-feedback error"></span>
+                            </div>
+                        }
+
+                        <div class="fg">
+                            <label class="fl">Full Name <span class="req">*</span></label>
+                            <input asp-for="CVInput.CandidateName" 
+                                   id="candidateName"
+                                   class="fi" 
+                                   placeholder="e.g. Kasun Bandara" 
+                                   autocomplete="name"
+                                   required />
+                            <div id="nameFeedback" class="input-feedback"></div>
+                            <span asp-validation-for="CVInput.CandidateName" class="input-feedback error"></span>
+                        </div>
+
+                        <div class="grid-2">
+                            <div class="fg">
+                                <label class="fl">Email Address <span class="req">*</span></label>
+                                <input asp-for="CVInput.Email" 
+                                       id="candidateEmail"
+                                       type="email" 
+                                       class="fi" 
+                                       placeholder="kasun.bandara@example.com" 
+                                       autocomplete="email"
+                                       required />
+                                <div id="emailFeedback" class="input-feedback"></div>
+                                <span asp-validation-for="CVInput.Email" class="input-feedback error"></span>
+                            </div>
+                            <div class="fg">
+                                <label class="fl">Contact Number <span class="req">*</span></label>
+                                <input asp-for="CVInput.ContactNumber" 
+                                       id="candidatePhone"
+                                       type="tel" 
+                                       class="fi" 
+                                       placeholder="e.g. 0771234567 or +94 77 123 4567" 
+                                       autocomplete="tel"
+                                       required />
+                                <div id="phoneFeedback" class="input-feedback"></div>
+                                <span asp-validation-for="CVInput.ContactNumber" class="input-feedback error"></span>
+                            </div>
+                        </div>
+
+                        <div class="sub-header">
+                            <i class="bi bi-briefcase-fill" style="color: var(--primary);"></i> Experience & Academic Background
+                        </div>
+
+                        <div class="fg">
+                            <label class="fl">Relevant Experience (Years) <span class="req">*</span></label>
+                            <input asp-for="CVInput.ExperienceYears" 
+                                   id="candidateExp"
+                                   type="number" 
+                                   class="fi" 
+                                   min="0" 
+                                   max="50" 
+                                   value="0" 
+                                   style="max-width: 240px;"
+                                   required />
+                            <div id="expFeedback" class="input-feedback"></div>
+                            <span style="font-size: 11px; color: #64748b;">Enter total years of relevant work/industry experience.</span>
+                            <span asp-validation-for="CVInput.ExperienceYears" class="input-feedback error"></span>
+                        </div>
+
+                        <div class="grid-2 mb-3">
+                            <label class="checkbox-card">
+                                <input asp-for="CVInput.HasDegree" type="checkbox" />
+                                <div>
+                                    <strong style="font-size: 13px; color: var(--text); display: block;">Bachelor's Degree</strong>
+                                    <span style="font-size: 11px; color: #64748b;">Undergraduate university degree</span>
+                                </div>
+                            </label>
+
+                            <label class="checkbox-card">
+                                <input asp-for="CVInput.HasMasters" type="checkbox" />
+                                <div>
+                                    <strong style="font-size: 13px; color: var(--text); display: block;">Master's / Postgraduate</strong>
+                                    <span style="font-size: 11px; color: #64748b;">MSc, MBA, or higher postgraduate diploma</span>
+                                </div>
+                            </label>
+                        </div>
+
+                        <div class="sub-header">
+                            <i class="bi bi-check2-square" style="color: var(--primary);"></i> Key Skills & Competencies Checklist
+                        </div>
+
+                        @if (Model.TargetJob != null && !string.IsNullOrWhiteSpace(Model.TargetJob.RequiredSkills))
+                        {
+                            var targetSkills = Model.TargetJob.RequiredSkills
+                                .Split(new[] { ',', ';', '|' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                                .Where(s => !string.IsNullOrWhiteSpace(s))
+                                .Distinct()
+                                .ToList();
+
+                            <p style="font-size: 12.5px; color: #475569; margin-bottom: 10px;">
+                                <i class="bi bi-info-circle text-success me-1"></i> Please check all the skills required for this position that you possess:
+                            </p>
+
+                            <div class="skills-check-grid">
+                                @foreach (var skill in targetSkills)
+                                {
+                                    <label class="skill-check-card">
+                                        <input type="checkbox" class="applicant-skill-cb" value="@skill" onchange="syncApplicantSkills();" />
+                                        <span>@skill</span>
+                                    </label>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            var defaultSkills = new List<string>
+                            {
+                                "Credit Analysis",
+                                "Financial Reporting",
+                                "Auditing & Compliance",
+                                "Risk Assessment",
+                                "Loan Operations",
+                                "Customer Service",
+                                "Accounting & Bookkeeping",
+                                "MS Excel & Financial Modeling",
+                                "Tax Compliance",
+                                "Team Leadership"
+                            };
+
+                            <p style="font-size: 12.5px; color: #475569; margin-bottom: 10px;">
+                                <i class="bi bi-info-circle text-success me-1"></i> Please check all the relevant skills you possess:
+                            </p>
+
+                            <div class="skills-check-grid">
+                                @foreach (var skill in defaultSkills)
+                                {
+                                    <label class="skill-check-card">
+                                        <input type="checkbox" class="applicant-skill-cb" value="@skill" onchange="syncApplicantSkills();" />
+                                        <span>@skill</span>
+                                    </label>
+                                }
+                            </div>
+                        }
+
+                        <div class="fg">
+                            <label class="fl" style="font-size: 12px; color: #475569;">Other / Additional Skills (Optional)</label>
+                            <input type="text" id="extraSkillsInput" class="fi" placeholder="Type any other specialized skills separated by commas..." oninput="syncApplicantSkills();" />
+                        </div>
+
+                        <!-- Hidden input storing all checked + extra skills -->
+                        <input asp-for="CVInput.Skills" id="candidateSkillsHidden" type="hidden" />
+
+                        <div class="sub-header">
+                            <i class="bi bi-file-earmark-pdf-fill" style="color: #dc2626;"></i> Attach Resume / Curriculum Vitae
+                        </div>
+
+                        <div class="fg">
+                            <label class="fl">Upload CV File (PDF, DOCX, Max 15MB) <span class="req">*</span></label>
+                            <input asp-for="UploadedCV" 
+                                   id="candidateFile"
+                                   type="file" 
+                                   class="fi" 
+                                   accept=".pdf,.docx,.doc" 
+                                   required />
+                            <div id="fileFeedback" class="input-feedback"></div>
+                            <span style="font-size: 11px; color: #64748b;">Accepted file types: PDF (.pdf) or Word (.docx, .doc). Maximum size: 15MB.</span>
+                            <span asp-validation-for="UploadedCV" class="input-feedback error"></span>
+                        </div>
+
+                        <div style="margin-top: 28px;">
+                            <button type="submit" id="submitBtn" class="btn-submit">
+                                <i class="bi bi-send-fill"></i> Submit Job Application
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+
+    <footer class="public-footer">
+        &copy; @DateTime.Now.Year Kanrich Finance Limited. All Rights Reserved. &bull; Official Talent Acquisition Portal
+    </footer>
+
+    <script>
+        // Real-time live validation functions
+        const atChar = String.fromCharCode(64);
+        const emailPattern = '^[a-zA-Z0-9._%+-]+' + atChar + '[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$';
+        const emailRegex = new RegExp(emailPattern);
+        const phoneRegex = new RegExp('^\\+?[0-9\\s\\-]{9,15}$');
+        const nameRegex = new RegExp('^[a-zA-Z\\s\\.\\,\'\\-]+$');
+
+        function setFeedback(inputEl, feedbackEl, isValid, message) {
+            if (isValid) {
+                inputEl.classList.remove('is-invalid');
+                inputEl.classList.add('is-valid');
+                if (feedbackEl) {
+                    feedbackEl.className = 'input-feedback success';
+                    feedbackEl.textContent = '✓ ' + message;
+                }
+            } else {
+                inputEl.classList.remove('is-valid');
+                inputEl.classList.add('is-invalid');
+                if (feedbackEl) {
+                    feedbackEl.className = 'input-feedback error';
+                    feedbackEl.textContent = message;
+                }
+            }
+        }
+
+        function syncApplicantSkills() {
+            const checkedBoxes = document.querySelectorAll('.applicant-skill-cb:checked');
+            const checkedValues = Array.from(checkedBoxes).map(cb => cb.value.trim());
+
+            // Update checked state class on cards
+            document.querySelectorAll('.applicant-skill-cb').forEach(cb => {
+                const card = cb.closest('.skill-check-card');
+                if (card) {
+                    if (cb.checked) card.classList.add('checked');
+                    else card.classList.remove('checked');
+                }
+            });
+
+            const extraInput = document.getElementById('extraSkillsInput');
+            if (extraInput && extraInput.value.trim().length > 0) {
+                const extras = extraInput.value.split(/[,;|]/).map(s => s.trim()).filter(s => s.length > 0);
+                extras.forEach(ext => {
+                    if (!checkedValues.some(v => v.toLowerCase() === ext.toLowerCase())) {
+                        checkedValues.push(ext);
+                    }
+                });
+            }
+
+            const hidden = document.getElementById('candidateSkillsHidden');
+            if (hidden) {
+                hidden.value = checkedValues.length > 0 ? checkedValues.join(', ') : 'Not Specified';
+            }
+        }
+
+        function validateApplyForm(form) {
+            syncApplicantSkills();
+            let isValid = true;
+
+            const nameEl = document.getElementById('candidateName');
+            const nameFb = document.getElementById('nameFeedback');
+            if (nameEl) {
+                const val = nameEl.value.trim();
+                if (!val) {
+                    setFeedback(nameEl, nameFb, false, 'Please enter your full name.');
+                    isValid = false;
+                } else if (val.length < 2) {
+                    setFeedback(nameEl, nameFb, false, 'Full name must be at least 2 characters.');
+                    isValid = false;
+                } else if (!nameRegex.test(val)) {
+                    setFeedback(nameEl, nameFb, false, 'Full name can only contain letters, spaces, dots, and hyphens.');
+                    isValid = false;
+                } else {
+                    setFeedback(nameEl, nameFb, true, 'Valid name format.');
+                }
+            }
+
+            const emailEl = document.getElementById('candidateEmail');
+            const emailFb = document.getElementById('emailFeedback');
+            if (emailEl) {
+                const val = emailEl.value.trim();
+                if (!val) {
+                    setFeedback(emailEl, emailFb, false, 'Please enter your email address.');
+                    isValid = false;
+                } else if (!emailRegex.test(val)) {
+                    setFeedback(emailEl, emailFb, false, 'Please enter a valid email address (e.g. name@example.com).');
+                    isValid = false;
+                } else {
+                    setFeedback(emailEl, emailFb, true, 'Valid email format.');
+                }
+            }
+
+            const phoneEl = document.getElementById('candidatePhone');
+            const phoneFb = document.getElementById('phoneFeedback');
+            if (phoneEl) {
+                const val = phoneEl.value.trim();
+                if (!val) {
+                    setFeedback(phoneEl, phoneFb, false, 'Please enter your contact number.');
+                    isValid = false;
+                } else if (!phoneRegex.test(val)) {
+                    setFeedback(phoneEl, phoneFb, false, 'Contact number must be 9-15 digits (e.g. 0771234567).');
+                    isValid = false;
+                } else {
+                    setFeedback(phoneEl, phoneFb, true, 'Valid contact number.');
+                }
+            }
+
+            const posEl = document.getElementById('candidatePos');
+            const posFb = document.getElementById('posFeedback');
+            if (posEl) {
+                if (!posEl.value || posEl.value === '-- Choose Position --') {
+                    setFeedback(posEl, posFb, false, 'Please choose a position.');
+                    isValid = false;
+                } else {
+                    setFeedback(posEl, posFb, true, 'Position selected.');
+                }
+            }
+
+            const fileEl = document.getElementById('candidateFile');
+            const fileFb = document.getElementById('fileFeedback');
+            if (fileEl && (!fileEl.files || fileEl.files.length === 0)) {
+                setFeedback(fileEl, fileFb, false, 'Please attach your Resume / CV document (PDF or DOCX).');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const nameEl = document.getElementById('candidateName');
+            const nameFb = document.getElementById('nameFeedback');
+            if (nameEl) {
+                nameEl.addEventListener('input', function() {
+                    const val = this.value.trim();
+                    if (!val) {
+                        setFeedback(this, nameFb, false, 'Full name is required.');
+                    } else if (val.length < 2) {
+                        setFeedback(this, nameFb, false, 'Full name must be at least 2 characters.');
+                    } else if (!nameRegex.test(val)) {
+                        setFeedback(this, nameFb, false, 'Only letters, spaces, dots, and hyphens allowed.');
+                    } else {
+                        setFeedback(this, nameFb, true, 'Valid name.');
+                    }
+                });
+            }
+
+            const emailEl = document.getElementById('candidateEmail');
+            const emailFb = document.getElementById('emailFeedback');
+            if (emailEl) {
+                emailEl.addEventListener('input', function() {
+                    const val = this.value.trim();
+                    if (!val) {
+                        setFeedback(this, emailFb, false, 'Email is required.');
+                    } else if (!emailRegex.test(val)) {
+                        setFeedback(this, emailFb, false, 'Invalid email format.');
+                    } else {
+                        setFeedback(this, emailFb, true, 'Valid email.');
+                    }
+                });
+            }
+
+            const phoneEl = document.getElementById('candidatePhone');
+            const phoneFb = document.getElementById('phoneFeedback');
+            if (phoneEl) {
+                phoneEl.addEventListener('input', function() {
+                    const val = this.value.trim();
+                    if (!val) {
+                        setFeedback(this, phoneFb, false, 'Contact number is required.');
+                    } else if (!phoneRegex.test(val)) {
+                        setFeedback(this, phoneFb, false, 'Must be 9-15 digits.');
+                    } else {
+                        setFeedback(this, phoneFb, true, 'Valid phone number.');
+                    }
+                });
+            }
+
+            const fileEl = document.getElementById('candidateFile');
+            const fileFb = document.getElementById('fileFeedback');
+            if (fileEl) {
+                fileEl.addEventListener('change', function() {
+                    if (this.files && this.files.length > 0) {
+                        const file = this.files[0];
+                        const name = file.name.toLowerCase();
+                        if (!name.endsWith('.pdf') && !name.endsWith('.docx') && !name.endsWith('.doc')) {
+                            setFeedback(this, fileFb, false, 'Only PDF, DOCX, or DOC files allowed.');
+                            this.value = '';
+                        } else if (file.size > 15 * 1024 * 1024) {
+                            setFeedback(this, fileFb, false, 'File size cannot exceed 15MB.');
+                            this.value = '';
+                        } else {
+                            setFeedback(this, fileFb, true, `Selected: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

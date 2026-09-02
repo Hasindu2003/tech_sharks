@@ -3,7 +3,7 @@
 @{
     ViewData["Title"] = "Edit Duty Account";
     ViewData["PageTitle"] = "Settings / Duty Accounts / Edit";
-    ViewData["ActiveNav"] = "Settings";
+    ViewData["ActiveNav"] = "DutyAccounts";
 }
 
 @section Styles {
@@ -137,6 +137,7 @@
     }
 
     <form method="post">
+        @Html.AntiForgeryToken()
         <input type="hidden" name="UserId" value="@Model.UserId" />
 
         <div class="form-card">
@@ -155,8 +156,8 @@
             <div class="form-card-body">
                 <div class="info-row">
                     <div class="info-item">
-                        <label>Login Email</label>
-                        <span>@Model.CurrentEmail</span>
+                        <label>Username</label>
+                        <code style="background:#eef7f0; color:#10823c; padding:3px 8px; border-radius:5px; font-weight:700; font-size:13px;">@Model.CurrentUserName</code>
                     </div>
                     <div class="info-item">
                         <label>Role</label>
@@ -164,7 +165,40 @@
                     </div>
                 </div>
 
-                @if (Model.Role == "HR Manager" || Model.Role == "Branch Manager")
+                @if (Model.Role == "HR Officer")
+                {
+                    <div class="form-group">
+                        <label class="form-label">Officer Name / Identifier <span class="required-mark">*</span></label>
+                        <input type="text" name="OfficerName" value="@Model.OfficerName"
+                               class="form-control" placeholder="e.g. Officer 1, K. Perera" />
+                        <span class="field-error">@Html.ValidationMessage("OfficerName")</span>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Assigned Branches</label>
+                        <div class="branch-checklist">
+                            @foreach (var b in Model.BranchList)
+                            {
+                                <label class="branch-check-item">
+                                    <input type="checkbox" name="ManagedBranchIds" value="@b.Value"
+                                           @(Model.ManagedBranchIds.Contains(int.Parse(b.Value)) ? "checked" : "") />
+                                    @b.Text
+                                </label>
+                            }
+                        </div>
+                        <span style="font-size:11px; color:#7a8863; margin-top:4px;">Select the regional branches assigned to this officer. Leave empty for all branches.</span>
+                    </div>
+                }
+
+                @if (Model.Role == "HR Manager")
+                {
+                    <div class="form-group">
+                        <p style="font-size:13px; color:#151811; line-height:1.6;">
+                            This is the corporate <strong>HR Manager</strong> duty account stationed at <strong>Head Office</strong> in the <strong>Human Resources</strong> department with global company-wide authority.
+                        </p>
+                    </div>
+                }
+
+                @if (Model.Role == "Branch Manager")
                 {
                     <div class="form-group">
                         <label class="form-label">Branch <span class="required-mark">*</span></label>
@@ -192,6 +226,65 @@
                             </div>
                         </div>
                         <span class="field-error">@Html.ValidationMessage("BranchId")</span>
+                    </div>
+                }
+
+                @if (Model.Role == "Department Head")
+                {
+                    <div class="form-group">
+                        <label class="form-label">Branch <span class="required-mark">*</span></label>
+                        <select name="BranchId" id="deptHeadBranchSelectEdit" style="display:none">
+                            <option value="">Select Branch</option>
+                            @foreach (var b in Model.BranchList)
+                            {
+                                if (Model.BranchId.HasValue && Model.BranchId.Value.ToString() == b.Value)
+                                { <option value="@b.Value" selected>@b.Text</option> }
+                                else
+                                { <option value="@b.Value">@b.Text</option> }
+                            }
+                        </select>
+                        <div class="custom-dropdown" id="deptHeadBranchDropdownEdit">
+                            <div class="custom-dropdown-trigger" id="deptHeadBranchTriggerEdit">
+                                <span id="deptHeadBranchTriggerTextEdit">Select Branch</span>
+                                <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div class="custom-dropdown-list" id="deptHeadBranchListEdit">
+                                <div class="custom-dropdown-option" data-value="">Select Branch</div>
+                                @foreach (var b in Model.BranchList)
+                                {
+                                    <div class="custom-dropdown-option" data-value="@b.Value">@b.Text</div>
+                                }
+                            </div>
+                        </div>
+                        <span class="field-error">@Html.ValidationMessage("BranchId")</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Department <span class="required-mark">*</span></label>
+                        <select name="DepartmentId" id="deptHeadDeptSelectEdit" style="display:none">
+                            <option value="">Select Department</option>
+                            @foreach (var d in Model.DepartmentList)
+                            {
+                                if (Model.DepartmentId.HasValue && Model.DepartmentId.Value.ToString() == d.Value)
+                                { <option value="@d.Value" selected>@d.Text</option> }
+                                else
+                                { <option value="@d.Value">@d.Text</option> }
+                            }
+                        </select>
+                        <div class="custom-dropdown" id="deptHeadDeptDropdownEdit">
+                            <div class="custom-dropdown-trigger" id="deptHeadDeptTriggerEdit">
+                                <span id="deptHeadDeptTriggerTextEdit">Select Department</span>
+                                <svg class="custom-dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                            </div>
+                            <div class="custom-dropdown-list" id="deptHeadDeptListEdit">
+                                <div class="custom-dropdown-option" data-value="">Select Department</div>
+                                @foreach (var d in Model.DepartmentList)
+                                {
+                                    <div class="custom-dropdown-option" data-value="@d.Value">@d.Text</div>
+                                }
+                            </div>
+                        </div>
+                        <span class="field-error">@Html.ValidationMessage("DepartmentId")</span>
                     </div>
                 }
 
@@ -230,11 +323,12 @@
 
 @section Scripts {
 <script>
-    function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder }) {
-        const select = document.getElementById(selectId);
-        const trigger = document.getElementById(triggerId);
-        const list = document.getElementById(listId);
-        const triggerText = document.getElementById(triggerTextId);
+    function initCustomDropdown(config) {
+        const select = document.getElementById(config.selectId);
+        const trigger = document.getElementById(config.triggerId);
+        const list = document.getElementById(config.listId);
+        const triggerText = document.getElementById(config.triggerTextId);
+        if (!select || !trigger || !list || !triggerText) return;
         const options = list.querySelectorAll('.custom-dropdown-option');
         function close() { list.classList.remove('open'); trigger.classList.remove('open'); }
         trigger.addEventListener('click', function () {
@@ -246,14 +340,15 @@
             opt.addEventListener('click', function () {
                 const value = this.dataset.value;
                 select.value = value;
-                triggerText.textContent = value ? this.textContent.trim() : placeholder;
+                triggerText.textContent = value ? this.textContent.trim() : config.placeholder;
                 options.forEach(o => o.classList.remove('selected'));
                 if (value) this.classList.add('selected');
                 close();
             });
         });
         document.addEventListener('click', function (e) {
-            if (!document.getElementById(dropdownId).contains(e.target)) close();
+            const el = document.getElementById(config.dropdownId);
+            if (el && !el.contains(e.target)) close();
         });
         if (select.value) {
             const pre = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
@@ -263,6 +358,12 @@
     document.addEventListener('DOMContentLoaded', function () {
         if (document.getElementById('branchSelectEdit'))
             initCustomDropdown({ selectId: 'branchSelectEdit', triggerId: 'branchTriggerEdit', listId: 'branchListEdit', triggerTextId: 'branchTriggerTextEdit', dropdownId: 'branchDropdownEdit', placeholder: 'Select Branch' });
+
+        if (document.getElementById('deptHeadBranchSelectEdit'))
+            initCustomDropdown({ selectId: 'deptHeadBranchSelectEdit', triggerId: 'deptHeadBranchTriggerEdit', listId: 'deptHeadBranchListEdit', triggerTextId: 'deptHeadBranchTriggerTextEdit', dropdownId: 'deptHeadBranchDropdownEdit', placeholder: 'Select Branch' });
+
+        if (document.getElementById('deptHeadDeptSelectEdit'))
+            initCustomDropdown({ selectId: 'deptHeadDeptSelectEdit', triggerId: 'deptHeadDeptTriggerEdit', listId: 'deptHeadDeptListEdit', triggerTextId: 'deptHeadDeptTriggerTextEdit', dropdownId: 'deptHeadDeptDropdownEdit', placeholder: 'Select Department' });
     });
 </script>
 }

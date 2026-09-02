@@ -1,0 +1,542 @@
+@page
+@model HRMS.UI.Pages.HRManager.AssignBranchesModel
+@{
+    ViewData["Title"] = "HR Officer Branch Assignments";
+    ViewData["PageTitle"] = "HR Officer Branch Assignments";
+    ViewData["ActiveNav"] = "HROfficers";
+}
+
+<style>
+    .sep-wrap { background: #ffffff; min-height: calc(100vh - 62px); }
+    .sep-page-title  { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sep-page-sub    { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0 0 22px 0; }
+    .btn-add-officer {
+        background: #10823c; color: #fff; font-size: 13px; font-weight: 700;
+        padding: 9px 17px; border-radius: 6px; text-decoration: none; border: none;
+        display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; cursor: pointer;
+        box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+    }
+    .btn-add-officer:hover { background: #0d6e32; color: #fff; }
+
+    /* ── Horizontally Long, Vertically Short List Layout ── */
+    .officer-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .officer-row-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 12px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        transition: border-color 0.2s, box-shadow 0.2s;
+        overflow: hidden;
+    }
+    .officer-row-card:hover {
+        border-color: #cbd5c8;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.04);
+    }
+
+    /* ── View Mode: Single Compact Row ── */
+    .officer-view-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        gap: 20px;
+    }
+
+    .officer-identity {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 280px;
+        flex-shrink: 0;
+    }
+
+    .officer-identity h3 {
+        font-size: 14.5px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .username-pill {
+        background: #eef7f0;
+        color: #10823c;
+        padding: 2px 7px;
+        border-radius: 5px;
+        font-weight: 700;
+        font-size: 11.5px;
+        font-family: monospace;
+    }
+
+    .officer-badge {
+        background: #e8f3ec;
+        color: #10823c;
+        padding: 3px 8px;
+        border-radius: 999px;
+        font-size: 10.5px;
+        font-weight: 700;
+    }
+
+    .officer-branches-preview {
+        flex: 1;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        padding: 0 10px;
+    }
+
+    .branch-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .branch-chip svg {
+        width: 12px;
+        height: 12px;
+        stroke: currentColor;
+    }
+
+    .branch-chip.global {
+        background: #f8fafc;
+        color: #64748b;
+        border-color: #e2e8f0;
+        font-style: italic;
+    }
+
+    .officer-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-shrink: 0;
+    }
+
+    .btn-edit-branches {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #ffffff;
+        color: #151811;
+        border: 1px solid #e2e5dc;
+        padding: 7px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .btn-edit-branches:hover {
+        background: #f0fdf4;
+        color: #10823c;
+        border-color: #10823c;
+    }
+
+    .btn-delete-officer {
+        background: none;
+        border: 1px solid transparent;
+        color: #dc3545;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: all 0.15s;
+    }
+    .btn-delete-officer:hover {
+        background: #fff1f2;
+        border-color: #fecdd3;
+    }
+
+    /* ── Edit Mode: Inline Expandable Section ── */
+    .officer-edit-drawer {
+        display: none;
+        padding: 16px 20px;
+        background: #ffffff;
+        border-top: 1px solid #edf0ea;
+        animation: slideDown 0.15s ease-out;
+    }
+
+    @@keyframes slideDown {
+        from { opacity: 0; transform: translateY(-4px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .edit-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .edit-header-title {
+        font-size: 13px;
+        font-weight: 800;
+        color: #151811;
+    }
+
+    .branches-grid-select {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 8px;
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        padding: 12px 14px;
+        max-height: 180px;
+        overflow-y: auto;
+        margin-bottom: 14px;
+    }
+
+    .branch-checkbox-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12.5px;
+        color: #151811;
+        cursor: pointer;
+        user-select: none;
+    }
+
+    .branch-checkbox-item input[type="checkbox"] {
+        width: 15px;
+        height: 15px;
+        accent-color: #10823c;
+        cursor: pointer;
+    }
+
+    .edit-footer-row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .btn-cancel-edit {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        color: #64748b;
+        padding: 6px 14px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-cancel-edit:hover { background: #f8fafc; color: #1e293b; }
+
+    .btn-save-assignments {
+        background: #10823c;
+        color: #fff;
+        border: none;
+        padding: 6px 16px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-save-assignments:hover { background: #0d6e32; }
+
+    /* ── Alerts ── */
+    .alert-success {
+        background: #ecfdf5;
+        color: #065f46;
+        padding: 12px 18px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #10b981;
+    }
+
+    .alert-error {
+        background: #fff5f5;
+        color: #dc3545;
+        padding: 12px 18px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid #dc3545;
+    }
+
+    /* ── Modal Styles ── */
+    .modal-overlay {
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.45);
+        display: none; align-items: center; justify-content: center;
+        z-index: 9999;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+        background: #fff; border-radius: 14px; width: 100%; max-width: 520px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2); overflow: hidden;
+        animation: modalIn 0.2s ease;
+    }
+    @@keyframes modalIn {
+        from { transform: translateY(12px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+        padding: 18px 22px; background: #10823c; color: #fff;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .modal-header h3 { font-size: 16px; font-weight: 800; margin: 0; }
+    .btn-close-modal {
+        background: none; border: none; color: #fff; font-size: 20px;
+        cursor: pointer; line-height: 1; padding: 0 4px;
+    }
+    .modal-body { padding: 22px; }
+    .modal-form-group { margin-bottom: 16px; }
+    .modal-form-group label { display: block; font-size: 12.5px; font-weight: 800; color: #151811; margin-bottom: 6px; }
+    .modal-input {
+        width: 100%; padding: 9px 12px; border: 1px solid #e2e5dc; border-radius: 7px;
+        font-size: 13.5px; font-family: inherit;
+    }
+    .modal-checklist {
+        border: 1px solid #e2e5dc; border-radius: 8px; max-height: 180px; overflow-y: auto;
+        padding: 10px; background: #ffffff; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .modal-footer {
+        padding: 14px 22px; background: #ffffff; border-top: 1px solid #e2e5dc;
+        display: flex; justify-content: flex-end; gap: 10px;
+    }
+    .btn-secondary {
+        background: #fff; border: 1px solid #e2e5dc; color: #7a8863;
+        padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer;
+    }
+    .btn-primary {
+        background: #10823c; border: none; color: #fff;
+        padding: 8px 18px; border-radius: 6px; font-weight: 700; font-size: 13px; cursor: pointer;
+    }
+    .btn-primary:hover { background: #0d6e32; }
+</style>
+
+<div class="sep-wrap">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 class="sep-page-title">HR Officer Regional Branch Assignments</h2>
+            <p class="sep-page-sub">As Corporate HR Manager, provision HR Officers and assign regional branch responsibilities.</p>
+        </div>
+        <button type="button" class="btn-add-officer" onclick="openCreateModal()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Add HR Officer
+        </button>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert-success">✓ @TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert-error">✕ @TempData["ErrorMessage"]</div>
+    }
+
+    @if (!Model.HROfficers.Any())
+    {
+        <div style="background:#fff; border:1px solid #e2e5dc; border-radius:12px; padding:40px; text-align:center; color:#7a8863;">
+            <p style="font-size:15px; font-weight:700; color:#151811; margin-bottom:6px;">No HR Officers Found</p>
+            <p style="font-size:13px; margin-bottom:16px;">Create HR Officer duty accounts to allocate regional branches.</p>
+            <button type="button" onclick="openCreateModal()" style="background:#10823c; color:#fff; border:none; padding:9px 18px; border-radius:6px; font-weight:700; font-size:13px; cursor:pointer;">
+                + Create HR Officer Account
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="officer-list">
+            @foreach (var officer in Model.HROfficers)
+            {
+                <div class="officer-row-card" id="card-@officer.UserId">
+                    <!-- ── 1. COMPACT HORIZONTAL VIEW ROW ── -->
+                    <div class="officer-view-row" id="view-mode-@officer.UserId">
+                        <div class="officer-identity">
+                            <h3>
+                                @officer.FullName
+                                <span class="username-pill">@officer.UserName</span>
+                            </h3>
+                            <span class="officer-badge">Head Office HR</span>
+                        </div>
+
+                        <div class="officer-branches-preview">
+                            @if (officer.AssignedBranchIds.Any())
+                            {
+                                @foreach (var b in Model.AllBranches.Where(br => officer.AssignedBranchIds.Contains(br.Id)))
+                                {
+                                    <span class="branch-chip">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                                            <circle cx="12" cy="10" r="3"></circle>
+                                        </svg>
+                                        @b.Name
+                                    </span>
+                                }
+                            }
+                            else
+                            {
+                                <span class="branch-chip global">
+                                    Global Access (All Branches)
+                                </span>
+                            }
+                        </div>
+
+                        <div class="officer-actions">
+                            <button type="button" class="btn-edit-branches" onclick="enableEdit('@officer.UserId')">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 20h9"></path>
+                                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                                </svg>
+                                Change Branches
+                            </button>
+
+                            <form method="post" asp-page-handler="DeleteOfficer" asp-route-userId="@officer.UserId" style="display:inline; margin:0;">
+                                <button type="submit"
+                                        class="btn-delete-officer"
+                                        onclick="return confirm('Delete HR Officer \'@officer.FullName\'? This will remove the account.');">
+                                    Delete
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ── 2. HORIZONTALLY EXPANDED EDIT SECTION ── -->
+                    <form method="post" id="edit-mode-@officer.UserId" class="officer-edit-drawer">
+                        <input type="hidden" name="TargetUserId" value="@officer.UserId" />
+
+                        <div class="edit-header-row">
+                            <span class="edit-header-title">Select Regional Branches for @officer.FullName</span>
+                            <label style="font-size:12px; color:#10823c; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:5px;">
+                                <input type="checkbox" onchange="toggleAllOfficerBranches('@officer.UserId', this)" style="accent-color:#10823c;" />
+                                Select All
+                            </label>
+                        </div>
+
+                        <div class="branches-grid-select">
+                            @foreach (var branch in Model.AllBranches)
+                            {
+                                <label class="branch-checkbox-item">
+                                    <input type="checkbox" name="SelectedBranchIds" value="@branch.Id"
+                                           class="officer-branch-check-@officer.UserId"
+                                           data-initially-checked="@(officer.AssignedBranchIds.Contains(branch.Id) ? "true" : "false")"
+                                           @(officer.AssignedBranchIds.Contains(branch.Id) ? "checked" : "") />
+                                    <span>@branch.Name</span>
+                                </label>
+                            }
+                        </div>
+
+                        <div class="edit-footer-row">
+                            <button type="button" class="btn-cancel-edit" onclick="cancelEdit('@officer.UserId')">Cancel</button>
+                            <button type="submit" class="btn-save-assignments">Save Assignments</button>
+                        </div>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Modal: Create HR Officer -->
+<div class="modal-overlay" id="createOfficerModal" onclick="closeCreateModal(event)">
+    <div class="modal-box" onclick="event.stopPropagation()">
+        <form method="post" asp-page-handler="CreateOfficer">
+            @Html.AntiForgeryToken()
+            <div class="modal-header">
+                <h3>Create HR Officer Account</h3>
+                <button type="button" class="btn-close-modal" onclick="closeCreateModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="background:#f0faf4; border:1px solid rgba(16,130,60,.2); border-radius:8px; padding:10px 14px; margin-bottom:14px; font-size:12px; color:#0d6e32;">
+                    HR Officers are stationed at Head Office (Human Resources). They will receive username format <code>hro.&lt;name&gt;</code>.
+                </div>
+
+                <div class="modal-form-group">
+                    <label>Officer Name / Identifier <span style="color:#dc3545">*</span></label>
+                    <input type="text" name="newOfficerName" required class="modal-input" placeholder="e.g. Perera, Silva, or Southern Region Officer" />
+                </div>
+
+                <div class="modal-form-group">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                        <label style="margin-bottom:0;">Assigned Branches</label>
+                        <label style="font-size:11.5px; color:#10823c; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:4px;">
+                            <input type="checkbox" id="modalSelectAllBranches" onchange="toggleModalBranches(this)" style="accent-color:#10823c;" />
+                            Select All
+                        </label>
+                    </div>
+                    <div class="modal-checklist" id="modalBranchList">
+                        @foreach (var b in Model.AllBranches)
+                        {
+                            <label class="branch-checkbox-item">
+                                <input type="checkbox" name="newOfficerBranchIds" value="@b.Id" class="modal-branch-check" />
+                                <span>@b.Name</span>
+                            </label>
+                        }
+                    </div>
+                    <span style="font-size:11px; color:#7a8863; display:block; margin-top:4px;">Leave empty to grant global access across all branches.</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeCreateModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Create HR Officer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function enableEdit(userId) {
+        const editEl = document.getElementById('edit-mode-' + userId);
+        if (editEl) {
+            editEl.style.display = 'block';
+        }
+    }
+
+    function cancelEdit(userId) {
+        const editEl = document.getElementById('edit-mode-' + userId);
+        if (editEl) {
+            // Restore initial checkbox states
+            const checkboxes = document.querySelectorAll('.officer-branch-check-' + userId);
+            checkboxes.forEach(cb => {
+                cb.checked = cb.getAttribute('data-initially-checked') === 'true';
+            });
+
+            editEl.style.display = 'none';
+        }
+    }
+
+    function toggleAllOfficerBranches(userId, master) {
+        const checkboxes = document.querySelectorAll('.officer-branch-check-' + userId);
+        checkboxes.forEach(cb => cb.checked = master.checked);
+    }
+
+    function openCreateModal() {
+        document.getElementById('createOfficerModal').classList.add('open');
+    }
+    function closeCreateModal(e) {
+        if (!e || e.target === document.getElementById('createOfficerModal') || e.target.classList.contains('btn-close-modal') || e.target.classList.contains('btn-secondary')) {
+            document.getElementById('createOfficerModal').classList.remove('open');
+        }
+    }
+    function toggleModalBranches(master) {
+        const checkboxes = document.querySelectorAll('.modal-branch-check');
+        checkboxes.forEach(cb => cb.checked = master.checked);
+    }
+</script>

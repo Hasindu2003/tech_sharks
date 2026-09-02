@@ -1,0 +1,265 @@
+@page
+@model HRMS.UI.Pages.Welfare.Approvals.BranchManagerApprovalModel
+@{
+    ViewData["Title"] = "Branch Manager Approvals";
+    ViewData["PageTitle"] = "Welfare / Branch Mgr Approvals";
+    ViewData["ActiveNav"] = "Welfare";
+}
+
+@section Styles {
+    <style>
+        .approval-shell {
+            padding: 26px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-item {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        .stat-val {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0;
+            line-height: 1;
+        }
+        .stat-val.pending { color: var(--accent-orange); }
+        .stat-val.approved { color: var(--primary); }
+        .stat-val.rejected { color: var(--accent-red); }
+        .req-card {
+            margin-bottom: 20px;
+        }
+        .req-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: var(--bg-body);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .req-body {
+            padding: 20px;
+        }
+        .req-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+        .req-grid-item label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
+        }
+        .req-grid-item span {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .reason-box {
+            padding: 12px 16px;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            margin-bottom: 16px;
+        }
+        .reason-box label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .reason-box p {
+            margin: 0;
+            font-size: 0.88rem;
+            color: var(--text-primary);
+        }
+        .doc-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+        .doc-btn {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+    </style>
+}
+
+<div class="approval-shell">
+
+    <!-- Header -->
+    <div class="page-header">
+        <h2>Branch Manager Approvals</h2>
+        <p class="page-subtitle">Review and verify welfare requests submitted by employees</p>
+    </div>
+
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success">✓ @TempData["Message"]</div>
+    }
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-item">
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-val pending">@Model.PendingRequests.Count</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Approved by Me</div>
+            <div class="stat-val approved">@Model.MyApprovedCount</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Rejected by Me</div>
+            <div class="stat-val rejected">@Model.MyRejectedCount</div>
+        </div>
+    </div>
+
+    <!-- Requests Listing -->
+    @if (!Model.PendingRequests.Any())
+    {
+        <div class="k-card" style="text-align: center; padding: 48px; color: var(--text-secondary);">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: var(--border-color); display: block; margin-bottom: 12px;"></i>
+            <p style="font-weight: 600; margin: 0 0 4px 0;">No Pending Requests</p>
+            <p style="font-size: 0.8rem; margin: 0;">All welfare requests have been reviewed.</p>
+        </div>
+    }
+    else
+    {
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            @foreach (var req in Model.PendingRequests)
+            {
+                <div class="k-card req-card" style="padding: 0; overflow: hidden;">
+                    <div class="req-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 800; font-size: 0.95rem;">WF-@req.RequestId.ToString("D4")</span>
+                            <span class="k-badge k-badge-pending">@req.Status</span>
+                        </div>
+                        <span style="font-size: 0.75rem; color: var(--text-secondary);">Submitted: @req.CreatedAt.ToString("MMM dd, yyyy")</span>
+                    </div>
+                    <div class="req-body">
+                        
+                        <div class="req-grid">
+                            <div class="req-grid-item">
+                                <label>Employee</label>
+                                <span>@req.Employee?.FullName</span>
+                            </div>
+                            <div class="req-grid-item">
+                                <label>Welfare Type</label>
+                                <span>@req.WelfareType?.TypeName</span>
+                            </div>
+                            <div class="req-grid-item">
+                                <label>Requested Amount</label>
+                                <span style="color: var(--primary); font-weight: 700;">LKR @req.RequestedAmount.ToString("N2")</span>
+                            </div>
+                            <div class="req-grid-item">
+                                <label>Request Date</label>
+                                <span>@req.RequestDate.ToString("MMM dd, yyyy")</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(req.Remark))
+                        {
+                            <div class="reason-box">
+                                <label>Reason</label>
+                                <p>@req.Remark</p>
+                            </div>
+                        }
+
+                        <!-- Supporting Documents -->
+                        @if (req.Documents != null && req.Documents.Any())
+                        {
+                            <div class="reason-box" style="background: white;">
+                                <label style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                    <i class="bi bi-paperclip" style="color: var(--primary); font-size: 0.9rem;"></i>
+                                    Supporting Documents (@req.Documents.Count)
+                                </label>
+                                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                    @foreach (var doc in req.Documents)
+                                    {
+                                        var ext = System.IO.Path.GetExtension(doc.FileName)?.ToLowerInvariant() ?? "";
+                                        var canPreview = ext == ".pdf" || ext == ".jpg" || ext == ".jpeg" || ext == ".png";
+                                        var icon = ext switch
+                                        {
+                                            ".pdf" => "bi-file-earmark-pdf-fill",
+                                            ".jpg" or ".jpeg" or ".png" => "bi-file-earmark-image-fill",
+                                            ".doc" or ".docx" => "bi-file-earmark-word-fill",
+                                            _ => "bi-file-earmark-fill"
+                                        };
+                                        <div class="doc-chip">
+                                            <i class="bi @icon" style="color: var(--primary);"></i>
+                                            <span style="font-weight: 600; color: var(--text-primary); max-w: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@doc.FileName</span>
+                                            <div style="display: flex; gap: 4px; margin-left: 8px;">
+                                                @if (canPreview)
+                                                {
+                                                    <a href="/Welfare/DownloadDocument?id=@doc.DocumentId&mode=view" class="doc-btn js-doc-preview" data-doc-title="@doc.FileName" data-doc-sub="Welfare Document" style="background: var(--primary-light); color: var(--primary);">
+                                                        View
+                                                    </a>
+                                                }
+                                                <a href="/Welfare/DownloadDocument?id=@doc.DocumentId" class="doc-btn" style="background: var(--bg-body); color: var(--text-secondary);">
+                                                    Download
+                                                </a>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <!-- Action Form -->
+                        <form method="post">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="RequestId" value="@req.RequestId" />
+                            <div style="display: flex; align-items: flex-end; gap: 12px; margin-top: 16px;">
+                                <div style="flex: 1;">
+                                    <label style="display: block; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px;">Comments (Optional)</label>
+                                    <input type="text" name="Comments" placeholder="Add your comments…" class="k-form-control" />
+                                </div>
+                                <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                                    <button type="submit" name="Action" value="Rejected" onclick="return confirm('Are you sure you want to reject this request?')" class="btn-kanrich btn-kanrich-danger">
+                                        <i class="bi bi-x-circle"></i> Reject
+                                    </button>
+                                    <button type="submit" name="Action" value="Approved" class="btn-kanrich btn-kanrich-primary">
+                                        <i class="bi bi-check-circle"></i> Approve & Forward
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+</div>

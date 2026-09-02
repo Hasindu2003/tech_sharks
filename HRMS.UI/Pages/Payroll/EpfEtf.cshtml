@@ -1,0 +1,732 @@
+@page
+@model HRMS.UI.Pages.Payroll.EpfEtfModel
+@{
+    ViewData["Title"] = "EPF & ETF Statutory Review";
+    ViewData["PageTitle"] = "Payroll / EPF & ETF";
+    ViewData["ActiveNav"] = "Payroll";
+}
+
+@section Styles {
+    <style>
+        .payroll-shell {
+            padding: 20px 24px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+
+        /* Sleek 4-Column KPI Grid */
+        .epf-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        @@media (max-width: 992px) {
+            .epf-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @@media (max-width: 576px) {
+            .epf-kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .epf-kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .epf-kpi-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+        }
+
+        .epf-kpi-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin: 0;
+        }
+        .epf-kpi-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 6px 0 2px 0;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+        .epf-kpi-sub {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        /* Slim Info Strip */
+        .compliance-strip {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 14px;
+            margin-bottom: 16px;
+            font-size: 0.76rem;
+            color: #475569;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        /* Toolbar */
+        .toolbar-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .filter-input {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            background: #ffffff;
+            color: #1e293b;
+        }
+        .filter-input:focus {
+            outline: none;
+            border-color: #10823c;
+            box-shadow: 0 0 0 2px rgba(16, 130, 60, 0.12);
+        }
+
+        /* Table Styling */
+        .epf-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+        .epf-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .epf-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #1e293b;
+        }
+        .epf-table tbody tr:hover {
+            background: #f8fafc;
+        }
+        .epf-table tfoot td {
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-top: 2px solid #cbd5e1;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 650px;
+            width: 100%;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @@media print {
+            body * { visibility: hidden; }
+            #printableFormC, #printableFormC * { visibility: visible; }
+            #printableFormC {
+                position: absolute;
+                left: 0; top: 0; width: 100%;
+                margin: 0; padding: 20px;
+                background: white;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+}
+
+<div class="payroll-shell">
+
+    <!-- Sub-navigation Tabs with Branch & Cycle Switchers -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 18px; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="/Payroll/Index?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Dashboard</a>
+            <a href="/Payroll/AttendanceReview?branchId=@Model.BranchId&month=@Model.Month&year=@Model.Year" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Attendance Review</a>
+            <a href="/Payroll/Bonuses?branchId=@Model.BranchId&month=@Model.Month&year=@Model.Year" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Allowances</a>
+            <a href="/Payroll/EpfEtf?branchId=@Model.BranchId&month=@Model.Month&year=@Model.Year" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 14px; font-size: 0.82rem;">EPF & ETF</a>
+            <a href="/Payroll/Payslips?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Payslips</a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <!-- Cycle Selector -->
+            <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <label style="font-size: 11px; font-weight: 700; color: #475569; margin: 0; display: flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-calendar-month" style="color: #10823c;"></i> Cycle:
+                </label>
+                <select onchange="const [y, m] = this.value.split('-'); location.href='?branchId=@Model.BranchId&month=' + m + '&year=' + y;" style="font-size: 12px; font-weight: 700; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; color: #0f172a; cursor: pointer;">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        var mDate = DateTime.Now.AddMonths(-i);
+                        var isSel = (mDate.Month == Model.Month && mDate.Year == Model.Year);
+                        <option value="@mDate.Year-@mDate.Month" selected="@isSel">@mDate.ToString("MMMM yyyy")</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Branch Switcher -->
+            @if (Model.ManagedBranchesList.Count > 1)
+            {
+                <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <label style="font-size: 11px; font-weight: 700; color: #475569; margin: 0; display: flex; align-items: center; gap: 4px;">
+                        <i class="bi bi-geo-alt-fill" style="color: #10823c;"></i> Branch:
+                    </label>
+                    <select onchange="location.href='?branchId=' + this.value + '&month=@Model.Month&year=@Model.Year'" style="font-size: 12px; font-weight: 700; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; color: #0f172a; cursor: pointer;">
+                        @foreach (var b in Model.ManagedBranchesList)
+                        {
+                            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+            else if (Model.CurrentBranch != null)
+            {
+                <div style="font-size: 11px; font-weight: 700; color: #10823c; background: #ebf5ee; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-geo-alt-fill"></i> Branch: @Model.CurrentBranch.Name
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Header block -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 1.3rem; display: inline-flex; align-items: center; gap: 8px;">
+                Statutory Deductions & Contributions
+                <span style="font-size: 0.95rem; color: #10823c; font-weight: 700;">(@Model.SelectedMonthName)</span>
+                @if (Model.CurrentBranch != null)
+                {
+                    <span style="font-size: 0.95rem; color: #64748b; font-weight: 600;">— @Model.CurrentBranch.Name</span>
+                }
+            </h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0 0;">
+                EPF (8%/12%) and ETF (3%) statutory return schedules for <strong>@(Model.CurrentBranch?.Name ?? "Selected Branch")</strong>
+            </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" onclick="exportCsv()" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+            </button>
+            <button type="button" onclick="openFormCModal()" class="btn-kanrich btn-kanrich-primary" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-printer"></i> Statutory Return / Form C
+            </button>
+        </div>
+    </div>
+
+    <!-- Sleek 4-Card Statutory KPI Grid -->
+    <div class="epf-kpi-grid">
+        
+        <!-- Total Statutory Liability (23%) -->
+        <div class="epf-kpi-card" style="border-left: 3px solid #6366f1;">
+            <div>
+                <p class="epf-kpi-title">Total Statutory (23%)</p>
+                <p class="epf-kpi-value" style="color: #4338ca;" id="kpiStatutory">Rs @Model.TotalStatutoryCost.ToString("N2")</p>
+            </div>
+            <p class="epf-kpi-sub">Total monthly statutory liability</p>
+        </div>
+
+        <!-- Central Bank EPF (20%) -->
+        <div class="epf-kpi-card" style="border-left: 3px solid #0284c7;">
+            <div>
+                <p class="epf-kpi-title">Central Bank EPF (20%)</p>
+                <p class="epf-kpi-value" style="color: #0284c7;" id="kpiTotalEpf">Rs @Model.TotalEpfCombined.ToString("N2")</p>
+            </div>
+            <p class="epf-kpi-sub">Emp 8%: <span id="kpiEpfEmp">Rs @Model.TotalEpfEmployee.ToString("N2")</span> · Co 12%: <span id="kpiEpfCo">Rs @Model.TotalEpfEmployer.ToString("N2")</span></p>
+        </div>
+
+        <!-- ETF Board (3%) -->
+        <div class="epf-kpi-card" style="border-left: 3px solid #ea580c;">
+            <div>
+                <p class="epf-kpi-title">ETF Board (3%)</p>
+                <p class="epf-kpi-value" style="color: #c2410c;" id="kpiEtf">Rs @Model.TotalEtf.ToString("N2")</p>
+            </div>
+            <p class="epf-kpi-sub">Employer trust fund contribution</p>
+        </div>
+
+        <!-- Qualifying Wages -->
+        <div class="epf-kpi-card" style="border-left: 3px solid #10823c;">
+            <div>
+                <p class="epf-kpi-title">Qualifying Wages</p>
+                <p class="epf-kpi-value" style="color: #0f172a;" id="kpiWages">Rs @Model.TotalBasicSalary.ToString("N2")</p>
+            </div>
+            <p class="epf-kpi-sub">@Model.SalaryData.Count contributing employee(s)</p>
+        </div>
+
+    </div>
+
+    <!-- Slim Compliance Reference Strip -->
+    <div class="compliance-strip">
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="bi bi-shield-check" style="color: #10823c; font-size: 14px;"></i>
+            <span>EPF Act No. 15 of 1958 & ETF Act No. 46 of 1980 · Remittance due by last working day of following month.</span>
+        </div>
+        <div>
+            <span>Employer Reg No: <strong style="color: #0f172a;">EPF/KFL/88421</strong></span>
+        </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="k-card" style="padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 10px;">
+        
+        <!-- Toolbar & Filters -->
+        <div class="toolbar-grid">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div style="position: relative;">
+                    <i class="bi bi-search" style="position: absolute; left: 9px; top: 8px; color: #94a3b8; font-size: 12px;"></i>
+                    <input id="tableSearch" oninput="filterTable()" class="filter-input" style="padding-left: 28px; width: 210px;" placeholder="Search name, EPF no..." />
+                </div>
+
+                <select id="deptFilter" onchange="filterTable()" class="filter-input">
+                    <option value="">All Departments (@Model.DepartmentsList.Count)</option>
+                    @foreach (var dept in Model.DepartmentsList)
+                    {
+                        <option value="@dept">@dept</option>
+                    }
+                </select>
+            </div>
+
+            <div>
+                <span id="recordCountBadge" style="font-size: 0.74rem; font-weight: 700; color: #64748b; background: #e2e8f0; padding: 3px 8px; border-radius: 10px;">
+                    Showing @Model.SalaryData.Count employees
+                </span>
+            </div>
+        </div>
+
+        @if (!Model.SalaryData.Any())
+        {
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                <i class="bi bi-wallet2" style="font-size: 2.5rem; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                <h4 style="font-weight: 700; color: #334155; margin: 0 0 4px 0;">No Salary Records Found</h4>
+                <p style="font-size: 0.8rem; margin: 0 0 12px 0;">Configure employee salary profiles in this branch to generate statutory schedules.</p>
+                <a href="/Payroll/Index?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-primary" style="padding: 6px 14px; font-size: 0.82rem;">Go to Payroll Dashboard</a>
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="epf-table" id="epfTable">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 220px;">Employee</th>
+                            <th style="text-align: left; width: 160px;">Department & Role</th>
+                            <th style="text-align: right;">Basic Salary</th>
+                            <th style="text-align: right; color: #0284c7;">EPF (8% Emp)</th>
+                            <th style="text-align: right; color: #10823c;">EPF (12% Co)</th>
+                            <th style="text-align: right; color: #c2410c;">ETF (3% Co)</th>
+                            <th style="text-align: right; color: #4338ca; font-weight: 800;">Total (23%)</th>
+                            <th style="text-align: center; width: 80px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="epfBody">
+                        @foreach (var item in Model.SalaryData)
+                        {
+                            var emp = item.Employee;
+                            <tr class="epf-row" 
+                                data-name="@(emp?.NameWithInitials.ToLower() ?? "") @(emp?.FullName.ToLower() ?? "")" 
+                                data-epf="@(emp?.EPFNumber?.ToLower() ?? "")" 
+                                data-dept="@(emp?.Department?.Name ?? "")"
+                                data-basic="@item.BasicSalary"
+                                data-epfemp="@item.EpfEmployee"
+                                data-epfco="@item.EpfEmployer"
+                                data-etf="@item.Etf"
+                                data-statutory="@item.TotalStatutory">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: #dcfce7; color: #10823c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.78rem; flex-shrink: 0;">
+                                            @(emp?.NameWithInitials.FirstOrDefault() ?? 'E')
+                                        </div>
+                                        <div>
+                                            <p style="font-weight: 700; margin: 0; font-size: 0.84rem; color: #0f172a; line-height: 1.2;" title="@emp?.FullName">@emp?.NameWithInitials</p>
+                                            <p style="font-size: 0.72rem; color: #64748b; margin: 0;">EPF: <strong>@(emp?.EPFNumber ?? "—")</strong></p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p style="font-weight: 600; margin: 0; font-size: 0.8rem; color: #1e293b;">@(emp?.Department?.Name ?? "General")</p>
+                                    <p style="font-size: 0.7rem; color: #64748b; margin: 0;">@(emp?.Designation?.Title ?? "Staff")</p>
+                                </td>
+                                <td style="text-align: right; font-weight: 600; white-space: nowrap;">
+                                    Rs @item.BasicSalary.ToString("N2")
+                                </td>
+                                <td style="text-align: right; color: #0284c7; font-weight: 600; white-space: nowrap;">
+                                    Rs @item.EpfEmployee.ToString("N2")
+                                </td>
+                                <td style="text-align: right; color: #10823c; font-weight: 600; white-space: nowrap;">
+                                    Rs @item.EpfEmployer.ToString("N2")
+                                </td>
+                                <td style="text-align: right; color: #c2410c; font-weight: 600; white-space: nowrap;">
+                                    Rs @item.Etf.ToString("N2")
+                                </td>
+                                <td style="text-align: right; font-weight: 700; color: #4338ca; white-space: nowrap;">
+                                    Rs @item.TotalStatutory.ToString("N2")
+                                </td>
+                                <td style="text-align: center;">
+                                    <button type="button" 
+                                            onclick="openBreakdownModal('@(emp?.NameWithInitials?.Replace("'", "\\'"))', '@(emp?.EPFNumber ?? "—")', '@(emp?.Department?.Name ?? "General")', '@(emp?.Designation?.Title ?? "Staff")', @item.BasicSalary, @item.HousingAllowance, @item.TransportAllowance, @item.MedicalAllowance, @item.GrossSalary, @item.EpfEmployee, @item.EpfEmployer, @item.Etf, @item.NetPayable)" 
+                                            class="btn-kanrich btn-kanrich-outline" 
+                                            style="padding: 3px 8px; font-size: 0.74rem;">
+                                        <i class="bi bi-eye"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" style="color: #475569; font-size: 0.76rem; letter-spacing: 0.4px;">
+                                TOTALS
+                            </td>
+                            <td style="text-align: right; color: #0f172a;" id="footBasic">
+                                Rs @Model.TotalBasicSalary.ToString("N2")
+                            </td>
+                            <td style="text-align: right; color: #0284c7;" id="footEpfEmp">
+                                Rs @Model.TotalEpfEmployee.ToString("N2")
+                            </td>
+                            <td style="text-align: right; color: #10823c;" id="footEpfCo">
+                                Rs @Model.TotalEpfEmployer.ToString("N2")
+                            </td>
+                            <td style="text-align: right; color: #c2410c;" id="footEtf">
+                                Rs @Model.TotalEtf.ToString("N2")
+                            </td>
+                            <td style="text-align: right; color: #4338ca;" id="footStatutory">
+                                Rs @Model.TotalStatutoryCost.ToString("N2")
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+
+    </div>
+
+</div>
+
+<!-- Modal: Central Bank Form C & Statutory Remittance Schedule -->
+<div class="modal-overlay" id="formCModal" onclick="closeFormCModal(event)">
+    <div class="modal-card" style="max-width: 720px;" onclick="event.stopPropagation()">
+        
+        <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: #dcfce7; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+                    <i class="bi bi-file-earmark-text"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;">Statutory Return Summary (Form C & ETF)</h3>
+                    <p style="margin: 1px 0 0 0; font-size: 11px; color: #64748b;">Central Bank EPF Form C Remittance Schedule</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeFormCModal()" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="padding: 20px; overflow-y: auto;" id="printableFormC">
+            
+            <!-- Schedule Header -->
+            <div style="text-align: center; border-bottom: 2px solid #10823c; padding-bottom: 12px; margin-bottom: 16px;">
+                <h2 style="margin: 0; color: #10823c; font-size: 18px; font-weight: 800; text-transform: uppercase;">Kanrich Finance Limited</h2>
+                <p style="margin: 3px 0 0 0; font-size: 12px; color: #334155; font-weight: 600;">Monthly Statutory Remittance Return — Form C Schedule</p>
+                <p style="margin: 2px 0 0 0; font-size: 11px; color: #64748b;">
+                    Branch: <strong>@(Model.CurrentBranch?.Name ?? "All Branches")</strong> &nbsp;|&nbsp; Cycle: <strong>@Model.SelectedMonthName</strong> &nbsp;|&nbsp; Employer EPF No: <strong>EPF/KFL/88421</strong>
+                </p>
+            </div>
+
+            <!-- Return Figures Grid -->
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 12.5px;">
+                <tr style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                    <td style="padding: 8px 12px; font-weight: 600; color: #475569;">Total Contributing Members</td>
+                    <td style="padding: 8px 12px; font-weight: 800; text-align: right; color: #0f172a;">@Model.SalaryData.Count Employees</td>
+                </tr>
+                <tr style="border: 1px solid #e2e8f0;">
+                    <td style="padding: 8px 12px; font-weight: 600; color: #475569;">Total Qualifying Basic Wages</td>
+                    <td style="padding: 8px 12px; font-weight: 800; text-align: right; color: #0f172a;">Rs @Model.TotalBasicSalary.ToString("N2")</td>
+                </tr>
+                <tr style="border: 1px solid #e2e8f0; background: #f0fdf4;">
+                    <td style="padding: 8px 12px; font-weight: 700; color: #0369a1;">1. Member EPF Deductions (8%)</td>
+                    <td style="padding: 8px 12px; font-weight: 800; text-align: right; color: #0369a1;">Rs @Model.TotalEpfEmployee.ToString("N2")</td>
+                </tr>
+                <tr style="border: 1px solid #e2e8f0; background: #f0fdf4;">
+                    <td style="padding: 8px 12px; font-weight: 700; color: #15803d;">2. Employer EPF Contributions (12%)</td>
+                    <td style="padding: 8px 12px; font-weight: 800; text-align: right; color: #15803d;">Rs @Model.TotalEpfEmployer.ToString("N2")</td>
+                </tr>
+                <tr style="border: 2px solid #0284c7; background: #e0f2fe;">
+                    <td style="padding: 10px 12px; font-weight: 800; color: #0369a1; font-size: 13px;">TOTAL EPF REMITTANCE TO CENTRAL BANK (20%)</td>
+                    <td style="padding: 10px 12px; font-weight: 900; text-align: right; color: #0284c7; font-size: 14px;">Rs @Model.TotalEpfCombined.ToString("N2")</td>
+                </tr>
+                <tr style="border: 1px solid #e2e8f0; background: #fff7ed;">
+                    <td style="padding: 8px 12px; font-weight: 700; color: #c2410c;">3. Employer ETF Contributions (3%)</td>
+                    <td style="padding: 8px 12px; font-weight: 800; text-align: right; color: #c2410c;">Rs @Model.TotalEtf.ToString("N2")</td>
+                </tr>
+                <tr style="border: 2px solid #6366f1; background: #e0e7ff;">
+                    <td style="padding: 10px 12px; font-weight: 800; color: #4338ca; font-size: 13px;">COMBINED STATUTORY LIABILITY (EPF + ETF = 23%)</td>
+                    <td style="padding: 10px 12px; font-weight: 900; text-align: right; color: #4338ca; font-size: 14px;">Rs @Model.TotalStatutoryCost.ToString("N2")</td>
+                </tr>
+            </table>
+
+            <!-- Signatures Section -->
+            <div style="display: flex; justify-content: space-between; margin-top: 24px; padding-top: 16px; border-top: 1px dashed #cbd5e1; font-size: 11.5px;">
+                <div style="text-align: center; width: 180px;">
+                    <div style="border-bottom: 1px solid #0f172a; height: 32px; margin-bottom: 4px;"></div>
+                    <p style="margin: 0; font-weight: 700; color: #1e293b;">Prepared By</p>
+                    <p style="margin: 0; color: #64748b;">HR Officer / Payroll</p>
+                </div>
+                <div style="text-align: center; width: 180px;">
+                    <div style="border-bottom: 1px solid #0f172a; height: 32px; margin-bottom: 4px;"></div>
+                    <p style="margin: 0; font-weight: 700; color: #1e293b;">Verified & Approved By</p>
+                    <p style="margin: 0; color: #64748b;">HR Manager / Head of HR</p>
+                </div>
+            </div>
+
+        </div>
+
+        <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+            <button type="button" onclick="closeFormCModal()" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 12px; font-size: 0.8rem;">Close</button>
+            <button type="button" onclick="window.print()" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px;">
+                <i class="bi bi-printer"></i> Print Return Statement
+            </button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: Individual Employee Statutory Breakdown -->
+<div class="modal-overlay" id="breakdownModal" onclick="closeBreakdownModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        
+        <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <div>
+                <h3 style="margin: 0; font-size: 15px; font-weight: 700; color: #0f172a;" id="mbEmpName">Employee Name</h3>
+                <p style="margin: 1px 0 0 0; font-size: 11.5px; color: #64748b;" id="mbEmpSub">EPF No: — | Department</p>
+            </div>
+            <button type="button" onclick="closeBreakdownModal()" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+
+        <div style="padding: 20px; overflow-y: auto;">
+            <h4 style="margin: 0 0 10px 0; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px;">Earnings Structure</h4>
+            <div style="margin-bottom: 14px;">
+                <div style="background: #f8fafc; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 11.5px; color: #64748b; font-weight: 600;">Basic Salary (Qualifying Earnings)</span>
+                    <p style="margin: 0; font-size: 14px; font-weight: 800; color: #0f172a;" id="mbBasic">Rs 0.00</p>
+                </div>
+            </div>
+
+            <h4 style="margin: 0 0 10px 0; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.4px;">Statutory Breakdown</h4>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 14px;">
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 0; color: #0284c7; font-weight: 600;">EPF Member Deduction (8%)</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #0284c7;" id="mbEpfEmp">Rs 0.00</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 0; color: #10823c; font-weight: 600;">EPF Employer Contribution (12%)</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #10823c;" id="mbEpfCo">Rs 0.00</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0; background: #e0f2fe;">
+                    <td style="padding: 7px 6px; color: #0369a1; font-weight: 800;">Total EPF Remitted (20%)</td>
+                    <td style="padding: 7px 6px; text-align: right; font-weight: 800; color: #0369a1;" id="mbTotalEpf">Rs 0.00</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e2e8f0;">
+                    <td style="padding: 6px 0; color: #c2410c; font-weight: 600;">ETF Employer Contribution (3%)</td>
+                    <td style="padding: 6px 0; text-align: right; font-weight: 700; color: #c2410c;" id="mbEtf">Rs 0.00</td>
+                </tr>
+                <tr style="background: #e0e7ff;">
+                    <td style="padding: 8px 6px; color: #4338ca; font-weight: 800;">Total Statutory Obligation (23%)</td>
+                    <td style="padding: 8px 6px; text-align: right; font-weight: 900; color: #4338ca;" id="mbStatutory">Rs 0.00</td>
+                </tr>
+            </table>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 8px 12px; display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11.5px; color: #166534; font-weight: 700;">Estimated Net Pay (Gross - EPF 8%)</span>
+                <span style="font-size: 14px; color: #166534; font-weight: 900;" id="mbNetPay">Rs 0.00</span>
+            </div>
+        </div>
+
+        <div style="padding: 12px 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end;">
+            <button type="button" onclick="closeBreakdownModal()" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 14px; font-size: 0.8rem;">Done</button>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const search = (document.getElementById('tableSearch').value || '').toLowerCase().trim();
+            const dept = (document.getElementById('deptFilter').value || '').toLowerCase().trim();
+
+            let visibleCount = 0;
+            let sumBasic = 0, sumEpfEmp = 0, sumEpfCo = 0, sumEtf = 0, sumStatutory = 0;
+
+            document.querySelectorAll('.epf-row').forEach(row => {
+                const name = (row.dataset.name || '').toLowerCase();
+                const epf = (row.dataset.epf || '').toLowerCase();
+                const rowDept = (row.dataset.dept || '').toLowerCase();
+
+                const matchSearch = !search || name.includes(search) || epf.includes(search);
+                const matchDept = !dept || rowDept === dept;
+
+                if (matchSearch && matchDept) {
+                    row.style.display = '';
+                    visibleCount++;
+                    sumBasic += parseFloat(row.dataset.basic || 0);
+                    sumEpfEmp += parseFloat(row.dataset.epfemp || 0);
+                    sumEpfCo += parseFloat(row.dataset.epfco || 0);
+                    sumEtf += parseFloat(row.dataset.etf || 0);
+                    sumStatutory += parseFloat(row.dataset.statutory || 0);
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update record count badge
+            const countBadge = document.getElementById('recordCountBadge');
+            if (countBadge) {
+                countBadge.textContent = `Showing ${visibleCount} employees`;
+            }
+
+            // Update footer totals
+            const footBasic = document.getElementById('footBasic');
+            const footEpfEmp = document.getElementById('footEpfEmp');
+            const footEpfCo = document.getElementById('footEpfCo');
+            const footEtf = document.getElementById('footEtf');
+            const footStatutory = document.getElementById('footStatutory');
+
+            if (footBasic) footBasic.textContent = 'Rs ' + formatMoney(sumBasic);
+            if (footEpfEmp) footEpfEmp.textContent = 'Rs ' + formatMoney(sumEpfEmp);
+            if (footEpfCo) footEpfCo.textContent = 'Rs ' + formatMoney(sumEpfCo);
+            if (footEtf) footEtf.textContent = 'Rs ' + formatMoney(sumEtf);
+            if (footStatutory) footStatutory.textContent = 'Rs ' + formatMoney(sumStatutory);
+        }
+
+        function formatMoney(num) {
+            return Number(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function openFormCModal() {
+            document.getElementById('formCModal').classList.add('open');
+        }
+
+        function closeFormCModal(e) {
+            if (!e || e.target === document.getElementById('formCModal') || e.target.closest('button')) {
+                document.getElementById('formCModal').classList.remove('open');
+            }
+        }
+
+        function openBreakdownModal(name, epf, dept, desig, basic, housing, trans, med, gross, epfEmp, epfCo, etf, net) {
+            document.getElementById('mbEmpName').textContent = name;
+            document.getElementById('mbEmpSub').textContent = `EPF No: ${epf} | ${dept} · ${desig}`;
+            document.getElementById('mbBasic').textContent = 'Rs ' + formatMoney(basic);
+            document.getElementById('mbEpfEmp').textContent = 'Rs ' + formatMoney(epfEmp);
+            document.getElementById('mbEpfCo').textContent = 'Rs ' + formatMoney(epfCo);
+            document.getElementById('mbTotalEpf').textContent = 'Rs ' + formatMoney(epfEmp + epfCo);
+            document.getElementById('mbEtf').textContent = 'Rs ' + formatMoney(etf);
+            document.getElementById('mbStatutory').textContent = 'Rs ' + formatMoney(epfEmp + epfCo + etf);
+            document.getElementById('mbNetPay').textContent = 'Rs ' + formatMoney(net);
+
+            document.getElementById('breakdownModal').classList.add('open');
+        }
+
+        function closeBreakdownModal(e) {
+            if (!e || e.target === document.getElementById('breakdownModal') || e.target.closest('button')) {
+                document.getElementById('breakdownModal').classList.remove('open');
+            }
+        }
+
+        function exportCsv() {
+            const rows = [
+                ["Employee Name", "EPF Number", "Department", "Designation", "Qualifying Basic (Rs)", "EPF 8% Emp (Rs)", "EPF 12% Co (Rs)", "ETF 3% Co (Rs)", "Total Statutory 23% (Rs)"]
+            ];
+
+            document.querySelectorAll('.epf-row').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const name = row.querySelector('td:nth-child(1) p:first-child')?.textContent.trim() || '';
+                    const epf = (row.dataset.epf || '').toUpperCase();
+                    const dept = row.dataset.dept || '';
+                    const desig = row.querySelector('td:nth-child(2) p:last-child')?.textContent.trim() || '';
+                    const basic = row.dataset.basic || '0';
+                    const epfEmp = row.dataset.epfemp || '0';
+                    const epfCo = row.dataset.epfco || '0';
+                    const etf = row.dataset.etf || '0';
+                    const statutory = row.dataset.statutory || '0';
+
+                    rows.push([
+                        `"${name}"`,
+                        `"${epf}"`,
+                        `"${dept}"`,
+                        `"${desig}"`,
+                        basic,
+                        epfEmp,
+                        epfCo,
+                        etf,
+                        statutory
+                    ]);
+                }
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `EPF_ETF_Schedule_${'@(Model.CurrentBranch?.Name ?? "Branch")'.replace(/\s+/g, '_')}_${'@Model.SelectedMonthName'.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeFormCModal();
+                closeBreakdownModal();
+            }
+        });
+    </script>
+}

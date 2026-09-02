@@ -1,6 +1,8 @@
-﻿using HRMS.Infrastructure.Identity;
+using System;
+using System.Threading.Tasks;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Infrastructure.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -8,7 +10,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Termination
 {
-    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer")]
     public class ReviewTerminationModel : PageModel
     {
         private readonly ITerminationService _terminationService;
@@ -25,12 +27,17 @@ namespace HRMS.UI.Pages.Termination
         [BindProperty]
         public string Comments { get; set; } = string.Empty;
 
+        public bool CanFinalize { get; set; }
+
         public async Task<IActionResult> OnGetAsync(int id)
         {
             Request = await _terminationService.GetTerminationByIdAsync(id);
             if (Request == null) return NotFound();
-            if (Request.Status != TerminationStatusEnum.SubmittedForApproval)
-                return RedirectToPage("/Termination/Details", new { id });
+
+            CanFinalize = Request.Status == TerminationStatusEnum.AMApproved ||
+                          Request.Status == TerminationStatusEnum.FinanceClearance ||
+                          Request.Status == TerminationStatusEnum.SubmittedForApproval;
+
             return Page();
         }
 
@@ -39,10 +46,21 @@ namespace HRMS.UI.Pages.Termination
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            await _terminationService.ApproveTerminationAsync(id, Comments, user.Email!);
+            var result = await _terminationService.FinalizeTerminationAsync(
+                id,
+                true,
+                !string.IsNullOrWhiteSpace(Comments) ? Comments : "Finalized and approved by HR.",
+                user.Email ?? user.UserName ?? "HR Officer"
+            );
 
-            TempData["SuccessMessage"] = "Termination request has been approved and sent for financial clearance.";
-            return RedirectToPage("/Termination/ApprovalQueue");
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = "Termination request has been finalized. Employee status updated and notifications sent.";
+                return RedirectToPage("/Termination/Requests");
+            }
+
+            TempData["ErrorMessage"] = result.ErrorMessage ?? "Failed to finalize termination.";
+            return RedirectToPage(new { id });
         }
 
         public async Task<IActionResult> OnPostRejectAsync(int id)
@@ -50,17 +68,28 @@ namespace HRMS.UI.Pages.Termination
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            if (string.IsNullOrWhiteSpace(Comments))
+            if (string.IsNullOrWhiteSpace(Comments) || Comments.Trim().Length < 5)
             {
                 Request = await _terminationService.GetTerminationByIdAsync(id);
-                ModelState.AddModelError("Comments", "Please provide a reason for rejection.");
+                ModelState.AddModelError("Comments", "Please provide a reason for rejection (minimum 5 characters).");
                 return Page();
             }
 
-            await _terminationService.RejectTerminationAsync(id, Comments, user.Email!);
+            var result = await _terminationService.FinalizeTerminationAsync(
+                id,
+                false,
+                Comments.Trim(),
+                user.Email ?? user.UserName ?? "HR Officer"
+            );
 
-            TempData["SuccessMessage"] = "Termination request has been rejected.";
-            return RedirectToPage("/Termination/ApprovalQueue");
+            if (result.Success)
+            {
+                TempData["SuccessMessage"] = "Termination request has been rejected.";
+                return RedirectToPage("/Termination/Requests");
+            }
+
+            TempData["ErrorMessage"] = result.ErrorMessage ?? "Failed to reject termination.";
+            return RedirectToPage(new { id });
         }
     }
 }

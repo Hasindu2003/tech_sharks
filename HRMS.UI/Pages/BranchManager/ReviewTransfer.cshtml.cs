@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -28,6 +28,12 @@ namespace HRMS.UI.Pages.BranchManager
             TransferRequest = await _transferService.GetRequestByIdAsync(id);
             if (TransferRequest == null) return NotFound();
 
+            if (TransferRequest.IsManagerialNotification)
+            {
+                TempData["ErrorMessage"] = "Managerial transfer notices are handled directly by the HR Manager.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Transfers" });
+            }
+
             var user = await _userManager.GetUserAsync(User);
             var branch = user?.Branch ?? "";
             if (TransferRequest.CurrentBranch == branch)
@@ -42,10 +48,19 @@ namespace HRMS.UI.Pages.BranchManager
 
         public async Task<IActionResult> OnPostAsync(int id, string action, string comments)
         {
+            var req = await _transferService.GetRequestByIdAsync(id);
+            if (req == null) return NotFound();
+
+            if (req.IsManagerialNotification)
+            {
+                TempData["ErrorMessage"] = "Managerial transfer notices are handled directly by the HR Manager.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Transfers" });
+            }
+
             if (string.IsNullOrWhiteSpace(comments) || comments.Trim().Length < 10)
             {
                 ModelState.AddModelError(string.Empty, "Comments must be at least 10 characters.");
-                TransferRequest = await _transferService.GetRequestByIdAsync(id);
+                TransferRequest = req;
                 var user2 = await _userManager.GetUserAsync(User);
                 ReviewerRole = TransferRequest?.CurrentBranch == user2?.Branch ? "Current Branch Manager" : "Target Branch Manager";
                 return Page();

@@ -374,3 +374,11 @@ appsettings.Development.json
 *.Backup.tmp
 # Google service account key
 HRMS.UI/google-calendar-key.json
+
+# Temporary spreadsheets, packages and publish test directories
+*.xlsx
+*.zip
+publish_test/
+HRMS.UI/wwwroot/uploads/*
+!HRMS.UI/wwwroot/uploads/.gitkeep
+

@@ -8,6 +8,84 @@
 <style>
     .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
     .page-s { font-size: 12px; color: #7a8863; margin: 0; }
+
+    /* Filter & Search Toolbar */
+    .filter-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04);
+    }
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 280px;
+        flex-wrap: wrap;
+    }
+    .search-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+        max-width: 360px;
+    }
+    .search-input-wrap svg {
+        position: absolute;
+        left: 11px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 15px;
+        height: 15px;
+        stroke: #7a8863;
+        fill: none;
+        pointer-events: none;
+    }
+    .search-input {
+        width: 100%;
+        padding: 8px 12px 8px 34px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        color: #151811;
+        background: #fafbfa;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .search-input:focus {
+        background: #fff;
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16,130,60,.1);
+    }
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        color: #151811;
+        background: #fff;
+        outline: none;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+    .filter-select:focus {
+        border-color: #10823c;
+    }
+    .count-indicator {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #7a8863;
+        white-space: nowrap;
+    }
     
     /* Inline table styles */
     .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
@@ -18,12 +96,90 @@
     .sep-table tbody tr:hover { background: #fafafa; }
 
     /* Badges */
-    .role-badge-container { display: inline-flex; align-items: center; gap: 4px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 600; color: #374151; margin: 2px; }
+    .role-badge-container { display: inline-flex; align-items: center; gap: 4px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 20px; padding: 3px 10px; font-size: 11.5px; font-weight: 600; color: #374151; margin: 2px; }
     .role-badge-container.admin { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
     .role-badge-container.hr { background: #e0e7ff; border-color: #c7d2fe; color: #3730a3; }
-    
-    .remove-role-btn { border: none; background: transparent; padding: 0; font-size: 14px; font-weight: bold; color: #9ca3af; cursor: pointer; margin-left: 2px; }
-    .remove-role-btn:hover { color: #ef4444; }
+    .role-badge-container.welfare { background: #fef3c7; border-color: #fde68a; color: #92400e; }
+
+    .username-badge {
+        display: inline-block;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 13px;
+        font-weight: 700;
+        color: #10823c;
+        background: #eef7f0;
+        padding: 3px 9px;
+        border-radius: 6px;
+    }
+
+    /* Pagination */
+    .tbl-pg-bar {
+        background: #f9fafb;
+        padding: 12px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #e2e5dc;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .tbl-pg-info {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #7a8863;
+    }
+    .tbl-pg-controls {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .pg-btn {
+        padding: 5px 10px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #151811;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        font-family: 'Manrope', sans-serif;
+    }
+    .pg-btn:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+    .pg-btn.active {
+        background: #10823c;
+        color: #ffffff;
+        border-color: #10823c;
+        box-shadow: 0 1px 2px rgba(0,0,0,.08);
+    }
+    .pg-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .pg-ellipsis {
+        padding: 5px 6px;
+        font-size: 12.5px;
+        color: #7a8863;
+        font-weight: 700;
+    }
+    .pg-select {
+        padding: 5px 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #151811;
+        background: #ffffff;
+        cursor: pointer;
+        outline: none;
+        font-family: 'Manrope', sans-serif;
+    }
+    .pg-select:focus {
+        border-color: #10823c;
+    }
 
     /* Modal dialog */
     .k-modal {
@@ -50,14 +206,9 @@
     .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
 </style>
 
-<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:22px;">
-    <div>
-        <h1 class="page-h">User Account Management</h1>
-        <p class="page-s">Create and manage corporate login accounts and roles</p>
-    </div>
-    <button class="btn-kanrich btn-kanrich-primary" onclick="showCreateModal()" style="padding:9px 18px">
-        <i class="bi bi-person-plus"></i> Create User Account
-    </button>
+<div style="margin-bottom:20px;">
+    <h1 class="page-h">User Account Management</h1>
+    <p class="page-s">Manage corporate duty and administrative login accounts, password resets, and system roles</p>
 </div>
 
 @if (!string.IsNullOrEmpty(Model.SuccessMessage))
@@ -73,23 +224,58 @@
     </div>
 }
 
+<!-- Filters & Search Toolbar -->
+<div class="filter-toolbar">
+    <div class="filter-group">
+        <!-- Search by username -->
+        <div class="search-input-wrap">
+            <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="usernameSearchInput" class="search-input" placeholder="Search by username..." oninput="filterDutyAccounts()" />
+        </div>
+
+        <!-- Filter by Duty Role -->
+        <select id="roleFilterSelect" class="filter-select" onchange="filterDutyAccounts()">
+            <option value="">All Duty Roles</option>
+            @foreach (var role in Model.AllRoles)
+            {
+                <option value="@role">@role</option>
+            }
+        </select>
+    </div>
+
+    <div class="count-indicator" id="accountsCountBadge">
+        Showing @Model.Users.Count duty accounts
+    </div>
+</div>
+
 <div class="tbl-card">
-    <table class="sep-table">
+    <table class="sep-table" id="dutyAccountsTable">
         <thead>
             <tr>
-                <th>Email / Username</th>
-                <th>Linked Employee</th>
+                <th>Username</th>
+                <th>User</th>
                 <th>Assigned Roles</th>
                 <th style="text-align:right">Actions</th>
             </tr>
         </thead>
         <tbody>
+            @if (Model.Users.Count == 0)
+            {
+                <tr id="emptyTableInitialRow">
+                    <td colspan="4" style="text-align: center; color: #7a8863; padding: 24px;">No duty accounts found.</td>
+                </tr>
+            }
             @foreach (var user in Model.Users)
             {
-                <tr>
+                <tr class="duty-user-row" 
+                    data-username="@user.UserName.ToLowerInvariant()"
+                    data-fullname="@user.FullName.ToLowerInvariant()"
+                    data-roles="@string.Join(",", user.Roles).ToLowerInvariant()">
                     <td>
-                        <div style="font-weight: 600; color: #151811;">@user.Email</div>
-                        <div style="font-size: 11px; color: #7a8863;">UserName: @user.UserName</div>
+                        <span class="username-badge">@user.UserName</span>
                     </td>
                     <td style="font-weight: 600;">@user.LinkedEmployee</td>
                     <td>
@@ -99,16 +285,11 @@
                             {
                                 var badgeClass = "";
                                 if (role == "Admin") badgeClass = "admin";
-                                else if (role == "HR Manager") badgeClass = "hr";
+                                else if (role == "HR Manager" || role == "HR Officer") badgeClass = "hr";
+                                else if (role == "Welfare Manager") badgeClass = "welfare";
                                 
                                 <span class="role-badge-container @badgeClass">
                                     @role
-                                    <form method="post" asp-page-handler="RemoveRole" style="display:inline;">
-                                        @Html.AntiForgeryToken()
-                                        <input type="hidden" name="userId" value="@user.Id" />
-                                        <input type="hidden" name="role" value="@role" />
-                                        <button type="submit" class="remove-role-btn" title="Remove role">&times;</button>
-                                    </form>
                                 </span>
                             }
                         }
@@ -119,12 +300,12 @@
                     </td>
                     <td style="text-align:right">
                         <div style="display:inline-flex; gap:6px; align-items:center;">
-                            <button class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" onclick="showRoleModal('@user.Id', '@user.Email')">
-                                <i class="bi bi-plus"></i> Add Role
+                            <button class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" onclick="showResetPasswordModal('@user.Id', '@user.UserName')" title="Reset Password">
+                                <i class="bi bi-key"></i> Reset Password
                             </button>
                             @if (user.Roles.Count == 0)
                             {
-                                <form method="post" asp-page-handler="DeleteUser" style="display:inline;" onsubmit="return confirm('Delete this user permanently?');">
+                                <form method="post" asp-page-handler="DeleteUser" style="display:inline;" onsubmit="return confirm('Delete user @user.UserName permanently?');">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="userId" value="@user.Id" />
                                     <button type="submit" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="color:#ef4444; border-color:#fee2e2;">
@@ -136,77 +317,57 @@
                     </td>
                 </tr>
             }
+            <tr id="noMatchesRow" style="display:none;">
+                <td colspan="4" style="text-align: center; color: #7a8863; padding: 24px;">No duty accounts match your search or filter.</td>
+            </tr>
         </tbody>
     </table>
-</div>
 
-<!-- Create Modal -->
-<div id="createModal" class="k-modal">
-    <div class="k-modal-content">
-        <h3>Create New User Account</h3>
-        <p style="font-size: 12px; color: #7a8863; margin-top: -6px; margin-bottom: 14px;">User will login with their email. Default password is <strong>Password@123</strong>.</p>
-        
-        <form method="post" asp-page-handler="CreateUser">
-            @Html.AntiForgeryToken()
-            <div class="fg">
-                <label class="fl">Email Address</label>
-                <input type="email" name="email" class="fi" placeholder="e.g. employee@company.com" required />
-            </div>
-            
-            <div class="fg">
-                <label class="fl">Initial System Role</label>
-                <select name="role" class="fi" required>
-                    <option value="">-- Select Role --</option>
-                    @foreach (var role in Model.AllRoles)
-                    {
-                        <option value="@role">@role</option>
-                    }
-                </select>
-            </div>
-
-            <div class="fg">
-                <label class="fl">Link to Employee Record (Optional)</label>
-                <select name="employeeId" class="fi">
-                    <option value="">-- Do not link --</option>
-                    @foreach (var emp in Model.Employees)
-                    {
-                        <option value="@emp.Id">@emp.Label</option>
-                    }
-                </select>
-            </div>
-
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" onclick="hideCreateModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
-                <button type="submit" class="btn-kanrich btn-kanrich-primary">Create User</button>
-            </div>
-        </form>
+    <!-- Pagination Toolbar -->
+    <div id="dutyAccountsPaginationBar" class="tbl-pg-bar" style="display:none;">
+        <span id="dutyAccountsPaginationInfo" class="tbl-pg-info">Showing 1–10 of 0</span>
+        <div class="tbl-pg-controls">
+            <select id="dutyAccountsPageSize" class="pg-select" onchange="changeDutyAccountsPageSize(this.value)">
+                <option value="5">5 / page</option>
+                <option value="10" selected>10 / page</option>
+                <option value="20">20 / page</option>
+                <option value="50">50 / page</option>
+            </select>
+            <div id="dutyAccountsPaginationButtons" style="display:inline-flex; gap:4px; align-items:center;"></div>
+        </div>
     </div>
 </div>
 
-<!-- Assign Role Modal -->
-<div id="roleModal" class="k-modal">
+<!-- Reset Password Modal -->
+<div id="resetModal" class="k-modal">
     <div class="k-modal-content">
-        <h3>Assign System Role</h3>
-        <p id="modalUserEmail" style="font-size: 13px; font-weight: 700; color: #151811; margin-top: -6px; margin-bottom: 14px;"></p>
+        <h3>Reset User Password</h3>
+        <p id="resetModalUserInfo" style="font-size: 13px; font-weight: 700; color: #151811; margin-top: -6px; margin-bottom: 14px;"></p>
         
-        <form method="post" asp-page-handler="AssignRole">
+        <form method="post" asp-page-handler="ResetPassword">
             @Html.AntiForgeryToken()
-            <input type="hidden" id="modalUserId" name="userId" />
+            <input type="hidden" id="resetModalUserId" name="userId" />
             
             <div class="fg">
-                <label class="fl">Role to Assign</label>
-                <select name="role" class="fi" required>
-                    <option value="">-- Select Role --</option>
-                    @foreach (var role in Model.AllRoles)
-                    {
-                        <option value="@role">@role</option>
-                    }
-                </select>
+                <label class="fl">New Temporary Password</label>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="resetNewPassword" name="newPassword" class="fi" placeholder="Enter new password" required />
+                    <button type="button" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" onclick="generateRandomPassword()" style="white-space: nowrap;">
+                        Auto Generate
+                    </button>
+                </div>
+            </div>
+
+            <div class="fg" style="margin-top: 14px;">
+                <label style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #374151; cursor: pointer;">
+                    <input type="checkbox" name="requireChangeOnLogin" value="true" checked />
+                    Require user to change password on next login
+                </label>
             </div>
 
             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" onclick="hideRoleModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
-                <button type="submit" class="btn-kanrich btn-kanrich-primary">Assign Role</button>
+                <button type="button" onclick="hideResetPasswordModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary">Save New Password</button>
             </div>
         </form>
     </div>
@@ -214,25 +375,167 @@
 
 @section Scripts {
     <script>
-        function showCreateModal() {
-            document.getElementById('createModal').style.display = 'block';
+        var currentPage = 1;
+        var pageSize = 10;
+        var filteredRows = [];
+
+        function filterDutyAccounts() {
+            var searchInput = document.getElementById('usernameSearchInput');
+            var roleSelect = document.getElementById('roleFilterSelect');
+            var countBadge = document.getElementById('accountsCountBadge');
+            var noMatchesRow = document.getElementById('noMatchesRow');
+            
+            var query = searchInput ? searchInput.value.trim().toLowerCase() : '';
+            var selectedRole = roleSelect ? roleSelect.value.trim().toLowerCase() : '';
+
+            var allRows = Array.from(document.querySelectorAll('.duty-user-row'));
+            filteredRows = [];
+
+            allRows.forEach(function (row) {
+                var username = row.getAttribute('data-username') || '';
+                var fullname = row.getAttribute('data-fullname') || '';
+                var roles = row.getAttribute('data-roles') || '';
+
+                var matchesSearch = !query || username.includes(query) || fullname.includes(query);
+                var matchesRole = !selectedRole || roles.includes(selectedRole);
+
+                if (matchesSearch && matchesRole) {
+                    filteredRows.push(row);
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            if (countBadge) {
+                countBadge.textContent = 'Showing ' + filteredRows.length + ' duty ' + (filteredRows.length === 1 ? 'account' : 'accounts');
+            }
+
+            if (noMatchesRow) {
+                noMatchesRow.style.display = (filteredRows.length === 0 && allRows.length > 0) ? '' : 'none';
+            }
+
+            currentPage = 1;
+            renderPagination();
         }
-        function hideCreateModal() {
-            document.getElementById('createModal').style.display = 'none';
+
+        function changeDutyAccountsPageSize(newSize) {
+            pageSize = parseInt(newSize, 10) || 10;
+            currentPage = 1;
+            renderPagination();
         }
-        function showRoleModal(userId, email) {
-            document.getElementById('modalUserId').value = userId;
-            document.getElementById('modalUserEmail').textContent = email;
-            document.getElementById('roleModal').style.display = 'block';
+
+        function goToPage(page) {
+            currentPage = page;
+            renderPagination();
         }
-        function hideRoleModal() {
-            document.getElementById('roleModal').style.display = 'none';
+
+        function renderPagination() {
+            var paginationBar = document.getElementById('dutyAccountsPaginationBar');
+            var paginationInfo = document.getElementById('dutyAccountsPaginationInfo');
+            var buttonsContainer = document.getElementById('dutyAccountsPaginationButtons');
+
+            if (!paginationBar || !paginationInfo || !buttonsContainer) return;
+
+            var totalCount = filteredRows.length;
+            if (totalCount === 0) {
+                paginationBar.style.display = 'none';
+                return;
+            }
+
+            paginationBar.style.display = 'flex';
+
+            var totalPages = Math.ceil(totalCount / pageSize) || 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            var startIdx = (currentPage - 1) * pageSize;
+            var endIdx = Math.min(startIdx + pageSize, totalCount);
+
+            // Display current page slice
+            filteredRows.forEach(function (row, idx) {
+                if (idx >= startIdx && idx < endIdx) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update info text
+            paginationInfo.textContent = 'Showing ' + (startIdx + 1) + '–' + endIdx + ' of ' + totalCount;
+
+            // Generate buttons
+            buttonsContainer.innerHTML = '';
+
+            // Previous button
+            var prevBtn = document.createElement('button');
+            prevBtn.className = 'pg-btn';
+            prevBtn.textContent = '← Prev';
+            prevBtn.disabled = (currentPage === 1);
+            prevBtn.onclick = function () { if (currentPage > 1) goToPage(currentPage - 1); };
+            buttonsContainer.appendChild(prevBtn);
+
+            // Page numbers logic with truncation
+            var pages = [];
+            if (totalPages <= 7) {
+                for (var i = 1; i <= totalPages; i++) pages.push(i);
+            } else {
+                if (currentPage <= 4) {
+                    pages = [1, 2, 3, 4, 5, '...', totalPages];
+                } else if (currentPage >= totalPages - 3) {
+                    pages = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+                } else {
+                    pages = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+                }
+            }
+
+            pages.forEach(function (p) {
+                if (p === '...') {
+                    var el = document.createElement('span');
+                    el.className = 'pg-ellipsis';
+                    el.textContent = '...';
+                    buttonsContainer.appendChild(el);
+                } else {
+                    var pageBtn = document.createElement('button');
+                    pageBtn.className = 'pg-btn' + (p === currentPage ? ' active' : '');
+                    pageBtn.textContent = p;
+                    pageBtn.onclick = function () { goToPage(p); };
+                    buttonsContainer.appendChild(pageBtn);
+                }
+            });
+
+            // Next button
+            var nextBtn = document.createElement('button');
+            nextBtn.className = 'pg-btn';
+            nextBtn.textContent = 'Next →';
+            nextBtn.disabled = (currentPage === totalPages);
+            nextBtn.onclick = function () { if (currentPage < totalPages) goToPage(currentPage + 1); };
+            buttonsContainer.appendChild(nextBtn);
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            filterDutyAccounts();
+        });
+
+        function showResetPasswordModal(userId, username) {
+            document.getElementById('resetModalUserId').value = userId;
+            document.getElementById('resetModalUserInfo').textContent = 'Username: ' + username;
+            generateRandomPassword();
+            document.getElementById('resetModal').style.display = 'block';
+        }
+        function hideResetPasswordModal() {
+            document.getElementById('resetModal').style.display = 'none';
+        }
+        function generateRandomPassword() {
+            const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+            let rand = "";
+            for (let i = 0; i < 6; i++) {
+                rand += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            document.getElementById('resetNewPassword').value = "Kanrich@@" + rand;
         }
         window.onclick = function(event) {
-            var createModal = document.getElementById('createModal');
-            var roleModal = document.getElementById('roleModal');
-            if (event.target == createModal) hideCreateModal();
-            if (event.target == roleModal) hideRoleModal();
+            var resetModal = document.getElementById('resetModal');
+            if (event.target == resetModal) hideResetPasswordModal();
         }
     </script>
 }

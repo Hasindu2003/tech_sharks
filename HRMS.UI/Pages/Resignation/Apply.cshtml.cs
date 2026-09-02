@@ -1,24 +1,32 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.UI.Pages.Resignation
 {
-    [Authorize(Roles = "Employee")]
+    [Authorize]
     public class ApplyModel : PageModel
     {
         private readonly IResignationService _resignationService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public ApplyModel(IResignationService resignationService, UserManager<ApplicationUser> userManager)
+        public ApplyModel(
+            IResignationService resignationService,
+            UserManager<ApplicationUser> userManager,
+            ApplicationDbContext context)
         {
             _resignationService = resignationService;
             _userManager = userManager;
+            _context = context;
         }
 
         [BindProperty]
@@ -90,9 +98,9 @@ namespace HRMS.UI.Pages.Resignation
 
             if (Input.EffectiveDate.HasValue)
             {
-                var minDate = DateTime.Today.AddDays(14);
+                var minDate = SriLankaTime.Today.AddMonths(1);
                 if (Input.EffectiveDate.Value.Date < minDate)
-                    ModelState.AddModelError("Input.EffectiveDate", "Effective date must be at least 14 days from today (minimum notice period).");
+                    ModelState.AddModelError("Input.EffectiveDate", "Last working day must be at least 1 month from the requesting date.");
             }
 
             if (!ModelState.IsValid) return Page();
@@ -100,31 +108,52 @@ namespace HRMS.UI.Pages.Resignation
             var id = await SaveRequestAsync(CurrentUser, true);
             await UploadDocumentsAsync(id);
 
-            var (success, error) = await _resignationService.ValidateAndSubmitAsync(id);
+            var userRole = User.IsInRole("HR Manager") ? "HR Manager"
+                         : User.IsInRole("Area Manager") ? "Area Manager"
+                         : User.IsInRole("Branch Manager") ? "Branch Manager"
+                         : User.IsInRole("Department Head") ? "Department Head"
+                         : User.IsInRole("Welfare Manager") ? "Welfare Manager"
+                         : User.IsInRole("Admin") ? "Admin"
+                         : "Employee";
+
+            var (success, error) = await _resignationService.ValidateAndSubmitAsync(id, userRole);
             if (!success)
             {
                 TempData["ErrorMessage"] = error;
                 return RedirectToPage("/Resignation/MyRequests");
             }
 
-            TempData["SuccessMessage"] = "Resignation request submitted successfully. Your Branch Manager will review it shortly.";
+            bool isManager = await _resignationService.IsManagerialEmployeeAsync(CurrentUser.Email, CurrentUser.EpfNumber, CurrentUser.Designation, userRole, CurrentUser.Department);
+            TempData["SuccessMessage"] = isManager
+                ? "Managerial resignation notice submitted directly for HR review."
+                : "Resignation request submitted successfully. Your request is now pending review.";
             return RedirectToPage("/Resignation/MyRequests");
         }
 
         private async Task<int> SaveRequestAsync(ApplicationUser user, bool submit)
         {
-            var today = DateTime.Today;
-            var effectiveDate = Input.EffectiveDate ?? today.AddDays(30);
+            var today = SriLankaTime.Today;
+            var effectiveDate = Input.EffectiveDate ?? today.AddMonths(1);
             var noticeDays = (effectiveDate - today).Days;
+
+            var emp = await _context.Employees
+                .Include(e => e.Designation)
+                .Include(e => e.Department)
+                .Include(e => e.Branch)
+                .FirstOrDefaultAsync(e => (user.EmployeeId.HasValue && e.Id == user.EmployeeId.Value) || (!string.IsNullOrEmpty(user.Email) && e.Email == user.Email));
+
+            var designation = !string.IsNullOrWhiteSpace(user.Designation) ? user.Designation : emp?.Designation?.Title ?? "";
+            var department = !string.IsNullOrWhiteSpace(user.Department) ? user.Department : emp?.Department?.Name ?? "";
+            var branch = !string.IsNullOrWhiteSpace(user.Branch) ? user.Branch : emp?.Branch?.Name ?? "";
 
             var vm = new ResignationRequestViewModel
             {
-                EmployeeName         = user.FullName,
-                EpfNumber            = user.EpfNumber,
-                EmployeeEmail        = user.Email!,
-                Branch               = user.Branch,
-                Department           = user.Department ?? "",
-                Designation          = user.Designation,
+                EmployeeName         = !string.IsNullOrWhiteSpace(user.FullName) ? user.FullName : emp?.FullName ?? "",
+                EpfNumber            = !string.IsNullOrWhiteSpace(user.EpfNumber) ? user.EpfNumber : emp?.EPFNumber ?? "",
+                EmployeeEmail        = user.Email ?? emp?.Email ?? "",
+                Branch               = branch,
+                Department           = department,
+                Designation          = designation,
                 ReasonForResignation = Input.ReasonForResignation ?? "",
                 ResignationDate      = today,
                 EffectiveDate        = effectiveDate,
@@ -134,7 +163,7 @@ namespace HRMS.UI.Pages.Resignation
                 IsLoanGuarantor      = Input.IsLoanGuarantor,
                 HasOverridePermission = Input.HasOverridePermission,
                 ObligationDetails    = Input.ObligationDetails,
-                InitiatedBy          = user.Email!
+                InitiatedBy          = user.Email ?? user.UserName ?? ""
             };
 
             return await _resignationService.CreateResignationRequestAsync(vm);

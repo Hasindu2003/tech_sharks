@@ -73,7 +73,7 @@ namespace HRMS.UI.Pages.Employee.Leave
                 LeaveBalances = balances;
             }
             MyLeaves = await _leaveService.GetEmployeeLeavesAsync(EmployeeId);
-            PendingCount = MyLeaves.Count(l => l.Status == "Pending");
+            PendingCount = MyLeaves.Count(l => l.Status != null && l.Status.StartsWith("Pending"));
             UsedCount = MyLeaves.Count(l => l.Status == "Approved");
             UpcomingApprovedLeaves = MyLeaves
                 .Where(l => l.Status == "Approved" && l.StartDate > DateTime.Now)

@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -26,11 +26,27 @@ namespace HRMS.UI.Pages.BranchManager
         {
             ResignationRequest = await _resignationService.GetByIdAsync(id);
             if (ResignationRequest == null) return NotFound();
+
+            if (ResignationRequest.IsManagerialNotification)
+            {
+                TempData["ErrorMessage"] = "Managerial resignation notices are handled directly by the HR Manager.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Resignations" });
+            }
+
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync(int id, string action, string comments)
         {
+            var req = await _resignationService.GetByIdAsync(id);
+            if (req == null) return NotFound();
+
+            if (req.IsManagerialNotification)
+            {
+                TempData["ErrorMessage"] = "Managerial resignation notices are handled directly by the HR Manager.";
+                return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Resignations" });
+            }
+
             if (string.IsNullOrWhiteSpace(comments) || comments.Trim().Length < 5)
             {
                 TempData["ErrorMessage"] = "Comments are required (minimum 5 characters).";

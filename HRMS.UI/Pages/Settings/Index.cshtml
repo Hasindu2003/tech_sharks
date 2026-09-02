@@ -137,6 +137,7 @@
                 <div class="setting-desc">Manage grouped business units and functions.</div>
             </a>
 
+
             @if (User.IsInRole("Admin"))
             {
                 <a href="/Settings/Designations" class="setting-card">
@@ -159,7 +160,7 @@
                         </svg>
                     </div>
                     <div class="setting-title">Duty Accounts</div>
-                    <div class="setting-desc">Create and manage position accounts for HR Managers, Area Managers, and Branch Managers.</div>
+                    <div class="setting-desc">Provision Head Office HR Officers, Area Managers, and Branch Managers.</div>
                 </a>
 
                 <a href="/Settings/LeaveAllocations" class="setting-card">
@@ -173,6 +174,17 @@
                     </div>
                     <div class="setting-title">Leave Allocations</div>
                     <div class="setting-desc">Manually configure the annual allocations for leave categories (Annual, Casual, Medical, etc.).</div>
+                </a>
+
+                <a href="/Settings/OvertimePolicy" class="setting-card">
+                    <div class="setting-icon">
+                        <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                    </div>
+                    <div class="setting-title">Overtime & Working Hours Policy</div>
+                    <div class="setting-desc">Configure monthly working days, daily hours, and overtime rate multipliers across company branches.</div>
                 </a>
             }
         </div>

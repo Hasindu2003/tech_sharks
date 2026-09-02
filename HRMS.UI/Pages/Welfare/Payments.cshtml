@@ -1,0 +1,616 @@
+@page
+@model HRMS.UI.Pages.Welfare.PaymentsModel
+@{
+    ViewData["Title"] = "Welfare Payments";
+    ViewData["PageTitle"] = "Welfare / Welfare Payments";
+    ViewData["ActiveNav"] = "Welfare";
+}
+
+@section Styles {
+    <style>
+        .payments-shell {
+            padding: 24px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card-custom {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .stat-card-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        .stat-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .stat-icon-wrap.pending { background: #fff7ed; color: #ea580c; border: 1px solid #ffedd5; }
+        .stat-icon-wrap.paid { background: #f0fdf4; color: #16a34a; border: 1px solid #dcfce7; }
+        .stat-icon-wrap.amount { background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; }
+        .stat-icon-wrap.total { background: #faf5ff; color: #9333ea; border: 1px solid #f3e8ff; }
+
+        .stat-meta .stat-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-secondary);
+            margin-bottom: 3px;
+        }
+
+        .stat-meta .stat-value {
+            font-size: 1.45rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.1;
+        }
+
+        .tab-bar-custom {
+            display: flex;
+            gap: 8px;
+            border-bottom: 2px solid #f1f5f9;
+            margin-bottom: 24px;
+        }
+
+        .tab-btn-custom {
+            padding: 10px 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s;
+        }
+
+        .tab-btn-custom.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .badge-count {
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .badge-count.pending { background: #ea580c; color: #ffffff; }
+        .badge-count.history { background: #e2e8f0; color: #475569; }
+
+        .payment-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .payment-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .payment-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .payment-card-body {
+            padding: 22px;
+        }
+
+        .bank-info-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 14px 18px;
+            margin: 16px 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        .bank-item label {
+            display: block;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #15803d;
+            margin-bottom: 2px;
+        }
+        .bank-item span {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #14532d;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .doc-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+        .doc-btn {
+            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .payment-form-section {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 18px 20px;
+            margin-top: 18px;
+        }
+
+        .form-grid-payment {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        .copy-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            color: #334155;
+            transition: background 0.15s;
+        }
+        .copy-btn:hover { background: #cbd5e1; }
+
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .payments-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+        .payments-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            text-align: left;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .payments-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            color: var(--text-primary);
+        }
+        .payments-table tr:hover {
+            background: #fafafa;
+        }
+    </style>
+}
+
+<div class="payments-shell">
+
+    <!-- Page Header -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2 style="margin: 0 0 4px 0; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                <i class="bi bi-wallet-fill" style="color: var(--primary);"></i> Welfare Payments &amp; Disbursements
+            </h2>
+            <p class="page-subtitle" style="margin: 0; color: var(--text-secondary);">
+                Process payments for welfare requests approved by the Welfare Department Head and record bank transfer confirmations
+            </p>
+        </div>
+        <div>
+            <a href="/Welfare/Records" class="btn-kanrich btn-kanrich-outline" style="font-size: 0.82rem;">
+                <i class="bi bi-journal-text"></i> View All Welfare Records
+            </a>
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" style="margin-bottom: 20px;">
+            <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" style="margin-bottom: 20px;">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]
+        </div>
+    }
+
+    <!-- Stat Metric Cards -->
+    <div class="stats-row">
+        <div class="stat-card-custom">
+            <div class="stat-icon-wrap pending">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="stat-meta">
+                <div class="stat-label">Pending Payments</div>
+                <div class="stat-value" style="color: #ea580c;">@Model.PendingCount</div>
+            </div>
+        </div>
+        <div class="stat-card-custom">
+            <div class="stat-icon-wrap amount">
+                <i class="bi bi-cash-coin"></i>
+            </div>
+            <div class="stat-meta">
+                <div class="stat-label">Pending Amount</div>
+                <div class="stat-value" style="color: #2563eb; font-size: 1.25rem;">LKR @Model.TotalPendingAmount.ToString("N2")</div>
+            </div>
+        </div>
+        <div class="stat-card-custom">
+            <div class="stat-icon-wrap paid">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="stat-meta">
+                <div class="stat-label">Disbursed This Month</div>
+                <div class="stat-value" style="color: #16a34a; font-size: 1.25rem;">LKR @Model.PaidThisMonthAmount.ToString("N2")</div>
+            </div>
+        </div>
+        <div class="stat-card-custom">
+            <div class="stat-icon-wrap total">
+                <i class="bi bi-collection-fill"></i>
+            </div>
+            <div class="stat-meta">
+                <div class="stat-label">Total Disbursed</div>
+                <div class="stat-value" style="color: #9333ea;">@Model.TotalProcessedCount</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar-custom">
+        <button type="button" class="tab-btn-custom active" id="tabPendingBtn" onclick="switchWelfareTab('pending')">
+            <i class="bi bi-clock-history"></i> Pending Disbursements
+            <span class="badge-count pending">@Model.PendingCount</span>
+        </button>
+        <button type="button" class="tab-btn-custom" id="tabHistoryBtn" onclick="switchWelfareTab('history')">
+            <i class="bi bi-check-all"></i> Disbursement History
+            <span class="badge-count history">@Model.CompletedPayments.Count</span>
+        </button>
+    </div>
+
+    <!-- TAB 1: PENDING PAYMENTS -->
+    <div id="tabPendingContent">
+        @if (!Model.PendingPayments.Any())
+        {
+            <div class="k-card" style="text-align: center; padding: 56px 20px; color: var(--text-secondary); border-radius: 12px;">
+                <div style="width: 64px; height: 64px; background: #f0fdf4; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto; color: #16a34a; font-size: 2rem;">
+                    <i class="bi bi-check2-all"></i>
+                </div>
+                <h4 style="color: var(--text-primary); margin: 0 0 6px 0; font-weight: 700;">No Pending Welfare Payments</h4>
+                <p style="font-size: 0.85rem; margin: 0; max-width: 420px; margin: 0 auto;">
+                    All approved welfare requests have been disbursed to employee accounts. New approvals from the Welfare Department Head will appear here automatically.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div style="display: flex; flex-direction: column; gap: 20px;">
+                @foreach (var req in Model.PendingPayments)
+                {
+                    <div class="payment-card">
+                        <div class="payment-card-head">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span style="font-weight: 800; font-size: 1rem; color: #1e293b;">WF-@req.RequestId.ToString("D4")</span>
+                                <span class="k-badge k-badge-approved" style="background: #dcfce7; color: #15803d; font-weight: 700;">
+                                    Approved by Welfare Head
+                                </span>
+                            </div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                Submitted: <strong>@req.CreatedAt.ToString("MMM dd, yyyy")</strong>
+                            </div>
+                        </div>
+
+                        <div class="payment-card-body">
+                            <!-- Employee & Welfare Overview -->
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px;">
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 3px;">Employee</label>
+                                    <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">@req.Employee?.FullName</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-secondary);">EPF: @req.Employee?.EPFNumber &bull; @(req.Employee?.Designation?.Title ?? "Staff")</div>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 3px;">Branch &amp; Dept</label>
+                                    <div style="font-size: 0.95rem; font-weight: 700; color: var(--text-primary);">@(req.Employee?.Branch?.Name ?? "N/A")</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-secondary);">@(req.Employee?.Department?.Name ?? "N/A")</div>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 3px;">Welfare Assistance Type</label>
+                                    <div style="font-size: 0.95rem; font-weight: 700; color: var(--primary);">@(req.WelfareType?.TypeName ?? "Standard")</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-secondary);">Requested: LKR @req.RequestedAmount.ToString("N2")</div>
+                                </div>
+                                <div>
+                                    <label style="display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 3px;">Approved Amount to Disburse</label>
+                                    <div style="font-size: 1.25rem; font-weight: 800; color: #16a34a;">
+                                        LKR @((req.ApprovedAmount ?? req.RequestedAmount).ToString("N2"))
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Reason / Welfare Head Remarks -->
+                            @if (!string.IsNullOrEmpty(req.Remark))
+                            {
+                                <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; font-size: 0.85rem;">
+                                    <span style="font-weight: 700; color: var(--text-secondary); text-transform: uppercase; font-size: 0.7rem; display: block; margin-bottom: 2px;">Request Reason / Description</span>
+                                    <span style="color: var(--text-primary);">@req.Remark</span>
+                                </div>
+                            }
+
+                            <!-- Employee Bank Account Information Box -->
+                            <div class="bank-info-box">
+                                <div class="bank-item">
+                                    <label><i class="bi bi-bank"></i> Bank Name</label>
+                                    <span>@(string.IsNullOrWhiteSpace(req.Employee?.BankName) || req.Employee.BankName == "-" ? "Commercial Bank" : req.Employee.BankName)</span>
+                                </div>
+                                <div class="bank-item">
+                                    <label><i class="bi bi-person-badge"></i> Account Holder Name</label>
+                                    <span>@(string.IsNullOrWhiteSpace(req.Employee?.BankAccountName) || req.Employee.BankAccountName == "-" ? req.Employee?.FullName : req.Employee.BankAccountName)</span>
+                                </div>
+                                <div class="bank-item">
+                                    <label><i class="bi bi-credit-card-2-front"></i> Account Number</label>
+                                    <span>
+                                        <span id="accNum_@req.RequestId">@(string.IsNullOrWhiteSpace(req.Employee?.BankAccountNumber) ? "N/A" : req.Employee.BankAccountNumber)</span>
+                                        @if (!string.IsNullOrWhiteSpace(req.Employee?.BankAccountNumber))
+                                        {
+                                            <button type="button" class="copy-btn" onclick="copyToClipboard('@req.Employee.BankAccountNumber', this)" title="Copy Account Number">
+                                                <i class="bi bi-clipboard"></i> Copy
+                                            </button>
+                                        }
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Supporting Documents -->
+                            @if (req.Documents != null && req.Documents.Any())
+                            {
+                                <div style="margin-bottom: 14px;">
+                                    <label style="display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 8px;">
+                                        <i class="bi bi-paperclip" style="color: var(--primary);"></i> Supporting Proof Documents (@req.Documents.Count)
+                                    </label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                                        @foreach (var doc in req.Documents)
+                                        {
+                                            var ext = System.IO.Path.GetExtension(doc.FileName)?.ToLowerInvariant() ?? "";
+                                            var canPreview = ext == ".pdf" || ext == ".jpg" || ext == ".jpeg" || ext == ".png";
+                                            <div class="doc-chip">
+                                                <i class="bi bi-file-earmark-text-fill" style="color: var(--primary);"></i>
+                                                <span style="font-weight: 600; color: var(--text-primary); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">@doc.FileName</span>
+                                                <div style="display: flex; gap: 4px; margin-left: 6px;">
+                                                    @if (canPreview)
+                                                    {
+                                                        <a href="/Welfare/DownloadDocument?id=@doc.DocumentId&mode=view" class="doc-btn js-doc-preview" data-doc-title="@doc.FileName" data-doc-sub="Welfare Document" style="background: var(--primary-light); color: var(--primary);">
+                                                            View
+                                                        </a>
+                                                    }
+                                                    <a href="/Welfare/DownloadDocument?id=@doc.DocumentId" class="doc-btn" style="background: var(--bg-body); color: var(--text-secondary);">
+                                                        Download
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            <!-- HR Payment Execution Form -->
+                            <form method="post" class="payment-form-section">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="RequestId" value="@req.RequestId" />
+
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px; color: var(--text-primary); font-weight: 700; font-size: 0.88rem;">
+                                    <i class="bi bi-credit-card" style="color: var(--primary);"></i> Record Payment &amp; Finalize Disbursement
+                                </div>
+
+                                <div class="form-grid-payment">
+                                    <div class="k-form-group">
+                                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Disbursed Amount (LKR) *</label>
+                                        <input type="number" name="ApprovedAmount" value="@((req.ApprovedAmount ?? req.RequestedAmount).ToString("F2"))" min="1" step="0.01" required class="form-control" style="font-weight: 700;" />
+                                    </div>
+
+                                    <div class="k-form-group">
+                                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Payment Method *</label>
+                                        <select name="PaymentMethod" class="form-control" style="font-weight: 600;">
+                                            <option value="Direct Bank Transfer" selected>Direct Bank Transfer</option>
+                                            <option value="Online Banking / SLIPS">Online Banking / SLIPS</option>
+                                            <option value="Company Cheque">Company Cheque</option>
+                                            <option value="Cash Disbursement">Cash Disbursement</option>
+                                        </select>
+                                    </div>
+
+                                    <div class="k-form-group">
+                                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Payment Date *</label>
+                                        <input type="date" name="PaymentDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" required class="form-control" />
+                                    </div>
+
+                                    <div class="k-form-group">
+                                        <label style="font-size: 0.72rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 4px; display: block;">Transaction / Cheque Ref</label>
+                                        <input type="text" name="PaymentReference" placeholder="e.g. TXN-20260902-004" class="form-control" />
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-color);">
+                                    <div style="flex: 1; max-width: 480px;">
+                                        <input type="text" name="Comments" placeholder="Optional HR disbursement notes…" class="form-control" style="font-size: 0.85rem;" />
+                                    </div>
+                                    <div style="display: flex; gap: 10px;">
+                                        <button type="submit" name="Action" value="Rejected" onclick="return confirm('Are you sure you want to decline this payment?')" class="btn-kanrich btn-kanrich-danger" style="font-size: 0.85rem;">
+                                            <i class="bi bi-x-circle"></i> Decline Payment
+                                        </button>
+                                        <button type="submit" name="Action" value="ConfirmPayment" onclick="return confirm('Confirm payment disbursement of LKR @((req.ApprovedAmount ?? req.RequestedAmount).ToString("N2")) to employee?')" class="btn-kanrich btn-kanrich-primary" style="font-size: 0.85rem; font-weight: 700;">
+                                            <i class="bi bi-check2-circle"></i> Confirm &amp; Mark as Paid
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- TAB 2: DISBURSEMENT HISTORY -->
+    <div id="tabHistoryContent" style="display: none;">
+        @if (!Model.CompletedPayments.Any())
+        {
+            <div class="k-card" style="text-align: center; padding: 48px; color: var(--text-secondary); border-radius: 12px;">
+                <i class="bi bi-receipt" style="font-size: 2.5rem; color: var(--border-color); display: block; margin-bottom: 10px;"></i>
+                <p style="font-weight: 600; margin: 0;">No Disbursed Payments Yet</p>
+                <p style="font-size: 0.8rem; margin: 4px 0 0 0;">Processed welfare disbursements will be archived here.</p>
+            </div>
+        }
+        else
+        {
+            <div class="k-card" style="padding: 0; overflow: hidden; border-radius: 12px;">
+                <div class="table-responsive">
+                    <table class="payments-table">
+                        <thead>
+                            <tr>
+                                <th>Request ID</th>
+                                <th>Employee</th>
+                                <th>Welfare Type</th>
+                                <th>Requested</th>
+                                <th>Disbursed Amount</th>
+                                <th>Branch / Dept</th>
+                                <th>Request Date</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in Model.CompletedPayments)
+                            {
+                                <tr>
+                                    <td>
+                                        <a href="/Welfare/StatusTracking?id=@p.RequestId" style="font-weight: 700; color: var(--primary); text-decoration: none;">
+                                            WF-@p.RequestId.ToString("D4")
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <div style="font-weight: 700;">@p.Employee?.FullName</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">EPF: @p.Employee?.EPFNumber</div>
+                                    </td>
+                                    <td>
+                                        <span class="k-badge k-badge-secondary" style="font-size: 0.75rem;">
+                                            @(p.WelfareType?.TypeName ?? "Standard")
+                                        </span>
+                                    </td>
+                                    <td style="color: var(--text-secondary);">
+                                        LKR @p.RequestedAmount.ToString("N2")
+                                    </td>
+                                    <td style="font-weight: 800; color: #16a34a;">
+                                        LKR @((p.ApprovedAmount ?? p.RequestedAmount).ToString("N2"))
+                                    </td>
+                                    <td>
+                                        <div>@(p.Employee?.Branch?.Name ?? "—")</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">@(p.Employee?.Department?.Name ?? "—")</div>
+                                    </td>
+                                    <td style="font-size: 0.82rem; color: var(--text-secondary);">
+                                        @p.RequestDate.ToString("MMM dd, yyyy")
+                                    </td>
+                                    <td>
+                                        <span class="k-badge k-badge-approved" style="background: #dcfce7; color: #15803d; font-weight: 700;">
+                                            <i class="bi bi-check-circle-fill"></i> Paid
+                                        </span>
+                                    </td>
+                                    <td style="text-align: right;">
+                                        <a href="/Welfare/StatusTracking?id=@p.RequestId" class="btn-kanrich btn-kanrich-outline" style="padding: 4px 10px; font-size: 0.75rem;">
+                                            <i class="bi bi-eye"></i> Details
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        function switchWelfareTab(tab) {
+            const pendingBtn = document.getElementById('tabPendingBtn');
+            const historyBtn = document.getElementById('tabHistoryBtn');
+            const pendingContent = document.getElementById('tabPendingContent');
+            const historyContent = document.getElementById('tabHistoryContent');
+
+            if (tab === 'pending') {
+                pendingBtn.classList.add('active');
+                historyBtn.classList.remove('active');
+                pendingContent.style.display = 'block';
+                historyContent.style.display = 'none';
+            } else {
+                historyBtn.classList.add('active');
+                pendingBtn.classList.remove('active');
+                historyContent.style.display = 'block';
+                pendingContent.style.display = 'none';
+            }
+        }
+
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="bi bi-check"></i> Copied!';
+                btn.style.background = '#86efac';
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+    </script>
+}

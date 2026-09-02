@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.Application.Models
 {
@@ -73,11 +73,29 @@ namespace HRMS.Application.Models
         public DateTime CreatedDate { get; set; }
         public DateTime LastModifiedDate { get; set; }
 
-        // ── Approval ──
-        public string? ApproverReview { get; set; }
-        public DateTime? ApproverReviewDate { get; set; }
-        public string? ApproverComments { get; set; }
-        public string? ApprovedBy { get; set; }
+        // ── Stage 3: Branch Manager Review ──
+        public string? BMReview { get; set; }
+        public DateTime? BMReviewDate { get; set; }
+        public string? BMComments { get; set; }
+        public string? BMEmail { get; set; }
+
+        // ── Stage 4: Area Manager Review ──
+        public string? AMReview { get; set; }
+        public DateTime? AMReviewDate { get; set; }
+        public string? AMComments { get; set; }
+        public string? AMEmail { get; set; }
+
+        // ── Stage 5: HR Finalization ──
+        public string? HRReview { get; set; }
+        public DateTime? HRReviewDate { get; set; }
+        public string? HRComments { get; set; }
+        public string? HREmail { get; set; }
+
+        // Backward compatibility
+        public string? ApproverReview => HRReview ?? AMReview ?? BMReview;
+        public string? ApprovedBy => HREmail ?? AMEmail ?? BMEmail;
+        public DateTime? ApproverReviewDate => HRReviewDate ?? AMReviewDate ?? BMReviewDate;
+        public string? ApproverComments => HRComments ?? AMComments ?? BMComments;
 
         // ── Finance Clearance ──
         public bool FinanceClearanceCompleted { get; set; }
@@ -88,26 +106,47 @@ namespace HRMS.Application.Models
         public List<TerminationDocumentViewModel> Documents { get; set; } = new();
         public int DocumentCount { get; set; }
 
+        // ── Department Clearances (Stage 2) ──
+        public List<TerminationDepartmentReviewViewModel> DepartmentReviews { get; set; } = new();
+
+        public int TotalDeptHeadsCount => DepartmentReviews.Count;
+        public int DeptHeadsApprovedCount => DepartmentReviews.Count(dr => dr.Status == "Approved");
+        public int DeptHeadsPendingCount => DepartmentReviews.Count(dr => dr.Status == "Pending");
+        public int DeptHeadsRejectedCount => DepartmentReviews.Count(dr => dr.Status == "Rejected");
+        public bool AreAllDeptHeadsApproved => TotalDeptHeadsCount > 0 && DeptHeadsApprovedCount == TotalDeptHeadsCount;
+
         // ── Helpers ──
         public string StatusDisplay => Status switch
         {
-            TerminationStatusEnum.New => "New",
-            TerminationStatusEnum.SubmittedForApproval => "Submitted for Approval",
-            TerminationStatusEnum.Approved => "Approved",
-            TerminationStatusEnum.Rejected => "Rejected",
+            TerminationStatusEnum.Draft => "Draft",
+            TerminationStatusEnum.SubmittedForApproval => "Pending Department Heads",
+            TerminationStatusEnum.DeptHeadRejected => "Rejected by Department Head",
+            TerminationStatusEnum.DeptHeadsApproved => "Dept Heads Approved - Awaiting Branch Manager",
+            TerminationStatusEnum.BMApproved => "Approved by Branch Manager - Awaiting Area Manager",
+            TerminationStatusEnum.BMRejected => "Rejected by Branch Manager",
+            TerminationStatusEnum.AMApproved => "Approved by Area Manager - Ready for HR Finalization",
+            TerminationStatusEnum.AMRejected => "Rejected by Area Manager",
+            TerminationStatusEnum.HRApproved => "Finalized / Approved by HR",
+            TerminationStatusEnum.HRRejected => "Rejected by HR",
             TerminationStatusEnum.FinanceClearance => "Finance Clearance",
             TerminationStatusEnum.Terminated => "Terminated",
-            _ => "Unknown"
+            _ => Status.ToString()
         };
 
         public string StatusBadgeClass => Status switch
         {
-            TerminationStatusEnum.New => "k-badge-info",
+            TerminationStatusEnum.Draft => "k-badge-secondary",
             TerminationStatusEnum.SubmittedForApproval => "k-badge-pending",
-            TerminationStatusEnum.Approved => "k-badge-approved",
-            TerminationStatusEnum.Rejected => "k-badge-rejected",
+            TerminationStatusEnum.DeptHeadRejected => "k-badge-rejected",
+            TerminationStatusEnum.DeptHeadsApproved => "k-badge-info",
+            TerminationStatusEnum.BMApproved => "k-badge-info",
+            TerminationStatusEnum.BMRejected => "k-badge-rejected",
+            TerminationStatusEnum.AMApproved => "k-badge-warning",
+            TerminationStatusEnum.AMRejected => "k-badge-rejected",
+            TerminationStatusEnum.HRApproved => "k-badge-approved",
+            TerminationStatusEnum.HRRejected => "k-badge-rejected",
             TerminationStatusEnum.FinanceClearance => "k-badge-pending",
-            TerminationStatusEnum.Terminated => "k-badge-terminated",
+            TerminationStatusEnum.Terminated => "k-badge-approved",
             _ => "k-badge-secondary"
         };
 
@@ -123,6 +162,26 @@ namespace HRMS.Application.Models
         };
     }
 
+    public class TerminationDepartmentReviewViewModel
+    {
+        public int Id { get; set; }
+        public int TerminationRequestId { get; set; }
+        public string DepartmentName { get; set; } = string.Empty;
+        public string? ReviewerUserId { get; set; }
+        public string? ReviewerName { get; set; }
+        public string? ReviewerEmail { get; set; }
+        public string Status { get; set; } = "Pending";
+        public string? Comments { get; set; }
+        public DateTime? ReviewDate { get; set; }
+
+        public string StatusBadgeClass => Status switch
+        {
+            "Approved" => "k-badge-approved",
+            "Rejected" => "k-badge-rejected",
+            _ => "k-badge-pending"
+        };
+    }
+
     public class TerminationDocumentViewModel
     {
         public int Id { get; set; }
@@ -134,12 +193,18 @@ namespace HRMS.Application.Models
 
     public enum TerminationStatusEnum
     {
-        New = 0,
-        SubmittedForApproval = 1,
-        Approved = 2,
-        Rejected = 3,
-        FinanceClearance = 4,
-        Terminated = 5
+        Draft = 0,
+        SubmittedForApproval = 1, // Stage 2: Pending Dept Heads
+        DeptHeadRejected = 2,
+        DeptHeadsApproved = 3,    // Stage 3: Pending Branch Manager
+        BMApproved = 4,           // Stage 4: Pending Area Manager
+        BMRejected = 5,
+        AMApproved = 6,           // Stage 5: Pending HR Finalization
+        AMRejected = 7,
+        HRApproved = 8,
+        HRRejected = 9,
+        FinanceClearance = 10,
+        Terminated = 11
     }
 
     public enum TerminationTypeEnum

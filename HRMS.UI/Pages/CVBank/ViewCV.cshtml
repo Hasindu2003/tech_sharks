@@ -1,0 +1,305 @@
+@page "{id:int}"
+@model HRMS.UI.Pages.CVBank.ViewCVModel
+@{
+    ViewData["Title"] = $"Candidate Profile - {Model.Candidate.CandidateName}";
+    Layout = "_Layout";
+    bool isPdf = !string.IsNullOrEmpty(Model.Candidate.CVFilePath) && Model.Candidate.CVFilePath.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase);
+}
+
+@section Styles {
+    <style>
+        .sep-page-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+        .sep-page-sub   { font-size: 12px; color: #7a8863; margin: 0 0 20px 0; }
+
+        .back-link {
+            text-decoration: none;
+            color: #7a8863;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 16px;
+            transition: 0.2s;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .back-link:hover { color: #151811; text-decoration: none; }
+
+        /* Main View Container */
+        .cv-view-grid {
+            display: grid;
+            grid-template-columns: 340px 1fr;
+            gap: 22px;
+            align-items: start;
+        }
+        @@media (max-width: 992px) {
+            .cv-view-grid { grid-template-columns: 1fr; }
+        }
+
+        /* Sidebar Profile Card */
+        .candidate-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 10px;
+            padding: 22px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        }
+        .candidate-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: rgba(16, 130, 60, 0.1);
+            color: #10823c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            border: 1px solid #e2e5dc;
+        }
+        .candidate-name {
+            font-size: 17px;
+            font-weight: 800;
+            color: #151811;
+            margin: 0 0 2px 0;
+        }
+        .candidate-role {
+            font-size: 13px;
+            font-weight: 600;
+            color: #10823c;
+            margin-bottom: 14px;
+        }
+
+        .meta-item {
+            margin-bottom: 12px;
+            font-size: 12.5px;
+        }
+        .meta-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #7a8863;
+            margin-bottom: 3px;
+            display: block;
+        }
+        .meta-val {
+            color: #151811;
+            font-weight: 500;
+        }
+
+        .score-pill-large {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px;
+        }
+
+        /* Document Viewer Panel */
+        .doc-viewer-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+            display: flex;
+            flex-direction: column;
+            min-height: 750px;
+        }
+        .doc-viewer-header {
+            padding: 12px 18px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e2e5dc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .doc-viewer-frame {
+            width: 100%;
+            height: 750px;
+            border: none;
+            background: #f8fafc;
+        }
+
+        .tag-chip {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #f1f5f9;
+            color: #334155;
+            display: inline-block;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+    </style>
+}
+
+<div>
+    <a href="/CVBank/Index" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to CV Bank Dashboard
+    </a>
+
+    <div class="cv-view-grid">
+        <!-- 1. Candidate Details Panel -->
+        <div class="candidate-card">
+            <div class="candidate-avatar">
+                @(string.IsNullOrEmpty(Model.Candidate.CandidateName) ? "?" : Model.Candidate.CandidateName.Trim().Substring(0, 1))
+            </div>
+            <h2 class="candidate-name">@Model.Candidate.CandidateName</h2>
+            <div class="candidate-role"><i class="bi bi-briefcase me-1"></i>@Model.Candidate.AppliedPosition</div>
+
+            @if (Model.Candidate.JobOpening != null)
+            {
+                <div style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; padding: 8px 12px; margin-bottom: 14px; font-size: 12px;">
+                    <div style="font-weight: 700; color: #0369a1; display: flex; align-items: center; justify-content: space-between;">
+                        <span><i class="bi bi-tag-fill me-1"></i> Job Vacancy</span>
+                        <span style="font-family: monospace;">@Model.Candidate.JobOpening.JobCode</span>
+                    </div>
+                    <div style="color: #475569; font-size: 11.5px; margin-top: 2px;">
+                        @(Model.Candidate.JobOpening.Branch?.Name ?? "Head Office") &bull; @(Model.Candidate.JobOpening.Department?.Name ?? "General")
+                    </div>
+                </div>
+            }
+
+            <div class="score-pill-large">
+                <div>
+                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase;">
+                        @(Model.Candidate.JobOpening != null ? "Adaptive Rank Score" : "Automated Rank")
+                    </div>
+                    <span class="text-muted" style="font-size: 11px;">
+                        @(Model.Candidate.JobOpening != null ? "Evaluated against job benchmarks" : "Standard baseline rating")
+                    </span>
+                </div>
+                <div style="font-size: 20px; font-weight: 800; color: #10823c;">
+                    @Model.Candidate.ExperienceScore / 100
+                </div>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Email Address</span>
+                <a href="mailto:@Model.Candidate.Email" class="meta-val text-decoration-none text-primary">
+                    <i class="bi bi-envelope me-1"></i>@Model.Candidate.Email
+                </a>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Contact Number</span>
+                @if (!string.IsNullOrEmpty(Model.Candidate.ContactNumber) && Model.Candidate.ContactNumber != "N/A")
+                {
+                    <a href="tel:@Model.Candidate.ContactNumber" class="meta-val text-decoration-none text-dark">
+                        <i class="bi bi-telephone me-1"></i>@Model.Candidate.ContactNumber
+                    </a>
+                }
+                else
+                {
+                    <span class="meta-val text-muted">Not Provided</span>
+                }
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Work Experience</span>
+                <span class="meta-val">
+                    <strong>@Model.Candidate.ExperienceYears Year@(Model.Candidate.ExperienceYears != 1 ? "s" : "")</strong>
+                    @if (Model.Candidate.JobOpening != null)
+                    {
+                        <span class="text-muted" style="font-size: 11.5px;">(Job min: @Model.Candidate.JobOpening.MinimumExperienceYears yrs)</span>
+                    }
+                </span>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Academic Qualifications</span>
+                <div class="mt-1">
+                    @if (Model.Candidate.HasMasters)
+                    {
+                        <div class="badge bg-primary mb-1 d-inline-block"><i class="bi bi-mortarboard-fill me-1"></i> Master's Degree</div>
+                    }
+                    @if (Model.Candidate.HasDegree)
+                    {
+                        <div class="badge bg-success mb-1 d-inline-block"><i class="bi bi-award me-1"></i> Bachelor's Degree</div>
+                    }
+                    @if (!Model.Candidate.HasDegree && !Model.Candidate.HasMasters)
+                    {
+                        <span class="text-muted small">No higher degrees specified</span>
+                    }
+                </div>
+            </div>
+
+            <div class="meta-item">
+                <span class="meta-label">Skills & Keywords</span>
+                <div class="mt-1">
+                    @if (!string.IsNullOrEmpty(Model.Candidate.Skills) && Model.Candidate.Skills != "Not Specified" && Model.Candidate.Skills != "Not Provided")
+                    {
+                        var skills = Model.Candidate.Skills.Split(new[] { ',', ';', '/' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                        foreach (var skill in skills)
+                        {
+                            <span class="tag-chip">@skill</span>
+                        }
+                    }
+                    else
+                    {
+                        <span class="text-muted small">No specific skills listed.</span>
+                    }
+                </div>
+            </div>
+
+            <div class="meta-item border-top pt-3 mt-3">
+                <span class="meta-label">Registration Date</span>
+                <span class="text-muted small">@Model.Candidate.UploadedDate.ToString("dd MMM yyyy, hh:mm tt")</span>
+            </div>
+        </div>
+
+        <!-- 2. Embedded Document Viewer -->
+        <div class="doc-viewer-card">
+            <div class="doc-viewer-header">
+                <div>
+                    <strong style="font-size: 13px; color: #151811;"><i class="bi bi-file-earmark-pdf text-danger me-1"></i> Candidate Resume Document</strong>
+                </div>
+                <div>
+                    @if (!string.IsNullOrEmpty(Model.Candidate.CVFilePath) && Model.HasValidFile)
+                    {
+                        <a href="@Model.Candidate.CVFilePath" target="_blank" download class="btn btn-outline-secondary btn-sm" style="font-size: 12px; font-weight: 600;">
+                            <i class="bi bi-download me-1"></i> Download PDF
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.Candidate.CVFilePath) && Model.HasValidFile)
+            {
+                if (isPdf)
+                {
+                    <iframe src="@Model.Candidate.CVFilePath" class="doc-viewer-frame"></iframe>
+                }
+                else
+                {
+                    <div class="text-center py-5 my-auto">
+                        <i class="bi bi-file-earmark-word text-primary fs-1 mb-2 d-block"></i>
+                        <h5>Word Document Attached</h5>
+                        <p class="text-muted small">This resume is stored as a DOC/DOCX file. Please download to view.</p>
+                        <a href="@Model.Candidate.CVFilePath" download class="btn btn-primary btn-sm">
+                            <i class="bi bi-download me-1"></i> Download Document
+                        </a>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center py-5 my-auto">
+                    <i class="bi bi-file-earmark-x text-muted fs-1 mb-2 d-block"></i>
+                    <h6 class="text-dark">No Document Attached</h6>
+                    <p class="text-muted small">A resume file was not attached during candidate registration, or the file is unavailable.</p>
+                    <a href="mailto:@Model.Candidate.Email" class="btn btn-outline-success btn-sm">
+                        <i class="bi bi-envelope me-1"></i> Request CV from Candidate
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,809 @@
+@page
+@model HRMS.UI.Pages.Payroll.BonusesModel
+@{
+    ViewData["Title"] = "Allowances & Additions";
+    ViewData["PageTitle"] = "Payroll / Allowances";
+    ViewData["ActiveNav"] = "Payroll";
+}
+
+@section Styles {
+    <style>
+        .payroll-shell {
+            padding: 20px 24px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+
+        /* 4-Card KPI Grid */
+        .allowance-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        @@media (max-width: 992px) {
+            .allowance-kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @@media (max-width: 576px) {
+            .allowance-kpi-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .allowance-kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .allowance-kpi-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+        }
+
+        .allowance-kpi-title {
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin: 0;
+        }
+        .allowance-kpi-value {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 6px 0 2px 0;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+        .allowance-kpi-sub {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            margin: 0;
+            white-space: nowrap;
+        }
+
+        /* Toolbar */
+        .toolbar-grid {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .filter-input {
+            padding: 6px 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            background: #ffffff;
+            color: #1e293b;
+        }
+        .filter-input:focus {
+            outline: none;
+            border-color: #10823c;
+            box-shadow: 0 0 0 2px rgba(16, 130, 60, 0.12);
+        }
+
+        /* Table Styling */
+        .allowance-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+        .allowance-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            font-size: 0.74rem;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            white-space: nowrap;
+        }
+        .allowance-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+            color: #1e293b;
+        }
+        .allowance-table tbody tr:hover {
+            background: #f8fafc;
+        }
+        .allowance-table tfoot td {
+            padding: 12px 14px;
+            background: #f8fafc;
+            border-top: 2px solid #cbd5e1;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        /* Category Badges */
+        .badge-cat {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .badge-cat.performance { background: #e0f2fe; color: #0369a1; }
+        .badge-cat.festival { background: #fef3c7; color: #92400e; }
+        .badge-cat.transport { background: #dcfce7; color: #15803d; }
+        .badge-cat.housing { background: #ede9fe; color: #5b21b6; }
+        .badge-cat.meal { background: #ffedd5; color: #c2410c; }
+        .badge-cat.overtime { background: #f1f5f9; color: #475569; }
+        .badge-cat.medical { background: #fee2e2; color: #b91c1c; }
+        .badge-cat.special { background: #ccfbf1; color: #0f766e; }
+        .badge-cat.other { background: #f3f4f6; color: #374151; }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-card {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 540px;
+            width: 100%;
+            overflow: hidden;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .input-prefix-box {
+            display: flex;
+            align-items: center;
+        }
+        .input-prefix-tag {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-right: none;
+            border-radius: 6px 0 0 6px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #475569;
+        }
+        .input-prefix-field {
+            border-radius: 0 6px 6px 0 !important;
+        }
+    </style>
+}
+
+<div class="payroll-shell">
+
+    <!-- Sub-navigation Tabs with Branch & Cycle Switchers -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 18px; padding-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <a href="/Payroll/Index?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Dashboard</a>
+            <a href="/Payroll/AttendanceReview?branchId=@Model.BranchId&month=@Model.Month&year=@Model.Year" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Attendance Review</a>
+            <a href="/Payroll/Bonuses?branchId=@Model.BranchId&month=@Model.Month&year=@Model.Year" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 14px; font-size: 0.82rem;">Allowances</a>
+            <a href="/Payroll/EpfEtf?branchId=@Model.BranchId&month=@Model.Month&year=@Model.Year" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">EPF & ETF</a>
+            <a href="/Payroll/Payslips?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 14px; font-size: 0.82rem;">Payslips</a>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <!-- Cycle Selector -->
+            <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                <label style="font-size: 11px; font-weight: 700; color: #475569; margin: 0; display: flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-calendar-month" style="color: #10823c;"></i> Cycle:
+                </label>
+                <select onchange="const [y, m] = this.value.split('-'); location.href='?branchId=@Model.BranchId&month=' + m + '&year=' + y;" style="font-size: 12px; font-weight: 700; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; color: #0f172a; cursor: pointer;">
+                    @for (int i = 0; i < 6; i++)
+                    {
+                        var mDate = DateTime.Now.AddMonths(-i);
+                        var isSel = (mDate.Month == Model.Month && mDate.Year == Model.Year);
+                        <option value="@mDate.Year-@mDate.Month" selected="@isSel">@mDate.ToString("MMMM yyyy")</option>
+                    }
+                </select>
+            </div>
+
+            <!-- Branch Switcher -->
+            @if (Model.ManagedBranchesList.Count > 1)
+            {
+                <div style="display: flex; align-items: center; gap: 6px; background: #f8fafc; padding: 3px 8px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                    <label style="font-size: 11px; font-weight: 700; color: #475569; margin: 0; display: flex; align-items: center; gap: 4px;">
+                        <i class="bi bi-geo-alt-fill" style="color: #10823c;"></i> Branch:
+                    </label>
+                    <select onchange="location.href='?branchId=' + this.value + '&month=@Model.Month&year=@Model.Year'" style="font-size: 12px; font-weight: 700; padding: 2px 6px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; color: #0f172a; cursor: pointer;">
+                        @foreach (var b in Model.ManagedBranchesList)
+                        {
+                            <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Name</option>
+                        }
+                    </select>
+                </div>
+            }
+            else if (Model.CurrentBranch != null)
+            {
+                <div style="font-size: 11px; font-weight: 700; color: #10823c; background: #ebf5ee; padding: 4px 10px; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-geo-alt-fill"></i> Branch: @Model.CurrentBranch.Name
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Header block with Grant & Export Actions -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h2 style="margin: 0; font-size: 1.3rem; display: inline-flex; align-items: center; gap: 8px;">
+                Allowances & Special Additions
+                <span style="font-size: 0.95rem; color: #10823c; font-weight: 700;">(@Model.SelectedMonthName)</span>
+                @if (Model.CurrentBranch != null)
+                {
+                    <span style="font-size: 0.95rem; color: #64748b; font-weight: 600;">— @Model.CurrentBranch.Name</span>
+                }
+            </h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin: 2px 0 0 0;">
+                Discretionary allowances, bonuses, and special additions for <strong>@(Model.CurrentBranch?.Name ?? "Selected Branch")</strong>
+            </p>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button type="button" onclick="exportCsv()" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 12px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+            </button>
+            <button type="button" onclick="openGrantModal()" class="btn-kanrich btn-kanrich-primary" style="padding: 6px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-plus-lg"></i> + Grant Allowance
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 10px 14px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <i class="bi bi-check-circle-fill"></i> @TempData["Success"]
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 10px 14px; border-radius: 8px; font-size: 0.84rem; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+            <i class="bi bi-exclamation-triangle-fill"></i> @TempData["Error"]
+        </div>
+    }
+
+    <!-- 4-Card KPI Grid -->
+    <div class="allowance-kpi-grid">
+        
+        <!-- Total Allowances This Cycle -->
+        <div class="allowance-kpi-card" style="border-left: 3px solid #10823c;">
+            <div>
+                <p class="allowance-kpi-title">Total Allowances (@Model.SelectedMonthName)</p>
+                <p class="allowance-kpi-value" style="color: #10823c;" id="kpiTotalMonth">Rs @Model.TotalThisMonth.ToString("N2")</p>
+            </div>
+            <p class="allowance-kpi-sub">Allocated for selected cycle</p>
+        </div>
+
+        <!-- Active Beneficiaries -->
+        <div class="allowance-kpi-card" style="border-left: 3px solid #0284c7;">
+            <div>
+                <p class="allowance-kpi-title">Active Beneficiaries</p>
+                <p class="allowance-kpi-value" style="color: #0284c7;">@Model.ActiveBeneficiariesCount Employee(s)</p>
+            </div>
+            <p class="allowance-kpi-sub">Receiving additions this month</p>
+        </div>
+
+        <!-- Top Allowance Category -->
+        <div class="allowance-kpi-card" style="border-left: 3px solid #6366f1;">
+            <div>
+                <p class="allowance-kpi-title">Top Category Volume</p>
+                <p class="allowance-kpi-value" style="color: #4338ca; font-size: 1.15rem;">@Model.TopAllowanceCategory</p>
+            </div>
+            <p class="allowance-kpi-sub">Primary addition category</p>
+        </div>
+
+        <!-- Average per Beneficiary -->
+        <div class="allowance-kpi-card" style="border-left: 3px solid #ea580c;">
+            <div>
+                <p class="allowance-kpi-title">Avg per Beneficiary</p>
+                <p class="allowance-kpi-value" style="color: #c2410c;">Rs @Model.AverageAllowancePerBeneficiary.ToString("N2")</p>
+            </div>
+            <p class="allowance-kpi-sub">Average addition payout</p>
+        </div>
+
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="k-card" style="padding: 0; overflow: hidden; border: 1px solid #e2e8f0; border-radius: 10px;">
+        
+        <!-- Toolbar & Filters -->
+        <div class="toolbar-grid">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <div style="position: relative;">
+                    <i class="bi bi-search" style="position: absolute; left: 9px; top: 8px; color: #94a3b8; font-size: 12px;"></i>
+                    <input id="tableSearch" oninput="filterTable()" class="filter-input" style="padding-left: 28px; width: 200px;" placeholder="Search employee, remarks..." />
+                </div>
+
+                <select id="typeFilter" onchange="filterTable()" class="filter-input">
+                    <option value="">All Categories</option>
+                    <option value="Performance">Performance Bonus</option>
+                    <option value="Festival">Festival Allowance</option>
+                    <option value="Transport">Transport / Fuel</option>
+                    <option value="Housing">Housing Allowance</option>
+                    <option value="Meal">Meal / Food</option>
+                    <option value="Overtime">Overtime Pay</option>
+                    <option value="Medical">Medical Allowance</option>
+                    <option value="Special">Special Duty / Acting</option>
+                    <option value="Other">Other Discretionary</option>
+                </select>
+
+                <select id="deptFilter" onchange="filterTable()" class="filter-input">
+                    <option value="">All Departments (@Model.DepartmentsList.Count)</option>
+                    @foreach (var dept in Model.DepartmentsList)
+                    {
+                        <option value="@dept">@dept</option>
+                    }
+                </select>
+
+                <select id="cycleFilter" onchange="filterTable()" class="filter-input">
+                    <option value="@Model.Month-@Model.Year" selected>Active Cycle (@Model.SelectedMonthName)</option>
+                    <option value="">All Historical Records</option>
+                </select>
+            </div>
+
+            <div>
+                <span id="recordCountBadge" style="font-size: 0.74rem; font-weight: 700; color: #64748b; background: #e2e8f0; padding: 3px 8px; border-radius: 10px;">
+                    Showing @Model.Bonuses.Count record(s)
+                </span>
+            </div>
+        </div>
+
+        @if (!Model.Bonuses.Any())
+        {
+            <div style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                <i class="bi bi-gift" style="font-size: 2.5rem; color: #cbd5e1; display: block; margin-bottom: 10px;"></i>
+                <h4 style="font-weight: 700; color: #334155; margin: 0 0 4px 0;">No Allowances Configured</h4>
+                <p style="font-size: 0.8rem; margin: 0 0 14px 0;">Grant discretionary allowances or bonuses to branch employees.</p>
+                <button type="button" onclick="openGrantModal()" class="btn-kanrich btn-kanrich-primary" style="padding: 6px 14px; font-size: 0.82rem;">
+                    <i class="bi bi-plus-lg"></i> Grant Allowance
+                </button>
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="allowance-table" id="allowanceTable">
+                    <thead>
+                        <tr>
+                            <th style="text-align: left; width: 220px;">Employee</th>
+                            <th style="text-align: left; width: 160px;">Department & Role</th>
+                            <th style="text-align: left; width: 150px;">Allowance Category</th>
+                            <th style="text-align: right; width: 130px;">Amount (LKR)</th>
+                            <th style="text-align: left; width: 110px;">Cycle</th>
+                            <th style="text-align: left;">Remarks / Justification</th>
+                            <th style="text-align: center; width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="allowanceBody">
+                        @foreach (var item in Model.Bonuses)
+                        {
+                            var emp = item.Employee;
+                            var badgeKey = item.BonusType.ToLower();
+                            var badgeClass = badgeKey switch
+                            {
+                                "performance" => "performance",
+                                "festival" => "festival",
+                                "transport" => "transport",
+                                "housing" => "housing",
+                                "meal" => "meal",
+                                "overtime" => "overtime",
+                                "medical" => "medical",
+                                "special" => "special",
+                                _ => "other"
+                            };
+
+                            var itemDate = new DateTime(item.Year, item.Month, 1);
+                            var isSelectedMonth = (item.Month == Model.Month && item.Year == Model.Year);
+
+                            <tr class="allowance-row" 
+                                data-id="@item.Id"
+                                data-empid="@item.EmployeeId"
+                                data-name="@(emp?.NameWithInitials.ToLower() ?? "") @(emp?.FullName.ToLower() ?? "")" 
+                                data-epf="@(emp?.EPFNumber?.ToLower() ?? "")" 
+                                data-dept="@(emp?.Department?.Name ?? "")"
+                                data-type="@item.BonusType"
+                                data-amount="@item.Amount"
+                                data-cycle="@item.Month-@item.Year"
+                                data-monthval="@item.Year-@(item.Month.ToString("D2"))"
+                                data-remarks="@(item.Reason?.ToLower() ?? "")">
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 28px; height: 28px; border-radius: 50%; background: #dcfce7; color: #10823c; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.78rem; flex-shrink: 0;">
+                                            @(emp?.NameWithInitials.FirstOrDefault() ?? 'E')
+                                        </div>
+                                        <div>
+                                            <p style="font-weight: 700; margin: 0; font-size: 0.84rem; color: #0f172a; line-height: 1.2;" title="@emp?.FullName">@emp?.NameWithInitials</p>
+                                            <p style="font-size: 0.72rem; color: #64748b; margin: 0;">EPF: <strong>@(emp?.EPFNumber ?? "—")</strong></p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <p style="font-weight: 600; margin: 0; font-size: 0.8rem; color: #1e293b;">@(emp?.Department?.Name ?? "General")</p>
+                                    <p style="font-size: 0.7rem; color: #64748b; margin: 0;">@(emp?.Designation?.Title ?? "Staff")</p>
+                                </td>
+                                <td>
+                                    <span class="badge-cat @badgeClass">
+                                        @item.BonusType
+                                    </span>
+                                </td>
+                                <td style="text-align: right; font-weight: 700; color: #10823c; white-space: nowrap;">
+                                    Rs @item.Amount.ToString("N2")
+                                </td>
+                                <td>
+                                    <span style="font-size: 0.78rem; font-weight: 600; color: #334155; white-space: nowrap;">
+                                        @itemDate.ToString("MMM yyyy")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="font-size: 0.76rem; color: #64748b;">@(string.IsNullOrWhiteSpace(item.Reason) ? "—" : item.Reason)</span>
+                                </td>
+                                <td style="text-align: center;">
+                                    <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                        <button type="button" 
+                                                onclick="openEditModal(@item.Id, @item.EmployeeId, '@(emp?.NameWithInitials?.Replace("'", "\\'"))', '@item.BonusType', @item.Amount, '@item.Year-@(item.Month.ToString("D2"))', '@(item.Reason?.Replace("'", "\\'") ?? "")')" 
+                                                class="btn-kanrich btn-kanrich-outline" 
+                                                style="padding: 2px 6px; font-size: 0.74rem;" 
+                                                title="Edit Allowance">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <form method="post" asp-page-handler="Delete" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="bonusId" value="@item.Id" />
+                                            <input type="hidden" name="branchId" value="@Model.BranchId" />
+                                            <input type="hidden" name="month" value="@Model.Month" />
+                                            <input type="hidden" name="year" value="@Model.Year" />
+                                            <button type="submit" 
+                                                    onclick="return confirm('Delete this allowance record?')" 
+                                                    class="btn-kanrich btn-kanrich-danger" 
+                                                    style="padding: 2px 6px; font-size: 0.74rem;" 
+                                                    title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" style="color: #475569; font-size: 0.76rem; letter-spacing: 0.4px;">
+                                TOTAL FILTERED ALLOWANCES
+                            </td>
+                            <td style="text-align: right; color: #10823c;" id="footTotal">
+                                Rs @Model.TotalThisMonth.ToString("N2")
+                            </td>
+                            <td colspan="3"></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        }
+
+    </div>
+
+</div>
+
+<!-- Modal: Grant Allowance -->
+<div class="modal-overlay" id="grantModal" onclick="closeGrantModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        
+        <div style="padding: 14px 18px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #dcfce7; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                    <i class="bi bi-plus-lg"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;">Grant New Allowance</h3>
+                    <p style="margin: 1px 0 0 0; font-size: 11px; color: #64748b;">Assign addition to employee for @(Model.CurrentBranch?.Name ?? "Branch")</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeGrantModal()" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+
+        <form method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="BranchId" />
+            <input type="hidden" asp-for="Month" />
+            <input type="hidden" asp-for="Year" />
+
+            <div style="padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+                
+                <div>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Select Employee *</label>
+                    <select asp-for="EmployeeId" required class="filter-input" style="width: 100%;">
+                        <option value="">Choose an employee…</option>
+                        @foreach (var emp in Model.Employees)
+                        {
+                            <option value="@emp.Id">@emp.NameWithInitials (EPF: @(emp.EPFNumber ?? "—")) — @(emp.Department?.Name ?? "General")</option>
+                        }
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Allowance Category *</label>
+                        <select asp-for="BonusType" required class="filter-input" style="width: 100%;">
+                            <option value="">Select Category…</option>
+                            <option value="Performance">Performance Bonus</option>
+                            <option value="Festival">Festival Allowance</option>
+                            <option value="Transport">Transport / Fuel</option>
+                            <option value="Housing">Housing Allowance</option>
+                            <option value="Meal">Meal / Food</option>
+                            <option value="Overtime">Overtime Pay</option>
+                            <option value="Medical">Medical Allowance</option>
+                            <option value="Special">Special Duty / Acting</option>
+                            <option value="Other">Other Discretionary</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Payroll Month *</label>
+                        <input type="month" asp-for="PayrollMonth" value="@(Model.Year)-@(Model.Month?.ToString("D2") ?? "01")" required class="filter-input" style="width: 100%;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Amount (LKR) *</label>
+                    <div class="input-prefix-box">
+                        <span class="input-prefix-tag">Rs</span>
+                        <input type="number" asp-for="Amount" placeholder="0.00" min="1" step="0.01" required class="filter-input input-prefix-field" style="width: 100%;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Justification / Remarks</label>
+                    <textarea asp-for="Reason" rows="2" placeholder="e.g. Q3 Performance recognition or fuel reimbursement..." class="filter-input" style="width: 100%; resize: none;"></textarea>
+                </div>
+
+            </div>
+
+            <div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" onclick="closeGrantModal()" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 12px; font-size: 0.8rem;">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-check-lg"></i> Grant Allowance
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<!-- Modal: Edit Allowance -->
+<div class="modal-overlay" id="editModal" onclick="closeEditModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        
+        <div style="padding: 14px 18px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; background: #f8fafc;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 28px; height: 28px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; font-size: 14px;">
+                    <i class="bi bi-pencil"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 14px; font-weight: 700; color: #0f172a;">Edit Allowance</h3>
+                    <p style="margin: 1px 0 0 0; font-size: 11px; color: #64748b;" id="editEmpSubtitle">Employee</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeEditModal()" style="background: none; border: none; font-size: 20px; color: #94a3b8; cursor: pointer;">&times;</button>
+        </div>
+
+        <form method="post" asp-page-handler="Edit">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="branchId" value="@Model.BranchId" />
+            <input type="hidden" name="month" value="@Model.Month" />
+            <input type="hidden" name="year" value="@Model.Year" />
+            <input type="hidden" id="editBonusId" name="editBonusId" value="" />
+
+            <div style="padding: 18px; display: flex; flex-direction: column; gap: 14px;">
+                
+                <div>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Employee *</label>
+                    <select id="editEmployeeId" name="editEmployeeId" required class="filter-input" style="width: 100%;">
+                        @foreach (var emp in Model.Employees)
+                        {
+                            <option value="@emp.Id">@emp.NameWithInitials (EPF: @(emp.EPFNumber ?? "—")) — @(emp.Department?.Name ?? "General")</option>
+                        }
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Allowance Category *</label>
+                        <select id="editBonusType" name="editBonusType" required class="filter-input" style="width: 100%;">
+                            <option value="Performance">Performance Bonus</option>
+                            <option value="Festival">Festival Allowance</option>
+                            <option value="Transport">Transport / Fuel</option>
+                            <option value="Housing">Housing Allowance</option>
+                            <option value="Meal">Meal / Food</option>
+                            <option value="Overtime">Overtime Pay</option>
+                            <option value="Medical">Medical Allowance</option>
+                            <option value="Special">Special Duty / Acting</option>
+                            <option value="Other">Other Discretionary</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Payroll Month *</label>
+                        <input type="month" id="editPayrollMonth" name="editPayrollMonth" required class="filter-input" style="width: 100%;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Amount (LKR) *</label>
+                    <div class="input-prefix-box">
+                        <span class="input-prefix-tag">Rs</span>
+                        <input type="number" id="editAmount" name="editAmount" placeholder="0.00" min="1" step="0.01" required class="filter-input input-prefix-field" style="width: 100%;" />
+                    </div>
+                </div>
+
+                <div>
+                    <label style="font-size: 11.5px; font-weight: 700; color: #334155; margin-bottom: 4px; display: block;">Justification / Remarks</label>
+                    <textarea id="editReason" name="editReason" rows="2" placeholder="Remarks..." class="filter-input" style="width: 100%; resize: none;"></textarea>
+                </div>
+
+            </div>
+
+            <div style="padding: 12px 18px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" onclick="closeEditModal()" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 12px; font-size: 0.8rem;">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 14px; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-check-lg"></i> Update Allowance
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function filterTable() {
+            const search = (document.getElementById('tableSearch').value || '').toLowerCase().trim();
+            const type = (document.getElementById('typeFilter').value || '').toLowerCase().trim();
+            const dept = (document.getElementById('deptFilter').value || '').toLowerCase().trim();
+            const cycle = (document.getElementById('cycleFilter').value || '').trim();
+
+            let visibleCount = 0;
+            let sumAmount = 0;
+
+            document.querySelectorAll('.allowance-row').forEach(row => {
+                const name = (row.dataset.name || '').toLowerCase();
+                const epf = (row.dataset.epf || '').toLowerCase();
+                const rowDept = (row.dataset.dept || '').toLowerCase();
+                const rowType = (row.dataset.type || '').toLowerCase();
+                const rowCycle = (row.dataset.cycle || '').trim();
+                const remarks = (row.dataset.remarks || '').toLowerCase();
+
+                const matchSearch = !search || name.includes(search) || epf.includes(search) || remarks.includes(search);
+                const matchType = !type || rowType === type;
+                const matchDept = !dept || rowDept === dept;
+                const matchCycle = !cycle || rowCycle === cycle;
+
+                if (matchSearch && matchType && matchDept && matchCycle) {
+                    row.style.display = '';
+                    visibleCount++;
+                    sumAmount += parseFloat(row.dataset.amount || 0);
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // Update record count badge
+            const countBadge = document.getElementById('recordCountBadge');
+            if (countBadge) {
+                countBadge.textContent = `Showing ${visibleCount} record(s)`;
+            }
+
+            // Update footer total
+            const footTotal = document.getElementById('footTotal');
+            if (footTotal) {
+                footTotal.textContent = 'Rs ' + formatMoney(sumAmount);
+            }
+        }
+
+        function formatMoney(num) {
+            return Number(num || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function openGrantModal() {
+            document.getElementById('grantModal').classList.add('open');
+        }
+
+        function closeGrantModal(e) {
+            if (!e || e.target === document.getElementById('grantModal') || e.target.closest('button')) {
+                document.getElementById('grantModal').classList.remove('open');
+            }
+        }
+
+        function openEditModal(id, empId, empName, type, amount, payrollMonth, reason) {
+            document.getElementById('editBonusId').value = id;
+            document.getElementById('editEmployeeId').value = empId;
+            document.getElementById('editEmpSubtitle').textContent = empName;
+            document.getElementById('editBonusType').value = type;
+            document.getElementById('editAmount').value = amount;
+            document.getElementById('editPayrollMonth').value = payrollMonth;
+            document.getElementById('editReason').value = reason;
+
+            document.getElementById('editModal').classList.add('open');
+        }
+
+        function closeEditModal(e) {
+            if (!e || e.target === document.getElementById('editModal') || e.target.closest('button')) {
+                document.getElementById('editModal').classList.remove('open');
+            }
+        }
+
+        function exportCsv() {
+            const rows = [
+                ["Employee Name", "EPF Number", "Department", "Designation", "Allowance Category", "Amount (Rs)", "Payroll Cycle", "Remarks"]
+            ];
+
+            document.querySelectorAll('.allowance-row').forEach(row => {
+                if (row.style.display !== 'none') {
+                    const name = row.querySelector('td:nth-child(1) p:first-child')?.textContent.trim() || '';
+                    const epf = (row.dataset.epf || '').toUpperCase();
+                    const dept = row.dataset.dept || '';
+                    const desig = row.querySelector('td:nth-child(2) p:last-child')?.textContent.trim() || '';
+                    const type = row.dataset.type || '';
+                    const amount = row.dataset.amount || '0';
+                    const cycle = row.querySelector('td:nth-child(5) span')?.textContent.trim() || '';
+                    const remarks = row.querySelector('td:nth-child(6) span')?.textContent.trim() || '';
+
+                    rows.push([
+                        `"${name}"`,
+                        `"${epf}"`,
+                        `"${dept}"`,
+                        `"${desig}"`,
+                        `"${type}"`,
+                        amount,
+                        `"${cycle}"`,
+                        `"${remarks.replace(/"/g, '""')}"`
+                    ]);
+                }
+            });
+
+            const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Allowances_Schedule_${'@(Model.CurrentBranch?.Name ?? "Branch")'.replace(/\s+/g, '_')}_${'@Model.SelectedMonthName'.replace(/\s+/g, '_')}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            filterTable();
+        });
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeGrantModal();
+                closeEditModal();
+            }
+        });
+    </script>
+}

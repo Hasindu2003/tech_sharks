@@ -1,0 +1,809 @@
+@page
+@model HRMS.UI.Pages.Welfare.RequestListModel
+@{
+    ViewData["Title"] = "My Welfare Requests";
+    ViewData["PageTitle"] = "Welfare / My Requests";
+    ViewData["ActiveNav"] = "Welfare";
+}
+
+<style>
+    .welfare-page-wrap {
+        background: transparent;
+        padding: 0;
+    }
+
+    /* Page Header */
+    .page-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 24px;
+        flex-wrap: wrap;
+    }
+    .page-h {
+        font-size: 20px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.3px;
+    }
+    .page-s {
+        font-size: 13px;
+        color: #7a8863;
+        margin: 0;
+        line-height: 1.5;
+    }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    /* Action Buttons */
+    .btn-sys-primary {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: #10823c;
+        color: #ffffff;
+        padding: 9px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        text-decoration: none;
+        border: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(16, 130, 60, 0.2);
+    }
+    .btn-sys-primary:hover {
+        background: #0d6e32;
+        color: #ffffff;
+        box-shadow: 0 2px 6px rgba(16, 130, 60, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .btn-sys-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #ffffff;
+        color: #151811;
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .btn-sys-outline:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #151811;
+    }
+
+    /* Stat Cards Grid */
+    .stat-cards-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .k-metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .k-metric-card:hover {
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.07);
+        transform: translateY(-1px);
+    }
+    .k-metric-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 20px;
+    }
+    .k-metric-icon.blue   { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+    .k-metric-icon.orange { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    .k-metric-icon.green  { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .k-metric-icon.red    { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+
+    .k-metric-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .k-metric-label {
+        font-size: 12px;
+        font-weight: 600;
+        color: #7a8863;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .k-metric-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: #151811;
+        line-height: 1.2;
+    }
+
+    /* Filter Toolbar */
+    .filter-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+    .filter-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+        min-width: 300px;
+        flex-wrap: wrap;
+    }
+    .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 220px;
+        max-width: 380px;
+    }
+    .search-wrap svg {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 15px;
+        height: 15px;
+        stroke: #7a8863;
+        fill: none;
+        pointer-events: none;
+    }
+    .search-input {
+        width: 100%;
+        padding: 8px 12px 8px 36px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        color: #151811;
+        background: #fafbfa;
+        outline: none;
+        transition: border-color .15s, box-shadow .15s, background .15s;
+    }
+    .search-input:focus {
+        background: #ffffff;
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.1);
+    }
+    .filter-select {
+        padding: 8px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 7px;
+        font-family: 'Manrope', sans-serif;
+        font-size: 13px;
+        color: #151811;
+        background: #ffffff;
+        outline: none;
+        cursor: pointer;
+        transition: border-color .15s;
+    }
+    .filter-select:focus {
+        border-color: #10823c;
+    }
+    .filter-right {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .results-count {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #7a8863;
+        white-space: nowrap;
+    }
+
+    /* Table Card */
+    .table-container-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        margin-bottom: 20px;
+    }
+    .welfare-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .welfare-table th {
+        background: #f9fafb;
+        padding: 13px 18px;
+        font-size: 12px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #e2e5dc;
+        white-space: nowrap;
+    }
+    .welfare-table td {
+        padding: 14px 18px;
+        font-size: 13.5px;
+        color: #151811;
+        border-bottom: 1px solid #e2e5dc;
+        vertical-align: middle;
+    }
+    .welfare-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .welfare-table tbody tr {
+        transition: background 0.12s ease;
+    }
+    .welfare-table tbody tr:hover {
+        background: #fbfcfb;
+    }
+
+    /* Badges & Chips */
+    .ref-code-badge {
+        display: inline-block;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #10823c;
+        background: #eef7f0;
+        padding: 3px 8px;
+        border-radius: 6px;
+        letter-spacing: 0.3px;
+    }
+    .type-title {
+        font-weight: 700;
+        color: #151811;
+        display: block;
+        margin-bottom: 2px;
+    }
+    .type-category-sub {
+        font-size: 11.5px;
+        color: #7a8863;
+        display: inline-block;
+    }
+    .amount-primary {
+        font-weight: 800;
+        color: #10823c;
+        font-size: 13.5px;
+    }
+    .amount-approved {
+        font-weight: 700;
+        color: #151811;
+        font-size: 13.5px;
+    }
+
+    /* Level / Stage Badges */
+    .stage-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 11.5px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .stage-badge.welfare-mgr { background: #ede9fe; color: #6d28d9; }
+    .stage-badge.branch-mgr  { background: #e0f2fe; color: #0369a1; }
+    .stage-badge.area-mgr    { background: #fef3c7; color: #b45309; }
+    .stage-badge.hr-mgr      { background: #dcfce7; color: #15803d; }
+    .stage-badge.complete    { background: #d1fae5; color: #065f46; }
+    .stage-badge.default     { background: #f3f4f6; color: #4b5563; }
+
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+    .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+    }
+    .status-badge.pending   { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+    .status-badge.pending .status-dot { background: #f59e0b; }
+    
+    .status-badge.approved  { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+    .status-badge.approved .status-dot { background: #10b981; }
+
+    .status-badge.rejected  { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
+    .status-badge.rejected .status-dot { background: #ef4444; }
+
+    .status-badge.draft     { background: #f3f4f6; color: #4b5563; border: 1px solid #e5e7eb; }
+    .status-badge.draft .status-dot { background: #9ca3af; }
+
+    /* Action Buttons in Table */
+    .tbl-action-group {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        justify-content: flex-end;
+    }
+    .btn-tbl-action {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 11px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        color: #151811;
+        transition: all 0.15s ease;
+        cursor: pointer;
+    }
+    .btn-tbl-action:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #151811;
+    }
+    .btn-tbl-action.edit-btn {
+        color: #d97706;
+        border-color: #fde68a;
+        background: #fffbeb;
+    }
+    .btn-tbl-action.edit-btn:hover {
+        background: #fef3c7;
+        border-color: #f59e0b;
+        color: #b45309;
+    }
+    .btn-tbl-action.view-btn {
+        color: #10823c;
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+    }
+    .btn-tbl-action.view-btn:hover {
+        background: #dcfce7;
+        border-color: #86efac;
+        color: #0d6e32;
+    }
+    .btn-tbl-action.del-btn {
+        color: #dc2626;
+        border-color: #fecaca;
+        background: #fef2f2;
+    }
+    .btn-tbl-action.del-btn:hover {
+        background: #fee2e2;
+        border-color: #f87171;
+        color: #b91c1c;
+    }
+
+    .edit-timer-hint {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        color: #d97706;
+        text-align: right;
+        margin-top: 3px;
+    }
+
+    /* Empty State */
+    .empty-state-box {
+        text-align: center;
+        padding: 54px 20px;
+        color: #7a8863;
+    }
+    .empty-state-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        background: #f6f8f7;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        color: #9ca3af;
+        margin-bottom: 14px;
+    }
+    .empty-state-title {
+        font-size: 16px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0 0 6px 0;
+    }
+    .empty-state-desc {
+        font-size: 13px;
+        color: #7a8863;
+        margin: 0 0 20px 0;
+        max-width: 380px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.5;
+    }
+
+    /* Pagination Bar */
+    .tbl-pg-bar {
+        background: #f9fafb;
+        padding: 12px 18px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid #e2e5dc;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .tbl-pg-info {
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #7a8863;
+    }
+    .tbl-pg-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .pg-btn {
+        padding: 5px 11px;
+        border-radius: 6px;
+        border: 1px solid #d1d5db;
+        background: #ffffff;
+        font-size: 12.5px;
+        font-weight: 600;
+        color: #151811;
+        cursor: pointer;
+        transition: all 0.15s;
+    }
+    .pg-btn:hover:not(:disabled) {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+    }
+    .pg-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+    }
+    .pg-btn.active {
+        background: #10823c;
+        color: #ffffff;
+        border-color: #10823c;
+    }
+</style>
+
+<div class="welfare-page-wrap">
+
+    <!-- Header Row -->
+    <div class="page-header-row">
+        <div>
+            <h2 class="page-h">My Welfare Requests</h2>
+            <p class="page-s">Review your assistance history, track live multi-stage approvals, and submit new welfare applications.</p>
+        </div>
+        <div class="header-actions">
+            @if (User.IsInRole("Welfare Manager") || User.IsInRole("Department Head") || User.IsInRole("HR Manager") || User.IsInRole("Admin"))
+            {
+                <a href="/Welfare/Approvals/DepartmentHeadApproval" class="btn-sys-outline">
+                    <i class="bi bi-shield-check"></i> Welfare Approvals
+                </a>
+            }
+            else if (User.IsInRole("Branch Manager"))
+            {
+                <a href="/Welfare/Approvals/BranchManagerApproval" class="btn-sys-outline">
+                    <i class="bi bi-building-check"></i> Branch Approvals
+                </a>
+            }
+            else if (User.IsInRole("Area Manager"))
+            {
+                <a href="/Welfare/Approvals/AreaManagerApproval" class="btn-sys-outline">
+                    <i class="bi bi-diagram-3"></i> Area Approvals
+                </a>
+            }
+            @if (Model.IsAnnualLimitReached)
+            {
+                <span class="btn-sys-outline" style="color: #991b1b; background: #fef2f2; border-color: #fecaca; font-weight: 700;" title="Annual quota of 2 approved welfare requests reached for @Model.CurrentYear">
+                    <i class="bi bi-slash-circle" style="color: #dc2626;"></i> Annual Limit Reached (@Model.ApprovedThisYearCount/2)
+                </span>
+            }
+            else
+            {
+                <a href="/Welfare/RequestForm" class="btn-sys-primary">
+                    <i class="bi bi-plus-lg"></i> New Welfare Request
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Stats Summary Row -->
+    @{
+        var totalCount = Model.Requests.Count;
+        var pendingCount = Model.Requests.Count(r => !r.IsDraft && r.Status != "Draft" && r.CurrentStatus == "Pending");
+        var approvedCount = Model.Requests.Count(r => !r.IsDraft && (r.CurrentStatus == "Approved" || r.Status == "PaymentCompleted"));
+        var rejectedCount = Model.Requests.Count(r => !r.IsDraft && r.CurrentStatus == "Rejected");
+    }
+    <div class="stat-cards-grid">
+        <div class="k-metric-card">
+            <div class="k-metric-icon blue">
+                <i class="bi bi-folder2-open"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Total Applications</span>
+                <span class="k-metric-val">@totalCount</span>
+            </div>
+        </div>
+
+        <div class="k-metric-card">
+            <div class="k-metric-icon orange">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Under Review</span>
+                <span class="k-metric-val" style="color: #d97706;">@pendingCount</span>
+            </div>
+        </div>
+
+        <div class="k-metric-card">
+            <div class="k-metric-icon green">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Approved & Disbursed</span>
+                <span class="k-metric-val" style="color: #10823c;">@approvedCount</span>
+            </div>
+        </div>
+
+        <div class="k-metric-card">
+            <div class="k-metric-icon red">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Rejected / Closed</span>
+                <span class="k-metric-val" style="color: #dc2626;">@rejectedCount</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter & Search Bar -->
+    <div class="filter-toolbar">
+        <div class="filter-left">
+            <div class="search-wrap">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="welfareSearch" oninput="applyFilters()" class="search-input" placeholder="Search by Ref ID, type, amount, date..." />
+            </div>
+
+            <select id="statusFilter" onchange="applyFilters()" class="filter-select">
+                <option value="">All Statuses</option>
+                <option value="Draft">Drafts Only</option>
+                <option value="Pending">Pending Review</option>
+                <option value="Approved">Approved</option>
+                <option value="PaymentCompleted">Disbursed / Completed</option>
+                <option value="Rejected">Rejected</option>
+            </select>
+
+            <select id="typeFilter" onchange="applyFilters()" class="filter-select">
+                <option value="">All Assistance Types</option>
+                <option value="Medical Assistance">Medical Assistance</option>
+                <option value="Education Assistance">Education Assistance</option>
+                <option value="Housing Loan">Housing Loan</option>
+                <option value="Festival Advance">Festival Advance</option>
+                <option value="Funeral Assistance">Funeral Assistance</option>
+            </select>
+        </div>
+
+        <div class="filter-right">
+            <span class="results-count" id="tableRecordCount">Showing @totalCount requests</span>
+        </div>
+    </div>
+
+    <!-- Data Table Card -->
+    <div class="table-container-card">
+        @if (!Model.Requests.Any())
+        {
+            <div class="empty-state-box">
+                <div class="empty-state-icon">
+                    <i class="bi bi-inbox"></i>
+                </div>
+                <h4 class="empty-state-title">No Welfare Requests Found</h4>
+                <p class="empty-state-desc">You haven't submitted any welfare assistance applications yet. Click below to submit your first request.</p>
+                <a href="/Welfare/RequestForm" class="btn-sys-primary">
+                    <i class="bi bi-plus-lg"></i> Submit Welfare Request
+                </a>
+            </div>
+        }
+        else
+        {
+            <div style="overflow-x: auto;">
+                <table class="welfare-table" id="welfareRequestsTable">
+                    <thead>
+                        <tr>
+                            <th>Ref No</th>
+                            <th>Assistance Type</th>
+                            <th>Request Date</th>
+                            <th>Amount</th>
+                            <th>Current Stage</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="welfareTableBody">
+                        @foreach (var item in Model.Requests)
+                        {
+                            var typeName = item.WelfareType?.TypeName ?? "Welfare Assistance";
+                            var reqAmountFormatted = "LKR " + item.RequestedAmount.ToString("N2");
+                            var isDraft = item.IsDraft || item.Status == "Draft" || item.CurrentStatus == "Draft";
+
+                            var (stageClass, stageLabel, stageIcon) = isDraft 
+                                ? ("stage-badge default", "Draft", "bi-pencil-square")
+                                : item.CurrentLevel switch
+                                {
+                                    "DepartmentHead" => ("stage-badge welfare-mgr", "Welfare Review", "bi-shield-check"),
+                                    "BranchManager"  => ("stage-badge branch-mgr", "Branch Review", "bi-building"),
+                                    "AreaManager"    => ("stage-badge area-mgr", "Area Review", "bi-diagram-3"),
+                                    "HRManager"      => ("stage-badge hr-mgr", "HR Disbursement", "bi-cash-coin"),
+                                    "Completed"      => ("stage-badge complete", "Completed", "bi-check2-all"),
+                                    _                => ("stage-badge default", item.CurrentLevel ?? "—", "bi-arrow-right-circle")
+                                };
+
+                            var (statusClass, statusLabel) = isDraft
+                                ? ("status-badge draft", "Draft")
+                                : item.CurrentStatus switch
+                                {
+                                    "Approved"         => ("status-badge approved", "Approved"),
+                                    "PaymentCompleted" => ("status-badge approved", "Disbursed"),
+                                    "Rejected"         => ("status-badge rejected", "Rejected"),
+                                    _                  => ("status-badge pending", "Pending")
+                                };
+
+                            var effectiveStatus = isDraft ? "Draft" : item.CurrentStatus;
+
+                            bool canDelete = isDraft || (
+                                item.CurrentLevel == "DepartmentHead"
+                                && item.CurrentStatus == "Pending"
+                                && DateTime.Now <= item.CreatedAt.AddHours(24)
+                            );
+
+                            <tr class="welfare-row"
+                                data-ref="WF-@item.RequestId.ToString("D4")"
+                                data-type="@typeName"
+                                data-status="@effectiveStatus"
+                                data-amount="@item.RequestedAmount"
+                                data-date="@item.RequestDate.ToString("yyyy-MM-dd")">
+                                
+                                <td>
+                                    <span class="ref-code-badge">WF-@item.RequestId.ToString("D4")</span>
+                                </td>
+                                
+                                <td style="font-weight: 700; color: #151811;">
+                                    @typeName
+                                </td>
+                                
+                                <td>
+                                    <span style="font-weight: 600; color: #4b5563;">@item.RequestDate.ToString("MMM dd, yyyy")</span>
+                                </td>
+                                
+                                <td>
+                                    <span class="amount-primary">@reqAmountFormatted</span>
+                                </td>
+                                
+                                <td>
+                                    <span class="@stageClass">
+                                        <i class="bi @stageIcon"></i> @stageLabel
+                                    </span>
+                                </td>
+                                
+                                <td>
+                                    <span class="@statusClass">
+                                        <span class="status-dot"></span>
+                                        @statusLabel
+                                    </span>
+                                </td>
+                                
+                                <td style="text-align: right;">
+                                    <div class="tbl-action-group">
+                                        @if (isDraft)
+                                        {
+                                            <a href="/Welfare/RequestForm?id=@item.RequestId" class="btn-tbl-action edit-btn" title="Edit and submit draft">
+                                                <i class="bi bi-pencil-square"></i> Edit Draft
+                                            </a>
+                                            <form method="post" asp-page-handler="Delete" asp-route-id="@item.RequestId" style="display: inline;"
+                                                  onsubmit="return confirm('Are you sure you want to delete this welfare draft WF-@item.RequestId.ToString("D4")? This cannot be undone.');">
+                                                <button type="submit" class="btn-tbl-action del-btn" title="Delete Draft">
+                                                    <i class="bi bi-trash3"></i> Delete
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            @if (canDelete)
+                                            {
+                                                <form method="post" asp-page-handler="Delete" asp-route-id="@item.RequestId" style="display: inline;"
+                                                      onsubmit="return confirm('Are you sure you want to delete your welfare request WF-@item.RequestId.ToString("D4")? This cannot be undone.');">
+                                                    <button type="submit" class="btn-tbl-action del-btn" title="Delete request within 24 hours">
+                                                        <i class="bi bi-trash3"></i> Delete
+                                                    </button>
+                                                </form>
+                                            }
+                                            <a href="/Welfare/StatusTracking?id=@item.RequestId" class="btn-tbl-action view-btn" title="View tracking history">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        function applyFilters() {
+            const search = document.getElementById('welfareSearch')?.value.toLowerCase().trim() || '';
+            const status = document.getElementById('statusFilter')?.value || '';
+            const type = document.getElementById('typeFilter')?.value || '';
+
+            const allRows = Array.from(document.querySelectorAll('#welfareTableBody tr.welfare-row'));
+            let matchedCount = 0;
+
+            allRows.forEach(row => {
+                const rowText = row.innerText.toLowerCase();
+                const rowStatus = row.getAttribute('data-status') || '';
+                const rowType = row.getAttribute('data-type') || '';
+
+                const matchesSearch = !search || rowText.includes(search);
+                const matchesStatus = !status || rowStatus === status || (status === 'Approved' && rowStatus === 'PaymentCompleted');
+                const matchesType = !type || rowType === type;
+
+                const isVisible = matchesSearch && matchesStatus && matchesType;
+                row.setAttribute('data-filter-hidden', isVisible ? 'false' : 'true');
+                if (isVisible) matchedCount++;
+            });
+
+            const countEl = document.getElementById('tableRecordCount');
+            if (countEl) {
+                countEl.textContent = `Showing ${matchedCount} requests`;
+            }
+
+            const table = document.getElementById('welfareRequestsTable');
+            if (table && typeof table._tablePaginationRender === 'function') {
+                if (typeof table._tablePaginationResetPage === 'function') {
+                    table._tablePaginationResetPage();
+                }
+                table._tablePaginationRender();
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('welfareRequestsTable', 10);
+            }
+        });
+    </script>
+}

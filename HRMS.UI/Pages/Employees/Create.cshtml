@@ -136,8 +136,16 @@
         gap: 3px;
     }
 
-    .form-group.col-span-2 {
+    .form-group.col-span-2, .col-span-2 {
         grid-column: span 2;
+    }
+
+    .form-group.col-span-3, .col-span-3 {
+        grid-column: span 3;
+    }
+
+    .form-group.col-span-4, .col-span-4 {
+        grid-column: span 4;
     }
 
     .form-label {
@@ -231,7 +239,7 @@
 
 <div style="padding: 26px;">
     
-    <form method="post" enctype="multipart/form-data" novalidate>
+    <form method="post" enctype="multipart/form-data" novalidate id="employeeCreateForm">
         <input type="hidden" asp-for="DraftId" />
         <input type="hidden" asp-for="EmployeeId" />
         
@@ -276,10 +284,12 @@
                 <div class="form-group col-span-2">
                     <label class="form-label">Full Name <span class="required-mark">*</span></label>
                     <input asp-for="NewEmployee.FullName" class="form-control" placeholder="e.g. Johnathan David Cooper" id="fullNameInput" required />
+                    <span asp-validation-for="NewEmployee.FullName" id="fullNameError" class="field-error"></span>
                 </div>
                 <div class="form-group col-span-2">
                     <label class="form-label">Name with Initials <span class="required-mark">*</span></label>
                     <input asp-for="NewEmployee.Initials" class="form-control" placeholder="e.g. J.D. Cooper" id="initialsInput" required />
+                    <span asp-validation-for="NewEmployee.Initials" id="initialsError" class="field-error"></span>
                 </div>
 
                 <!-- Row 2 -->
@@ -296,10 +306,11 @@
                 <div class="form-group">
                     <label class="form-label">Sex <span class="required-mark">*</span></label>
                     <div class="select-wrapper">
-                        <select asp-for="NewEmployee.Sex" asp-items="Model.SexList" class="form-select" required>
+                        <select asp-for="NewEmployee.Sex" asp-items="Model.SexList" class="form-select" id="sexSelect" required>
                             <option value="">Select Gender</option>
                         </select>
                     </div>
+                    <span asp-validation-for="NewEmployee.Sex" id="sexError" class="field-error"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Phone Number <span class="required-mark">*</span></label>
@@ -310,18 +321,26 @@
 
                 <!-- Row 3 -->
                 <div class="form-group col-span-2">
-                    <label class="form-label">Residential Address <span class="required-mark">*</span></label>
-                    <textarea asp-for="NewEmployee.ResidentialAddress" class="form-control" placeholder="Enter full residential address..." required></textarea>
+                    <label class="form-label">Email Address <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.Email" type="email" class="form-control" placeholder="e.g. employee@kanrich.lk" id="emailInput" required />
+                    <span asp-validation-for="NewEmployee.Email" id="emailError" class="field-error"></span>
                 </div>
-                <div class="form-group col-span-2 spouse-box">
+                <div class="form-group col-span-2">
+                    <label class="form-label">Residential Address <span class="required-mark">*</span></label>
+                    <input asp-for="NewEmployee.ResidentialAddress" class="form-control" placeholder="e.g. 33, Walawwatta, Thalawitiya" id="residentialAddressInput" required />
+                    <span asp-validation-for="NewEmployee.ResidentialAddress" id="addressError" class="field-error"></span>
+                </div>
+
+                <!-- Row 4 -->
+                <div class="form-group col-span-4 spouse-box">
                     <div class="spouse-box-header">
-                        <input type="checkbox" style="width:13px; height:13px; accent-color: #10823c;" />
-                        <span class="spouse-box-title">Spouse Details (If Married)</span>
+                        <input type="checkbox" id="spouseCheckbox" style="width:14px; height:14px; accent-color: #10823c; cursor:pointer;" />
+                        <label for="spouseCheckbox" class="spouse-box-title" style="cursor:pointer; margin:0;">Spouse Details (If Married)</label>
                     </div>
-                    <div>
-                        <div class="form-group" style="margin-bottom: 8px;">
+                    <div id="spouseFieldsContainer" style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
                             <label class="form-label">Spouse Name</label>
-                            <input asp-for="NewEmployee.SpouseName" class="form-control" placeholder="Full name of spouse" />
+                            <input asp-for="NewEmployee.SpouseName" class="form-control" placeholder="Full name of spouse" id="spouseNameInput" />
                         </div>
                         <div class="form-group">
                             <label class="form-label">Spouse Contact No</label>
@@ -342,13 +361,7 @@
             <div class="form-section-body form-grid">
                 
                 <!-- Row 1 -->
-                <div class="form-group">
-                    <label class="form-label">System Role <span class="required-mark">*</span></label>
-                    <div class="select-wrapper">
-                        <select asp-for="SelectedRole" asp-items="Model.RoleList" class="form-select" required>
-                        </select>
-                    </div>
-                </div>
+                <input type="hidden" asp-for="SelectedRole" value="Employee" />
                 <div class="form-group">
                     <label class="form-label">Employee Type <span class="required-mark">*</span></label>
                     <div class="select-wrapper">
@@ -356,41 +369,34 @@
                             <option value="">Select Type</option>
                         </select>
                     </div>
+                    <span asp-validation-for="NewEmployee.EmployeeType" id="employeeTypeError" class="field-error"></span>
                 </div>
-                @if (User.IsInRole("HR Manager"))
-                {
-                <div class="form-group">
-                    <label class="form-label">Branch</label>
-                    <input type="hidden" name="NewEmployee.BranchId" value="@Model.NewEmployee.BranchId" />
-                    <div class="form-control" style="background:#f9fafb; color:#555; cursor:default;">@Model.HrManagerBranchName</div>
-                </div>
-                }
-                else
-                {
                 <div class="form-group">
                     <label class="form-label">Branch <span class="required-mark">*</span></label>
                     <div class="select-wrapper">
-                        <select asp-for="NewEmployee.BranchId" asp-items="Model.BranchList" class="form-select" id="branchSelect">
+                        <select asp-for="NewEmployee.BranchId" asp-items="Model.BranchList" class="form-select" id="branchSelect" required>
                             <option value="">Select Branch</option>
                         </select>
                     </div>
+                    <span asp-validation-for="NewEmployee.BranchId" id="branchError" class="field-error"></span>
                 </div>
-                }
                 <div class="form-group">
                     <label class="form-label">Department <span class="required-mark">*</span></label>
                     <div class="select-wrapper">
-                        <select asp-for="NewEmployee.DepartmentId" class="form-select" id="departmentSelect" required>
-                            <option value="">Select Branch First</option>
+                        <select asp-for="NewEmployee.DepartmentId" asp-items="Model.DepartmentList" class="form-select" id="departmentSelect" required>
+                            <option value="">@(Model.NewEmployee.BranchId > 0 ? "Select Department" : "Select Branch First")</option>
                         </select>
                     </div>
+                    <span asp-validation-for="NewEmployee.DepartmentId" id="departmentError" class="field-error"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Current Designation <span class="required-mark">*</span></label>
                     <div class="select-wrapper">
-                        <select asp-for="NewEmployee.DesignationId" class="form-select" id="designationSelect" required>
-                            <option value="">Select Department First</option>
+                        <select asp-for="NewEmployee.DesignationId" asp-items="Model.DesignationList" class="form-select" id="designationSelect" required>
+                            <option value="">@(Model.NewEmployee.DepartmentId.HasValue && Model.NewEmployee.DepartmentId.Value > 0 ? "Select Designation" : "Select Department First")</option>
                         </select>
                     </div>
+                    <span asp-validation-for="NewEmployee.DesignationId" id="designationError" class="field-error"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Date Joined <span class="required-mark">*</span></label>
@@ -402,33 +408,87 @@
                     <input type="date" asp-for="NewEmployee.DateConfirmed" class="form-control" id="dateConfirmedInput" />
                     <span asp-validation-for="NewEmployee.DateConfirmed" id="dateConfirmedError" class="field-error"></span>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Date of Designation <span class="required-mark">*</span></label>
-                    <input type="date" class="form-control" id="dateDesignationInput" />
-                    <span class="field-error" id="dateDesignationError"></span>
-                </div>
 
                 <!-- Row 3: Conditional Period -->
                 <div class="form-group" id="probationPeriodGroup" style="display:none;">
                     <label class="form-label">Probation Period (Months)</label>
-                    <input type="number" asp-for="NewEmployee.ProbationPeriodMonths" class="form-control" placeholder="e.g. 6" />
+                    <input type="number" min="0" max="36" asp-for="NewEmployee.ProbationPeriodMonths" class="form-control" placeholder="e.g. 6" />
                 </div>
                 <div class="form-group" id="internPeriodGroup" style="display:none;">
                     <label class="form-label">Intern Period (Months)</label>
-                    <input type="number" asp-for="NewEmployee.InternPeriodMonths" class="form-control" placeholder="e.g. 3" id="internPeriodInput" />
+                    <input type="number" min="0" max="36" asp-for="NewEmployee.InternPeriodMonths" class="form-control" placeholder="e.g. 3" id="internPeriodInput" />
                 </div>
                 
                 <div class="form-group">
                     <label class="form-label">Previous Experience (Years)</label>
-                    <input type="number" step="0.5" name="NewEmployee.PreviousExperienceYears" id="NewEmployee_PreviousExperienceYears" value="@(Model.NewEmployee.PreviousExperienceYears == 0 ? "" : Model.NewEmployee.PreviousExperienceYears.ToString("0.##"))" class="form-control" placeholder="e.g. 2.5" />
+                    <input type="number" step="0.5" min="0" max="60" name="NewEmployee.PreviousExperienceYears" id="NewEmployee_PreviousExperienceYears" value="@(Model.NewEmployee.PreviousExperienceYears <= 0 ? "" : Model.NewEmployee.PreviousExperienceYears.ToString("0.##"))" class="form-control" placeholder="e.g. 2.5" />
+                    <span id="expError" class="field-error"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">EPF Number <span class="required-mark">*</span></label>
-                    <input asp-for="NewEmployee.EPFNumber" class="form-control" placeholder="e.g. 10452" required />
+                    <input asp-for="NewEmployee.EPFNumber" class="form-control" placeholder="e.g. 10452" id="epfInput" required />
+                    <span asp-validation-for="NewEmployee.EPFNumber" id="epfError" class="field-error"></span>
                 </div>
                 <div class="form-group">
                     <label class="form-label">ETF Number <span class="required-mark">*</span></label>
-                    <input asp-for="NewEmployee.ETFNumber" class="form-control" placeholder="e.g. 10452" required />
+                    <input asp-for="NewEmployee.ETFNumber" class="form-control" placeholder="e.g. 10452" id="etfInput" required />
+                    <span asp-validation-for="NewEmployee.ETFNumber" id="etfError" class="field-error"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- SALARY & BANKING DETAILS -->
+        <div class="form-section">
+            <div class="form-section-header">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#151811" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                <h3 class="form-section-title">Salary &amp; Banking Details</h3>
+            </div>
+            <div class="form-section-body form-grid">
+                <!-- Basic Salary -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Basic Salary (LKR)</label>
+                    <input type="number" step="0.01" min="0" asp-for="BasicSalary" class="form-control" id="basicSalaryInput" placeholder="e.g. 75000.00" />
+                    <span asp-validation-for="BasicSalary" class="field-error"></span>
+                </div>
+
+                <!-- Bank Name -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Bank Name</label>
+                    <input asp-for="NewEmployee.BankName" list="bankList" class="form-control" placeholder="e.g. Commercial Bank of Ceylon" id="bankNameInput" />
+                    <datalist id="bankList">
+                        <option value="Bank of Ceylon" />
+                        <option value="Commercial Bank of Ceylon" />
+                        <option value="People's Bank" />
+                        <option value="Sampath Bank" />
+                        <option value="Hatton National Bank" />
+                        <option value="Seylan Bank" />
+                        <option value="Nations Trust Bank" />
+                        <option value="DFCC Bank" />
+                        <option value="National Savings Bank" />
+                        <option value="Pan Asia Bank" />
+                        <option value="Union Bank" />
+                        <option value="Standard Chartered Bank" />
+                        <option value="HSBC Sri Lanka" />
+                    </datalist>
+                    <span asp-validation-for="NewEmployee.BankName" class="field-error"></span>
+                </div>
+
+                <!-- Bank Account Name -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Bank Account Holder Name</label>
+                    <input asp-for="NewEmployee.BankAccountName" class="form-control" placeholder="e.g. K.R. Perera" id="bankAccountNameInput" />
+                    <span asp-validation-for="NewEmployee.BankAccountName" class="field-error"></span>
+                </div>
+
+                <!-- Bank Account Number -->
+                <div class="form-group col-span-2">
+                    <label class="form-label">Bank Account Number</label>
+                    <input asp-for="NewEmployee.BankAccountNumber" class="form-control" placeholder="e.g. 100234567890" id="bankAccountNumberInput" />
+                    <span asp-validation-for="NewEmployee.BankAccountNumber" class="field-error"></span>
                 </div>
             </div>
         </div>
@@ -465,10 +525,21 @@
             const initialsInput = document.getElementById('initialsInput');
             const nicInput = document.getElementById('nicInput');
             const phoneInput = document.getElementById('phoneInput');
+            const emailInput = document.getElementById('emailInput');
             const dobInput = document.getElementById('dobInput');
+            const sexSelect = document.getElementById('sexSelect');
+            const roleSelect = document.getElementById('roleSelect');
+            const empTypeSelect = document.getElementById('employeeTypeSelect');
+            const branchSelect = document.getElementById('branchSelect');
+            const deptSelect = document.getElementById('departmentSelect');
+            const desigSelect = document.getElementById('designationSelect');
             const dateJoinedInput = document.getElementById('dateJoinedInput');
             const dateConfirmedInput = document.getElementById('dateConfirmedInput');
-            const dateDesignationInput = document.getElementById('dateDesignationInput');
+            const resAddrInput = document.getElementById('residentialAddressInput');
+            const epfInput = document.getElementById('epfInput');
+            const etfInput = document.getElementById('etfInput');
+            const spouseCheckbox = document.getElementById('spouseCheckbox');
+            const spouseNameInput = document.getElementById('spouseNameInput');
             const spousePhoneInput = document.getElementById('spousePhoneInput');
 
             // --- Error helpers ---
@@ -497,39 +568,128 @@
                 });
             }
 
-            // --- NIC Validation ---
-            // Old: 9 digits + V/X — first 2 digits = birth year (19xx)
-            // New: 12 digits      — first 4 digits = full birth year
-            function validateNIC() {
+            // --- Sri Lankan NIC Parser & Validator ---
+            // Old format: 9 digits + V/X (e.g. 901234567V) -> born before 2000 (1900 + YY)
+            // New format: 12 digits (e.g. 200301500132)    -> first 4 digits = YYYY
+            // Next 3 digits: Days from Jan 1 (001-366 for Male, 501-866 for Female)
+            function parseSriLankanNIC(nicStr) {
+                if (!nicStr) return null;
+                const val = nicStr.trim();
+                const oldRegex = /^(\d{2})(\d{3})(\d{4})([VvXx])$/;
+                const newRegex = /^(\d{4})(\d{3})(\d{5})$/;
+
+                let year, dayNum;
+                if (oldRegex.test(val)) {
+                    const match = val.match(oldRegex);
+                    year = 1900 + parseInt(match[1], 10);
+                    dayNum = parseInt(match[2], 10);
+                } else if (newRegex.test(val)) {
+                    const match = val.match(newRegex);
+                    year = parseInt(match[1], 10);
+                    dayNum = parseInt(match[2], 10);
+                } else {
+                    return { valid: false, error: 'Invalid NIC format. Use 9 digits with V/X (e.g. 901234567V) or 12 digits (e.g. 200301500132).' };
+                }
+
+                let gender = 'Male';
+                let days = dayNum;
+                if (dayNum > 500) {
+                    gender = 'Female';
+                    days = dayNum - 500;
+                }
+
+                if (days < 1 || days > 366) {
+                    return { valid: false, error: `Invalid NIC day digits (${String(dayNum).padStart(3, '0')}). Days must be 001-366 (Male) or 501-866 (Female).` };
+                }
+
+                // Month days in standard SL NIC mapping (Feb treated as 29 days)
+                const monthDays = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+                let month = 1;
+                let day = days;
+                for (let i = 0; i < monthDays.length; i++) {
+                    if (day <= monthDays[i]) {
+                        month = i + 1;
+                        break;
+                    }
+                    day -= monthDays[i];
+                }
+
+                const mm = String(month).padStart(2, '0');
+                const dd = String(day).padStart(2, '0');
+                const dobString = `${year}-${mm}-${dd}`;
+
+                return {
+                    valid: true,
+                    year: year,
+                    month: month,
+                    day: day,
+                    gender: gender,
+                    dobString: dobString
+                };
+            }
+
+            function validateNIC(autoFill = true) {
+                if (!nicInput) return true;
                 const val = nicInput.value.trim();
-                if (!val) { clearError('nicError'); return true; }
-                const oldFormat = /^\d{9}[VvXx]$/;
-                const newFormat = /^\d{12}$/;
-                if (!oldFormat.test(val) && !newFormat.test(val)) {
-                    showError('nicError', 'Invalid NIC. Use 9 digits + V/X or 12 digits.');
+                if (!val) {
+                    showError('nicError', 'NIC number is required.');
                     return false;
                 }
-                // Cross-check birth year with DOB
-                if (dobInput && dobInput.value) {
-                    const dobYear = new Date(dobInput.value).getFullYear();
-                    const nicYear = oldFormat.test(val)
-                        ? 1900 + parseInt(val.substring(0, 2), 10)
-                        : parseInt(val.substring(0, 4), 10);
-                    if (dobYear !== nicYear) {
-                        showError('nicError', `Birth year in NIC (${nicYear}) does not match Date of Birth year (${dobYear}).`);
-                        return false;
+                const parsed = parseSriLankanNIC(val);
+                if (!parsed || !parsed.valid) {
+                    showError('nicError', parsed ? parsed.error : 'Invalid NIC number.');
+                    return false;
+                }
+
+                // Auto-fill DOB and Sex if empty
+                if (autoFill) {
+                    if (dobInput && !dobInput.value) {
+                        dobInput.value = parsed.dobString;
+                        clearError('dobError');
+                    }
+                    if (sexSelect && !sexSelect.value) {
+                        sexSelect.value = parsed.gender;
+                        clearError('sexError');
                     }
                 }
+
+                // Cross-check if already filled
+                if (dobInput && dobInput.value && dobInput.value !== parsed.dobString) {
+                    showError('nicError', `NIC indicates Date of Birth ${parsed.dobString}, which does not match entered Date of Birth (${dobInput.value}).`);
+                    return false;
+                }
+
+                if (sexSelect && sexSelect.value && sexSelect.value.toLowerCase() !== parsed.gender.toLowerCase()) {
+                    showError('nicError', `NIC indicates gender is ${parsed.gender}, but ${sexSelect.value} is selected.`);
+                    return false;
+                }
+
                 clearError('nicError');
                 return true;
             }
-            if (nicInput) nicInput.addEventListener('input', validateNIC);
+
+            if (nicInput) {
+                nicInput.addEventListener('input', function () {
+                    const val = this.value.trim();
+                    if (val.length === 10 || val.length === 12) {
+                        validateNIC(true);
+                    } else if (!val) {
+                        clearError('nicError');
+                    }
+                });
+                nicInput.addEventListener('blur', function () {
+                    validateNIC(true);
+                });
+            }
 
             // --- Phone Validation ---
-            // Must start with 0, exactly 10 digits
             function validatePhone() {
+                if (!phoneInput) return true;
                 const val = phoneInput.value.trim();
-                if (!val) { clearError('phoneError'); return true; }
+                if (!val) {
+                    showError('phoneError', 'Phone number is required.');
+                    return false;
+                }
                 const phoneRegex = /^0\d{9}$/;
                 if (!phoneRegex.test(val)) {
                     showError('phoneError', 'Phone must start with 0 and have exactly 10 digits.');
@@ -538,14 +698,37 @@
                 clearError('phoneError');
                 return true;
             }
-            if (phoneInput) phoneInput.addEventListener('input', validatePhone);
+            if (phoneInput) {
+                phoneInput.addEventListener('blur', validatePhone);
+                phoneInput.addEventListener('input', function() { if (phoneInput.value.trim()) clearError('phoneError'); });
+            }
+
+            // --- Email Validation ---
+            function validateEmail() {
+                if (!emailInput) return true;
+                const val = emailInput.value.trim();
+                if (!val) {
+                    showError('emailError', 'Email address is required.');
+                    return false;
+                }
+                const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                if (!emailRegex.test(val)) {
+                    showError('emailError', 'Please enter a valid email address.');
+                    return false;
+                }
+                clearError('emailError');
+                return true;
+            }
+            if (emailInput) {
+                emailInput.addEventListener('blur', validateEmail);
+                emailInput.addEventListener('input', function() { if (emailInput.value.trim()) clearError('emailError'); });
+            }
 
             // --- Spouse Phone Validation ---
-            // Optional, but if provided must start with 0 and be exactly 10 digits
             function validateSpousePhone() {
-                if (!spousePhoneInput) return true;
+                if (!spousePhoneInput || !spousePhoneInput.value) { clearError('spousePhoneError'); return true; }
                 const val = spousePhoneInput.value.trim();
-                if (!val) { clearError('spousePhoneError'); return true; } // Optional
+                if (!val) { clearError('spousePhoneError'); return true; }
                 const phoneRegex = /^0\d{9}$/;
                 if (!phoneRegex.test(val)) {
                     showError('spousePhoneError', 'Spouse Phone must start with 0 and have exactly 10 digits.');
@@ -554,18 +737,40 @@
                 clearError('spousePhoneError');
                 return true;
             }
-            if (spousePhoneInput) spousePhoneInput.addEventListener('input', validateSpousePhone);
+            if (spousePhoneInput) spousePhoneInput.addEventListener('blur', validateSpousePhone);
+
+            // --- Spouse Details Checkbox Toggle ---
+            function updateSpouseFieldsState() {
+                if (!spouseCheckbox) return;
+                const isChecked = spouseCheckbox.checked;
+                if (spouseNameInput) spouseNameInput.disabled = !isChecked;
+                if (spousePhoneInput) spousePhoneInput.disabled = !isChecked;
+                if (!isChecked) {
+                    if (spouseNameInput) spouseNameInput.value = '';
+                    if (spousePhoneInput) spousePhoneInput.value = '';
+                    clearError('spousePhoneError');
+                }
+            }
+            if (spouseCheckbox) {
+                if ((spouseNameInput && spouseNameInput.value.trim() !== '') || (spousePhoneInput && spousePhoneInput.value.trim() !== '')) {
+                    spouseCheckbox.checked = true;
+                }
+                updateSpouseFieldsState();
+                spouseCheckbox.addEventListener('change', updateSpouseFieldsState);
+            }
 
             // --- DOB Validation ---
             function validateDOB() {
-                if (!dobInput || !dobInput.value) { clearError('dobError'); return true; }
+                if (!dobInput || !dobInput.value) {
+                    showError('dobError', 'Date of Birth is required.');
+                    return false;
+                }
                 const dob = new Date(dobInput.value);
                 const today = new Date(); today.setHours(0,0,0,0);
                 if (dob >= today) {
                     showError('dobError', 'Date of Birth must be in the past.');
                     return false;
                 }
-                // Must be at least 18 years old
                 const minAge = new Date(today);
                 minAge.setFullYear(minAge.getFullYear() - 18);
                 if (dob > minAge) {
@@ -573,15 +778,20 @@
                     return false;
                 }
                 clearError('dobError');
-                // Re-check NIC birth year whenever DOB changes
-                if (nicInput && nicInput.value) validateNIC();
+                if (nicInput && nicInput.value) validateNIC(false);
                 return true;
             }
-            if (dobInput) dobInput.addEventListener('change', validateDOB);
+            if (dobInput) {
+                dobInput.addEventListener('change', validateDOB);
+                dobInput.addEventListener('blur', validateDOB);
+            }
 
             // --- Date Joined Validation ---
             function validateDateJoined() {
-                if (!dateJoinedInput || !dateJoinedInput.value) { clearError('dateJoinedError'); return true; }
+                if (!dateJoinedInput || !dateJoinedInput.value) {
+                    showError('dateJoinedError', 'Date Joined is required.');
+                    return false;
+                }
                 const dj = new Date(dateJoinedInput.value);
                 const today = new Date(); today.setHours(0,0,0,0);
                 if (dj > today) {
@@ -596,12 +806,13 @@
                     }
                 }
                 clearError('dateJoinedError');
-                // Re-validate dependent dates
                 validateDateConfirmed();
-                validateDateDesignation();
                 return true;
             }
-            if (dateJoinedInput) dateJoinedInput.addEventListener('change', validateDateJoined);
+            if (dateJoinedInput) {
+                dateJoinedInput.addEventListener('change', validateDateJoined);
+                dateJoinedInput.addEventListener('blur', validateDateJoined);
+            }
 
             // --- Date Confirmed Validation ---
             function validateDateConfirmed() {
@@ -619,24 +830,7 @@
             }
             if (dateConfirmedInput) dateConfirmedInput.addEventListener('change', validateDateConfirmed);
 
-            // --- Date of Designation Validation ---
-            function validateDateDesignation() {
-                if (!dateDesignationInput || !dateDesignationInput.value) { clearError('dateDesignationError'); return true; }
-                const dd = new Date(dateDesignationInput.value);
-                if (dateJoinedInput && dateJoinedInput.value) {
-                    const dj = new Date(dateJoinedInput.value);
-                    if (dd < dj) {
-                        showError('dateDesignationError', 'Date of Designation must be on or after Date Joined.');
-                        return false;
-                    }
-                }
-                clearError('dateDesignationError');
-                return true;
-            }
-            if (dateDesignationInput) dateDesignationInput.addEventListener('change', validateDateDesignation);
-
             // --- Employee Type Toggle (Intern vs Probationary vs Permanent) ---
-            const empTypeSelect = document.getElementById('employeeTypeSelect');
             const probationGroup = document.getElementById('probationPeriodGroup');
             const internGroup = document.getElementById('internPeriodGroup');
             function togglePeriodFields() {
@@ -652,39 +846,222 @@
                     if (internGroup) internGroup.style.display = 'none';
                 }
             }
-            if (empTypeSelect) {
-                empTypeSelect.addEventListener('change', togglePeriodFields);
-                togglePeriodFields(); // run on page load
+
+            function updateManagerialFieldsLock() {
+                if (!roleSelect) return;
+                const r = roleSelect.value;
+                const isManagerial = (r === 'Branch Manager' || r === 'Area Manager' || r === 'Department Head');
+                
+                // Employee Type Lock
+                if (empTypeSelect) {
+                    if (isManagerial) {
+                        empTypeSelect.value = 'Permanent';
+                        empTypeSelect.style.pointerEvents = 'none';
+                        empTypeSelect.style.backgroundColor = '#f1f5f9';
+                        empTypeSelect.style.color = '#475569';
+                        empTypeSelect.setAttribute('tabindex', '-1');
+                        clearError('employeeTypeError');
+                    } else {
+                        empTypeSelect.style.pointerEvents = '';
+                        empTypeSelect.style.backgroundColor = '';
+                        empTypeSelect.style.color = '';
+                        empTypeSelect.removeAttribute('tabindex');
+                    }
+                }
+
+                // Area Manager: Branch Lock to Head Office
+                if (branchSelect) {
+                    if (r === 'Area Manager') {
+                        selectOptionByText(branchSelect, 'Head Office', true);
+                        branchSelect.style.pointerEvents = 'none';
+                        branchSelect.style.backgroundColor = '#f1f5f9';
+                        branchSelect.style.color = '#475569';
+                        branchSelect.setAttribute('tabindex', '-1');
+                        clearError('branchError');
+                    } else {
+                        branchSelect.style.pointerEvents = '';
+                        branchSelect.style.backgroundColor = '';
+                        branchSelect.style.color = '';
+                        branchSelect.removeAttribute('tabindex');
+                    }
+                }
+
+                // Branch Manager & Area Manager: Department Lock to Managerial
+                if (deptSelect) {
+                    if (r === 'Branch Manager' || r === 'Area Manager') {
+                        deptSelect.style.pointerEvents = 'none';
+                        deptSelect.style.backgroundColor = '#f1f5f9';
+                        deptSelect.style.color = '#475569';
+                        deptSelect.setAttribute('tabindex', '-1');
+                        clearError('departmentError');
+                    } else {
+                        deptSelect.style.pointerEvents = '';
+                        deptSelect.style.backgroundColor = '';
+                        deptSelect.style.color = '';
+                        deptSelect.removeAttribute('tabindex');
+                    }
+                }
+
+                // Designation Lock for Managerial Roles
+                if (desigSelect) {
+                    if (isManagerial) {
+                        desigSelect.style.pointerEvents = 'none';
+                        desigSelect.style.backgroundColor = '#f1f5f9';
+                        desigSelect.style.color = '#475569';
+                        desigSelect.setAttribute('tabindex', '-1');
+                        clearError('designationError');
+                    } else {
+                        desigSelect.style.pointerEvents = '';
+                        desigSelect.style.backgroundColor = '';
+                        desigSelect.style.color = '';
+                        desigSelect.removeAttribute('tabindex');
+                    }
+                }
+
+                togglePeriodFields();
             }
 
+            if (empTypeSelect) {
+                empTypeSelect.addEventListener('change', togglePeriodFields);
+                togglePeriodFields();
+                updateManagerialFieldsLock();
+            }
+
+            // --- Required Field Validators ---
+            function validateRequiredInput(inputEl, errorId, errorMsg) {
+                if (!inputEl) return true;
+                const val = inputEl.value ? inputEl.value.trim() : '';
+                if (!val) {
+                    showError(errorId, errorMsg);
+                    return false;
+                }
+                clearError(errorId);
+                return true;
+            }
+
+            function validateRequiredSelect(selectEl, errorId, errorMsg) {
+                if (!selectEl) return true;
+                const val = selectEl.value ? selectEl.value.trim() : '';
+                if (!val || val === '0' || val === '') {
+                    showError(errorId, errorMsg);
+                    return false;
+                }
+                clearError(errorId);
+                return true;
+            }
+
+            function validateFullName() {
+                return validateRequiredInput(fullNameInput, 'fullNameError', 'Full Name is required.');
+            }
+            function validateInitials() {
+                return validateRequiredInput(initialsInput, 'initialsError', 'Name with Initials is required.');
+            }
+            function validateSex() {
+                const ok = validateRequiredSelect(sexSelect, 'sexError', 'Please select a gender.');
+                if (ok && nicInput && nicInput.value) validateNIC(false);
+                return ok;
+            }
+            function validateEmployeeType() {
+                return validateRequiredSelect(empTypeSelect, 'employeeTypeError', 'Please select an employee type.');
+            }
+            function validateBranch() {
+                return validateRequiredSelect(branchSelect, 'branchError', 'Please select a branch.');
+            }
+            function validateDepartment() {
+                return validateRequiredSelect(deptSelect, 'departmentError', 'Please select a department.');
+            }
+            function validateDesignation() {
+                return validateRequiredSelect(desigSelect, 'designationError', 'Please select a designation.');
+            }
+            function validateAddress() {
+                return validateRequiredInput(resAddrInput, 'addressError', 'Residential Address is required.');
+            }
+            function validateEPF() {
+                return validateRequiredInput(epfInput, 'epfError', 'EPF Number is required.');
+            }
+            function validateETF() {
+                return validateRequiredInput(etfInput, 'etfError', 'ETF Number is required.');
+            }
+
+            const expInput = document.getElementById('NewEmployee_PreviousExperienceYears');
+            function validateExperience() {
+                if (!expInput) return true;
+                const valStr = expInput.value ? expInput.value.trim() : '';
+                if (!valStr) {
+                    clearError('expError');
+                    return true;
+                }
+                const val = parseFloat(valStr);
+                if (isNaN(val) || val < 0) {
+                    showError('expError', 'Previous experience cannot be negative.');
+                    return false;
+                }
+                if (val > 60) {
+                    showError('expError', 'Previous experience cannot exceed 60 years.');
+                    return false;
+                }
+                clearError('expError');
+                return true;
+            }
+
+            if (expInput) {
+                expInput.addEventListener('input', function() {
+                    if (this.value && parseFloat(this.value) < 0) {
+                        this.value = '0';
+                    }
+                    validateExperience();
+                });
+                expInput.addEventListener('blur', validateExperience);
+            }
+
+            if (fullNameInput) fullNameInput.addEventListener('blur', validateFullName);
+            if (initialsInput) initialsInput.addEventListener('blur', validateInitials);
+            if (sexSelect) sexSelect.addEventListener('change', validateSex);
+            if (resAddrInput) resAddrInput.addEventListener('blur', validateAddress);
+            if (empTypeSelect) empTypeSelect.addEventListener('change', validateEmployeeType);
+            if (branchSelect) branchSelect.addEventListener('change', validateBranch);
+            if (deptSelect) deptSelect.addEventListener('change', validateDepartment);
+            if (desigSelect) desigSelect.addEventListener('change', validateDesignation);
+            if (epfInput) epfInput.addEventListener('blur', validateEPF);
+            if (etfInput) etfInput.addEventListener('blur', validateETF);
+
             // --- Block form submit if any validation fails ---
-            const form = document.querySelector('form');
+            const form = document.getElementById('employeeCreateForm');
             if (form) {
                 form.addEventListener('submit', function (e) {
-                    // Bypass custom validation if saving as draft
-                    if (e.submitter && e.submitter.classList.contains('btn-draft')) {
-                        return; // Let the form submit without custom validation
+                    if (e.submitter && (e.submitter.classList.contains('btn-draft') || e.submitter.hasAttribute('formnovalidate') || (e.submitter.getAttribute('formaction') && e.submitter.getAttribute('formaction').includes('Draft')))) {
+                        return;
                     }
 
-                    const nicOk = validateNIC();
-                    const phoneOk = validatePhone();
+                    const nameOk = validateFullName();
+                    const initialsOk = validateInitials();
+                    const nicOk = validateNIC(false);
                     const dobOk = validateDOB();
+                    const sexOk = validateSex();
+                    const phoneOk = validatePhone();
+                    const emailOk = validateEmail();
+                    const addrOk = validateAddress();
+                    const empTypeOk = validateEmployeeType();
+                    const branchOk = validateBranch();
+                    const deptOk = validateDepartment();
+                    const desigOk = validateDesignation();
                     const djOk = validateDateJoined();
                     const dcOk = validateDateConfirmed();
-                    const ddOk = validateDateDesignation();
+                    const epfOk = validateEPF();
+                    const etfOk = validateETF();
                     const spOk = validateSpousePhone();
-                    if (!nicOk || !phoneOk || !dobOk || !djOk || !dcOk || !ddOk || !spOk) {
+                    const expOk = validateExperience();
+
+                    if (!nameOk || !initialsOk || !nicOk || !dobOk || !sexOk || !phoneOk || !emailOk || !addrOk ||
+                        !empTypeOk || !branchOk || !deptOk || !desigOk || !djOk || !dcOk || !epfOk || !etfOk || !spOk || !expOk) {
                         e.preventDefault();
-                        // Scroll to first error
                         const firstErr = document.querySelector('.field-error[style*="block"]');
                         if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 });
             }
+
             // --- Branch → Department → Designation cascade ---
-            const branchSelect = document.getElementById('branchSelect');
-            const deptSelect   = document.getElementById('departmentSelect');
-            const desigSelect  = document.getElementById('designationSelect');
             const initialBranchId = @(Model.NewEmployee.BranchId);
             const initialDeptId   = @(Model.NewEmployee.DepartmentId ?? 0);
             const initialDesigId  = @(Model.NewEmployee.DesignationId ?? 0);
@@ -692,7 +1069,7 @@
             async function loadDepartments(branchId, preselectDeptId) {
                 if (!deptSelect) return;
                 deptSelect.innerHTML = '<option value="">Select Department</option>';
-                desigSelect.innerHTML = '<option value="">Select Department First</option>';
+                if (desigSelect) desigSelect.innerHTML = '<option value="">Select Department First</option>';
                 if (!branchId) { deptSelect.innerHTML = '<option value="">Select Branch First</option>'; return; }
                 try {
                     const resp = await fetch(`?handler=DepartmentsByBranch&branchId=${branchId}`);
@@ -705,7 +1082,6 @@
                         if (preselectDeptId && d.id === preselectDeptId) opt.selected = true;
                         deptSelect.appendChild(opt);
                     });
-                    // If a dept was preselected, load its designations too
                     if (preselectDeptId) loadDesignations(preselectDeptId, initialDesigId);
                 } catch (e) { /* no-op */ }
             }
@@ -714,8 +1090,9 @@
                 if (!desigSelect) return;
                 desigSelect.innerHTML = '<option value="">Select Designation</option>';
                 if (!deptId) { desigSelect.innerHTML = '<option value="">Select Department First</option>'; return; }
+                const branchId = branchSelect ? (branchSelect.value || 0) : 0;
                 try {
-                    const resp = await fetch(`?handler=DesignationsByDepartment&departmentId=${deptId}`);
+                    const resp = await fetch(`?handler=DesignationsByDepartment&departmentId=${deptId}&branchId=${branchId}`);
                     if (!resp.ok) return;
                     const data = await resp.json();
                     data.forEach(function(d) {
@@ -728,22 +1105,140 @@
                 } catch (e) { /* no-op */ }
             }
 
+            const currentEmployeeId = @(Model.EmployeeId ?? 0);
+
+            function selectOptionByText(selectEl, textToMatch, partial = false) {
+                if (!selectEl) return false;
+                for (let i = 0; i < selectEl.options.length; i++) {
+                    const optText = selectEl.options[i].text.trim().toLowerCase();
+                    const target = textToMatch.trim().toLowerCase();
+                    if ((partial && optText.includes(target)) || (!partial && optText === target)) {
+                        selectEl.selectedIndex = i;
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            async function syncFromRole() {
+                if (!roleSelect) return;
+                updateManagerialFieldsLock();
+                const r = roleSelect.value;
+                if (r === 'Branch Manager') {
+                    if (branchSelect && branchSelect.value) {
+                        await loadDepartments(branchSelect.value, null);
+                        selectOptionByText(deptSelect, 'Managerial');
+                        if (deptSelect && deptSelect.value) {
+                            await loadDesignations(deptSelect.value, null);
+                            selectOptionByText(desigSelect, 'Branch Manager');
+                            validateDesignation();
+                            checkDesignationAvailability();
+                        }
+                    } else {
+                        selectOptionByText(deptSelect, 'Managerial');
+                        selectOptionByText(desigSelect, 'Branch Manager');
+                    }
+                } else if (r === 'Area Manager') {
+                    selectOptionByText(branchSelect, 'Head Office', true);
+                    if (branchSelect && branchSelect.value) {
+                        await loadDepartments(branchSelect.value, null);
+                        selectOptionByText(deptSelect, 'Managerial');
+                        if (deptSelect && deptSelect.value) {
+                            await loadDesignations(deptSelect.value, null);
+                            selectOptionByText(desigSelect, 'Area Manager');
+                            validateDesignation();
+                            checkDesignationAvailability();
+                        }
+                    }
+                } else if (r === 'Department Head') {
+                    if (desigSelect) {
+                        selectOptionByText(desigSelect, 'Department Head');
+                        validateDesignation();
+                        checkDesignationAvailability();
+                    }
+                }
+                updateManagerialFieldsLock();
+            }
+
+            if (roleSelect) {
+                roleSelect.addEventListener('change', function() {
+                    syncFromRole();
+                });
+            }
+
+            async function checkDesignationAvailability() {
+                if (!desigSelect || !desigSelect.value || !branchSelect || !branchSelect.value) return true;
+                const branchId = branchSelect.value;
+                const deptId = deptSelect ? (deptSelect.value || 0) : 0;
+                const desigId = desigSelect.value;
+
+                try {
+                    const resp = await fetch(`?handler=CheckDesignationAvailability&branchId=${branchId}&departmentId=${deptId}&designationId=${desigId}&employeeId=${currentEmployeeId}`);
+                    if (!resp.ok) return true;
+                    const res = await resp.json();
+                    if (!res.isAvailable) {
+                        showError('designationError', res.message);
+                        return false;
+                    } else {
+                        clearError('designationError');
+                        return true;
+                    }
+                } catch (e) { return true; }
+            }
+
             if (branchSelect) {
                 branchSelect.addEventListener('change', function() {
-                    loadDepartments(this.value, null);
+                    validateBranch();
+                    if (!this.value) {
+                        if (deptSelect) deptSelect.innerHTML = '<option value="">Select Branch First</option>';
+                        if (desigSelect) desigSelect.innerHTML = '<option value="">Select Department First</option>';
+                        return;
+                    }
+                    const currentDeptId = deptSelect ? deptSelect.value : null;
+                    const currentDesigId = desigSelect ? desigSelect.value : null;
+                    loadDepartments(this.value, currentDeptId).then(() => {
+                        if (deptSelect && deptSelect.value) {
+                            loadDesignations(deptSelect.value, currentDesigId);
+                        } else {
+                            if (desigSelect) desigSelect.innerHTML = '<option value="">Select Department First</option>';
+                        }
+                    });
+                    checkDesignationAvailability();
                 });
-                // On page load: if branch already selected (edit/draft), restore chain
                 if (branchSelect.value) {
                     loadDepartments(branchSelect.value, initialDeptId || null);
+                } else if (initialBranchId) {
+                    loadDepartments(initialBranchId, initialDeptId || null);
+                } else {
+                    if (deptSelect) deptSelect.innerHTML = '<option value="">Select Branch First</option>';
+                    if (desigSelect) desigSelect.innerHTML = '<option value="">Select Department First</option>';
                 }
-            } else if (initialBranchId) {
-                // Branch is fixed (HR Manager) — load departments on page load
-                loadDepartments(initialBranchId, initialDeptId || null);
             }
 
             if (deptSelect) {
                 deptSelect.addEventListener('change', function() {
-                    loadDesignations(this.value, null);
+                    validateDepartment();
+                    if (!this.value) {
+                        if (desigSelect) desigSelect.innerHTML = '<option value="">Select Department First</option>';
+                    } else {
+                        loadDesignations(this.value, null);
+                    }
+                    checkDesignationAvailability();
+                });
+            }
+
+            if (desigSelect) {
+                desigSelect.addEventListener('change', function() {
+                    if (roleSelect) {
+                        const selText = desigSelect.options[desigSelect.selectedIndex] ? desigSelect.options[desigSelect.selectedIndex].text.trim() : '';
+                        if (selText === 'Branch Manager' || selText === 'Area Manager' || selText === 'Department Head') {
+                            selectOptionByText(roleSelect, selText);
+                            updateManagerialFieldsLock();
+                        }
+                    }
+                    if (validateDesignation()) {
+                        checkDesignationAvailability();
+                    }
                 });
             }
         });

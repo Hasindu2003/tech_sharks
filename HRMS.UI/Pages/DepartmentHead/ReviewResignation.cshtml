@@ -1,0 +1,280 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Authorization
+@using HRMS.Application.Models
+@attribute [Authorize(Roles = "Department Head")]
+@model HRMS.UI.Pages.DepartmentHead.ReviewResignationModel
+@{
+    ViewData["Title"] = "Review Resignation Request";
+    ViewData["ActiveNav"] = "Separation";
+}
+
+<style>
+    .k-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 22px; margin-bottom: 20px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .k-card-header { font-size: 15px; font-weight: 700; color: #151811; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f0f2eb; padding-bottom: 10px; }
+    .profile-header { background: white; border: 1px solid #e2e5dc; border-radius: 10px; padding: 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+    .profile-info { display: flex; align-items: center; gap: 16px; }
+    .profile-avatar { width: 48px; height: 48px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700; }
+    .profile-name { font-size: 17px; font-weight: 800; color: #151811; }
+    .profile-meta { display: flex; gap: 14px; font-size: 12.5px; color: #7a8863; margin-top: 3px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 18px; }
+    .detail-label { font-size: 11.5px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+    .detail-value { font-size: 14px; font-weight: 600; color: #151811; }
+    .k-badge, .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .k-badge-pending  { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .k-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .k-badge-rejected { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .k-badge-info     { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+    .doc-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 8px; }
+    .doc-info { display: flex; align-items: center; gap: 10px; }
+    .btn-approve { background: #10823c; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-approve:hover { background: #0d6e32; color: white; }
+    .btn-reject { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; padding: 10px 20px; border-radius: 6px; font-size: 13.5px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-reject:hover { background: #fca5a5; color: #7f1d1d; }
+    .dept-review-card { padding: 12px 14px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; background: #fcfcfc; }
+</style>
+
+@if (Model.ResignationRequest == null)
+{
+    <div class="k-alert k-alert-danger" style="background:#fef2f2;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid #fca5a5">
+        <i class="bi bi-exclamation-triangle"></i> Resignation request not found or not in your branch.
+    </div>
+}
+else
+{
+    var req = Model.ResignationRequest;
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+
+    <div style="margin-bottom:16px">
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Resignations" style="color:#7a8863;text-decoration:none;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back
+        </a>
+    </div>
+
+    @if (TempData["ErrorMessage"] is string errorMsg)
+    {
+        <div class="k-alert k-alert-danger" style="background:#fef2f2;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid #fca5a5">
+            <i class="bi bi-exclamation-triangle"></i> @errorMsg
+        </div>
+    }
+
+    <!-- Employee Profile Header -->
+    <div class="profile-header">
+        <div class="profile-info">
+            <div class="profile-avatar">@initials</div>
+            <div>
+                <div class="profile-name">@req.EmployeeName</div>
+                <div class="profile-meta">
+                    <span><i class="bi bi-hash"></i> EPF: @req.EpfNumber</span>
+                    <span><i class="bi bi-building"></i> Branch: @req.Branch</span>
+                    <span><i class="bi bi-diagram-3"></i> Department: @req.Department</span>
+                    <span><i class="bi bi-person-badge"></i> Designation: @req.Designation</span>
+                </div>
+            </div>
+        </div>
+        <div>
+            <span class="k-badge @req.StatusBadgeClass" style="font-size:12.5px;padding:4px 12px">
+                @req.StatusDisplay
+            </span>
+        </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px">
+        <!-- Main Info -->
+        <div>
+            <!-- Resignation Details -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <span>Resignation Information</span>
+                    <span style="font-size:12px;color:#7a8863">Request #@req.Id</span>
+                </div>
+
+                <div class="detail-grid">
+                    <div>
+                        <div class="detail-label">Submission Date</div>
+                        <div class="detail-value">@req.ResignationDate.ToString("dd MMMM yyyy")</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Last Working Day</div>
+                        <div class="detail-value" style="color:#10823c">@req.EffectiveDate.ToString("dd MMMM yyyy")</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Notice Period</div>
+                        <div class="detail-value">@req.NoticePeriodDays Days</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:16px">
+                    <div class="detail-label">Reason for Resignation</div>
+                    <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-top:4px;font-size:13.5px;color:#151811;line-height:1.5">
+                        @req.ReasonForResignation
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(req.AdditionalRemarks))
+                {
+                    <div style="margin-bottom:16px">
+                        <div class="detail-label">Additional Remarks</div>
+                        <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-top:4px;font-size:13.5px;color:#151811">
+                            @req.AdditionalRemarks
+                        </div>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Documents -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <span>Supporting Documents</span>
+                    <span style="font-size:12px;color:#7a8863">@req.Documents.Count attached</span>
+                </div>
+                @if (req.Documents.Any())
+                {
+                    @foreach (var doc in req.Documents)
+                    {
+                        <div class="doc-item">
+                            <div class="doc-info">
+                                <i class="bi bi-file-earmark-text" style="font-size:20px;color:#10823c"></i>
+                                <div>
+                                    <div style="font-size:13.5px;font-weight:600;color:#151811">@doc.FileName</div>
+                                    <div style="font-size:11.5px;color:#7a8863">Uploaded: @doc.UploadedDate.ToString("dd MMM yyyy")</div>
+                                </div>
+                            </div>
+                            <a asp-page="/Resignation/DownloadDocument" asp-route-id="@doc.Id" class="btn-action" style="color:#10823c">
+                                <i class="bi bi-download"></i> Download
+                            </a>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="font-size:13px;color:#7a8863;text-align:center;padding:12px">No documents attached.</div>
+                }
+            </div>
+        </div>
+
+        <!-- Right Side: Branch Department Heads Status & Review Form -->
+        <div>
+            <!-- Branch Department Heads Progress -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <span>Branch Dept Heads Review</span>
+                    <span class="k-badge @(req.AreAllDeptHeadsApproved ? "k-badge-approved" : "k-badge-pending")">
+                        @req.DeptHeadsApprovedCount/@req.TotalDeptHeadsCount Approved
+                    </span>
+                </div>
+
+                <div style="font-size:12px;color:#7a8863;margin-bottom:14px">
+                    All department heads in @req.Branch must review and approve before this request moves to the Branch Manager.
+                </div>
+
+                @if (req.DepartmentReviews.Any())
+                {
+                    @foreach (var dr in req.DepartmentReviews)
+                    {
+                        var isMyDept = dr.DepartmentName.Equals(Model.DeptHeadDepartment, StringComparison.OrdinalIgnoreCase);
+                        <div class="dept-review-card" style="@(isMyDept ? "border-color:#10823c;background:#f4fbf6" : "")">
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                                <div style="font-size:13.5px;font-weight:700;color:#151811">
+                                    @dr.DepartmentName Dept
+                                    @if (isMyDept)
+                                    {
+                                        <span style="font-size:10.5px;background:#10823c;color:white;padding:1px 6px;border-radius:4px;margin-left:4px">Your Dept</span>
+                                    }
+                                </div>
+                                @if (dr.Status == "Approved")
+                                {
+                                    <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span>
+                                }
+                                else if (dr.Status == "Rejected")
+                                {
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span>
+                                }
+                                else
+                                {
+                                    <span class="k-badge k-badge-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(dr.ReviewerName))
+                            {
+                                <div style="font-size:11.5px;color:#7a8863">Reviewer: @dr.ReviewerName (@(dr.ReviewDate?.ToString("dd MMM yyyy") ?? ""))</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(dr.Comments))
+                            {
+                                <div style="font-size:12px;color:#374151;margin-top:4px;background:rgba(0,0,0,.02);padding:6px 8px;border-radius:4px">
+                                    "<i>@dr.Comments</i>"
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="font-size:12px;color:#7a8863">No department reviews initialized yet.</div>
+                }
+            </div>
+
+            <!-- Review Action Card -->
+            <div class="k-card">
+                <div class="k-card-header">
+                    <span>Your Review (@Model.DeptHeadDepartment Dept)</span>
+                </div>
+
+                @if (Model.CanReview)
+                {
+                    <form method="post">
+                        <div style="margin-bottom:14px">
+                            <label style="font-size:12px;font-weight:700;color:#151811;display:block;margin-bottom:5px">
+                                Review Comments / Clearance Remarks <span style="color:#ef4444">*</span>
+                            </label>
+                            <textarea name="comments" rows="4" class="form-control" style="width:100%;border:1px solid #d1d5db;border-radius:6px;padding:8px 10px;font-size:13.5px" placeholder="State any handover notes, asset clearance status, or reasons..." required></textarea>
+                        </div>
+
+                        <div style="display:flex;gap:10px">
+                            <button type="submit" name="action" value="approve" class="btn-approve" style="flex:1;justify-content:center">
+                                <i class="bi bi-check-lg"></i> Approve
+                            </button>
+                            <button type="submit" name="action" value="reject" class="btn-reject" style="flex:1;justify-content:center" onclick="return confirm('Are you sure you want to reject this resignation request?');">
+                                <i class="bi bi-x-lg"></i> Reject
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    @if (Model.MyDepartmentReview != null && Model.MyDepartmentReview.Status != "Pending")
+                    {
+                        <div style="text-align:center;padding:12px">
+                            @if (Model.MyDepartmentReview.Status == "Approved")
+                            {
+                                <div style="color:#10823c;font-size:24px;margin-bottom:4px"><i class="bi bi-check-circle-fill"></i></div>
+                                <div style="font-size:14px;font-weight:700;color:#151811">Approved by Your Department</div>
+                            }
+                            else
+                            {
+                                <div style="color:#b91c1c;font-size:24px;margin-bottom:4px"><i class="bi bi-x-circle-fill"></i></div>
+                                <div style="font-size:14px;font-weight:700;color:#151811">Rejected by Your Department</div>
+                            }
+                            <div style="font-size:12px;color:#7a8863;margin-top:2px">
+                                Reviewed on @Model.MyDepartmentReview.ReviewDate?.ToString("dd MMM yyyy hh:mm tt")
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(Model.MyDepartmentReview.Comments))
+                            {
+                                <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:8px 10px;margin-top:10px;font-size:12.5px;color:#374151;text-align:left">
+                                    <strong>Your Comments:</strong> @Model.MyDepartmentReview.Comments
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div style="font-size:13px;color:#7a8863;text-align:center;padding:12px">
+                            This resignation request is currently not awaiting Department Head review (Status: @req.StatusDisplay).
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}

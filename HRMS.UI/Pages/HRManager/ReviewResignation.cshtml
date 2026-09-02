@@ -14,12 +14,13 @@
 else
 {
     var req = Model.ResignationRequest;
-    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
     bool canReview = req.Status == ResignationStatusEnum.AMApproved;
 
     <div style="margin-bottom:20px">
-        <a asp-page="/HRManager/ReviewResignations" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
-            <i class="bi bi-arrow-left"></i> Back to Resignations
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Resignations" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
         <span class="k-badge @req.StatusBadgeClass" style="margin-left:8px">@req.StatusDisplay</span>
@@ -56,60 +57,101 @@ else
                 </div>
             </div>
 
-            <!-- Obligations -->
-            @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
+            @if (req.IsManagerialNotification)
             {
-                <div class="k-card" style="margin-bottom:20px;border-left:4px solid #f59e0b">
-                    <div class="k-card-header" style="color:#92400e"><i class="bi bi-exclamation-triangle me-2"></i>Financial Obligations Declared</div>
-                    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
-                        @if (req.HasOutstandingLoans) { <span class="k-badge k-badge-rejected"><i class="bi bi-bank"></i> Outstanding Loan Balance</span> }
-                        @if (req.IsLoanGuarantor) { <span class="k-badge k-badge-rejected"><i class="bi bi-people"></i> Loan Guarantor</span> }
+                <div class="review-card approved" style="margin-bottom:20px;background:#eff6ff;border-color:#bfdbfe">
+                    <h6 style="font-weight:700;margin-bottom:6px;color:#1e40af"><i class="bi bi-info-circle-fill"></i> Managerial Notification Protocol</h6>
+                    <div style="font-size:0.88rem;color:#1e3a8a">
+                        Submitted by <strong>@req.Designation</strong> (@req.EmployeeName). This is an administrative resignation notification forwarded directly to the HR Manager.
+                        <div style="margin-top:4px;font-size:0.82rem;color:#3b82f6"><strong>Note:</strong> Marking as reviewed confirms HR has seen this notice; any subsequent managerial exit procedures or clearances take place outside this system.</div>
                     </div>
-                    <div style="margin-top:10px;font-size:0.85rem;color:#92400e;font-weight:500">
-                        <i class="bi bi-info-circle"></i> You may reject this resignation based on these obligations.
+                </div>
+            }
+            else
+            {
+                <!-- Prior Reviews: Department Heads -->
+                @if (req.DepartmentReviews.Any())
+                {
+                    <div class="k-card" style="margin-bottom:20px">
+                        <div class="k-card-header" style="display:flex;justify-content:space-between;align-items:center">
+                            <span>Department Head Reviews</span>
+                            <span class="k-badge @(req.AreAllDeptHeadsApproved ? "k-badge-approved" : "k-badge-pending")">
+                                @req.DeptHeadsApprovedCount/@req.TotalDeptHeadsCount Approved
+                            </span>
+                        </div>
+                        @foreach (var dr in req.DepartmentReviews)
+                        {
+                            <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px;background:#fcfcfc">
+                                <div style="display:flex;justify-content:space-between;align-items:center">
+                                    <span style="font-weight:600;font-size:0.9rem;color:#151811">@dr.DepartmentName Department</span>
+                                    @if (dr.Status == "Approved")
+                                    {
+                                        <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span>
+                                    }
+                                    else if (dr.Status == "Rejected")
+                                    {
+                                        <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="k-badge k-badge-pending">Pending</span>
+                                    }
+                                </div>
+                                @if (!string.IsNullOrEmpty(dr.Comments))
+                                {
+                                    <div style="font-size:0.82rem;color:#555;margin-top:4px">@dr.Comments</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                <!-- Prior Reviews: Branch & Area Managers -->
+                <div class="k-card" style="margin-bottom:20px">
+                    <div class="k-card-header">Manager Approvals</div>
+                    <div style="padding:12px">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <div style="padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fcfcfc">
+                                <div style="font-size:0.8rem;color:#7a8863;font-weight:600">Branch Manager (@req.Branch)</div>
+                                <div style="margin-top:4px">
+                                    @if (req.Status >= ResignationStatusEnum.BMApproved)
+                                    { <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span> }
+                                    else if (req.Status == ResignationStatusEnum.BMRejected)
+                                    { <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span> }
+                                    else
+                                    { <span class="k-badge k-badge-pending">Pending</span> }
+                                </div>
+                                @if (req.BMReviewDate.HasValue)
+                                { <div style="font-size:0.75rem;color:#888;margin-top:2px">@req.BMReviewDate.Value.ToString("dd MMM yyyy")</div> }
+                            </div>
+
+                            <div style="padding:10px;border:1px solid #e5e7eb;border-radius:6px;background:#fcfcfc">
+                                <div style="font-size:0.8rem;color:#7a8863;font-weight:600">Area Manager</div>
+                                <div style="margin-top:4px">
+                                    @if (req.Status >= ResignationStatusEnum.AMApproved)
+                                    { <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span> }
+                                    else if (req.Status == ResignationStatusEnum.AMRejected)
+                                    { <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span> }
+                                    else
+                                    { <span class="k-badge k-badge-pending">Pending</span> }
+                                </div>
+                                @if (req.AMReviewDate.HasValue)
+                                { <div style="font-size:0.75rem;color:#888;margin-top:2px">@req.AMReviewDate.Value.ToString("dd MMM yyyy")</div> }
+                            </div>
+                        </div>
                     </div>
                 </div>
             }
 
-            <!-- Prior Reviews -->
-            @if (!string.IsNullOrWhiteSpace(req.BMComments))
-            {
-                <div class="review-card approved" style="margin-bottom:20px">
-                    <h6 style="font-weight:700;margin-bottom:8px"><i class="bi bi-clipboard-check"></i> Branch Manager Review</h6>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.88rem">
-                        <div><strong>Decision:</strong> @req.BMReview</div>
-                        <div><strong>Date:</strong> @req.BMReviewDate?.ToString("MMM dd, yyyy")</div>
-                    </div>
-                    <div style="margin-top:8px;font-size:0.88rem"><strong>Comments:</strong> @req.BMComments</div>
-                </div>
-            }
-            @if (!string.IsNullOrWhiteSpace(req.AMComments))
-            {
-                <div class="review-card approved" style="margin-bottom:20px">
-                    <h6 style="font-weight:700;margin-bottom:8px"><i class="bi bi-clipboard-check"></i> Area Manager Review</h6>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:0.88rem">
-                        <div><strong>Decision:</strong> @req.AMReview</div>
-                        <div><strong>Date:</strong> @req.AMReviewDate?.ToString("MMM dd, yyyy")</div>
-                    </div>
-                    <div style="margin-top:8px;font-size:0.88rem"><strong>Comments:</strong> @req.AMComments</div>
-                </div>
-            }
-
-            <!-- Documents -->
+            <!-- Attached Documents -->
             @if (req.Documents.Any())
             {
-                <div class="k-card">
-                    <div class="k-card-header">Document Attachments</div>
+                <div class="k-card" style="margin-bottom:20px">
+                    <div class="k-card-header">Attached Documents</div>
                     @foreach (var doc in req.Documents)
                     {
-                        var ext = doc.FileName.Split('.').LastOrDefault()?.ToLower();
-                        var icon = ext switch { "pdf" => "bi-file-earmark-pdf", "jpg" or "jpeg" or "png" => "bi-file-earmark-image", _ => "bi-file-earmark-word" };
-                        var iconClass = ext switch { "pdf" => "pdf", "jpg" or "jpeg" or "png" => "img", _ => "doc" };
-                        <div class="doc-item">
-                            <div class="doc-info">
-                                <div class="doc-icon @iconClass"><i class="bi @icon"></i></div>
-                                <div><div class="doc-name">@doc.FileName</div><div style="font-size:0.78rem;color:#9ca3af">@doc.UploadedDate.ToString("MMM dd, yyyy")</div></div>
-                            </div>
+                        <div class="doc-row">
+                            <span style="font-weight:500">@doc.FileName</span>
                             <a asp-page="/Resignation/DownloadDocument" asp-route-id="@doc.Id" style="color:#1a7a3a;font-size:1.1rem"><i class="bi bi-download"></i></a>
                         </div>
                     }
@@ -118,23 +160,41 @@ else
         </div>
 
         <div>
-            @if (canReview)
+            @if (req.Status == ResignationStatusEnum.PendingHRReview)
+            {
+                <div class="k-card" style="padding:22px;border:1px solid #e2e5dc;border-radius:12px;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                        <i class="bi bi-bell-fill" style="color:#10823c;font-size:18px"></i>
+                        <h5 style="margin:0;font-size:15px;font-weight:800;color:#151811">Managerial Resignation Notice</h5>
+                    </div>
+                    <p style="font-size:12.5px;color:#7a8863;margin-bottom:16px;line-height:1.5">
+                        Submitted by <strong>@req.Designation</strong>. This is an administrative notification routed directly to HR. Click below to mark this request as reviewed.
+                    </p>
+
+                    <form method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@req.Id" />
+                        <div style="margin-bottom:14px">
+                            <label style="display:block;font-size:11.5px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:6px">Acknowledgement Remarks (Optional)</label>
+                            <textarea name="comments" placeholder="Add remarks or notes (optional)..."
+                                      style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid #d1d5db;background:#f9fafb;color:#151811;font-family:inherit;font-size:13px;resize:vertical;min-height:70px;box-sizing:border-box"></textarea>
+                        </div>
+                        <button type="submit" name="action" value="mark_reviewed" style="background:#10823c;border:none;color:#fff;width:100%;padding:12px 18px;font-size:14px;font-weight:700;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background 0.2s;box-shadow:0 2px 4px rgba(16,130,60,0.2)">
+                            <i class="bi bi-check-circle-fill"></i> Mark as Reviewed
+                        </button>
+                    </form>
+                </div>
+            }
+            else if (canReview)
             {
                 <div class="eligibility-panel">
                     <h5><i class="bi bi-shield-check"></i> HR Manager — Final Approval</h5>
-                    <p class="ep-subtitle">Provide final approval per HR policy. Approving generates an acceptance letter.</p>
+                    <p class="ep-subtitle">Provide final approval per HR policy.</p>
                     <div class="ep-check-item">
                         <div class="ep-check-circle"></div>
                         <div>
                             <div class="ep-check-label">Notice Period</div>
                             <div class="ep-check-desc">@req.NoticePeriodDays days — Last day: @req.EffectiveDate.ToString("MMM dd, yyyy")</div>
-                        </div>
-                    </div>
-                    <div class="ep-check-item">
-                        <div class="ep-check-circle"></div>
-                        <div>
-                            <div class="ep-check-label">Financial Obligations</div>
-                            <div class="ep-check-desc">@(req.HasOutstandingLoans || req.IsLoanGuarantor ? "⚠ Obligations declared" : "✓ None declared")</div>
                         </div>
                     </div>
                     <form method="post" class="ep-actions">
@@ -145,7 +205,7 @@ else
                                       style="width:100%;padding:10px;border-radius:6px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;font-family:inherit;resize:vertical;min-height:80px"></textarea>
                         </div>
                         <button type="submit" name="action" value="approve" class="btn-ep-approve">
-                            <i class="bi bi-check-circle"></i> Final Approve &amp; Generate Letter
+                            <i class="bi bi-check-circle"></i> Final Approve Resignation
                         </button>
                         <button type="submit" name="action" value="reject" class="btn-ep-reject" onclick="return confirm('Reject this resignation?')">
                             <i class="bi bi-x-circle"></i> Reject
@@ -158,28 +218,16 @@ else
                 <div class="k-card" style="margin-bottom:16px">
                     <div class="k-alert k-alert-info" style="margin-bottom:0">
                         <i class="bi bi-info-circle"></i>
-                        @if (req.Status == ResignationStatusEnum.HRApproved)
-                        { <span>This resignation has been approved.</span> }
+                        @if (req.Status == ResignationStatusEnum.ManagerReviewed)
+                        { <span>This managerial resignation notice has been seen and acknowledged by the HR Manager. Any subsequent resignation processes will take place outside of this system.</span> }
+                        else if (req.Status == ResignationStatusEnum.HRApproved)
+                        { <span>This resignation has been reviewed and approved by HR.</span> }
                         else if (req.Status == ResignationStatusEnum.Completed)
                         { <span>This resignation is fully completed.</span> }
                         else
                         { <span>This request is not yet at the HR approval stage.</span> }
                     </div>
                 </div>
-
-                <!-- Acceptance letter link -->
-                @if (req.AcceptanceLetterGenerated)
-                {
-                    <div class="k-card" style="margin-bottom:16px">
-                        <div class="k-card-header">Acceptance Letter</div>
-                        <div style="padding:12px">
-                            <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@req.Id"
-                               class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
-                                <i class="bi bi-file-earmark-check"></i> View Letter
-                            </a>
-                        </div>
-                    </div>
-                }
 
                 <!-- Deactivation / reactivation controls -->
                 @if (req.Status == ResignationStatusEnum.HRApproved || req.Status == ResignationStatusEnum.Completed)

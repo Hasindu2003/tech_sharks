@@ -26,14 +26,33 @@
     .btn-outline:hover { background: #f9fafb; color: #151811; }
     .error-banner { background: #fef2f2; color: #991b1b; padding: 14px 20px; border-radius: 10px; margin-bottom: 20px; font-size: 14px; font-weight: 600; border: 1px solid #fca5a5; }
     .text-danger { font-size: 11px; color: #ef4444; display: block; margin-top: 4px; }
+    .emp-info-panel { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 16px; margin-top: 12px; }
+
+    .search-select-wrapper { position: relative; width: 100%; }
+    .search-select-trigger { width: 100%; padding: 9px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; color: #151811; font-family: 'Manrope', sans-serif; background: #fff; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; }
+    .search-select-trigger:focus, .search-select-trigger.active { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.12); }
+    .search-select-menu { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: white; border: 1px solid #d1d5db; border-radius: 8px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1); z-index: 50; max-height: 320px; display: flex; flex-direction: column; overflow: hidden; }
+    .search-select-header { padding: 8px 10px; border-bottom: 1px solid #f3f4f6; background: #fafafa; position: sticky; top: 0; }
+    .search-select-input { width: 100%; padding: 7px 10px 7px 32px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 13px; outline: none; box-sizing: border-box; font-family: 'Manrope', sans-serif; }
+    .search-select-input:focus { border-color: #10823c; }
+    .search-select-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: #9ca3af; pointer-events: none; }
+    .search-select-list { overflow-y: auto; max-height: 250px; padding: 4px 0; margin: 0; list-style: none; }
+    .search-select-item { padding: 8px 12px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: background 0.15s; }
+    .search-select-item:hover, .search-select-item.highlighted { background: #f0fdf4; }
+    .search-select-item.selected { background: #dcfce7; }
+    .search-select-avatar { width: 28px; height: 28px; border-radius: 50%; background: #e2e8f0; color: #334155; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .search-select-name { font-size: 13.5px; font-weight: 600; color: #151811; line-height: 1.2; }
+    .search-select-sub { font-size: 11.5px; color: #7a8863; line-height: 1.2; margin-top: 2px; }
+    .search-select-epf-badge { background: #f1f5f9; color: #475569; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; border: 1px solid #e2e8f0; }
+    .search-select-empty { padding: 16px; text-align: center; font-size: 13px; color: #9ca3af; }
 </style>
 
-<a href="javascript:history.back()" class="back-link">
+<a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Death" class="back-link">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    Back
+    Back to Separation Hub
 </a>
 <h2 class="page-h">Initiate Employee Death Process</h2>
-<p class="page-s">Complete the form below and attach mandatory proofs to start the separation due to death workflow.</p>
+<p class="page-s">Initiate the formal separation process due to employee death and forward to Area Manager review</p>
 
 @if (!ModelState.IsValid)
 {
@@ -43,41 +62,72 @@
 }
 
 <form method="post" enctype="multipart/form-data" style="max-width:900px">
+    <!-- Hidden Inputs for Model Binding -->
+    <input type="hidden" asp-for="RequestModel.EmployeeName" id="hiddenName" />
+    <input type="hidden" asp-for="RequestModel.EpfNumber" id="hiddenEpf" />
+    <input type="hidden" asp-for="RequestModel.EmployeeEmail" id="hiddenEmail" />
+    <input type="hidden" asp-for="RequestModel.Branch" id="hiddenBranch" />
+    <input type="hidden" asp-for="RequestModel.Department" id="hiddenDept" />
+    <input type="hidden" asp-for="RequestModel.Designation" id="hiddenDesig" />
+
     <div class="form-section">
-        <div class="fst">Employee Details</div>
-        <div class="grid-2">
-            <div class="fg">
-                <label asp-for="RequestModel.EmployeeName" class="fl">Employee Name <span class="req">*</span></label>
-                <input asp-for="RequestModel.EmployeeName" class="fi" required placeholder="Full Name" list="employeeList" id="nameInput" />
-                <datalist id="employeeList"></datalist>
-                <span asp-validation-for="RequestModel.EmployeeName" class="text-danger"></span>
+        <div class="fst">Employee Selection</div>
+        <div class="fg" style="margin-bottom:0">
+            <label class="fl">Select Employee <span class="req">*</span></label>
+            
+            <div class="search-select-wrapper" id="searchSelectWrapper">
+                <div class="search-select-trigger" id="searchSelectTrigger" tabindex="0">
+                    <span id="searchSelectTriggerText" style="color:#7a8863">
+                        <i class="bi bi-search" style="margin-right:4px"></i> Search employee by EPF number or Name...
+                    </span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7a8863" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+
+                <div class="search-select-menu" id="searchSelectMenu" style="display:none">
+                    <div class="search-select-header" style="position:relative">
+                        <svg class="search-select-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                        <input type="text" id="internalSearchInput" class="search-select-input" placeholder="Type EPF (e.g. 1045) or name..." autocomplete="off" />
+                        <span id="searchCountBadge" style="position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:11px;color:#7a8863;font-weight:700"></span>
+                    </div>
+                    <ul class="search-select-list" id="searchSelectList">
+                        @foreach (var emp in Model.Employees)
+                        {
+                            var nameParts = (emp.FullName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                            var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                            <li class="search-select-item"
+                                data-name="@emp.FullName"
+                                data-epf="@emp.EpfNumber"
+                                data-email="@emp.Email"
+                                data-branch="@emp.Branch"
+                                data-dept="@emp.Department"
+                                data-desig="@emp.Designation"
+                                onclick="selectEmployeeOption(this)">
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <div class="search-select-avatar">@initials</div>
+                                    <div>
+                                        <div class="search-select-name">@emp.FullName</div>
+                                        <div class="search-select-sub">@emp.Designation &bull; @emp.Department &bull; @emp.Branch</div>
+                                    </div>
+                                </div>
+                                <div class="search-select-epf-badge">EPF: @emp.EpfNumber</div>
+                            </li>
+                        }
+                    </ul>
+                    <div id="searchSelectEmpty" class="search-select-empty" style="display:none">
+                        No employees found matching your search.
+                    </div>
+                </div>
             </div>
-            <div class="fg">
-                <label asp-for="RequestModel.EpfNumber" class="fl">EPF Number <span class="req">*</span></label>
-                <input asp-for="RequestModel.EpfNumber" class="fi" required placeholder="e.g. 12345" id="epfInput" />
-            </div>
-            <div class="fg">
-                <label asp-for="RequestModel.EmployeeEmail" class="fl">Employee Email <span class="req">*</span></label>
-                <input asp-for="RequestModel.EmployeeEmail" type="email" class="fi" required placeholder="User Email" id="emailInput" />
-            </div>
-            <div class="fg">
-                <label asp-for="RequestModel.Branch" class="fl">Branch <span class="req">*</span></label>
-                <select class="fi" required id="branchInput" disabled>
-                    <option value="">-- Select Branch --</option>
-                    @foreach (var b in Model.Branches)
-                    {
-                        <option value="@b" selected="@(b == Model.RequestModel.Branch ? "selected" : null)">@b</option>
-                    }
-                </select>
-                <input type="hidden" asp-for="RequestModel.Branch" id="hiddenBranchInput" />
-            </div>
-            <div class="fg">
-                <label asp-for="RequestModel.Department" class="fl">Department</label>
-                <input asp-for="RequestModel.Department" class="fi" id="deptInput" />
-            </div>
-            <div class="fg">
-                <label asp-for="RequestModel.Designation" class="fl">Designation <span class="req">*</span></label>
-                <input asp-for="RequestModel.Designation" class="fi" required id="desigInput" />
+
+            <div id="employeeInfoPanel" style="display:none" class="emp-info-panel">
+                <div class="grid-3">
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Name</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoName">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">EPF Number</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoEpf">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Branch</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoBranch">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Department</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoDept">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Designation</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoDesig">—</div></div>
+                    <div><div style="font-size:11px;font-weight:700;color:#7a8863;text-transform:uppercase;margin-bottom:2px">Email</div><div style="font-size:14px;font-weight:600;color:#151811" id="infoEmail">—</div></div>
+                </div>
             </div>
         </div>
     </div>
@@ -87,123 +137,216 @@
         <div class="grid-2" style="margin-bottom:14px">
             <div class="fg">
                 <label asp-for="RequestModel.DateOfDeath" class="fl">Date of Death <span class="req">*</span></label>
-                <input asp-for="RequestModel.DateOfDeath" type="date" class="fi" required />
+                <input asp-for="RequestModel.DateOfDeath" type="date" class="fi" required max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="RequestModel.DateOfDeath" class="text-danger"></span>
             </div>
             <div class="fg">
-                <label asp-for="RequestModel.NatureOfDeath" class="fl">Nature of Death <span class="req">*</span></label>
-                <input asp-for="RequestModel.NatureOfDeath" class="fi" required placeholder="e.g., Natural, Accident" />
+                <label asp-for="RequestModel.NatureOfDeath" class="fl">Nature / Cause of Death <span class="req">*</span></label>
+                <input asp-for="RequestModel.NatureOfDeath" class="fi" required placeholder="e.g. Natural causes, Illness, Accident" />
+                <span asp-validation-for="RequestModel.NatureOfDeath" class="text-danger"></span>
             </div>
         </div>
         <div class="grid-3" style="margin-bottom:14px">
             <div class="fg">
-                <label asp-for="RequestModel.NomineeName" class="fl">Nominee Name <span class="req">*</span></label>
-                <input asp-for="RequestModel.NomineeName" class="fi" required />
+                <label asp-for="RequestModel.NomineeName" class="fl">Nominee Full Name <span class="req">*</span></label>
+                <input asp-for="RequestModel.NomineeName" class="fi" required placeholder="e.g. Jane Doe" />
+                <span asp-validation-for="RequestModel.NomineeName" class="text-danger"></span>
             </div>
             <div class="fg">
                 <label asp-for="RequestModel.NomineeRelation" class="fl">Relationship <span class="req">*</span></label>
-                <input asp-for="RequestModel.NomineeRelation" class="fi" required />
+                <input asp-for="RequestModel.NomineeRelation" class="fi" required placeholder="e.g. Spouse, Parent, Child" />
+                <span asp-validation-for="RequestModel.NomineeRelation" class="text-danger"></span>
             </div>
             <div class="fg">
                 <label asp-for="RequestModel.NomineeContact" class="fl">Nominee Contact</label>
-                <input asp-for="RequestModel.NomineeContact" class="fi" placeholder="Phone/Email" />
+                <input asp-for="RequestModel.NomineeContact" class="fi" placeholder="Phone number or email" />
             </div>
         </div>
         <div class="fg" style="margin-bottom:0">
-            <label asp-for="RequestModel.AdditionalRemarks" class="fl">Additional Remarks</label>
-            <textarea asp-for="RequestModel.AdditionalRemarks" class="fi" rows="2"></textarea>
+            <label asp-for="RequestModel.AdditionalRemarks" class="fl">Additional Remarks / Notes</label>
+            <textarea asp-for="RequestModel.AdditionalRemarks" class="fi" rows="2" placeholder="Optional notes for Area Manager and HR..."></textarea>
         </div>
     </div>
 
     <div class="form-section">
-        <div class="fst">Financial Obligations</div>
-        <p style="font-size:13px;color:#7a8863;margin:0 0 12px 0">Outstanding obligations do not block submission but must be flagged for the finance department.</p>
-        <div class="fg">
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;margin-bottom:10px">
+        <div class="fst">Financial Obligations &amp; Liabilities</div>
+        <p style="font-size:13px;color:#7a8863;margin:0 0 12px 0">Flag any outstanding company loans or guarantor obligations for the finance department settlement.</p>
+        <div style="display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#151811;cursor:pointer">
                 <input asp-for="RequestModel.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
-                Outstanding Loans?
+                Has Outstanding Loans
             </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:#151811;cursor:pointer">
                 <input asp-for="RequestModel.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
-                Loan Guarantor?
+                Is Loan Guarantor
             </label>
         </div>
         <div class="fg" style="margin-bottom:0">
             <label asp-for="RequestModel.ObligationDetails" class="fl">Obligation Details</label>
-            <textarea asp-for="RequestModel.ObligationDetails" class="fi" rows="2" placeholder="Describe any loans or obligations..."></textarea>
+            <textarea asp-for="RequestModel.ObligationDetails" class="fi" rows="2" placeholder="Describe any loans, advances, or guarantor commitments..."></textarea>
         </div>
     </div>
 
     <div class="form-section">
-        <div class="fst">Mandatory Documents <span class="req">*</span></div>
+        <div class="fst">Mandatory Proofs &amp; Documents <span class="req">*</span></div>
         <div class="fg" style="margin-bottom:0">
-            <input type="file" name="documents" class="fi" multiple required accept=".pdf,.png,.jpg,.jpeg" style="padding:6px 12px" />
-            <span class="fi-hint">Please upload Death Certificate and relevant proofs (PDF, JPG, PNG). At least one document is required.</span>
+            <input type="file" name="documents" class="fi" multiple required accept=".pdf,.png,.jpg,.jpeg,.doc,.docx" style="padding:6px 12px" />
+            <span class="fi-hint">Please upload Death Certificate and any relevant supporting proofs (PDF, JPG, PNG, DOCX — max 5 MB each). At least one document is required.</span>
         </div>
     </div>
 
     <div style="display:flex;gap:12px;justify-content:flex-end">
-        <a href="javascript:history.back()" class="btn-outline">Cancel</a>
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Death" class="btn-outline">Cancel</a>
         <button type="submit" class="btn-create">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-            Process Death Request
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            Submit for Area Manager Review
         </button>
     </div>
 </form>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const epfInput = document.getElementById('epfInput');
-            const nameInput = document.getElementById('nameInput');
-            const emailInput = document.getElementById('emailInput');
-            const branchInput = document.getElementById('branchInput');
-            const deptInput = document.getElementById('deptInput');
-            const desigInput = document.getElementById('desigInput');
-            const employeeList = document.getElementById('employeeList');
+        const trigger = document.getElementById('searchSelectTrigger');
+        const triggerText = document.getElementById('searchSelectTriggerText');
+        const menu = document.getElementById('searchSelectMenu');
+        const searchInput = document.getElementById('internalSearchInput');
+        const searchCountBadge = document.getElementById('searchCountBadge');
+        const list = document.getElementById('searchSelectList');
+        const emptyState = document.getElementById('searchSelectEmpty');
+        const panel = document.getElementById('employeeInfoPanel');
 
-            let searchData = [];
+        let isDropdownOpen = false;
 
-            function fillFields(data) {
-                if (!data) return;
-                nameInput.value = data.fullName || '';
-                epfInput.value = data.epfNumber || '';
-                emailInput.value = data.email || '';
-                branchInput.value = data.branch || '';
-                const hiddenBranchInput = document.getElementById('hiddenBranchInput');
-                if (hiddenBranchInput) { hiddenBranchInput.value = data.branch || ''; }
-                deptInput.value = data.department || '';
-                desigInput.value = data.designation || '';
+        function openDropdown() {
+            menu.style.display = 'flex';
+            trigger.classList.add('active');
+            isDropdownOpen = true;
+            searchInput.value = '';
+            filterInsideDropdown('');
+            setTimeout(() => searchInput.focus(), 50);
+        }
+
+        function closeDropdown() {
+            menu.style.display = 'none';
+            trigger.classList.remove('active');
+            isDropdownOpen = false;
+        }
+
+        function toggleDropdown(e) {
+            if (e) e.stopPropagation();
+            if (isDropdownOpen) {
+                closeDropdown();
+            } else {
+                openDropdown();
+            }
+        }
+
+        if (trigger) {
+            trigger.addEventListener('click', toggleDropdown);
+            trigger.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    openDropdown();
+                }
+            });
+        }
+
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                filterInsideDropdown(this.value);
+            });
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeDropdown();
+                    trigger.focus();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const visibleItems = Array.from(list.querySelectorAll('.search-select-item')).filter(i => i.style.display !== 'none');
+                    if (visibleItems.length > 0) {
+                        selectEmployeeOption(visibleItems[0]);
+                    }
+                }
+            });
+        }
+
+        function filterInsideDropdown(term) {
+            const cleanTerm = (term || '').trim().toLowerCase();
+            const items = list.querySelectorAll('.search-select-item');
+            let matchCount = 0;
+
+            items.forEach(item => {
+                const epf = (item.getAttribute('data-epf') || '').toLowerCase();
+                const name = (item.getAttribute('data-name') || '').toLowerCase();
+                const branch = (item.getAttribute('data-branch') || '').toLowerCase();
+                const dept = (item.getAttribute('data-dept') || '').toLowerCase();
+                const desig = (item.getAttribute('data-desig') || '').toLowerCase();
+
+                if (!cleanTerm || epf.includes(cleanTerm) || name.includes(cleanTerm) || branch.includes(cleanTerm) || dept.includes(cleanTerm) || desig.includes(cleanTerm)) {
+                    item.style.display = 'flex';
+                    matchCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+
+            if (searchCountBadge) {
+                searchCountBadge.textContent = cleanTerm ? `${matchCount} found` : '';
             }
 
-            epfInput.addEventListener('blur', async function() {
-                const epfValue = this.value.trim();
-                if (epfValue.length < 2) return;
-                try {
-                    const response = await fetch(`/Api/EmployeeData?handler=ByEpf&epf=${epfValue}`);
-                    if (response.ok) { const data = await response.json(); fillFields(data); }
-                } catch (error) { console.error('Error:', error); }
-            });
+            if (emptyState) {
+                emptyState.style.display = (matchCount === 0) ? 'block' : 'none';
+            }
+        }
 
-            nameInput.addEventListener('input', async function() {
-                const term = this.value.trim();
-                if (term.length < 3) return;
-                const match = searchData.find(e => e.fullName === term);
-                if (match) { fillFields(match); return; }
-                try {
-                    const response = await fetch(`/Api/EmployeeData?handler=Search&term=${encodeURIComponent(term)}`);
-                    if (response.ok) {
-                        const data = await response.json();
-                        searchData = data;
-                        employeeList.innerHTML = '';
-                        data.forEach(emp => {
-                            const option = document.createElement('option');
-                            option.value = emp.fullName;
-                            option.textContent = `EPF: ${emp.epfNumber} - ${emp.branch}`;
-                            employeeList.appendChild(option);
-                        });
-                    }
-                } catch (error) { console.error('Error:', error); }
-            });
+        function selectEmployeeOption(item) {
+            const name = item.getAttribute('data-name');
+            const epf = item.getAttribute('data-epf');
+            const email = item.getAttribute('data-email');
+            const branch = item.getAttribute('data-branch');
+            const dept = item.getAttribute('data-dept');
+            const desig = item.getAttribute('data-desig');
+
+            document.getElementById('hiddenName').value = name;
+            document.getElementById('hiddenEpf').value = epf;
+            document.getElementById('hiddenEmail').value = email;
+            document.getElementById('hiddenBranch').value = branch;
+            document.getElementById('hiddenDept').value = dept;
+            document.getElementById('hiddenDesig').value = desig;
+
+            // Highlight selected item
+            list.querySelectorAll('.search-select-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+
+            triggerText.innerHTML = `<span style="font-weight:700;color:#151811">${name}</span> <span style="font-size:12px;color:#7a8863">(EPF: ${epf} &bull; ${branch})</span>`;
+
+            // Populate Info Panel
+            panel.style.display = 'block';
+            document.getElementById('infoName').textContent = name || '—';
+            document.getElementById('infoEpf').textContent = epf || '—';
+            document.getElementById('infoBranch').textContent = branch || '—';
+            document.getElementById('infoDept').textContent = dept || '—';
+            document.getElementById('infoDesig').textContent = desig || '—';
+            document.getElementById('infoEmail').textContent = email || '—';
+
+            closeDropdown();
+            trigger.focus();
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const wrapper = document.getElementById('searchSelectWrapper');
+            if (wrapper && !wrapper.contains(e.target) && isDropdownOpen) {
+                closeDropdown();
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const initialName = document.getElementById('hiddenName').value;
+            if (initialName) {
+                const matched = Array.from(list.querySelectorAll('.search-select-item')).find(i => i.getAttribute('data-name') === initialName);
+                if (matched) selectEmployeeOption(matched);
+            }
         });
     </script>
 }

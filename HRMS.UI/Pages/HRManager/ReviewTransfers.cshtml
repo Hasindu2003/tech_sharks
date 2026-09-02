@@ -1,7 +1,7 @@
 @page
 @using Microsoft.AspNetCore.Authorization
 @using HRMS.Application.Models
-@attribute [Authorize(Roles = "HR Manager")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer")]
 @model HRMS.UI.Pages.HRManager.ReviewTransfersModel
 @{
     ViewData["Title"] = "Review Transfers";
@@ -107,7 +107,8 @@
             <tbody>
                 @foreach (var r in Model.FinalizationQueue)
                 {
-                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">
@@ -156,7 +157,8 @@ else
             <tbody>
                 @foreach (var r in Model.IncomingRequests)
                 {
-                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">
@@ -203,7 +205,8 @@ else
             <tbody>
                 @foreach (var r in Model.OutgoingRequests)
                 {
-                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">

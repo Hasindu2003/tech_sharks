@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -29,6 +29,25 @@ namespace HRMS.UI.Pages.Resignation
 
             Requests = await _resignationService.GetMyResignationsAsync(user.Email!);
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostDeleteDraftAsync(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var identifier = user.Email ?? user.UserName ?? "";
+            (bool success, string? error) = await _resignationService.DeleteDraftAsync(id, identifier);
+            if (!success)
+            {
+                TempData["ErrorMessage"] = error;
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Draft resignation was deleted successfully.";
+            }
+
+            return RedirectToPage("/Resignation/MyRequests");
         }
     }
 }

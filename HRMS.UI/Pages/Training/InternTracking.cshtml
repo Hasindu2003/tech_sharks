@@ -1,0 +1,212 @@
+@page
+@model HRMS.UI.Pages.Training.InternTrackingModel
+@{
+    ViewData["Title"] = "Intern Tracking";
+    Layout = "_Layout";
+}
+
+<style>
+    .sep-page-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sep-page-sub   { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 28px; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .status-completed { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .status-training { background: #fef9c3; color: #a16207; }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+
+    .btn-action-eval {
+        background-color: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        border-radius: 6px;
+        padding: 5px 14px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-action-eval:hover { background-color: #10823c; color: white; border-color: #10823c; text-decoration: none; }
+
+    .btn-action-view {
+        background-color: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 5px 14px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    .btn-action-view:hover { background-color: #334155; color: white; border-color: #334155; text-decoration: none; }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+    }
+    .section-title {
+        font-size: 14.5px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .prob-track {
+        width: 140px;
+        height: 7px;
+        background-color: #e2e8f0;
+        border-radius: 999px;
+        overflow: hidden;
+        margin-bottom: 5px;
+        display: block;
+    }
+    .prob-fill {
+        height: 100%;
+        border-radius: 999px;
+        transition: width 0.3s ease;
+    }
+    .prob-fill-green {
+        background: linear-gradient(90deg, #10823c, #16a34a);
+    }
+    .prob-fill-amber {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+</style>
+
+<div>
+    <a href="/Training/Dashboard" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+            <i class="bi bi-check-circle me-1"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+            <i class="bi bi-exclamation-circle me-1"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+        <div>
+            <h1 class="sep-page-title">Intern Tracking</h1>
+            <p class="sep-page-sub">Monitor internship progress, review evaluations, and assess technical competency development.</p>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <h2 class="section-title">
+            <i class="bi bi-mortarboard-fill text-primary"></i> Active Interns
+        </h2>
+        <span class="badge bg-light text-muted border" style="font-size: 12px; border-radius: 12px; padding: 4px 10px;">
+            @Model.InternEmployees.Count Interns
+        </span>
+    </div>
+
+    <div class="tbl-card">
+        <table class="sep-table" id="tblInternStaff">
+            <thead>
+                <tr>
+                    <th>Intern Name</th>
+                    <th>Branch & Dept</th>
+                    <th>Start Date</th>
+                    <th>Internship Progress</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.InternEmployees.Any()) {
+                    foreach (var intern in Model.InternEmployees) {
+                        bool isCompleted = intern.EvaluationsCount >= intern.TotalInternMonths;
+                        <tr>
+                            <td>
+                                <strong>@intern.FullName</strong>
+                                <div class="text-muted" style="font-size: 11.5px;">EPF: @(string.IsNullOrEmpty(intern.EPFNumber) ? "N/A" : intern.EPFNumber)</div>
+                            </td>
+                            <td>
+                                <div>@intern.BranchName</div>
+                                <span class="text-muted" style="font-size: 11.5px;">@intern.DepartmentName</span>
+                            </td>
+                            <td class="text-muted">@intern.DateJoined.ToString("dd MMM yyyy")</td>
+                            <td style="width: 190px;">
+                                <div class="prob-track">
+                                    <div class="prob-fill @(isCompleted ? "prob-fill-green" : "prob-fill-amber")" 
+                                         style="width: @(intern.ProgressPercentage.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+                                </div>
+                                <span style="font-size: 11px; font-weight: 600;" class="text-muted">Month @intern.EvaluationsCount of @intern.TotalInternMonths</span>
+                            </td>
+                            <td>
+                                <span class="status-pill @(isCompleted ? "status-completed" : "status-training")">
+                                    <i class="bi @(isCompleted ? "bi-check-circle" : "bi-hourglass-split") me-1"></i> @intern.Status
+                                </span>
+                            </td>
+                            <td style="text-align: right;">
+                                <div class="d-inline-flex gap-2 justify-content-end">
+                                    <a href="/Training/ViewProfile?id=@intern.Id" class="btn-action-view">
+                                        <i class="bi bi-graph-up"></i> Profile
+                                    </a>
+                                    <a href="/Training/EvaluateIntern?id=@intern.Id" class="btn-action-eval">
+                                        <i class="bi bi-pencil-square"></i> Evaluate
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                } else {
+                    <tr class="empty-row">
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            <i class="bi bi-info-circle fs-4 d-block mb-1 text-secondary"></i>
+                            No intern records found for your assigned branch.
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof initTablePagination === 'function') {
+            initTablePagination('tblInternStaff', 10);
+        }
+    });
+</script>

@@ -6,5 +6,6 @@ namespace HRMS.Application.Designations.Commands
     public class CreateDesignationCommand : ICommand<Result>
     {
         public string Title { get; set; } = string.Empty;
+        public int DepartmentId { get; set; }
     }
 }

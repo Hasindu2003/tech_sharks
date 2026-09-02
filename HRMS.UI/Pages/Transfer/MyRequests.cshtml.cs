@@ -1,11 +1,11 @@
-﻿using HRMS.Application.Models;
+using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Transfer
 {
-    [Authorize(Roles = "Employee,Branch Manager,HR Manager")]
+    [Authorize(Roles = "Employee")]
     /// <summary>
     /// Page model for the "My Requests" page.
     /// Retrieves and displays all transfer requests initiated by the logged-in user.

@@ -8,7 +8,7 @@ namespace HRMS.Domain.Entities.Attendance
         public int Id { get; set; }
 
         public int EmployeeId { get; set; }
-        public Employee Employee { get; set; } = null!;
+        public Employee? Employee { get; set; }
 
         public DateTime LogDateTime { get; set; }
         public string DeviceId { get; set; } = null!;

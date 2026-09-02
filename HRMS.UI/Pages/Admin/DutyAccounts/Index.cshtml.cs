@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.UI.Pages.Admin.DutyAccounts
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,HR Manager")]
     public class IndexModel : PageModel
     {
         private readonly UserManager<ApplicationUser> _userManager;
@@ -23,44 +24,75 @@ namespace HRMS.UI.Pages.Admin.DutyAccounts
             _context = context;
         }
 
-        public List<DutyAccountItem> HRManagers { get; set; } = new();
+        public List<DutyAccountItem> CorporateHeads { get; set; } = new();
+        public List<DutyAccountItem> WelfareHeads { get; set; } = new();
         public List<DutyAccountItem> AreaManagers { get; set; } = new();
         public List<DutyAccountItem> BranchManagers { get; set; } = new();
         public List<DutyAccountItem> DepartmentHeads { get; set; } = new();
 
         public async Task OnGetAsync()
         {
-            HRManagers = await LoadRoleAsync("HR Manager");
+            var hrManagers = await LoadRoleAsync("HR Manager");
+            var welfareManagers = await LoadRoleAsync("Welfare Manager");
+            var dhList = await LoadRoleAsync("Department Head");
+
+            CorporateHeads = hrManagers.ToList();
+            WelfareHeads = welfareManagers
+                .Concat(dhList.Where(d => d.Department == "Welfare" || d.UserName == "head.welfare"))
+                .GroupBy(d => d.UserId)
+                .Select(g => g.First())
+                .ToList();
+
             AreaManagers = await LoadRoleAsync("Area Manager");
             BranchManagers = await LoadRoleAsync("Branch Manager");
-            DepartmentHeads = await LoadRoleAsync("Department Head");
+            DepartmentHeads = dhList
+                .Where(d => d.Department != "Welfare" && d.UserName != "head.welfare" && !WelfareHeads.Any(w => w.UserId == d.UserId))
+                .OrderBy(d => d.FullName)
+                .ToList();
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(string userId)
         {
+            if (string.IsNullOrEmpty(userId)) return NotFound();
+
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null) return NotFound();
 
-            var displayName = user.FullName;
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("HR Manager") || user.UserName is "hrmanager")
+            {
+                TempData["ErrorMessage"] = "Corporate HR Manager account cannot be deleted.";
+                return RedirectToPage();
+            }
 
-            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var displayName = user.FullName;
+            var empId = user.EmployeeId;
+
             try
             {
-                if (user.EmployeeId.HasValue)
+                // Delete linked dummy employee record if one was created for this duty account
+                if (empId.HasValue)
                 {
-                    var employee = await _context.Employees.FindAsync(user.EmployeeId.Value);
-                    if (employee != null)
+                    var employee = await _context.Employees.FindAsync(empId.Value);
+                    if (employee != null && employee.NIC.StartsWith("DUTY-"))
+                    {
                         _context.Employees.Remove(employee);
-                    await _context.SaveChangesAsync();
+                        await _context.SaveChangesAsync();
+                    }
                 }
 
-                await _userManager.DeleteAsync(user);
-                await transaction.CommitAsync();
+                // Delete Identity user using UserManager
+                var result = await _userManager.DeleteAsync(user);
+                if (!result.Succeeded)
+                {
+                    TempData["ErrorMessage"] = $"Failed to delete duty account: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+                    return RedirectToPage();
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                await transaction.RollbackAsync();
-                throw;
+                TempData["ErrorMessage"] = $"Failed to delete duty account: {ex.Message}";
+                return RedirectToPage();
             }
 
             TempData["SuccessMessage"] = $"Duty account '{displayName}' has been deleted.";
@@ -75,7 +107,7 @@ namespace HRMS.UI.Pages.Admin.DutyAccounts
             foreach (var u in users)
             {
                 string managedBranchNames = string.Empty;
-                if (role == "Area Manager" && !string.IsNullOrEmpty(u.ManagedBranches))
+                if ((role == "Area Manager" || role == "HR Officer") && !string.IsNullOrEmpty(u.ManagedBranches))
                 {
                     var ids = u.ManagedBranches.Split(',')
                         .Select(s => int.TryParse(s, out var i) ? i : 0)
@@ -90,6 +122,7 @@ namespace HRMS.UI.Pages.Admin.DutyAccounts
                 result.Add(new DutyAccountItem
                 {
                     UserId             = u.Id,
+                    UserName           = u.UserName ?? string.Empty,
                     FullName           = u.FullName,
                     Email              = u.Email ?? string.Empty,
                     BranchOrArea       = u.Branch ?? "-",
@@ -105,6 +138,7 @@ namespace HRMS.UI.Pages.Admin.DutyAccounts
         public class DutyAccountItem
         {
             public string UserId             { get; set; } = string.Empty;
+            public string UserName           { get; set; } = string.Empty;
             public string FullName           { get; set; } = string.Empty;
             public string Email              { get; set; } = string.Empty;
             public string BranchOrArea       { get; set; } = string.Empty;
