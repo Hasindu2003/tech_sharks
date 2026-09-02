@@ -73,14 +73,32 @@ namespace HRMS.Domain.Entities.Termination
         public DateTime CreatedDate { get; set; }
         public DateTime LastModifiedDate { get; set; }
 
-        // ── Approval ──
+        // ── Stage 3: Branch Manager Review ──
         [MaxLength(50)]
-        public string? ApproverReview { get; set; }
-        public DateTime? ApproverReviewDate { get; set; }
+        public string? BMReview { get; set; }
+        public DateTime? BMReviewDate { get; set; }
         [MaxLength(1000)]
-        public string? ApproverComments { get; set; }
+        public string? BMComments { get; set; }
         [MaxLength(256)]
-        public string? ApprovedBy { get; set; }
+        public string? BMEmail { get; set; }
+
+        // ── Stage 4: Area Manager Review ──
+        [MaxLength(50)]
+        public string? AMReview { get; set; }
+        public DateTime? AMReviewDate { get; set; }
+        [MaxLength(1000)]
+        public string? AMComments { get; set; }
+        [MaxLength(256)]
+        public string? AMEmail { get; set; }
+
+        // ── Stage 5: HR Finalization ──
+        [MaxLength(50)]
+        public string? HRReview { get; set; }
+        public DateTime? HRReviewDate { get; set; }
+        [MaxLength(1000)]
+        public string? HRComments { get; set; }
+        [MaxLength(256)]
+        public string? HREmail { get; set; }
 
         // ── Finance Clearance ──
         public bool FinanceClearanceCompleted { get; set; }
@@ -90,16 +108,23 @@ namespace HRMS.Domain.Entities.Termination
 
         // ── Navigation ──
         public ICollection<TerminationDocument> Documents { get; set; } = new List<TerminationDocument>();
+        public ICollection<TerminationDepartmentReview> DepartmentReviews { get; set; } = new List<TerminationDepartmentReview>();
     }
 
     public enum TerminationRequestStatus
     {
-        New = 0,
-        SubmittedForApproval = 1,
-        Approved = 2,
-        Rejected = 3,
-        FinanceClearance = 4,
-        Terminated = 5
+        Draft = 0,
+        SubmittedForApproval = 1, // Stage 2: Pending Department Heads in Branch
+        DeptHeadRejected = 2,
+        DeptHeadsApproved = 3,    // Stage 3: Pending Branch Manager
+        BMApproved = 4,           // Stage 4: Pending Area Manager
+        BMRejected = 5,
+        AMApproved = 6,           // Stage 5: Pending HR Officer Finalization
+        AMRejected = 7,
+        HRApproved = 8,           // Finalized / Approved by HR
+        HRRejected = 9,
+        FinanceClearance = 10,
+        Terminated = 11
     }
 
     public enum TerminationType

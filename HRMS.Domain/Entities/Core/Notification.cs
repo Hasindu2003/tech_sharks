@@ -1,4 +1,5 @@
 using System;
+using HRMS.Domain.Common;
 
 namespace HRMS.Domain.Entities.Core
 {
@@ -17,7 +18,7 @@ namespace HRMS.Domain.Entities.Core
 
         public bool IsRead { get; set; } = false;
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
+        public DateTime CreatedAt { get; set; } = SriLankaTime.Now;
 
         // --- Separation & Transfer Integration ---
         public CoreNotificationType? Type { get; set; }

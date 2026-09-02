@@ -58,7 +58,8 @@
             <tbody>
                 @foreach (var request in Model.PendingRequests)
                 {
-                    var initials = string.Join("", request.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (request.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">
@@ -113,7 +114,8 @@ else
             <tbody>
                 @foreach (var r in Model.ReviewedRequests)
                 {
-                    var initials   = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials   = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     var isApproved = r.AreaManagerReview == "Approved";
                     <tr>
                         <td>

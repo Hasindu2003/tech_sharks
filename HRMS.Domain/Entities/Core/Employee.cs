@@ -26,6 +26,7 @@ namespace HRMS.Domain.Entities.Core
 
         public string EPFNumber { get; set; } = null!;
         public string ETFNumber { get; set; } = string.Empty;
+        public string? BankName { get; set; }
         public string BankAccountName { get; set; } = null!;
         public string BankAccountNumber { get; set; } = null!;
 
@@ -49,5 +50,30 @@ namespace HRMS.Domain.Entities.Core
         // Reporting Officer (Self-referencing relationship)
         public int? ReportingOfficerId { get; set; }
         public Employee? ReportingOfficer { get; set; }
+
+        // Computed Name with Initials
+        public string NameWithInitials => FormatNameWithInitials(FullName, Initials);
+
+        public static string FormatNameWithInitials(string? fullName, string? initials)
+        {
+            if (!string.IsNullOrWhiteSpace(initials))
+            {
+                return initials.Trim();
+            }
+
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                var parts = fullName.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                if (parts.Length > 1)
+                {
+                    var initPart = string.Join(" ", parts.Take(parts.Length - 1).Select(p => p[0].ToString().ToUpper() + "."));
+                    var lastName = parts[^1];
+                    return $"{initPart} {lastName}";
+                }
+                return parts[0];
+            }
+
+            return "Unknown";
+        }
     }
 }

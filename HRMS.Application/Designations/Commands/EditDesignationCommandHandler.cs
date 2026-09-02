@@ -1,5 +1,6 @@
 using HRMS.Application.Common;
 using HRMS.Application.Entity.Commands;
+using HRMS.Domain.Entities.Core;
 using HRMS.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,6 +28,21 @@ namespace HRMS.Application.Designations.Commands
                 return Result.Failure("Designation not found.");
 
             designation.Title = command.Title.Trim();
+
+            // Enforce strictly one department assignment per designation
+            var existingDDs = await _context.DepartmentDesignations
+                .Where(dd => dd.DesignationId == command.Id)
+                .ToListAsync();
+            _context.DepartmentDesignations.RemoveRange(existingDDs);
+
+            if (command.DepartmentId > 0)
+            {
+                _context.DepartmentDesignations.Add(new DepartmentDesignation
+                {
+                    DepartmentId = command.DepartmentId,
+                    DesignationId = command.Id
+                });
+            }
 
             await _context.SaveChangesAsync();
 

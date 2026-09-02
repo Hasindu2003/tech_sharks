@@ -7,36 +7,81 @@
 }
 
 <style>
-    .form-container { padding: 24px; max-width: 680px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .btn-primary { background: #10823c; color: white; padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; text-decoration: none; display: inline-block; }
-    .branch-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 1px solid #e2e5dc; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: background 0.15s; }
-    .branch-row:hover { background: #f6f8f7; }
-    .branch-row input[type=checkbox] { width: 18px; height: 18px; accent-color: #10823c; flex-shrink: 0; }
-    .branch-name { font-weight: 600; font-size: 14px; }
-    .branch-loc { font-size: 12px; color: #7a8863; }
+    .form-container { padding: 28px; max-width: 680px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid #e2e5dc; }
+    .btn-primary { background: #10823c; color: white; padding: 10px 22px; border: none; border-radius: 8px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: #0d6e32; }
+    .btn-secondary { background: #f6f8f7; color: #151811; padding: 10px 20px; border: 1px solid #e2e5dc; border-radius: 8px; font-weight: 600; font-size: 13.5px; text-decoration: none; display: inline-block; transition: background 0.2s; }
+    .btn-secondary:hover { background: #eef1ec; }
+    .select-all-bar { display: flex; justify-content: space-between; align-items: center; padding: 11px 16px; background: #f6f8f7; border: 1px solid #e2e5dc; border-radius: 8px; margin-bottom: 12px; }
+    .branch-row { display: flex; align-items: center; gap: 14px; padding: 12px 16px; border: 1px solid #e2e5dc; border-radius: 8px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; user-select: none; }
+    .branch-row:hover { background: #fafbfa; border-color: #cbd5e1; }
+    .branch-row input[type=checkbox], .select-all-bar input[type=checkbox] { width: 18px; height: 18px; accent-color: #10823c; flex-shrink: 0; cursor: pointer; }
+    .branch-name { font-weight: 700; font-size: 14px; color: #151811; }
+    .branch-loc { font-size: 12px; color: #7a8863; margin-top: 2px; }
+    .hr-notice { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; border-radius: 8px; padding: 14px 16px; font-size: 13px; margin-bottom: 20px; display: flex; gap: 12px; align-items: flex-start; }
 </style>
 
 <div style="padding: 24px;">
     <div class="form-container">
-        <h2 style="margin-bottom: 6px;">Assign "@Model.Department.Name" to Branches</h2>
-        <p style="color:#7a8863; font-size:13px; margin-bottom:24px;">Select the branches that should have this department.</p>
+        <h2 style="margin-bottom: 6px; font-size: 20px; font-weight: 800; color: #151811;">Assign "@Model.Department.Name" to Branches</h2>
+        <p style="color:#7a8863; font-size:13px; margin-bottom:20px;">Configure which operational branches have active units of this department.</p>
 
-        <form method="post">
+        @if (Model.IsHumanResources)
+        {
+            <div class="hr-notice">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <div>
+                    <strong>Corporate Department Policy:</strong> The Human Resources department is stationed strictly at <strong>Head Office</strong>. HR Officers and HR Managers manage branch operations centrally and this department cannot be assigned to regional branches.
+                </div>
+            </div>
+        }
+        else if (Model.IsWelfare)
+        {
+            <div class="hr-notice" style="background: #f0fdf4; border-color: #bbf7d0; color: #166534;">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <div>
+                    <strong>Corporate Department Policy:</strong> The Welfare department is stationed strictly at <strong>Head Office</strong>. The Welfare Manager oversees employee financial assistance, medical claims, distress grants, and emergency relief centrally for all company branches.
+                </div>
+            </div>
+        }
+
+        <form method="post" id="assignForm">
             <input type="hidden" asp-for="DepartmentId" />
 
             @if (Model.Branches.Count == 0)
             {
-                <p style="color:#7a8863;">No branches found. Add branches first.</p>
+                <p style="color:#7a8863; font-size:13.5px; padding:20px 0; text-align:center;">No eligible branches found. Add branches first in Settings.</p>
             }
             else
             {
-                foreach (var branch in Model.Branches)
+                @if (!Model.IsCorporateHeadOfficeOnly)
                 {
-                    <label class="branch-row">
-                        <input type="checkbox" name="SelectedBranchIds" value="@branch.Id" @(branch.IsAssigned ? "checked" : "") />
+                    <div class="select-all-bar">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; font-weight:700; font-size:13px; color:#151811; margin:0;">
+                            <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" />
+                            <span>Select All Branches</span>
+                        </label>
+                        <span id="selectionSummary" style="font-size:12px; color:#7a8863; font-weight:700;"></span>
+                    </div>
+                }
+
+                @foreach (var branch in Model.Branches)
+                {
+                    <label class="branch-row" style="@(Model.IsHumanResources ? "opacity:0.9; cursor:default;" : "")">
+                        <input type="checkbox"
+                               class="branch-checkbox"
+                               name="SelectedBranchIds"
+                               value="@branch.Id"
+                               @(branch.IsAssigned ? "checked" : "")
+                               @(Model.IsHumanResources ? "checked onclick='return false;'" : "") />
                         <div>
-                            <div class="branch-name">@branch.Name</div>
+                            <div class="branch-name">
+                                @branch.Name
+                                @if (Model.IsHumanResources)
+                                {
+                                    <span style="font-size:11px; background:#dbeafe; color:#1d4ed8; font-weight:700; padding:2px 8px; border-radius:10px; margin-left:8px;">Exclusive Station</span>
+                                }
+                            </div>
                             <div class="branch-loc">@branch.Location</div>
                         </div>
                     </label>
@@ -50,3 +95,40 @@
         </form>
     </div>
 </div>
+
+@section Scripts {
+<script>
+function toggleSelectAll(master) {
+    const checkboxes = document.querySelectorAll('.branch-checkbox');
+    checkboxes.forEach(cb => {
+        if (!cb.disabled && cb.getAttribute('onclick') !== 'return false;') {
+            cb.checked = master.checked;
+        }
+    });
+    updateSummary();
+}
+
+function updateSummary() {
+    const checkboxes = document.querySelectorAll('.branch-checkbox');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+    const total = checkboxes.length;
+    const master = document.getElementById('selectAllCheckbox');
+    if (master) {
+        master.checked = (total > 0 && checked === total);
+        master.indeterminate = (checked > 0 && checked < total);
+    }
+    const summary = document.getElementById('selectionSummary');
+    if (summary) {
+        summary.textContent = `${checked} of ${total} selected`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const checkboxes = document.querySelectorAll('.branch-checkbox');
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', updateSummary);
+    });
+    updateSummary();
+});
+</script>
+}

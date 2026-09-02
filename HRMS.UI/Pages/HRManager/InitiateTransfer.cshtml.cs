@@ -1,18 +1,23 @@
-using HRMS.Infrastructure.Identity;
-using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HRMS.UI.Pages.HRManager
 {
-    [Authorize(Roles = "HR Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer")]
     public class InitiateTransferModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
@@ -32,12 +37,16 @@ namespace HRMS.UI.Pages.HRManager
         [BindProperty]
         public InputModel Input { get; set; } = new();
 
+        public List<SelectListItem> AssignedBranchList { get; set; } = new();
         public List<SelectListItem> Employees { get; set; } = new();
         public List<string> AllBranches { get; set; } = new();
 
-
         public class InputModel
         {
+            [Required(ErrorMessage = "Please select the employee's current branch.")]
+            [Display(Name = "Current Branch")]
+            public int? SelectedBranchId { get; set; }
+
             [Required(ErrorMessage = "Please select an employee.")]
             [Range(1, int.MaxValue, ErrorMessage = "Please select an employee.")]
             [Display(Name = "Employee")]
@@ -64,15 +73,97 @@ namespace HRMS.UI.Pages.HRManager
 
         public async Task<IActionResult> OnGetAsync()
         {
-            var hrUser = await _userManager.GetUserAsync(User);
+            var hrUser = await GetCurrentUserAsync();
             if (hrUser == null) return Challenge();
-            await PopulateDropdownsAsync(hrUser.Branch);
+
+            await LoadAssignedBranchesAndDataAsync(hrUser, Input.SelectedBranchId);
             return Page();
+        }
+
+        public async Task<IActionResult> OnGetEmployeesByBranchAsync(int branchId)
+        {
+            var hrUser = await GetCurrentUserAsync();
+            if (hrUser == null) return Unauthorized();
+
+            var assignedIds = await GetAssignedBranchIdsAsync(hrUser);
+            if (assignedIds.Any() && !assignedIds.Contains(branchId))
+            {
+                return Forbid();
+            }
+
+            var (dutyEmployeeIds, dutyIdentifiers) = await GetDutyAccountExclusionsAsync();
+
+            var rawEmployees = await _context.Employees
+                .Include(e => e.Designation)
+                .Include(e => e.Department)
+                .Include(e => e.Branch)
+                .Where(e => e.BranchId == branchId 
+                         && !e.NIC.StartsWith("DUTY")
+                         && e.NIC != "DUTY-ACC" 
+                         && e.Status != "Draft" 
+                         && e.Status != "Terminated" 
+                         && e.Status != "Resigned")
+                .OrderBy(e => e.FullName)
+                .ToListAsync();
+
+            var users = await _context.Users
+                .Where(u => !string.IsNullOrEmpty(u.Designation) || !string.IsNullOrEmpty(u.Department))
+                .Select(u => new { u.EmployeeId, u.Email, u.UserName, u.EpfNumber, u.Designation, u.Department })
+                .ToListAsync();
+
+            var userByEmpId = users.Where(u => u.EmployeeId.HasValue).ToDictionary(u => u.EmployeeId!.Value, u => u);
+            var userByEmail = users.Where(u => !string.IsNullOrEmpty(u.Email)).GroupBy(u => u.Email!, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+            var userByEpf = users.Where(u => !string.IsNullOrEmpty(u.EpfNumber)).GroupBy(u => u.EpfNumber!, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+            var filteredEmployees = rawEmployees
+                .Where(e => !dutyEmployeeIds.Contains(e.Id)
+                         && (string.IsNullOrEmpty(e.Email) || !dutyIdentifiers.Contains(e.Email.Trim()))
+                         && (string.IsNullOrEmpty(e.EPFNumber) || !dutyIdentifiers.Contains(e.EPFNumber.Trim())))
+                .Select(e =>
+                {
+                    string desig = e.Designation?.Title ?? "";
+                    if (string.IsNullOrWhiteSpace(desig))
+                    {
+                        if (userByEmpId.TryGetValue(e.Id, out var u) && !string.IsNullOrWhiteSpace(u.Designation))
+                            desig = u.Designation;
+                        else if (!string.IsNullOrEmpty(e.Email) && userByEmail.TryGetValue(e.Email, out u) && !string.IsNullOrWhiteSpace(u.Designation))
+                            desig = u.Designation;
+                        else if (!string.IsNullOrEmpty(e.EPFNumber) && userByEpf.TryGetValue(e.EPFNumber, out u) && !string.IsNullOrWhiteSpace(u.Designation))
+                            desig = u.Designation;
+                    }
+
+                    string dept = e.Department?.Name ?? "";
+                    if (string.IsNullOrWhiteSpace(dept))
+                    {
+                        if (userByEmpId.TryGetValue(e.Id, out var u) && !string.IsNullOrWhiteSpace(u.Department))
+                            dept = u.Department;
+                        else if (!string.IsNullOrEmpty(e.Email) && userByEmail.TryGetValue(e.Email, out u) && !string.IsNullOrWhiteSpace(u.Department))
+                            dept = u.Department;
+                        else if (!string.IsNullOrEmpty(e.EPFNumber) && userByEpf.TryGetValue(e.EPFNumber, out u) && !string.IsNullOrWhiteSpace(u.Department))
+                            dept = u.Department;
+                    }
+
+                    return new
+                    {
+                        id = e.Id,
+                        fullName = e.FullName,
+                        epfNumber = !string.IsNullOrWhiteSpace(e.EPFNumber) ? e.EPFNumber : "N/A",
+                        email = e.Email ?? "",
+                        designationTitle = desig,
+                        departmentName = !string.IsNullOrWhiteSpace(dept) ? dept : "General",
+                        branchName = e.Branch != null ? e.Branch.Name : "N/A",
+                        dateJoined = e.DateJoined.HasValue ? e.DateJoined.Value.ToString("yyyy-MM-dd") : null,
+                        yearsOfService = e.DateJoined.HasValue ? (int)((DateTime.Today - e.DateJoined.Value).TotalDays / 365.25) : 0
+                    };
+                })
+                .ToList();
+
+            return new JsonResult(filteredEmployees);
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            var hrUser = await _userManager.GetUserAsync(User);
+            var hrUser = await GetCurrentUserAsync();
             if (hrUser == null) return Challenge();
 
             if (Input.PreferredDate.HasValue)
@@ -110,12 +201,20 @@ namespace HRMS.UI.Pages.HRManager
 
             if (!ModelState.IsValid)
             {
-                await PopulateDropdownsAsync(hrUser.Branch);
+                await LoadAssignedBranchesAndDataAsync(hrUser, Input.SelectedBranchId);
                 return Page();
             }
 
             var targetEmployee = await _context.Employees
-                .Where(e => e.Id == Input.SelectedEmployeeId)
+                .Include(e => e.Designation)
+                .Include(e => e.Department)
+                .Include(e => e.Branch)
+                .Where(e => e.Id == Input.SelectedEmployeeId 
+                         && !e.NIC.StartsWith("DUTY")
+                         && e.NIC != "DUTY-ACC" 
+                         && e.Status != "Draft" 
+                         && e.Status != "Terminated" 
+                         && e.Status != "Resigned")
                 .Select(e => new
                 {
                     e.Id,
@@ -123,7 +222,10 @@ namespace HRMS.UI.Pages.HRManager
                     e.EPFNumber,
                     e.Email,
                     e.DateJoined,
-                    BranchName = e.Branch.Name,
+                    e.BranchId,
+                    e.DepartmentId,
+                    e.DesignationId,
+                    BranchName = e.Branch != null ? e.Branch.Name : "",
                     DesignationTitle = e.Designation != null ? e.Designation.Title : "",
                     DepartmentName = e.Department != null ? e.Department.Name : ""
                 })
@@ -132,24 +234,24 @@ namespace HRMS.UI.Pages.HRManager
             if (targetEmployee == null)
             {
                 ModelState.AddModelError("Input.SelectedEmployeeId", "Invalid employee selected.");
-                await PopulateDropdownsAsync(hrUser.Branch);
+                await LoadAssignedBranchesAndDataAsync(hrUser, Input.SelectedBranchId);
                 return Page();
             }
 
-            // Enforce branch restriction: HR Manager can only initiate transfers for employees in their own branch
-            if (targetEmployee.BranchName != hrUser.Branch)
+            var assignedIds = await GetAssignedBranchIdsAsync(hrUser);
+            if (assignedIds.Any() && !assignedIds.Contains(targetEmployee.BranchId))
             {
                 ModelState.AddModelError("Input.SelectedEmployeeId",
-                    "You can only initiate transfers for employees in your branch.");
-                await PopulateDropdownsAsync(hrUser.Branch);
+                    "You can only initiate transfers for employees in your assigned branches.");
+                await LoadAssignedBranchesAndDataAsync(hrUser, Input.SelectedBranchId);
                 return Page();
             }
 
-            if (Input.RequestedBranch == targetEmployee.BranchName)
+            if (string.Equals(Input.RequestedBranch, targetEmployee.BranchName, StringComparison.OrdinalIgnoreCase))
             {
                 ModelState.AddModelError("Input.RequestedBranch",
                     $"The employee is already at {targetEmployee.BranchName}. You cannot request a transfer to their current branch.");
-                await PopulateDropdownsAsync(hrUser.Branch);
+                await LoadAssignedBranchesAndDataAsync(hrUser, Input.SelectedBranchId);
                 return Page();
             }
 
@@ -169,59 +271,202 @@ namespace HRMS.UI.Pages.HRManager
                 documentContentType = Input.Document.ContentType;
             }
 
+            var roleName = User.IsInRole("HR Officer") ? "HR Officer" : "HR Manager";
+
+            string desigTitle = targetEmployee.DesignationTitle;
+            string deptTitle = targetEmployee.DepartmentName;
+
+            if (string.IsNullOrWhiteSpace(desigTitle) || string.IsNullOrWhiteSpace(deptTitle))
+            {
+                if (targetEmployee.DepartmentId.HasValue && targetEmployee.DepartmentId.Value > 0 && string.IsNullOrWhiteSpace(deptTitle))
+                {
+                    var d = await _context.Departments.FindAsync(targetEmployee.DepartmentId.Value);
+                    if (d != null) deptTitle = d.Name;
+                }
+
+                if (targetEmployee.DesignationId.HasValue && targetEmployee.DesignationId.Value > 0 && string.IsNullOrWhiteSpace(desigTitle))
+                {
+                    var des = await _context.Designations.FindAsync(targetEmployee.DesignationId.Value);
+                    if (des != null) desigTitle = des.Title;
+                }
+
+                var matchingUser = await _context.Users
+                    .FirstOrDefaultAsync(u => (u.EmployeeId == targetEmployee.Id) ||
+                                              (!string.IsNullOrEmpty(targetEmployee.Email) && u.Email == targetEmployee.Email) ||
+                                              (!string.IsNullOrEmpty(targetEmployee.EPFNumber) && u.EpfNumber == targetEmployee.EPFNumber));
+                if (matchingUser != null)
+                {
+                    if (string.IsNullOrWhiteSpace(desigTitle) && !string.IsNullOrWhiteSpace(matchingUser.Designation))
+                        desigTitle = matchingUser.Designation;
+                    if (string.IsNullOrWhiteSpace(deptTitle) && !string.IsNullOrWhiteSpace(matchingUser.Department))
+                        deptTitle = matchingUser.Department;
+                }
+            }
+
             var request = new TransferRequestViewModel
             {
                 EmployeeName = targetEmployee.FullName,
-                EpfNumber = targetEmployee.EPFNumber,
+                EpfNumber = !string.IsNullOrWhiteSpace(targetEmployee.EPFNumber) ? targetEmployee.EPFNumber : "N/A",
                 EmployeeEmail = targetEmployee.Email,
                 CurrentBranch = targetEmployee.BranchName,
-                CurrentDesignation = targetEmployee.DesignationTitle,
-                Department = targetEmployee.DepartmentName,
+                CurrentDesignation = !string.IsNullOrWhiteSpace(desigTitle) ? desigTitle : "General Staff",
+                // Department routes the request to a Department Head, so it must hold the real
+                // department name or nothing at all — a placeholder matches no Department Head
+                // and would strand the request at stage 2.
+                Department = !string.IsNullOrWhiteSpace(deptTitle) ? deptTitle.Trim() : "",
                 RequestedBranch = Input.RequestedBranch,
                 Reason = Input.Reason,
                 PreferredDate = Input.PreferredDate!.Value,
                 YearsOfService = yearsOfService,
                 JoinDate = targetEmployee.DateJoined,
-                RequestedBy = hrUser.Email!,
-                RequestedByRole = "HR Manager"
+                RequestedBy = hrUser.Email ?? hrUser.UserName ?? "HR",
+                RequestedByRole = roleName
             };
 
             await _transferService.CreateTransferRequestAsync(request, documentData, documentFileName, documentContentType);
 
             TempData["SuccessMessage"] = $"Transfer request for {targetEmployee.FullName} initiated successfully!";
-            return RedirectToPage("/HRManager/ReviewTransfers");
+            return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Transfers" });
         }
 
-        private async Task PopulateDropdownsAsync(string hrBranch)
+        private async Task<ApplicationUser?> GetCurrentUserAsync()
         {
-            // Collect emails of all duty accounts so they can be excluded
-            var dutyEmails = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var role in new[] { "HR Manager", "Branch Manager", "Area Manager", "Department Head" })
+            var username = User.Identity?.Name;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null && !string.IsNullOrEmpty(username))
             {
-                var roleUsers = await _userManager.GetUsersInRoleAsync(role);
-                foreach (var u in roleUsers)
-                    if (u.Email != null) dutyEmails.Add(u.Email);
+                user = await _userManager.FindByNameAsync(username) ?? await _userManager.FindByEmailAsync(username);
+            }
+            return user;
+        }
+
+        private async Task<HashSet<int>> GetAssignedBranchIdsAsync(ApplicationUser hrUser)
+        {
+            var assignedIds = new HashSet<int>();
+            if (User.IsInRole("HR Manager"))
+            {
+                return assignedIds; // Empty set means all branches allowed
             }
 
-            var employees = await _context.Employees
-                .Where(e => e.Branch.Name == hrBranch && !dutyEmails.Contains(e.Email))
-                .OrderBy(e => e.FullName)
-                .Select(e => new
-                {
-                    e.Id,
-                    e.FullName,
-                    e.EPFNumber,
-                    DesignationTitle = e.Designation != null ? e.Designation.Title : "N/A"
-                })
-                .ToListAsync();
-
-            Employees = employees.Select(e => new SelectListItem
+            if (!string.IsNullOrWhiteSpace(hrUser.ManagedBranches))
             {
-                Value = e.Id.ToString(),
-                Text = $"{e.FullName} ({e.EPFNumber}) - {e.DesignationTitle}"
+                var ids = hrUser.ManagedBranches
+                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(s => int.TryParse(s.Trim(), out int id) ? id : 0)
+                    .Where(id => id > 0);
+
+                foreach (var id in ids) assignedIds.Add(id);
+            }
+
+            if (!string.IsNullOrWhiteSpace(hrUser.Branch) && hrUser.Branch != "Multiple")
+            {
+                var b = await _context.Branches.FirstOrDefaultAsync(br => br.Name == hrUser.Branch);
+                if (b != null) assignedIds.Add(b.Id);
+            }
+
+            return assignedIds;
+        }
+
+        private async Task<(HashSet<int> DutyEmployeeIds, HashSet<string> DutyIdentifiers)> GetDutyAccountExclusionsAsync()
+        {
+            var dutyEmployeeIds = new HashSet<int>();
+            var dutyIdentifiers = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var dutyRoles = new[] { "Admin", "HR Manager", "HR Officer", "Branch Manager", "Area Manager", "Department Head" };
+            foreach (var role in dutyRoles)
+            {
+                var usersInRole = await _userManager.GetUsersInRoleAsync(role);
+                foreach (var u in usersInRole)
+                {
+                    if (u.EmployeeId.HasValue && u.EmployeeId.Value > 0)
+                        dutyEmployeeIds.Add(u.EmployeeId.Value);
+
+                    if (!string.IsNullOrWhiteSpace(u.Email))
+                        dutyIdentifiers.Add(u.Email.Trim());
+
+                    if (!string.IsNullOrWhiteSpace(u.UserName))
+                        dutyIdentifiers.Add(u.UserName.Trim());
+
+                    if (!string.IsNullOrWhiteSpace(u.EpfNumber))
+                        dutyIdentifiers.Add(u.EpfNumber.Trim());
+                }
+            }
+
+            return (dutyEmployeeIds, dutyIdentifiers);
+        }
+
+        private async Task LoadAssignedBranchesAndDataAsync(ApplicationUser hrUser, int? selectedBranchId)
+        {
+            var assignedIds = await GetAssignedBranchIdsAsync(hrUser);
+            var allBranchesQuery = _context.Branches.OrderBy(b => b.Name);
+
+            var availableBranches = assignedIds.Any()
+                ? await allBranchesQuery.Where(b => assignedIds.Contains(b.Id)).ToListAsync()
+                : await allBranchesQuery.ToListAsync();
+
+            AssignedBranchList = availableBranches.Select(b => new SelectListItem
+            {
+                Value = b.Id.ToString(),
+                Text = b.Name,
+                Selected = selectedBranchId.HasValue && selectedBranchId.Value == b.Id
             }).ToList();
 
             AllBranches = await _context.Branches.Select(b => b.Name).OrderBy(b => b).ToListAsync();
+
+            if (selectedBranchId.HasValue)
+            {
+                var (dutyEmployeeIds, dutyIdentifiers) = await GetDutyAccountExclusionsAsync();
+                var rawEmployees = await _context.Employees
+                    .Include(e => e.Designation)
+                    .Include(e => e.Department)
+                    .Include(e => e.Branch)
+                    .Where(e => e.BranchId == selectedBranchId.Value 
+                             && !e.NIC.StartsWith("DUTY")
+                             && e.NIC != "DUTY-ACC" 
+                             && e.Status != "Draft" 
+                             && e.Status != "Terminated" 
+                             && e.Status != "Resigned")
+                    .OrderBy(e => e.FullName)
+                    .ToListAsync();
+
+                var users = await _context.Users
+                    .Where(u => !string.IsNullOrEmpty(u.Designation) || !string.IsNullOrEmpty(u.Department))
+                    .Select(u => new { u.EmployeeId, u.Email, u.UserName, u.EpfNumber, u.Designation, u.Department })
+                    .ToListAsync();
+
+                var userByEmpId = users.Where(u => u.EmployeeId.HasValue).ToDictionary(u => u.EmployeeId!.Value, u => u);
+                var userByEmail = users.Where(u => !string.IsNullOrEmpty(u.Email)).GroupBy(u => u.Email!, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+                var userByEpf = users.Where(u => !string.IsNullOrEmpty(u.EpfNumber)).GroupBy(u => u.EpfNumber!, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
+                var filteredEmployees = rawEmployees
+                    .Where(e => !dutyEmployeeIds.Contains(e.Id)
+                             && (string.IsNullOrEmpty(e.Email) || !dutyIdentifiers.Contains(e.Email.Trim()))
+                             && (string.IsNullOrEmpty(e.EPFNumber) || !dutyIdentifiers.Contains(e.EPFNumber.Trim())))
+                    .ToList();
+
+                Employees = filteredEmployees.Select(e =>
+                {
+                    string desig = e.Designation?.Title ?? "";
+                    if (string.IsNullOrWhiteSpace(desig))
+                    {
+                        if (userByEmpId.TryGetValue(e.Id, out var u) && !string.IsNullOrWhiteSpace(u.Designation))
+                            desig = u.Designation;
+                        else if (!string.IsNullOrEmpty(e.Email) && userByEmail.TryGetValue(e.Email, out u) && !string.IsNullOrWhiteSpace(u.Designation))
+                            desig = u.Designation;
+                        else if (!string.IsNullOrEmpty(e.EPFNumber) && userByEpf.TryGetValue(e.EPFNumber, out u) && !string.IsNullOrWhiteSpace(u.Designation))
+                            desig = u.Designation;
+                    }
+                    var epf = !string.IsNullOrWhiteSpace(e.EPFNumber) ? e.EPFNumber : "N/A";
+                    var desigSuffix = !string.IsNullOrWhiteSpace(desig) ? $" - {desig}" : "";
+
+                    return new SelectListItem
+                    {
+                        Value = e.Id.ToString(),
+                        Text = $"{e.FullName} ({epf}){desigSuffix}",
+                        Selected = Input.SelectedEmployeeId.HasValue && Input.SelectedEmployeeId.Value == e.Id
+                    };
+                }).ToList();
+            }
         }
     }
 }

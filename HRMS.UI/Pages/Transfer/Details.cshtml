@@ -45,11 +45,15 @@
 else
 {
     var req = Model.TransferRequest;
-    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
 
-    <a asp-page="/Transfer/MyRequests" class="back-link">
+    var isDutyAccount = User.IsInRole("Department Head") || User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager") || User.IsInRole("HR Officer") || User.IsInRole("Admin");
+    var backUrl = isDutyAccount ? "/Separation/Dashboard?ActiveTab=Transfers" : "/Transfer/Separation?ActiveTab=Transfers";
+
+    <a href="@backUrl" class="back-link">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to My Requests
+        Back
     </a>
 
     <div class="avatar-header">
@@ -76,7 +80,7 @@ else
                         @switch (req.Status)
                         {
                             case TransferStatus.Pending:
-                                <span class="k-badge k-badge-pending">Pending HR Review</span>
+                                <span class="k-badge k-badge-pending">Awaiting Department Head</span>
                                 break;
                             case TransferStatus.DeptHeadApproved:
                                 <span class="k-badge k-badge-info">Dept Head Approved — Awaiting BMs</span>
@@ -133,7 +137,9 @@ else
 
                 @{
                     string StepState(string? review) =>
-                        review == "Approved" ? "done" : review == "Rejected" ? "rejected" : "pending";
+                        review == "Rejected" ? "rejected"
+                        : string.IsNullOrEmpty(review) ? "pending"
+                        : "done";   // "Approved", or "Not Required" when a stage was skipped
                 }
 
                 <div class="tstep">

@@ -105,18 +105,18 @@
 </div>
 
 <div class="form-card" style="margin-top: 24px; margin-bottom: 40px;">
-    <div class="form-card-header">Import Biometric Logs from CSV</div>
+    <div class="form-card-header">Import Biometric Logs from File (Excel / CSV)</div>
     <div class="form-card-body">
         <h2 class="page-h" style="margin-bottom: 4px;">Upload Punch Export File</h2>
-        <p class="page-s" style="margin-bottom: 20px;">Upload a CSV file exported from a biometric device (e.g. fingerprint scanner)</p>
+        <p class="page-s" style="margin-bottom: 20px;">Upload an Excel (.xlsx) or CSV file exported from a biometric device (e.g. fingerprint scanner)</p>
 
         <form method="post" enctype="multipart/form-data" asp-page-handler="ImportCsv">
             <div class="fg" style="margin-bottom: 20px;">
-                <label asp-for="CsvFile" class="fl">Select CSV File <span class="req">*</span></label>
-                <input asp-for="CsvFile" type="file" class="fi" accept=".csv" required />
+                <label asp-for="CsvFile" class="fl">Select Excel (.xlsx) or CSV (.csv) File <span class="req">*</span></label>
+                <input asp-for="CsvFile" type="file" class="fi" accept=".csv,.xlsx" required />
                 <span asp-validation-for="CsvFile" class="text-danger"></span>
-                <div style="font-size: 12px; color: #7a8863; margin-top: 6px;">
-                    Expected format: CSV containing headers <code>UserID</code>, <code>VerifyTime</code>, <code>VerifyState</code>, and <code>DeviceID</code>.
+                <div style="font-size: 12px; color: #7a8863; margin-top: 6px; line-height: 1.5;">
+                    Supported formats: Biometric machine export with headers <code>ID</code> (Employee ID), <code>Date</code>, <code>Time</code>, <code>Device Serial No.</code>, or legacy format with <code>UserID</code>, <code>VerifyTime</code>.
                 </div>
             </div>
 

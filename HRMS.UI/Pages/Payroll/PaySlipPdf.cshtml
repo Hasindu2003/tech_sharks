@@ -1,0 +1,401 @@
+@page "{id:int?}"
+@model HRMS.UI.Pages.Payroll.PayslipPdfModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Payslip — @Model.Payslip?.Employee?.NameWithInitials</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: #fff;
+            color: #111;
+            font-size: 13px;
+        }
+
+        .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: 0 auto;
+            padding: 20mm;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 3px solid #10823c;
+        }
+
+        .company-name {
+            font-size: 22px;
+            font-weight: 800;
+            color: #10823c;
+        }
+
+        .company-sub {
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .payslip-title {
+            text-align: right;
+        }
+
+            .payslip-title h2 {
+                font-size: 18px;
+                font-weight: 700;
+                color: #111;
+            }
+
+            .payslip-title p {
+                font-size: 11px;
+                color: #666;
+                margin-top: 3px;
+            }
+
+        .emp-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #f6f8f7;
+            border-radius: 8px;
+            border-left: 4px solid #10823c;
+        }
+
+        .info-group label {
+            font-size: 10px;
+            font-weight: 700;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 3px;
+        }
+
+        .info-group span {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #10823c;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 4px;
+        }
+
+        th {
+            background: #f6f8f7;
+            padding: 8px 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 1px solid #e2e5dc;
+        }
+
+        td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 12px;
+        }
+
+            td:last-child {
+                text-align: right;
+                font-weight: 600;
+            }
+
+        tr.total-row td {
+            background: #f6f8f7;
+            font-weight: 700;
+            border-top: 2px solid #e2e5dc;
+        }
+
+        tr.bonus-row td {
+            color: #10823c;
+        }
+
+        tr.bonus-sub td {
+            color: #555;
+            font-size: 11px;
+            padding: 4px 12px 4px 24px;
+        }
+
+            tr.bonus-sub td:first-child::before {
+                content: "↳ ";
+                color: #10823c;
+            }
+
+        .net-pay-box {
+            background: #10823c;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+            .net-pay-box .label {
+                font-size: 13px;
+                font-weight: 600;
+            }
+
+            .net-pay-box .amount {
+                font-size: 24px;
+                font-weight: 800;
+            }
+
+        .employer-box {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+            .employer-box .title {
+                font-size: 11px;
+                font-weight: 700;
+                color: #166534;
+                text-transform: uppercase;
+                margin-bottom: 8px;
+            }
+
+        .employer-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 4px;
+        }
+
+            .employer-row span:last-child {
+                font-weight: 600;
+                color: #166534;
+            }
+
+        .footer {
+            margin-top: 32px;
+            padding-top: 16px;
+            border-top: 1px solid #e2e5dc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+            .footer p {
+                font-size: 10px;
+                color: #999;
+            }
+
+        .stamp {
+            font-size: 10px;
+            color: #10823c;
+            font-weight: 600;
+        }
+
+        @@media print {
+            body {
+                background: white;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+
+            .page {
+                padding: 15mm;
+            }
+
+            @@page {
+                margin: 0;
+                size: A4;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print" style="position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:99;">
+        <button onclick="window.print()"
+                style="padding:10px 20px;background:#10823c;color:white;border:none;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;">
+            🖨️ Print / Save as PDF
+        </button>
+        <a href="/Payroll/Payslips"
+           style="padding:10px 16px;background:#f6f8f7;border:1px solid #e2e5dc;color:#111;border-radius:8px;font-weight:600;font-size:13px;text-decoration:none;">
+            ← Back
+        </a>
+    </div>
+
+    <div class="page">
+
+        <!-- Header -->
+        <div class="header">
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <img src="/images/logo.png" alt="Kanrich Finance" style="height: 48px; width: auto; object-fit: contain;" onerror="this.onerror=null; this.src='/images/logo.webp';" />
+                <div>
+                    <div class="company-name">Kanrich Finance</div>
+                    <div class="company-sub">Official Payslip Document</div>
+                    <div class="company-sub">Confidential — For Employee Use Only</div>
+                </div>
+            </div>
+            <div class="payslip-title">
+                <h2>PAYSLIP</h2>
+                <p>Pay Period: @Model.Payslip?.PayrollRun?.MonthName</p>
+                <p>Generated: @DateTime.Now.ToString("dd MMM yyyy")</p>
+            </div>
+        </div>
+
+        <!-- Employee Info -->
+        <div class="emp-section">
+            <div class="info-group">
+                <label>Employee Name</label>
+                <span>@Model.Payslip?.Employee?.NameWithInitials</span>
+            </div>
+            <div class="info-group">
+                <label>EPF Number</label>
+                <span>@(Model.Payslip?.Employee?.EPFNumber ?? "—")</span>
+            </div>
+            <div class="info-group">
+                <label>Designation</label>
+                <span>@(Model.Payslip?.Employee?.Designation?.Title ?? "—")</span>
+            </div>
+            <div class="info-group">
+                <label>Department</label>
+                <span>@(Model.Payslip?.Employee?.Department?.Name ?? "—")</span>
+            </div>
+            <div class="info-group">
+                <label>Bank Account</label>
+                <span>@(!string.IsNullOrEmpty(Model.Payslip?.Employee?.BankName) ? $"{Model.Payslip.Employee.BankName} — " : "")@(Model.Payslip?.Employee?.BankAccountNumber ?? "—")</span>
+            </div>
+            <div class="info-group">
+                <label>Pay Period</label>
+                <span>@Model.Payslip?.PayrollRun?.MonthName</span>
+            </div>
+        </div>
+
+        <!-- Basic Earnings -->
+        <div class="section-title">Basic Earnings</div>
+        <table>
+            <thead>
+                <tr><th>Description</th><th style="text-align:right">Amount (LKR)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Basic Salary</td><td>@Model.Payslip?.BasicSalary.ToString("N2")</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Bonuses & Additions -->
+        @if (Model.Payslip?.Bonuses > 0 || (Model.BonusDetails != null && Model.BonusDetails.Any()))
+        {
+            <div class="section-title">Bonuses &amp; Additions</div>
+            <table>
+                <thead>
+                    <tr><th>Incentive / Bonus Type</th><th style="text-align:right">Amount (LKR)</th></tr>
+                </thead>
+                <tbody>
+                    @if (Model.BonusDetails != null && Model.BonusDetails.Any())
+                    {
+                        @foreach (var bonus in Model.BonusDetails)
+                        {
+                            <tr class="bonus-sub">
+                                <td>@bonus.BonusType@(string.IsNullOrEmpty(bonus.Reason) ? "" : $" — {bonus.Reason}")</td>
+                                <td>@bonus.Amount.ToString("N2")</td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr class="bonus-sub">
+                            <td>Performance &amp; Overtime Additions</td>
+                            <td>@Model.Payslip?.Bonuses.ToString("N2")</td>
+                        </tr>
+                    }
+                    <tr class="total-row">
+                        <td>Total Bonuses &amp; Additions</td>
+                        <td>@Model.Payslip?.Bonuses.ToString("N2")</td>
+                    </tr>
+                </tbody>
+            </table>
+        }
+
+        <!-- Gross Pay -->
+        <table>
+            <tbody>
+                <tr class="total-row" style="background: #eef7f0; border-top: 2px solid #10823c;">
+                    <td style="color: #10823c; font-size: 13px; font-weight: 800;">Total Gross Pay (Basic + Additions)</td>
+                    <td style="color: #10823c; font-size: 13px; font-weight: 800;">@Model.AdjustedGrossPay.ToString("N2")</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Deductions -->
+        <div class="section-title">Deductions</div>
+        <table>
+            <thead>
+                <tr><th>Description</th><th style="text-align:right">Amount (LKR)</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>EPF Employee Contribution (8%)</td><td>@Model.Payslip?.EpfEmployee.ToString("N2")</td></tr>
+                @if (Model.Payslip?.TaxDeduction > 0)
+                {
+                    <tr><td>Income Tax</td><td>@Model.Payslip.TaxDeduction.ToString("N2")</td></tr>
+                }
+                <tr class="total-row"><td>Total Deductions</td><td>@Model.AdjustedTotalDeductions.ToString("N2")</td></tr>
+            </tbody>
+        </table>
+
+        <!-- Net Pay -->
+        <div class="net-pay-box">
+            <div class="label">NET PAY</div>
+            <div class="amount">LKR @Model.AdjustedNetPay.ToString("N2")</div>
+        </div>
+
+        <!-- Employer Contributions -->
+        <div class="employer-box">
+            <div class="title">Employer Contributions (Not deducted from salary)</div>
+            <div class="employer-row">
+                <span>EPF Employer Contribution (12%)</span>
+                <span>LKR @Model.Payslip?.EpfEmployer.ToString("N2")</span>
+            </div>
+            <div class="employer-row">
+                <span>ETF Employer Contribution (3%)</span>
+                <span>LKR @Model.Payslip?.Etf.ToString("N2")</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>This is a computer-generated payslip. No signature required.</p>
+            <div class="stamp">✓ Kanrich Finance — @DateTime.Now.ToString("yyyy")</div>
+        </div>
+
+    </div>
+</body>
+</html>

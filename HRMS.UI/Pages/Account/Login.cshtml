@@ -287,12 +287,21 @@
             box-shadow: 0 16px 40px -12px rgba(0, 0, 0, 0.2);
         }
 
-        .right-bg {
+        .slide-bg {
             position: absolute;
             inset: 0;
-            background-image: url('/images/login-bg.webp');
             background-size: cover;
-            background-position: center top;
+            background-position: center;
+            opacity: 0;
+            transform: scale(1.04);
+            transition: opacity 1s cubic-bezier(0.4, 0, 0.2, 1), transform 5s ease-out;
+            z-index: 1;
+        }
+
+        .slide-bg.active {
+            opacity: 1;
+            transform: scale(1);
+            z-index: 2;
         }
 
         .right-gradient {
@@ -300,17 +309,19 @@
             inset: 0;
             background: linear-gradient(
                 to top,
-                rgba(16, 130, 60, 0.88) 0%,
-                rgba(16, 130, 60, 0.35) 50%,
-                rgba(16, 130, 60, 0) 100%
+                rgba(10, 92, 41, 0.92) 0%,
+                rgba(16, 130, 60, 0.4) 55%,
+                rgba(16, 130, 60, 0.05) 100%
             );
             mix-blend-mode: multiply;
+            z-index: 3;
         }
 
         .right-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0, 0, 0, 0.08);
+            background: rgba(0, 0, 0, 0.12);
+            z-index: 4;
         }
 
         .right-content {
@@ -319,6 +330,7 @@
             left: 0;
             right: 0;
             padding: 0 40px 40px;
+            z-index: 5;
         }
 
         .slide-indicator {
@@ -329,36 +341,61 @@
             margin-bottom: 14px;
         }
 
+        .slide-text-item {
+            display: none;
+            opacity: 0;
+            transform: translateY(8px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+
+        .slide-text-item.active {
+            display: block;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
         .slide-heading {
             font-size: 24px;
             font-weight: 800;
             color: #ffffff;
             line-height: 32px;
             margin-bottom: 10px;
+            letter-spacing: -0.3px;
         }
 
         .slide-desc {
             font-size: 13px;
-            font-weight: 300;
-            color: rgba(255, 255, 255, 0.8);
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.85);
             line-height: 22px;
             max-width: 440px;
         }
 
         .slide-dots {
             display: flex;
-            gap: 7px;
-            margin-top: 20px;
+            align-items: center;
+            gap: 8px;
+            margin-top: 22px;
         }
 
         .dot {
-            width: 7px;
-            height: 7px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
+            background: rgba(255, 255, 255, 0.4);
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .dot.active { background: #ffffff; }
-        .dot.inactive { background: rgba(255, 255, 255, 0.35); }
+        .dot:hover {
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .dot.active {
+            width: 26px;
+            border-radius: 999px;
+            background: #ffffff;
+        }
 
         /* ── Responsive ── */
         @@media (max-width: 900px) {
@@ -403,6 +440,13 @@
             <form method="post" novalidate>
                 @Html.AntiForgeryToken()
 
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div style="background:#ecfdf5;border:1px solid #10b981;border-radius:6px;color:#065f46;font-size:12.5px;padding:10px 14px;margin-bottom:16px;line-height:1.4;">
+                        @TempData["SuccessMessage"]
+                    </div>
+                }
+
                 @if (!ViewData.ModelState.IsValid)
                 {
                     <div class="alert-error">
@@ -410,14 +454,14 @@
                     </div>
                 }
 
-                <!-- Email -->
+                <!-- Username -->
                 <div class="input-wrap">
-                    <label asp-for="Input.Email" class="field-label">Username or Email</label>
+                    <label asp-for="Input.Username" class="field-label">Username</label>
                     <div class="input-field">
-                        <input asp-for="Input.Email"
+                        <input asp-for="Input.Username"
                                class="form-input"
                                placeholder="Enter your username"
-                               autocomplete="email" />
+                               autocomplete="username" />
                         <span class="input-icon">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
@@ -425,7 +469,7 @@
                             </svg>
                         </span>
                     </div>
-                    <span asp-validation-for="Input.Email" class="validation-message"></span>
+                    <span asp-validation-for="Input.Username" class="validation-message"></span>
                 </div>
 
                 <!-- Password -->
@@ -453,7 +497,7 @@
                         <input asp-for="Input.RememberMe" type="checkbox" />
                         <span>Remember for 30 days</span>
                     </label>
-                    <a href="#" class="forgot-link">Forgot password?</a>
+                    <a href="/Account/ForgotPassword" class="forgot-link">Forgot password?</a>
                 </div>
 
                 <!-- Sign In -->
@@ -465,35 +509,69 @@
                     </svg>
                 </button>
             </form>
-
-            <div class="support-row">
-                <p>Having trouble logging in?</p>
-                <a href="#" class="support-link">Contact Support</a>
-            </div>
         </div>
 
         <div class="copyright">&copy; 2026 Kanrich Limited. All rights reserved.</div>
     </div>
 
-    <!-- ── RIGHT PANEL ── -->
+    <!-- ── RIGHT PANEL (SLIDESHOW) ── -->
     <div class="right-panel">
         <div class="right-inner">
-            <div class="right-bg"></div>
+            <!-- Background Images -->
+            <div class="slide-bg active" style="background-image: url('/images/slideshow/slide1.webp');" data-index="0"></div>
+            <div class="slide-bg" style="background-image: url('/images/slideshow/slide2.webp');" data-index="1"></div>
+            <div class="slide-bg" style="background-image: url('/images/slideshow/slide3.webp');" data-index="2"></div>
+            <div class="slide-bg" style="background-image: url('/images/slideshow/slide4.webp');" data-index="3"></div>
+
             <div class="right-gradient"></div>
             <div class="right-overlay"></div>
+
+            <!-- Slide Content -->
             <div class="right-content">
                 <div class="slide-indicator"></div>
-                <h2 class="slide-heading">
-                    Streamline your workforce<br />management.
-                </h2>
-                <p class="slide-desc">
-                    Experience the next generation of HR tools designed for
-                    efficiency, clarity, and growth at Kanrich Limited.
-                </p>
+
+                <div class="slide-text-item active" data-index="0">
+                    <h2 class="slide-heading">
+                        Empowering people,<br />Driving financial growth.
+                    </h2>
+                    <p class="slide-desc">
+                        Leading financial solutions with integrity, innovation, and dedicated human capital management across Sri Lanka.
+                    </p>
+                </div>
+
+                <div class="slide-text-item" data-index="1">
+                    <h2 class="slide-heading">
+                        Streamline your workforce<br />management.
+                    </h2>
+                    <p class="slide-desc">
+                        Experience the next generation of HR tools designed for efficiency, clarity, and organizational synergy.
+                    </p>
+                </div>
+
+                <div class="slide-text-item" data-index="2">
+                    <h2 class="slide-heading">
+                        Unified leadership &<br />Branch excellence.
+                    </h2>
+                    <p class="slide-desc">
+                        Empowering managers and duty officers with real-time operational insights and transparent workflow control.
+                    </p>
+                </div>
+
+                <div class="slide-text-item" data-index="3">
+                    <h2 class="slide-heading">
+                        Cultivating talent &<br />Professional success.
+                    </h2>
+                    <p class="slide-desc">
+                        Building the future of Kanrich Limited through continuous career development and collaborative teamwork.
+                    </p>
+                </div>
+
+                <!-- Slide Dots -->
                 <div class="slide-dots">
-                    <div class="dot active"></div>
-                    <div class="dot inactive"></div>
-                    <div class="dot inactive"></div>
+                    <div class="dot active" onclick="goToSlide(0)"></div>
+                    <div class="dot" onclick="goToSlide(1)"></div>
+                    <div class="dot" onclick="goToSlide(2)"></div>
+                    <div class="dot" onclick="goToSlide(3)"></div>
                 </div>
             </div>
         </div>
@@ -517,6 +595,49 @@
                 <line x1="1" y1="1" x2="23" y2="23"/>`;
         }
     }
+
+    // ── Slideshow Controller ──
+    let currentSlide = 0;
+    const totalSlides = 4;
+    let slideTimer;
+
+    function goToSlide(index) {
+        currentSlide = index;
+        updateSlideDisplay();
+        restartSlideTimer();
+    }
+
+    function nextSlide() {
+        currentSlide = (currentSlide + 1) % totalSlides;
+        updateSlideDisplay();
+    }
+
+    function updateSlideDisplay() {
+        const bgElements = document.querySelectorAll('.slide-bg');
+        const textElements = document.querySelectorAll('.slide-text-item');
+        const dots = document.querySelectorAll('.dot');
+
+        bgElements.forEach((bg, idx) => {
+            bg.classList.toggle('active', idx === currentSlide);
+        });
+
+        textElements.forEach((text, idx) => {
+            text.classList.toggle('active', idx === currentSlide);
+        });
+
+        dots.forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === currentSlide);
+        });
+    }
+
+    function restartSlideTimer() {
+        clearInterval(slideTimer);
+        slideTimer = setInterval(nextSlide, 5000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        restartSlideTimer();
+    });
 </script>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>

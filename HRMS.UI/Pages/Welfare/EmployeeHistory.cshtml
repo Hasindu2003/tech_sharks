@@ -1,0 +1,720 @@
+@page "{id:int?}"
+@model HRMS.UI.Pages.Welfare.EmployeeHistoryModel
+@{
+    ViewData["Title"] = $"{Model.Employee.NameWithInitials} - Welfare History";
+    ViewData["PageTitle"] = $"Welfare / Employee Profile / {Model.Employee.EPFNumber}";
+    ViewData["ActiveNav"] = "Welfare";
+    var emp = Model.Employee;
+    var nameWithInitials = emp.NameWithInitials;
+    var fullName = emp.FullName ?? "Staff Member";
+    var initial = string.IsNullOrWhiteSpace(nameWithInitials) ? "E" : nameWithInitials.Substring(0, 1).ToUpperInvariant();
+}
+
+<style>
+    .eh-shell {
+        background: transparent;
+        padding: 0;
+    }
+
+    /* Header Nav */
+    .eh-header-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+    .btn-sys-outline {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #ffffff;
+        color: #151811;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        text-decoration: none;
+        border: 1px solid #d1d5db;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .btn-sys-outline:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+        color: #151811;
+    }
+
+    /* Profile Banner */
+    .emp-profile-banner {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .banner-avatar-wrap {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 3px solid #eef7f0;
+        background: #f1f5f9;
+        flex-shrink: 0;
+        position: relative;
+    }
+    .banner-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .banner-avatar-fallback {
+        width: 100%;
+        height: 100%;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        font-weight: 800;
+        color: #10823c;
+        background: #eef7f0;
+    }
+    .banner-main-info {
+        flex: 1;
+        min-width: 250px;
+    }
+    .banner-name {
+        font-size: 20px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0 0 2px 0;
+        letter-spacing: -0.2px;
+    }
+    .banner-sub {
+        font-size: 13px;
+        color: #64748b;
+        margin: 0 0 8px 0;
+    }
+    .banner-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .chip-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 9px;
+        border-radius: 6px;
+        font-size: 11.5px;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+    .chip-item.green { background: #eef7f0; color: #10823c; border-color: #cbe7d3; }
+    .chip-item.blue  { background: #eff6ff; color: #1d4ed8; border-color: #bfdbfe; }
+
+    /* Stat Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+    }
+    .k-metric-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .k-metric-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 20px;
+    }
+    .k-metric-icon.green  { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .k-metric-icon.blue   { background: rgba(59, 130, 246, 0.1); color: #2563eb; }
+    .k-metric-icon.red    { background: rgba(239, 68, 68, 0.1); color: #dc2626; }
+    .k-metric-icon.orange { background: rgba(245, 158, 11, 0.12); color: #d97706; }
+    
+    .k-metric-info {
+        display: flex;
+        flex-direction: column;
+    }
+    .k-metric-label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #7a8863;
+        margin-bottom: 2px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+    .k-metric-val {
+        font-size: 20px;
+        font-weight: 800;
+        color: #151811;
+        line-height: 1.2;
+    }
+
+    /* 2-Column Content Layout */
+    .eh-content-grid {
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: 20px;
+        align-items: start;
+    }
+    @@media (max-width: 1024px) {
+        .eh-content-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Section Cards */
+    .eh-card {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+    .eh-card-head {
+        padding: 14px 18px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .eh-card-title {
+        font-size: 13.5px;
+        font-weight: 800;
+        color: #151811;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .eh-card-body {
+        padding: 18px;
+    }
+
+    /* Detail Field Groups */
+    .df-group {
+        margin-bottom: 16px;
+    }
+    .df-group:last-child {
+        margin-bottom: 0;
+    }
+    .df-group-title {
+        font-size: 11px;
+        font-weight: 700;
+        color: #10823c;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        margin-bottom: 8px;
+        padding-bottom: 4px;
+        border-bottom: 1px dashed #e2e8f0;
+    }
+    .df-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 6px 0;
+        font-size: 12.5px;
+        border-bottom: 1px solid #f8fafc;
+    }
+    .df-lbl {
+        color: #64748b;
+        font-weight: 600;
+        min-width: 110px;
+    }
+    .df-val {
+        color: #151811;
+        font-weight: 700;
+        text-align: right;
+        word-break: break-word;
+    }
+
+    /* History Table */
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+    .history-table th {
+        background: #f9fafb;
+        padding: 11px 14px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #e2e5dc;
+        white-space: nowrap;
+    }
+    .history-table td {
+        padding: 13px 14px;
+        font-size: 12.5px;
+        color: #151811;
+        border-bottom: 1px solid #e2e5dc;
+        vertical-align: middle;
+    }
+    .history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+    .history-table tbody tr:hover {
+        background: #fbfcfb;
+    }
+
+    /* Badges */
+    .ref-code-badge {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #10823c;
+        background: #eef7f0;
+        padding: 2px 7px;
+        border-radius: 5px;
+        text-decoration: none;
+    }
+    .ref-code-badge:hover {
+        background: #d4ebd9;
+    }
+    .st-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+    }
+    .st-pending   { background: #fef3c7; color: #b45309; }
+    .st-approved  { background: #dcfce7; color: #15803d; }
+    .st-disbursed { background: #e0e7ff; color: #4338ca; }
+    .st-rejected  { background: #fee2e2; color: #b91c1c; }
+
+    .stage-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10.5px;
+        font-weight: 700;
+        background: #f1f5f9;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        margin-right: 3px;
+    }
+
+    .doc-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
+        border-radius: 5px;
+        padding: 2px 6px;
+        font-size: 11px;
+        color: #334155;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    .doc-pill:hover {
+        border-color: #10823c;
+        color: #10823c;
+    }
+
+    /* In-Page Document Modal */
+    .wf-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 99999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    .wf-modal-overlay.active {
+        opacity: 1;
+        visibility: visible;
+    }
+    .wf-modal-card {
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+        width: 90vw;
+        max-width: 860px;
+        height: 86vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+    .wf-modal-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+        flex-shrink: 0;
+    }
+</style>
+
+<div class="eh-shell">
+
+    <!-- Top Action Bar -->
+    <div class="eh-header-row">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="/Welfare/Approvals/DepartmentHeadApproval" class="btn-sys-outline">
+                <i class="bi bi-arrow-left"></i> Back to Approvals
+            </a>
+            <span style="font-size: 13px; font-weight: 700; color: #7a8863;">Welfare History Dossier</span>
+        </div>
+    </div>
+
+    <!-- Employee Profile Banner -->
+    <div class="emp-profile-banner">
+        <div class="banner-avatar-wrap">
+            <img src="/uploads/avatars/emp_@(emp.Id).jpg" 
+                 class="banner-avatar-img" 
+                 onerror="this.style.display='none'; document.getElementById('bAvatarFallback').style.display='flex';" 
+                 alt="@nameWithInitials" />
+            <div id="bAvatarFallback" class="banner-avatar-fallback">@initial</div>
+        </div>
+        <div class="banner-main-info">
+            <h1 class="banner-name">@nameWithInitials</h1>
+            <p class="banner-sub">@fullName • @(emp.Designation?.Title ?? "Staff Member")</p>
+            <div class="banner-chips">
+                <span class="chip-item green"><i class="bi bi-person-badge"></i> @emp.EPFNumber</span>
+                <span class="chip-item blue"><i class="bi bi-geo-alt"></i> @(emp.Branch?.Name ?? "Main Branch")</span>
+                <span class="chip-item"><i class="bi bi-building"></i> @(emp.Department?.Name ?? "General")</span>
+                <span class="chip-item"><i class="bi bi-clock-history"></i> Service: @Model.ServiceDuration</span>
+                <span class="chip-item green"><i class="bi bi-shield-check"></i> Status: @(emp.Status ?? "Active")</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats KPI Cards -->
+    <div class="stats-grid">
+        <div class="k-metric-card">
+            <div class="k-metric-icon green">
+                <i class="bi bi-cash-stack"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Total Assistance Claimed</span>
+                <span class="k-metric-val" style="color: #10823c;">LKR @Model.TotalDisbursedAmount.ToString("N2")</span>
+            </div>
+        </div>
+        <div class="k-metric-card">
+            <div class="k-metric-icon blue">
+                <i class="bi bi-file-earmark-medical"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Total Applications</span>
+                <span class="k-metric-val">@Model.TotalRequestsCount</span>
+            </div>
+        </div>
+        <div class="k-metric-card">
+            <div class="k-metric-icon green">
+                <i class="bi bi-check2-circle"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Approved Requests</span>
+                <span class="k-metric-val" style="color: #15803d;">@Model.ApprovedRequestsCount</span>
+            </div>
+        </div>
+        <div class="k-metric-card">
+            <div class="k-metric-icon red">
+                <i class="bi bi-x-circle"></i>
+            </div>
+            <div class="k-metric-info">
+                <span class="k-metric-label">Rejected Requests</span>
+                <span class="k-metric-val" style="color: #b91c1c;">@Model.RejectedRequestsCount</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="eh-content-grid">
+
+        <!-- Left Column: Past Welfare Requests Table -->
+        <div>
+            <div class="eh-card">
+                <div class="eh-card-head">
+                    <h2 class="eh-card-title">
+                        <i class="bi bi-clock-history" style="color: #10823c;"></i>
+                        Welfare Assistance History (@Model.PastRequests.Count)
+                    </h2>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table class="history-table" id="welfareHistoryTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 14%;">Ref No</th>
+                                <th style="width: 22%;">Assistance Type</th>
+                                <th style="width: 16%;">Request Date</th>
+                                <th style="width: 16%;">Amount</th>
+                                <th style="width: 16%;">Stage / Status</th>
+                                <th style="width: 16%; text-align: right;">Action / Docs</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.PastRequests.Any())
+                            {
+                                @foreach (var req in Model.PastRequests)
+                                {
+                                    var stageText = req.CurrentLevel switch
+                                    {
+                                        "DepartmentHead" => "Welfare Review",
+                                        "BranchManager"  => "Branch Review",
+                                        "AreaManager"    => "Area Review",
+                                        "HRManager"      => "HR Disbursement",
+                                        "Completed"      => "Disbursed",
+                                        _                => req.CurrentLevel
+                                    };
+                                    var statusBadgeClass = req.CurrentStatus switch
+                                    {
+                                        "Approved" => "st-badge st-approved",
+                                        "Disbursed" => "st-badge st-disbursed",
+                                        "Rejected" => "st-badge st-rejected",
+                                        _ => "st-badge st-pending"
+                                    };
+                                    var amountToDisplay = req.ApprovedAmount.HasValue && req.ApprovedAmount.Value > 0
+                                        ? req.ApprovedAmount.Value
+                                        : req.RequestedAmount;
+
+                                    <tr>
+                                        <td>
+                                            <a href="/Welfare/StatusTracking?id=@req.RequestId" target="_blank" class="ref-code-badge" title="View Full Status Tracking">
+                                                WF-@req.RequestId.ToString("D4") <i class="bi bi-box-arrow-up-right" style="font-size: 9px;"></i>
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 700; color: #1e293b;">@(req.WelfareType?.TypeName ?? "Welfare Assistance")</span>
+                                            @if (!string.IsNullOrWhiteSpace(req.Remark))
+                                            {
+                                                <div style="font-size: 11px; color: #64748b; margin-top: 2px; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@req.Remark">
+                                                    @req.Remark
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <span style="color: #475569; font-weight: 600;">@req.RequestDate.ToString("MMM dd, yyyy")</span>
+                                        </td>
+                                        <td>
+                                            <div style="font-weight: 800; color: #10823c;">LKR @amountToDisplay.ToString("N2")</div>
+                                            @if (req.ApprovedAmount.HasValue && req.ApprovedAmount.Value != req.RequestedAmount)
+                                            {
+                                                <div style="font-size: 10px; color: #94a3b8;">Req: LKR @req.RequestedAmount.ToString("N2")</div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <span class="stage-badge">@stageText</span>
+                                                <span class="@statusBadgeClass">@req.CurrentStatus</span>
+                                            </div>
+                                        </td>
+                                        <td style="text-align: right;">
+                                            @if (req.Documents != null && req.Documents.Any())
+                                            {
+                                                <div style="display: flex; justify-content: flex-end; gap: 4px; flex-wrap: wrap;">
+                                                    @foreach (var doc in req.Documents)
+                                                    {
+                                                        var ext = System.IO.Path.GetExtension(doc.FileName)?.ToLowerInvariant() ?? "";
+                                                        var canPreview = ext == ".pdf" || ext == ".jpg" || ext == ".jpeg" || ext == ".png";
+                                                        if (canPreview)
+                                                        {
+                                                            <button type="button" class="doc-pill" onclick="openDocPreview('/Welfare/DownloadDocument?id=@doc.DocumentId&mode=view', '@doc.FileName')" title="Preview @doc.FileName">
+                                                                <i class="bi bi-eye"></i> Doc
+                                                            </button>
+                                                        }
+                                                        else
+                                                        {
+                                                            <a href="/Welfare/DownloadDocument?id=@doc.DocumentId" class="doc-pill" title="Download @doc.FileName">
+                                                                <i class="bi bi-download"></i> Doc
+                                                            </a>
+                                                        }
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span style="color: #94a3b8; font-size: 11px;">No Docs</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 36px; color: #94a3b8;">
+                                        <i class="bi bi-shield-check" style="font-size: 2rem; display: block; margin-bottom: 6px; color: #cbd5e1;"></i>
+                                        <div style="font-weight: 700; color: #475569;">No Previous Welfare Claims Found</div>
+                                        <div style="font-size: 11.5px; margin-top: 2px;">This is the first welfare application on record for @nameWithInitials.</div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Employee Eligibility & Employment Card -->
+        <div>
+            <div class="eh-card">
+                <div class="eh-card-head">
+                    <h2 class="eh-card-title">
+                        <i class="bi bi-person-badge" style="color: #10823c;"></i>
+                        Employment & Eligibility
+                    </h2>
+                </div>
+                <div class="eh-card-body">
+
+                    <!-- Employment Details -->
+                    <div class="df-group">
+                        <div class="df-group-title">Work Information</div>
+                        <div class="df-row">
+                            <span class="df-lbl">EPF Number</span>
+                            <span class="df-val">@emp.EPFNumber</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Designation</span>
+                            <span class="df-val">@(emp.Designation?.Title ?? "Staff Member")</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Department</span>
+                            <span class="df-val">@(emp.Department?.Name ?? "General")</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Branch</span>
+                            <span class="df-val">@(emp.Branch?.Name ?? "Main Branch")</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Reporting Officer</span>
+                            <span class="df-val">@(emp.ReportingOfficer?.NameWithInitials ?? "—")</span>
+                        </div>
+                    </div>
+
+                    <!-- Tenure & Status -->
+                    <div class="df-group">
+                        <div class="df-group-title">Tenure & Status</div>
+                        <div class="df-row">
+                            <span class="df-lbl">Date Joined</span>
+                            <span class="df-val">@(emp.DateJoined.HasValue ? emp.DateJoined.Value.ToString("MMM dd, yyyy") : "—")</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Service Duration</span>
+                            <span class="df-val" style="color: #10823c; font-weight: 800;">@Model.ServiceDuration</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Employment Status</span>
+                            <span class="df-val">@(emp.Status ?? "Active")</span>
+                        </div>
+                    </div>
+
+                    <!-- Official Contact -->
+                    <div class="df-group">
+                        <div class="df-group-title">Official Contact</div>
+                        <div class="df-row">
+                            <span class="df-lbl">Work Email</span>
+                            <span class="df-val" style="font-size: 11.5px;">@(string.IsNullOrEmpty(emp.Email) ? "—" : emp.Email)</span>
+                        </div>
+                        <div class="df-row">
+                            <span class="df-lbl">Contact No</span>
+                            <span class="df-val">@(string.IsNullOrEmpty(emp.PhoneNumber) ? "—" : emp.PhoneNumber)</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- ── INLINE DOCUMENT PREVIEW MODAL ── -->
+<div class="wf-modal-overlay" id="welfareDocModal">
+    <div class="wf-modal-card">
+        <div class="wf-modal-head">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i class="bi bi-file-earmark-text" style="color: #10823c; font-size: 16px;"></i>
+                <span id="docModalTitle" style="font-weight: 800; font-size: 13.5px; color: #0f172a;">Document Preview</span>
+            </div>
+            <button type="button" class="btn-sys-outline" id="docModalCloseBtn" style="padding: 4px 10px; border-radius: 6px; font-size: 12px;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div style="flex: 1; position: relative; background: #f8fafc; overflow: hidden;">
+            <iframe id="docViewerIframe" src="" style="width: 100%; height: 100%; border: none;"></iframe>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const docModal = document.getElementById('welfareDocModal');
+        const docModalCloseBtn = document.getElementById('docModalCloseBtn');
+        const docViewerIframe = document.getElementById('docViewerIframe');
+        const docModalTitle = document.getElementById('docModalTitle');
+
+        window.openDocPreview = function (url, title) {
+            docModalTitle.textContent = title || 'Document Preview';
+            docViewerIframe.src = url;
+            docModal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        function closeDocModal() {
+            docModal.classList.remove('active');
+            docViewerIframe.src = '';
+            document.body.style.overflow = '';
+        }
+
+        if (docModalCloseBtn) docModalCloseBtn.addEventListener('click', closeDocModal);
+        if (docModal) {
+            docModal.addEventListener('click', function (e) {
+                if (e.target === docModal) closeDocModal();
+            });
+        }
+
+        // Initialize table pagination for history table
+        if (typeof initTablePagination === 'function') {
+            initTablePagination('welfareHistoryTable', 10);
+        }
+    });
+</script>
+}

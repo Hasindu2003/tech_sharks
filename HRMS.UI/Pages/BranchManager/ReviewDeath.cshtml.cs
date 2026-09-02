@@ -1,4 +1,4 @@
-﻿using HRMS.Application.Models;
+using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -43,7 +43,7 @@ namespace HRMS.UI.Pages.BranchManager
                 ? $"Death request {action}d successfully." 
                 : "Failed to process request.";
                 
-            return RedirectToPage("./ReviewDeathRequests");
+            return RedirectToPage("/Separation/Dashboard", new { ActiveTab = "Death" });
         }
     }
 }

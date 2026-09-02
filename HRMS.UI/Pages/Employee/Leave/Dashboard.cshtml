@@ -101,7 +101,7 @@
         <div class="label">Approved Leaves</div>
     </div>
     <div class="stat-card">
-        <div class="number">@Model.LeaveBalances.Sum(b => b.RemainingDays)</div>
+        <div class="number">@(Model.LeaveBalances.Sum(b => b.RemainingDays) % 1 == 0 ? $"{Model.LeaveBalances.Sum(b => b.RemainingDays):0}" : $"{Model.LeaveBalances.Sum(b => b.RemainingDays):0.0}")</div>
         <div class="label">Remaining Balance</div>
     </div>
 </div>
@@ -112,10 +112,10 @@
     {
         <div class="balance-card">
             <h4>@balance.LeaveType</h4>
-            <div class="total">@balance.RemainingDays <span style="font-size: 13px; font-weight: 500; color: #7a8863;">/ @balance.TotalDays Days</span></div>
+            <div class="total">@(balance.RemainingDays % 1 == 0 ? $"{balance.RemainingDays:0}" : $"{balance.RemainingDays:0.0}") <span style="font-size: 13px; font-weight: 500; color: #7a8863;">/ @(balance.TotalDays % 1 == 0 ? $"{balance.TotalDays:0}" : $"{balance.TotalDays:0.0}") Days</span></div>
             <div class="details">
-                <div>Used: <strong style="color: #ef4444;">@balance.UsedDays</strong></div>
-                <div>Remaining: <strong style="color: #10823c;">@balance.RemainingDays</strong></div>
+                <div>Used: <strong style="color: #ef4444;">@(balance.UsedDays % 1 == 0 ? $"{balance.UsedDays:0}" : $"{balance.UsedDays:0.0}")</strong></div>
+                <div>Remaining: <strong style="color: #10823c;">@(balance.RemainingDays % 1 == 0 ? $"{balance.RemainingDays:0}" : $"{balance.RemainingDays:0.0}")</strong></div>
             </div>
         </div>
     }
@@ -139,10 +139,18 @@
                 @foreach (var leave in Model.UpcomingApprovedLeaves)
                 {
                     <tr>
-                        <td style="font-weight: 600;">@leave.LeaveType</td>
+                        <td style="font-weight: 600;">
+                            @leave.LeaveType
+                            @if (leave.IsHalfDay)
+                            {
+                                <span style="display:block; font-size:11px; color:#10823c; font-weight:600;">
+                                    <i class="bi bi-pie-chart-fill"></i> @(leave.HalfDaySession ?? "Half Day")
+                                </span>
+                            }
+                        </td>
                         <td>@leave.StartDate.ToString("MMM dd, yyyy")</td>
                         <td>@leave.EndDate.ToString("MMM dd, yyyy")</td>
-                        <td>@leave.TotalDays days</td>
+                        <td>@(leave.TotalDays % 1 == 0 ? $"{leave.TotalDays:0}" : $"{leave.TotalDays:0.0}") @(leave.TotalDays == 1 ? "day" : "days")</td>
                         <td>
                             <span class="status-badge @leave.Status">
                                 <i class="bi bi-check-circle-fill"></i> @leave.Status

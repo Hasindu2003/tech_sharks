@@ -1,0 +1,447 @@
+@page
+@model HRMS.UI.Pages.Welfare.RequestFormModel
+@{
+    ViewData["Title"] = "Welfare Request Form";
+    ViewData["PageTitle"] = "Welfare / New Request";
+    ViewData["ActiveNav"] = "Welfare";
+}
+
+@section Styles {
+    <style>
+        .form-shell {
+            padding: 26px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+        .form-grid-three {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .form-grid-two {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .form-flex {
+            display: flex;
+            gap: 24px;
+            align-items: start;
+        }
+        .flex-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .flex-sidebar {
+            width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .policy-item {
+            display: flex;
+            align-items: start;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #1e3a1e;
+            margin-bottom: 8px;
+        }
+        .policy-item i {
+            color: var(--primary);
+            font-size: 1rem;
+            margin-top: 2px;
+        }
+        .help-box {
+            background: var(--primary-light);
+            border: 1px solid rgba(16,130,60,0.15);
+            border-radius: var(--border-radius);
+            padding: 16px;
+        }
+        .help-box h4 {
+            color: var(--primary);
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin: 0 0 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .help-box p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.4;
+        }
+        .input-group-prefix {
+            display: flex;
+        }
+        .input-prefix {
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-right: none;
+            border-top-left-radius: var(--border-radius-sm);
+            border-bottom-left-radius: var(--border-radius-sm);
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            user-select: none;
+        }
+        .input-with-prefix {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .input-group-btn {
+            display: flex;
+        }
+        .input-with-btn {
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+        .btn-input {
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        .urgency-options {
+            display: flex;
+            gap: 16px;
+            margin-top: 8px;
+        }
+        .urgency-option {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .urgency-badge {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .urgency-badge.high { background: #fee2e2; color: #b91c1c; }
+        .urgency-badge.medium { background: #ffedd5; color: #c2410c; }
+        .urgency-badge.normal { background: #dcfce7; color: #15803d; }
+    </style>
+}
+
+<div class="form-shell">
+
+    <!-- Header -->
+    <div class="page-header">
+        <h2>Welfare Request Form</h2>
+        <p class="page-subtitle">Apply for financial or medical welfare assistance</p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">✓ @TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">✗ @TempData["Error"]</div>
+    }
+
+    @if (Model.IsAnnualLimitReached)
+    {
+        <div class="alert" style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; display: flex; align-items: flex-start; gap: 12px; border-radius: 8px; margin-bottom: 20px; padding: 14px 16px;">
+            <i class="bi bi-slash-circle-fill" style="font-size: 1.35rem; flex-shrink: 0; color: #dc2626; margin-top: 1px;"></i>
+            <div>
+                <h5 style="margin: 0 0 4px 0; font-size: 0.95rem; font-weight: 700; color: #991b1b;">Annual Welfare Limit Reached</h5>
+                <p style="margin: 0; font-size: 0.85rem; line-height: 1.45;">
+                    You currently have <strong>@Model.ApprovedThisYearCount approved welfare assistance requests</strong> in <strong>@Model.CurrentYear</strong>. In accordance with company policy, employees are eligible for a maximum of <strong>2 approved welfare requests per calendar year</strong>. You cannot submit new welfare applications for @Model.CurrentYear.
+                </p>
+            </div>
+        </div>
+    }
+
+    <!-- Form Container -->
+    <form method="post" enctype="multipart/form-data">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="IsDraft" id="isDraftInput" value="false" />
+
+        <div class="form-flex">
+
+            <!-- Main Content Area -->
+            <div class="flex-main">
+
+                <input type="hidden" name="EmployeeId" value="@Model.EmployeeId" />
+
+                <!-- Request Details Card -->
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <i class="bi bi-file-earmark-text-fill"></i> Request Details
+                    </div>
+                    <div class="form-grid-two">
+                        <div class="k-form-group">
+                            <label>Assistance Type *</label>
+                            <select name="WelfareTypeId" id="welfareTypeId" onchange="onTypeChange()" required class="k-form-control">
+                                <option value="">Select type…</option>
+                                @foreach (var wt in Model.WelfareTypes)
+                                {
+                                    var isLoan = wt.TypeName.Contains("Loan", StringComparison.OrdinalIgnoreCase) 
+                                              || wt.TypeName.Contains("Advance", StringComparison.OrdinalIgnoreCase) 
+                                              || (wt.Category != null && (wt.Category.Contains("Housing", StringComparison.OrdinalIgnoreCase) || wt.Category.Contains("Financial", StringComparison.OrdinalIgnoreCase)));
+                                    <option value="@wt.WelfareTypeId" data-max="@wt.MaxEligibleAmount" data-cat="@wt.Category" data-is-loan="@(isLoan ? "true" : "false")">@wt.TypeName</option>
+                                }
+                            </select>
+                            <div id="typeCategory" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;"></div>
+                        </div>
+
+                        <div class="k-form-group">
+                            <label>Request Date *</label>
+                            <input type="date" name="RequestDate" id="requestDate" required min="@DateTime.Today.ToString("yyyy-MM-dd")" class="k-form-control" />
+                        </div>
+
+                        <div class="k-form-group">
+                            <label>Requested Amount (LKR) *</label>
+                            <div class="input-group-prefix">
+                                <span class="input-prefix">LKR</span>
+                                <input type="number" name="RequestedAmount" id="requestedAmount" placeholder="0.00" min="1" step="0.01" oninput="validateAmount()" required
+                                       class="k-form-control input-with-prefix" />
+                            </div>
+                            <div id="amountHint" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">Maximum eligible: <strong id="maxAmount">—</strong></div>
+                        </div>
+
+                        <div class="k-form-group" id="repaymentDiv" style="display: none;">
+                            <label>Repayment Period</label>
+                            <select id="repaymentPeriod" onchange="updateMonthly()" class="k-form-control">
+                                <option value="">Select period…</option>
+                                <option value="3">3 Months</option>
+                                <option value="6">6 Months</option>
+                                <option value="12">12 Months</option>
+                                <option value="18">18 Months</option>
+                                <option value="24">24 Months</option>
+                            </select>
+                            <div id="monthlyDeduction" style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;"></div>
+                        </div>
+
+                        <div class="k-form-group" style="grid-column: span 2;">
+                            <label>Urgency Level</label>
+                            <div class="urgency-options">
+                                <label class="urgency-option">
+                                    <input type="radio" name="Urgency" value="High" />
+                                    <span class="urgency-badge high">High</span>
+                                </label>
+                                <label class="urgency-option">
+                                    <input type="radio" name="Urgency" value="Medium" />
+                                    <span class="urgency-badge medium">Medium</span>
+                                </label>
+                                <label class="urgency-option">
+                                    <input type="radio" name="Urgency" value="Normal" checked />
+                                    <span class="urgency-badge normal">Normal</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="k-form-group" style="grid-column: span 2;">
+                            <label>Reason for Request *</label>
+                            <textarea name="Remark" id="remark" rows="4" oninput="updateCount()" placeholder="Provide a clear reason for your request…" required
+                                      class="k-form-control" style="resize: none;"></textarea>
+                            <div style="text-align: right; font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px;">
+                                <span id="remarkCount">0 / 500</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Supporting Documents Card -->
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <i class="bi bi-paperclip"></i> Supporting Documents
+                    </div>
+                    <div class="k-form-group">
+                        <label>Attach Documents</label>
+                        <input type="file" name="Documents" id="uploadedFiles" multiple accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" onchange="previewFiles()" class="k-form-control" />
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">Accepted: PDF, JPG, PNG, DOC, DOCX. Maximum 5 files.</p>
+                        <div id="filePreview" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px;"></div>
+                    </div>
+                </div>
+
+                <!-- Submit buttons -->
+                @if (Model.IsAnnualLimitReached)
+                {
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                        <a href="/Welfare/RequestList" class="btn-kanrich btn-kanrich-outline">
+                            <i class="bi bi-arrow-left"></i> Back to My Requests
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
+                        <button type="button" onclick="saveDraft()" class="btn-kanrich btn-kanrich-outline">
+                            <i class="bi bi-save"></i> Save as Draft
+                        </button>
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                            <i class="bi bi-send"></i> Submit Request
+                        </button>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Sidebar Guidelines Area -->
+            <div class="flex-sidebar">
+                <div class="k-card">
+                    <div class="k-card-header">
+                        <i class="bi bi-info-circle-fill"></i> Policy Guidelines
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        @foreach (var policy in new[] {
+                            "Medical claims require original bills",
+                            "Approvals over LKR 50,000 require HO clearance",
+                            "Maximum 2 welfare requests per year",
+                            "Repayment cannot exceed 24 months"
+                        })
+                        {
+                            <div class="policy-item">
+                                <i class="bi bi-check-circle-fill"></i>
+                                <span>@policy</span>
+                            </div>
+                        }
+                    </div>
+
+                    <div style="margin-top: 14px; padding: 10px 12px; background: @(Model.IsAnnualLimitReached ? "#fef2f2" : "#f0fdf4"); border: 1px solid @(Model.IsAnnualLimitReached ? "#fecaca" : "#bbf7d0"); border-radius: 6px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 700;">
+                            <span style="color: var(--text-secondary);">Annual Quota (@Model.CurrentYear):</span>
+                            <span style="color: @(Model.IsAnnualLimitReached ? "#dc2626" : "#15803d");">@Model.ApprovedThisYearCount / 2 Approved</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="help-box">
+                    <h4><i class="bi bi-question-circle-fill"></i> Need Help?</h4>
+                    <p>Contact HR at <strong>hr@@kanrich.lk</strong> or call extension <strong>1234</strong></p>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const todayStr = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('requestDate');
+            if (dateInput) {
+                dateInput.value = todayStr;
+                dateInput.min = todayStr;
+            }
+        });
+
+        function previewFiles() {
+            const preview = document.getElementById('filePreview');
+            const files = document.getElementById('uploadedFiles').files;
+            preview.innerHTML = '';
+            if (files.length > 5) { 
+                alert('Maximum 5 files allowed.'); 
+                document.getElementById('uploadedFiles').value = ''; 
+                return; 
+            }
+            for (let i = 0; i < files.length; i++) {
+                preview.insertAdjacentHTML('beforeend', `
+                    <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg-body); border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.75rem; color: var(--text-primary);">
+                        <i class="bi bi-file-earmark-arrow-up"></i>
+                        ${files[i].name}
+                    </div>`);
+            }
+        }
+
+
+        function saveDraft() {
+            document.getElementById('isDraftInput').value = 'true';
+            document.querySelector('form').submit();
+        }
+
+        function onTypeChange() {
+            const sel = document.getElementById('welfareTypeId');
+            const opt = sel.options[sel.selectedIndex];
+            const repaymentDiv = document.getElementById('repaymentDiv');
+            const repaymentPeriod = document.getElementById('repaymentPeriod');
+            const monthlyDeduction = document.getElementById('monthlyDeduction');
+            const amountInput = document.getElementById('requestedAmount');
+            const typeCatEl = document.getElementById('typeCategory');
+            const amountHint = document.getElementById('amountHint');
+
+            if (!opt || !opt.value) {
+                if (typeCatEl) typeCatEl.textContent = '';
+                if (amountHint) amountHint.innerHTML = 'Maximum eligible: <strong id="maxAmount">—</strong>';
+                if (repaymentDiv) repaymentDiv.style.display = 'none';
+                if (repaymentPeriod) repaymentPeriod.value = '';
+                if (monthlyDeduction) monthlyDeduction.innerHTML = '';
+                if (amountInput) amountInput.removeAttribute('max');
+                return;
+            }
+
+            const max = parseFloat(opt.dataset.max) || 0;
+            const cat = opt.dataset.cat || '';
+            const isLoan = opt.dataset.isLoan === 'true';
+
+            if (typeCatEl) typeCatEl.textContent = cat ? 'Category: ' + cat : '';
+            if (amountInput) amountInput.max = max;
+
+            // Handle Repayment section
+            if (isLoan) {
+                if (repaymentDiv) repaymentDiv.style.display = '';
+                updateMonthly();
+            } else {
+                if (repaymentDiv) repaymentDiv.style.display = 'none';
+                if (repaymentPeriod) repaymentPeriod.value = '';
+                if (monthlyDeduction) monthlyDeduction.innerHTML = '';
+            }
+
+            validateAmount();
+        }
+
+        function validateAmount() {
+            const sel = document.getElementById('welfareTypeId');
+            const opt = sel.options[sel.selectedIndex];
+            const amountInput = document.getElementById('requestedAmount');
+            const amountHint = document.getElementById('amountHint');
+
+            if (!opt || !opt.value) {
+                if (amountHint) amountHint.innerHTML = 'Maximum eligible: <strong id="maxAmount">—</strong>';
+                return;
+            }
+
+            const max = parseFloat(opt.dataset.max) || 0;
+            const val = parseFloat(amountInput.value) || 0;
+
+            if (val > max) {
+                amountHint.innerHTML = `<span style="color:var(--accent-red); font-weight:700;">✗ Exceeds max limit: LKR ${formatNum(max)}</span>`;
+            } else {
+                amountHint.innerHTML = `Maximum eligible: <strong>LKR ${formatNum(max)}</strong>`;
+            }
+
+            updateMonthly();
+        }
+
+        function updateMonthly() {
+            const amountInput = document.getElementById('requestedAmount');
+            const repaymentPeriod = document.getElementById('repaymentPeriod');
+            const monthlyDeduction = document.getElementById('monthlyDeduction');
+            if (!monthlyDeduction) return;
+
+            const a = parseFloat(amountInput?.value) || 0;
+            const m = parseInt(repaymentPeriod?.value) || 0;
+            monthlyDeduction.innerHTML = a > 0 && m > 0 
+                ? `Monthly deduction: <strong>LKR ${formatNum(a / m)}</strong>` 
+                : '';
+        }
+
+        function updateCount() {
+            document.getElementById('remarkCount').textContent = document.getElementById('remark').value.length + ' / 500';
+        }
+
+        function formatNum(n) {
+            return parseFloat(n).toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+    </script>
+}

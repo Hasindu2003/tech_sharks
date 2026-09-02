@@ -26,6 +26,8 @@ namespace HRMS.Domain.Entities.Core
 
         public string? EPFNumber { get; set; }
         public string? ETFNumber { get; set; }
+        public decimal? BasicSalary { get; set; }
+        public string? BankName { get; set; }
         public string? BankAccountName { get; set; }
         public string? BankAccountNumber { get; set; }
 

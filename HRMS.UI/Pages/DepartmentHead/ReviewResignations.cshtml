@@ -1,0 +1,206 @@
+@page
+@using Microsoft.AspNetCore.Authorization
+@using HRMS.Application.Models
+@attribute [Authorize(Roles = "Department Head")]
+@model HRMS.UI.Pages.DepartmentHead.ReviewResignationsModel
+@{
+    ViewData["Title"] = "Resignation Reviews";
+    ViewData["ActiveNav"] = "Separation";
+}
+
+<style>
+    .table-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 19px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .emp-table { width: 100%; border-collapse: collapse; }
+    .emp-table th { background: #f9fafb; padding: 13px 19px; text-align: left; font-size: 13px; font-weight: 700; color: #7a8863; border-bottom: 1px solid #e2e5dc; }
+    .emp-table td { padding: 13px 19px; border-bottom: 1px solid #e2e5dc; font-size: 14px; color: #151811; }
+    .emp-table tr:last-child td { border-bottom: none; }
+    .emp-table tbody tr:hover { background: #fafafa; }
+    .employee-cell { display: flex; align-items: center; gap: 10px; }
+    .avatar-circle { width: 36px; height: 36px; border-radius: 50%; background: #e8f3ec; color: #10823c; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; }
+    .emp-info .name { font-size: 14px; font-weight: 700; color: #151811; display: block; }
+    .emp-info .sub  { font-size: 12px; color: #7a8863; }
+    .btn-action { color: #10823c; font-size: 13px; font-weight: 700; text-decoration: none; padding: 5px 10px; border-radius: 5px; transition: background .2s; }
+    .btn-action:hover { background: #e8f3ec; }
+    .k-badge, .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; border: 1px solid transparent; }
+    .k-badge-pending  { background: #fef3c7; border-color: #fde68a; color: #b45309; }
+    .k-badge-approved { background: #dcfce7; border-color: #bbf7d0; color: #10823c; }
+    .k-badge-rejected { background: #fee2e2; border-color: #fecaca; color: #b91c1c; }
+    .k-badge-info     { background: #dbeafe; border-color: #bfdbfe; color: #1d4ed8; }
+</style>
+
+<div class="page-header" style="margin-bottom:18px">
+    <div>
+        <h1 style="font-size:19px;font-weight:800;color:#151811;margin:0 0 3px">Separation Management</h1>
+        <div style="font-size:12px;color:#7a8863">@Model.DeptHeadDepartment Department &mdash; @Model.DeptHeadBranch Branch</div>
+    </div>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #e2e5dc;padding-bottom:12px">
+    <a asp-page="/DepartmentHead/ReviewTransfers" 
+       class="btn-kanrich btn-kanrich-outline btn-kanrich-sm"
+       style="display:inline-flex;align-items:center;gap:6px">
+        <i class="bi bi-arrow-left-right"></i> Transfers
+    </a>
+    <a asp-page="/DepartmentHead/ReviewResignations" 
+       class="btn-kanrich btn-kanrich-primary btn-kanrich-sm"
+       style="display:inline-flex;align-items:center;gap:6px">
+        <i class="bi bi-box-arrow-right"></i> Resignations
+    </a>
+    <div style="margin-left:auto">
+        <a asp-page="/Separation/Dashboard" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-grid"></i> Separation Hub
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] is string successMsg)
+{
+    <div class="k-alert k-alert-success" style="background:#ecfdf5;color:#065f46;padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid #10b981;display:flex;align-items:center;gap:8px">
+        <i class="bi bi-check-circle-fill"></i> @successMsg
+    </div>
+}
+@if (TempData["ErrorMessage"] is string errorMsg)
+{
+    <div class="k-alert k-alert-danger" style="background:#fef2f2;color:#991b1b;padding:12px 16px;border-radius:8px;margin-bottom:16px;border:1px solid #fca5a5;display:flex;align-items:center;gap:8px">
+        <i class="bi bi-exclamation-triangle-fill"></i> @errorMsg
+    </div>
+}
+
+<!-- Pending section -->
+<div style="font-size:14px;font-weight:700;color:#151811;margin:0 0 10px;display:flex;align-items:center;gap:8px">
+    <span>Awaiting Your Department's Review</span>
+    @if (Model.PendingRequests.Any())
+    {
+        <span style="background:#ef4444;color:#fff;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:800">@Model.PendingRequests.Count</span>
+    }
+</div>
+
+@if (Model.PendingRequests.Any())
+{
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Designation</th>
+                    <th>Last Working Day</th>
+                    <th>Notice Period</th>
+                    <th>Branch Approvals</th>
+                    <th style="text-align:right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.PendingRequests)
+                {
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">EPF: @r.EpfNumber</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="color:#7a8863">@r.Designation</td>
+                        <td style="font-weight:600;color:#10823c">@r.EffectiveDate.ToString("dd MMM yyyy")</td>
+                        <td style="color:#7a8863">@r.NoticePeriodDays days</td>
+                        <td>
+                            <span class="k-badge k-badge-pending">
+                                <i class="bi bi-people"></i> @r.DeptHeadsApprovedCount/@r.TotalDeptHeadsCount Dept Heads
+                            </span>
+                        </td>
+                        <td style="text-align:right">
+                            <a asp-page="/DepartmentHead/ReviewResignation" asp-route-id="@r.Id" class="btn-action">
+                                Review &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="table-card" style="text-align:center;padding:36px;margin-bottom:24px">
+        <i class="bi bi-check2-circle" style="font-size:32px;color:#10823c;display:block;margin-bottom:8px"></i>
+        <div style="font-size:14px;font-weight:700;color:#151811">All Caught Up!</div>
+        <div style="font-size:12px;color:#7a8863">No pending resignation requests awaiting your department's review.</div>
+    </div>
+}
+
+<!-- Reviewed section -->
+<div style="font-size:14px;font-weight:700;color:#151811;margin:24px 0 10px">
+    Recently Reviewed Resignations
+</div>
+
+@if (Model.ReviewedRequests.Any())
+{
+    <div class="table-card">
+        <table class="emp-table">
+            <thead>
+                <tr>
+                    <th>Employee</th>
+                    <th>Designation</th>
+                    <th>Last Working Day</th>
+                    <th>Overall Status</th>
+                    <th>Your Dept Decision</th>
+                    <th style="text-align:right"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in Model.ReviewedRequests)
+                {
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                    var myDeptReview = r.DepartmentReviews.FirstOrDefault(d => d.DepartmentName.Equals(Model.DeptHeadDepartment, StringComparison.OrdinalIgnoreCase));
+
+                    <tr>
+                        <td>
+                            <div class="employee-cell">
+                                <div class="avatar-circle">@initials</div>
+                                <div class="emp-info">
+                                    <span class="name">@r.EmployeeName</span>
+                                    <span class="sub">EPF: @r.EpfNumber</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="color:#7a8863">@r.Designation</td>
+                        <td style="color:#7a8863">@r.EffectiveDate.ToString("dd MMM yyyy")</td>
+                        <td>
+                            <span class="k-badge @r.StatusBadgeClass">@r.StatusDisplay</span>
+                        </td>
+                        <td>
+                            @if (myDeptReview != null && myDeptReview.Status == "Approved")
+                            {
+                                <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span>
+                            }
+                            else if (myDeptReview != null && myDeptReview.Status == "Rejected")
+                            {
+                                <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span>
+                            }
+                            else
+                            {
+                                <span class="k-badge k-badge-pending">Pending</span>
+                            }
+                        </td>
+                        <td style="text-align:right">
+                            <a asp-page="/DepartmentHead/ReviewResignation" asp-route-id="@r.Id" class="btn-action">
+                                View Details &rarr;
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="table-card" style="text-align:center;padding:24px">
+        <div style="font-size:12px;color:#7a8863">No past resignation reviews recorded for your department.</div>
+    </div>
+}

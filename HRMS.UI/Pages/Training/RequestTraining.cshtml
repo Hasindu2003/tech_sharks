@@ -1,0 +1,175 @@
+@page
+@model HRMS.UI.Pages.Training.RequestTrainingModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Request Training - Kanrich HRMS";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Form card */
+    .form-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .form-card-body { padding: 20px; }
+    
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .req { color: #ef4444; }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+</style>
+
+<div>
+    <a href="/Training/Dashboard" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+    </a>
+
+    <h1 class="page-h">Training Request Form</h1>
+    <p class="page-s">Submit your request for upcoming professional development programs.</p>
+
+    <!-- Eligibility Alert -->
+    <div class="alert @(Model.IsEligible ? "alert-info" : "alert-warning") shadow-sm d-flex align-items-center border-0 mb-4" style="max-width: 800px; margin: 0 auto 20px auto; border-radius: 8px;">
+        <i class="bi @(Model.IsEligible ? "bi-check-circle-fill" : "bi-exclamation-triangle-fill") fs-4 me-3"></i>
+        <div>
+            <div class="fw-bold">Status: @Model.EmployeeTypeDisplayName</div>
+            <div class="small">
+                @if (Model.IsEligible) {
+                    <span>You are eligible to apply for training programs.</span>
+                } else {
+                    <span>Training requests are restricted to permanent staff only.</span>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <div class="form-card-header">Application Request Form</div>
+        <div class="form-card-body">
+            @if (Model.IsEligible)
+            {
+                <form method="post">
+                    <div class="fg">
+                        <label class="fl">Select Training Program <span class="req">*</span></label>
+                        <select asp-for="TrainingRequest.Title" id="programSelect" class="fi" required>
+                            <option value="">-- Choose an Approved Program --</option>
+                            @{
+                                var programs = new List<string> {
+                                    "Gold Loan Appraising",
+                                    "Credit Evaluation & Lending",
+                                    "Leasing & Hire Purchase Operations",
+                                    "Debt Recovery & Negotiation Skills",
+                                    "AML & KYC Compliance",
+                                    "Financial Fraud Detection",
+                                    "Customer Service Excellence",
+                                    "Financial Product Sales & Marketing",
+                                    "Core Banking System (CBS) Training",
+                                    "Cybersecurity & Data Privacy",
+                                    "Advanced Microsoft Excel",
+                                    "Microfinance Field Best Practices",
+                                    "Workplace Ethics & Conduct",
+                                    "Strategic Leadership & Team Management",
+                                    "IT Infrastructure & Troubleshooting"
+                                };
+                                foreach(var p in programs) {
+                                    <option value="@p">@p</option>
+                                }
+                            }
+                            <option value="Other">-- Other / Custom Program (Type Below) --</option>
+                        </select>
+                    </div>
+
+                    <div class="fg" id="customProgramWrap" style="display: none;">
+                        <label class="fl">Custom Program Name <span class="req">*</span></label>
+                        <input type="text" asp-for="CustomProgramTitle" id="customProgramInput" class="fi" placeholder="e.g. Specialized Asset Valuation & Appraisal" />
+                        <span class="text-muted" style="font-size: 11.5px;">Specify the custom program or workshop you would like to request.</span>
+                    </div>
+
+                    <div class="fg">
+                        <label class="fl">Reason for Training <span class="req">*</span></label>
+                        <textarea asp-for="TrainingRequest.Description" class="fi" rows="5" 
+                                  placeholder="Briefly explain why you need this training and how it helps your role..." required></textarea>
+                    </div>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; border-top: 1px solid #e2e5dc; padding-top: 20px;">
+                        <a href="/Training/Dashboard" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                            <i class="bi bi-send"></i> Submit Request
+                        </button>
+                    </div>
+                </form>
+
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        var progSelect = document.getElementById("programSelect");
+                        var customWrap = document.getElementById("customProgramWrap");
+                        var customInput = document.getElementById("customProgramInput");
+
+                        function toggleCustomProgram() {
+                            if (progSelect && progSelect.value === "Other") {
+                                customWrap.style.display = "block";
+                                if (customInput) customInput.setAttribute("required", "required");
+                            } else if (customWrap) {
+                                customWrap.style.display = "none";
+                                if (customInput) customInput.removeAttribute("required");
+                            }
+                        }
+
+                        if (progSelect) {
+                            progSelect.addEventListener("change", toggleCustomProgram);
+                            toggleCustomProgram();
+                        }
+                    });
+                </script>
+            }
+            else
+            {
+                <div class="text-center py-5">
+                    <i class="bi bi-lock-fill text-muted" style="font-size: 3.5rem; opacity: 0.5;"></i>
+                    <h4 class="mt-3 fw-bold text-secondary">Access Restricted</h4>
+                    <p class="text-muted">Currently, only permanent employees are authorized to submit training requests via the portal.</p>
+                    <a href="/Training/Dashboard" class="btn-kanrich btn-kanrich-outline mt-2">Return to Dashboard</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>

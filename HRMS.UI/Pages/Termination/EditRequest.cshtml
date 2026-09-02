@@ -1,6 +1,6 @@
 @page "{id:int}"
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "HR Manager")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer")]
 @model HRMS.UI.Pages.Termination.EditRequestModel
 @{
     ViewData["Title"] = "Employee Termination";
@@ -42,9 +42,9 @@
     .override-block { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 18px; margin-top: 12px; }
 </style>
 
-<a asp-page="/Termination/Requests" class="back-link">
+<a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Terminations" class="back-link">
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-    Back to List
+    Back to Separation Hub
 </a>
 <h2 class="page-h">Edit Termination Request #@Model.CurrentRequest?.Id</h2>
 <p class="page-s">@Model.CurrentRequest?.EmployeeName — @Model.CurrentRequest?.EpfNumber</p>
@@ -91,58 +91,15 @@
                 </select>
             </div>
             <div class="fg">
-                <label asp-for="Input.InitiationDate" class="fl">Initiation Date <span class="req">*</span></label>
-                <input asp-for="Input.InitiationDate" type="date" class="fi" />
-            </div>
-            <div class="fg">
                 <label asp-for="Input.EffectiveTerminationDate" class="fl">Effective Termination Date <span class="req">*</span></label>
-                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" />
+                <input asp-for="Input.EffectiveTerminationDate" type="date" class="fi" min="@SriLankaTime.Today.ToString("yyyy-MM-dd")" />
+                <span asp-validation-for="Input.EffectiveTerminationDate" class="text-danger small"></span>
             </div>
         </div>
         <div class="fg">
             <label asp-for="Input.ReasonForTermination" class="fl">Reason for Termination <span class="req">*</span></label>
             <textarea asp-for="Input.ReasonForTermination" class="fi" rows="3"></textarea>
             <span asp-validation-for="Input.ReasonForTermination" class="text-danger small"></span>
-        </div>
-        <div class="grid-2">
-            <div class="fg">
-                <label asp-for="Input.SupervisorRemarks" class="fl">Supervisor Remarks</label>
-                <textarea asp-for="Input.SupervisorRemarks" class="fi" rows="2"></textarea>
-            </div>
-            <div class="fg">
-                <label asp-for="Input.SpecialRemarks" class="fl">Special Remarks / Notes</label>
-                <textarea asp-for="Input.SpecialRemarks" class="fi" rows="2"></textarea>
-            </div>
-        </div>
-    </div>
-
-    <div class="form-section">
-        <div class="fst">Employee Obligations</div>
-        <div class="grid-2" style="margin-bottom:14px">
-            <div class="fg">
-                <label asp-for="Input.DirectObligations" class="fl">Direct Obligations</label>
-                <textarea asp-for="Input.DirectObligations" class="fi" rows="2"></textarea>
-            </div>
-            <div class="fg">
-                <label asp-for="Input.IndirectObligations" class="fl">Indirect Obligations</label>
-                <textarea asp-for="Input.IndirectObligations" class="fi" rows="2"></textarea>
-            </div>
-        </div>
-        <div style="display:flex;gap:32px;flex-wrap:wrap;margin-bottom:12px">
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-                <input asp-for="Input.HasOutstandingLoans" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
-                Employee has outstanding loan balances
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-                <input asp-for="Input.IsLoanGuarantor" type="checkbox" style="width:16px;height:16px;accent-color:#10823c" />
-                Employee is a loan guarantor
-            </label>
-        </div>
-        <div class="override-block">
-            <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;font-weight:600;color:#92400e">
-                <input asp-for="Input.HasOverridePermission" type="checkbox" style="width:16px;height:16px;accent-color:#f59e0b" />
-                Senior Management Override
-            </label>
         </div>
     </div>
 
@@ -182,9 +139,11 @@
                 </select>
             </div>
             <div class="fg">
-                <label asp-for="Input.Documents" class="fl">Add More Files</label>
-                <input asp-for="Input.Documents" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
+                <label asp-for="Input.Documents" class="fl">Add More Files @(Model.ExistingDocuments.Any() ? "" : "(Mandatory)")</label>
+                <input asp-for="Input.Documents" id="editTerminationDocInput" type="file" class="fi" multiple accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" style="padding:6px 12px" />
                 <span class="fi-hint">PDF, DOC, DOCX, JPG, PNG — max 5 MB each</span>
+                <span id="editDocValidationMsg" class="text-danger small" style="display:none;font-weight:600;margin-top:5px"><i class="bi bi-exclamation-circle me-1"></i>At least one supporting document must be attached to submit a termination request.</span>
+                <span asp-validation-for="Input.Documents" class="text-danger small"></span>
             </div>
         </div>
     </div>
@@ -195,9 +154,43 @@
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
             Save Changes
         </button>
-        <button type="submit" asp-page-handler="Submit" class="btn-create">
+        <button type="submit" asp-page-handler="Submit" id="btnEditSubmitForApproval" class="btn-create">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
             Submit for Approval
         </button>
     </div>
 </form>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const existingDocsCount = @Model.ExistingDocuments.Count;
+            const docInput = document.getElementById('editTerminationDocInput');
+            const docMsg = document.getElementById('editDocValidationMsg');
+            const btnSubmit = document.getElementById('btnEditSubmitForApproval');
+
+            if (docInput && docMsg) {
+                docInput.addEventListener('change', function() {
+                    if (docInput.files && docInput.files.length > 0) {
+                        docMsg.style.display = 'none';
+                        docInput.style.borderColor = '';
+                    }
+                });
+            }
+
+            if (btnSubmit && docInput && docMsg) {
+                btnSubmit.addEventListener('click', function(e) {
+                    if (existingDocsCount === 0 && (!docInput.files || docInput.files.length === 0)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        docMsg.style.display = 'block';
+                        docInput.style.borderColor = '#ef4444';
+                        docInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        docInput.focus();
+                        return false;
+                    }
+                });
+            }
+        });
+    </script>
+}

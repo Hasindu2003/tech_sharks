@@ -55,10 +55,7 @@
             align-items: center;
             border-bottom: 1px solid var(--border-color);
             margin-bottom: 19px;
-            position: sticky;
-            top: 0;
             background: white;
-            z-index: 5;
         }
 
         .tabs-list {
@@ -142,6 +139,7 @@
         .avatar-circle {
             width: 36px;
             height: 36px;
+            aspect-ratio: 1 / 1;
             border-radius: 50%;
             background: #e8f3ec;
             display: flex;
@@ -152,6 +150,17 @@
             color: var(--primary-green);
             flex-shrink: 0;
             box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .avatar-img-table {
+            width: 100%;
+            height: 100%;
+            aspect-ratio: 1 / 1;
+            object-fit: cover;
+            object-position: center;
+            display: block;
         }
 
         .emp-info .name {
@@ -161,15 +170,12 @@
             display: block;
         }
 
-        .emp-info .email {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .emp-id {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-main);
+        .emp-info .emp-id-sub {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #64748b;
+            font-family: monospace;
+            display: block;
         }
 
         .emp-dept {
@@ -177,7 +183,7 @@
             color: var(--text-muted);
         }
 
-        /* Status Badges */
+        /* Status & Type Badges */
         .status-badge {
             display: inline-flex;
             align-items: center;
@@ -195,33 +201,25 @@
             border-radius: 50%;
         }
 
-        .badge-active {
-            background: #dbeafe; /* As per Figma context line 416 */
-            border-color: #bbf7d0;
-            color: #10823c;
-        }
-        .badge-active .dot { background: #22c55e; }
+        /* Employee Type Badges */
+        .badge-perm { background: #dbeafe; border-color: #93c5fd; color: #1e40af; }
+        .badge-perm .dot { background: #2563eb; }
 
-        .badge-leave {
-            background: #fef3c7;
-            border-color: #fde68a;
-            color: #b45309;
-        }
-        .badge-leave .dot { background: #f59e0b; }
+        .badge-prob { background: #fff7ed; border-color: #fed7aa; color: #c2410c; }
+        .badge-prob .dot { background: #f97316; }
 
-        .badge-inactive {
-            background: #fffbeb;
-            border-color: #e5e7eb;
-            color: #374151;
-        }
-        .badge-inactive .dot { background: #9ca3af; }
+        .badge-intern { background: #f3e8ff; border-color: #d8b4fe; color: #7e22ce; }
+        .badge-intern .dot { background: #a855f7; }
 
-        .badge-draft {
-            background: #fef3c7;
-            border-color: #fde68a;
-            color: #b45309;
-        }
-        .badge-draft .dot { background: #f59e0b; }
+        /* Employee Status Badges */
+        .badge-status-active { background: #f0fdf4; border-color: #bbf7d0; color: #15803d; }
+        .badge-status-active .dot { background: #22c55e; }
+
+        .badge-status-terminated { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+        .badge-status-terminated .dot { background: #ef4444; }
+
+        .badge-status-resigned { background: #f8fafc; border-color: #cbd5e1; color: #475569; }
+        .badge-status-resigned .dot { background: #64748b; }
 
         .btn-resume {
             color: var(--primary-green);
@@ -334,10 +332,8 @@
             box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
         }
 
-        .pg-btn.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+        .sep-page-title  { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+        .sep-page-sub    { font-size: 12px; font-weight: 400; color: #7a8863; margin: 0 0 22px 0; }
     </style>
 }
 
@@ -357,6 +353,10 @@
                 </button>
             </div>
         }
+
+        <h2 class="sep-page-title">Employee Directory</h2>
+        <p class="sep-page-sub">Centralized directory to manage staff profiles, onboarding records, and document verification.</p>
+
         <div class="tabs-container">
             <div class="tabs-list">
                 <a class="tab @(Model.Tab == "directory" ? "active" : "")" href="?tab=directory">
@@ -370,17 +370,16 @@
                     <span class="tab-badge yellow">@Model.DraftCount</span>
                 </a>
                 }
+                @if (User.IsInRole("HR Officer") || User.IsInRole("Admin"))
+                {
                 <a class="tab @(Model.Tab == "documents" ? "active" : "")" href="?tab=documents">
                     Pending Document Approvals
                     <span class="tab-badge red">@Model.PendingApprovals</span>
                 </a>
-                <a class="tab">
-                    Employee Requests
-                    <span class="tab-badge blue">@Model.RequestCount</span>
-                </a>
+                }
             </div>
             
-            @if (User.IsInRole("HR Manager"))
+            @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer") || User.IsInRole("Admin"))
             {
             <a href="/Employees/Create" class="btn-create">
                 <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -395,24 +394,28 @@
     <!-- ── EMPLOYEE DIRECTORY TAB ── -->
     <div class="tab-panel @(Model.Tab == "directory" ? "active" : "")">
         <div class="table-card">
-            <table class="emp-table" style="table-layout:fixed;">
+            <table class="emp-table" id="tbl-employees" style="table-layout:fixed;">
                 <colgroup>
-                    <col style="width:32%;" />  <!-- Employee name + avatar -->
-                    <col style="width:16%;" />  <!-- ID -->
+                    <col style="width:30%;" />  <!-- Employee name + avatar + ID -->
                     <col style="width:22%;" />  <!-- Department -->
                     <col style="width:18%;" />  <!-- Employee Type -->
-                    <col style="width:12%;" />  <!-- Actions -->
+                    <col style="width:16%;" />  <!-- Status -->
+                    <col style="width:14%;" />  <!-- Actions -->
                 </colgroup>
                 <thead>
                     <tr>
                         <th>Employee</th>
-                        <th>ID</th>
                         <th>Department</th>
                         <th>Employee Type</th>
-                        <th></th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
+                    @if (!Model.EmployeeList.Any())
+                    {
+                        <tr class="empty-row"><td colspan="5" style="text-align:center; padding:32px 0; color:var(--text-muted);">No employees found.</td></tr>
+                    }
                     @foreach (var emp in Model.EmployeeList)
                     {
                         <tr>
@@ -425,16 +428,17 @@
                                                 ? $"{nameParts[0][0]}{nameParts[^1][0]}" 
                                                 : (nameParts.Length == 1 ? nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)) : "U");
                                         }
-                                        @avatarChars.ToUpper()
+                                        <img src="/uploads/avatars/emp_@(emp.Id).jpg" 
+                                             class="avatar-img-table" 
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';" 
+                                             alt="@(emp.Initials ?? emp.FullName)" />
+                                        <span style="display:none;">@avatarChars.ToUpper()</span>
                                     </div>
                                     <div class="emp-info">
                                         <span class="name">@(string.IsNullOrEmpty(emp.Initials) ? emp.FullName : emp.Initials)</span>
-                                        <span class="email">@emp.Email</span>
+                                        <span class="emp-id-sub">EMP-@emp.Id.ToString("D5")</span>
                                     </div>
                                 </div>
-                            </td>
-                            <td>
-                                <span class="emp-id">EMP-@emp.Id.ToString("D5")</span>
                             </td>
                             <td>
                                 <span class="emp-dept">@(emp.Department?.Name ?? "-")</span>
@@ -443,15 +447,31 @@
                                 @{
                                     var typeClass = emp.EmployeeType switch
                                     {
-                                        "Permanent" => "badge-active",
-                                        "Probationary" => "badge-leave",
-                                        "Intern" => "badge-draft",
-                                        _ => "badge-active"
+                                        "Permanent" => "badge-perm",
+                                        "Probationary" => "badge-prob",
+                                        "Intern" => "badge-intern",
+                                        _ => "badge-perm"
                                     };
                                 }
                                 <div class="status-badge @typeClass">
                                     <span class="dot"></span>
-                                    @(string.IsNullOrEmpty(emp.EmployeeType) ? "Unknown" : emp.EmployeeType)
+                                    @(string.IsNullOrEmpty(emp.EmployeeType) ? "Permanent" : emp.EmployeeType)
+                                </div>
+                            </td>
+                            <td>
+                                @{
+                                    var empStatus = string.IsNullOrWhiteSpace(emp.Status) ? "Active" : emp.Status;
+                                    var statusClass = empStatus switch
+                                    {
+                                        "Active" => "badge-status-active",
+                                        "Terminated" => "badge-status-terminated",
+                                        "Resigned" => "badge-status-resigned",
+                                        _ => "badge-status-active"
+                                    };
+                                }
+                                <div class="status-badge @statusClass">
+                                    <span class="dot"></span>
+                                    @empStatus
                                 </div>
                             </td>
                             <td style="text-align: right;">
@@ -461,50 +481,6 @@
                     }
                 </tbody>
             </table>
-
-            <div class="pagination-container">
-                <div class="pagination-info">
-                    Showing @((Model.PageNumber - 1) * IndexModel.PageSize + 1)–@(Math.Min(Model.PageNumber * IndexModel.PageSize, Model.TotalEmployees)) of @Model.TotalEmployees employees
-                </div>
-                <div class="pagination-buttons">
-                    @{
-                        var prevPage = Model.PageNumber - 1;
-                        var nextPage = Model.PageNumber + 1;
-                        int startPage = Math.Max(1, Model.PageNumber - 2);
-                        int endPage   = Math.Min(Model.TotalPages, startPage + 4);
-                        if (endPage - startPage < 4) startPage = Math.Max(1, endPage - 4);
-                    }
-                    @if (Model.PageNumber <= 1)
-                    {
-                        <span class="pg-btn disabled">← Prev</span>
-                    }
-                    else
-                    {
-                        <a class="pg-btn" href="?tab=directory&pageNumber=@prevPage">← Prev</a>
-                    }
-
-                    @for (int p = startPage; p <= endPage; p++)
-                    {
-                        if (p == Model.PageNumber)
-                        {
-                            <span class="pg-btn active">@p</span>
-                        }
-                        else
-                        {
-                            <a class="pg-btn" href="?tab=directory&pageNumber=@p">@p</a>
-                        }
-                    }
-
-                    @if (Model.PageNumber >= Model.TotalPages)
-                    {
-                        <span class="pg-btn disabled">Next →</span>
-                    }
-                    else
-                    {
-                        <a class="pg-btn" href="?tab=directory&pageNumber=@nextPage">Next →</a>
-                    }
-                </div>
-            </div>
         </div>
     </div>
 
@@ -619,6 +595,8 @@
         }
     </div>
 
+    @if (User.IsInRole("HR Officer") || User.IsInRole("Admin"))
+    {
     <!-- ── PENDING DOCUMENT APPROVALS TAB ── -->
     <div class="tab-panel @(Model.Tab == "documents" ? "active" : "")">
         @if (Model.PendingDocumentList.Count == 0)
@@ -680,6 +658,7 @@
             </div>
         }
     </div>
+    }
 
   </div> <!-- End main-content -->
 </div>
@@ -687,8 +666,9 @@
 @section Scripts {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-drafts', 8);
-    initTablePagination('tbl-docs', 8);
+    initTablePagination('tbl-employees', 10);
+    initTablePagination('tbl-drafts', 10);
+    initTablePagination('tbl-docs', 10);
 });
 </script>
 }

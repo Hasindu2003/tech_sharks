@@ -1,0 +1,125 @@
+@page
+@model HRMS.UI.Pages.Training.EvaluateProbationModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Probation Evaluation Form";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    /* Form card */
+    .form-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .form-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .form-card-body { padding: 20px; }
+    
+    .fg { margin-bottom: 14px; }
+    .fg:last-child { margin-bottom: 0; }
+    .fl { font-size: 13px; font-weight: 600; color: #151811; margin-bottom: 5px; display: block; }
+    .fi {
+        width: 100%; padding: 9px 12px;
+        border: 1px solid #d1d5db; border-radius: 6px;
+        font-size: 14px; color: #151811;
+        font-family: 'Manrope', sans-serif;
+        background: #fff; box-sizing: border-box;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .fi:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .req { color: #ef4444; }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+</style>
+
+<div>
+    <a href="/Training/ProbationTracking" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Tracking
+    </a>
+
+    <h1 class="page-h">Probationary Period Evaluation</h1>
+    <p class="page-s">Evaluation for: <strong>@Model.Employee.FullName</strong> | @Model.Employee.Department</p>
+
+    <div class="form-card">
+        <div class="form-card-header">Monthly Evaluation Form</div>
+        <div class="form-card-body">
+            <form method="post">
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                <input type="hidden" asp-for="Evaluation.EmployeeId" />
+                
+                <div class="fg">
+                    <label class="fl">Select Evaluation Month <span class="req">*</span></label>
+                    <select asp-for="Evaluation.Month" class="fi" required>
+                        <option value="">-- Choose Month --</option>
+                        @for (int i = 1; i <= Model.TotalProbationMonths; i++)
+                        {
+                            if (Model.ExistingMonths.Contains(i))
+                            {
+                                <option value="@i" disabled>Month @i (Completed)</option>
+                            }
+                            else
+                            {
+                                <option value="@i">Month @i</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="grid-3">
+                    <div class="fg">
+                        <label class="fl">Performance (0-100) <span class="req">*</span></label>
+                        <input type="number" asp-for="Evaluation.PerformanceScore" class="fi" min="0" max="100" required />
+                    </div>
+                    
+                    <div class="fg">
+                        <label class="fl">Attendance & Punctuality (0-100) <span class="req">*</span></label>
+                        <input type="number" asp-for="Evaluation.AttendanceScore" class="fi" min="0" max="100" required />
+                    </div>
+                    
+                    <div class="fg">
+                        <label class="fl">Conduct & Discipline (0-100) <span class="req">*</span></label>
+                        <input type="number" asp-for="Evaluation.ConductScore" class="fi" min="0" max="100" required />
+                    </div>
+                </div>
+
+                <div class="fg">
+                    <label class="fl">Overall Feedback</label>
+                    <textarea asp-for="Evaluation.Comments" class="fi" rows="4" style="resize:none;" placeholder="Enter detailed performance feedback..."></textarea>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; border-top: 1px solid #e2e5dc; padding-top: 20px;">
+                    <a href="/Training/ProbationTracking" class="btn-kanrich btn-kanrich-outline">Cancel</a>
+                    <button type="submit" class="btn-kanrich btn-kanrich-primary">Save Evaluation</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

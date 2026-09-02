@@ -1,0 +1,860 @@
+@page
+@model HRMS.UI.Pages.Payroll.IndexModel
+@{
+    ViewData["Title"] = "Payroll Management";
+    ViewData["PageTitle"] = "Payroll / Dashboard";
+    ViewData["ActiveNav"] = "Payroll";
+}
+
+@section Styles {
+    <style>
+        .payroll-shell {
+            padding: 26px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+
+        .grid-split {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 24px;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: start;
+            gap: 16px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .checklist-item:last-child {
+            border-bottom: none;
+        }
+        .checklist-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+        .checklist-content {
+            flex-grow: 1;
+        }
+        .checklist-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0 0 2px 0;
+        }
+        .checklist-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 0;
+        }
+        .checklist-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 8px;
+            font-size: 0.75rem;
+            padding: 6px 12px;
+        }
+        .step-check-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            padding: 5px 11px;
+            background: #ffffff;
+            border: 1.5px solid #cbd5e1;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.76rem;
+            font-weight: 700;
+            color: #334155;
+            transition: all 0.2s ease;
+            user-select: none;
+            width: fit-content;
+        }
+        .step-check-label:hover {
+            border-color: #10823c;
+            background: #f0fdf4;
+            color: #10823c;
+        }
+        .step-check-label.checked {
+            border-color: #10823c;
+            background: #f0fdf4;
+            color: #10823c;
+        }
+        .step-check-input {
+            width: 15px;
+            height: 15px;
+            accent-color: #10823c;
+            cursor: pointer;
+            margin: 0;
+        }
+        .run-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .run-list-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Modal Overlay & Dialog Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        .modal-card {
+            background: white;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            animation: modalIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @@keyframes modalIn {
+            from { transform: translateY(12px) scale(0.98); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+    </style>
+}
+
+<div class="payroll-shell">
+
+    <!-- Sub-navigation Tabs with Branch Switcher -->
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); margin-bottom: 24px; padding-bottom: 12px; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="/Payroll/Index?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-primary" style="padding: 6px 16px; font-size: 0.85rem;">Dashboard</a>
+            <a href="/Payroll/AttendanceReview?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">Attendance Review</a>
+            <a href="/Payroll/Bonuses?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">Allowances</a>
+            <a href="/Payroll/EpfEtf?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">EPF & ETF</a>
+            <a href="/Payroll/Payslips?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 16px; font-size: 0.85rem;">Payslips</a>
+        </div>
+
+        @if (Model.ManagedBranchesList.Count > 1)
+        {
+            <div style="display: flex; align-items: center; gap: 8px; background: #f8fafc; padding: 4px 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                <label style="font-size: 12px; font-weight: 700; color: #475569; margin: 0; display: flex; align-items: center; gap: 4px;">
+                    <i class="bi bi-geo-alt-fill" style="color: #10823c;"></i> Branch:
+                </label>
+                <select onchange="location.href='?branchId=' + this.value" style="font-size: 13px; font-weight: 700; padding: 4px 8px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #0f172a; cursor: pointer;">
+                    @foreach (var b in Model.ManagedBranchesList)
+                    {
+                        <option value="@b.Id" selected="@(b.Id == Model.BranchId)">@b.Name</option>
+                    }
+                </select>
+            </div>
+        }
+        else if (Model.CurrentBranch != null)
+        {
+            <div style="font-size: 12px; font-weight: 700; color: #10823c; background: #ebf5ee; padding: 6px 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-geo-alt-fill"></i> Branch: @Model.CurrentBranch.Name
+            </div>
+        }
+    </div>
+
+    <!-- Header block -->
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+        <div>
+            <h2 style="display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0;">
+                @Model.CurrentMonthName Payroll
+                @if (Model.CurrentBranch != null)
+                {
+                    <span style="font-size: 1.1rem; color: #64748b; font-weight: 600;">— @Model.CurrentBranch.Name</span>
+                }
+                @if (Model.HasPayrollRun || Model.HasPayslips)
+                {
+                    <span class="k-badge k-badge-approved" style="font-size: 0.8rem; border-radius: 6px;">Processed · Completed</span>
+                }
+                else
+                {
+                    <span class="k-badge k-badge-pending" style="font-size: 0.8rem; border-radius: 6px;">Active Cycle · Pending</span>
+                }
+            </h2>
+            <p class="page-subtitle" style="margin-top: 4px;">Processing branch payroll for <strong>@(Model.CurrentBranch?.Name ?? "Selected Branch")</strong></p>
+        </div>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <button onclick="exportReport()" class="btn-kanrich btn-kanrich-outline">
+                <i class="bi bi-download"></i> Export Report
+            </button>
+            @if (Model.HasPayrollRun || Model.HasPayslips)
+            {
+                <button type="button" onclick="openStartOverModal(@SriLankaTime.Now.Month, @SriLankaTime.Now.Year, '@Model.CurrentMonthName', @Model.BranchId, '@(Model.CurrentBranch?.Name ?? "Selected Branch")')" class="btn-kanrich btn-kanrich-outline" style="color: #b91c1c; border-color: #fecaca; background: #fff5f5; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                    <i class="bi bi-arrow-counterclockwise"></i> Start Over Cycle
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" style="margin-bottom: 20px;">✓ @TempData["Success"]</div>
+    }
+
+    <!-- Stats Grid (Kanrich System Style) -->
+    <div class="stat-cards">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-bank"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Estimated Payroll Total <span class="k-badge k-badge-approved" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">@(Model.CurrentBranch?.Name ?? "Branch")</span></div>
+                <div class="stat-value">Rs @Model.TotalPayroll.ToString("N0")</div>
+                <div class="stat-sub">
+                    @Model.LastMonthName: 
+                    @if (Model.LastMonthPayroll > 0)
+                    {
+                        <strong>Rs @Model.LastMonthPayroll.ToString("N0")</strong>
+                        @if (Model.TotalPayroll > Model.LastMonthPayroll)
+                        {
+                            <span style="color: var(--primary); font-weight: 700;"> ↑</span>
+                        }
+                        else if (Model.TotalPayroll < Model.LastMonthPayroll)
+                        {
+                            <span style="color: var(--accent-red); font-weight: 700;"> ↓</span>
+                        }
+                    }
+                    else
+                    {
+                        <span style="font-style: italic;">No data</span>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Total Employees <span class="k-badge k-badge-info" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">@(Model.CurrentBranch?.Name ?? "Branch")</span></div>
+                <div class="stat-value">@Model.TotalEmployees</div>
+                <div class="stat-sub">With salary records configured</div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="bi bi-award-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Allowances & Additions <span class="k-badge k-badge-info" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">Allowances</span></div>
+                <div class="stat-value">Rs @Model.TotalBonuses.ToString("N0")</div>
+                <div class="stat-sub">
+                    @(Model.TotalBonuses == 0 ? "No additions this month" : "Performance & Additions")
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon orange"><i class="bi bi-dash-circle-fill"></i></div>
+            <div class="stat-info">
+                <div class="stat-label">Employee Deductions <span class="k-badge k-badge-rejected" style="font-size: 0.65rem; padding: 1px 6px; margin-left: 6px;">EPF 8%</span></div>
+                <div class="stat-value">Rs @Model.TotalDeductions.ToString("N0")</div>
+                <div class="stat-sub">EPF 8% from salary · Employer (15%): Rs @Model.TotalEmployerContributions.ToString("N0")</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main split layout -->
+    <div class="grid-split">
+        
+        <!-- Checklist Column -->
+        <div>
+            <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0 0 14px 0;"><i class="bi bi-clipboard-check"></i> Processing Checklist — @(Model.CurrentBranch?.Name ?? "Selected Branch")</h3>
+            <div class="k-card" style="padding: 0;">
+                
+                <!-- Step 1: Salary & Additions Review -->
+                @if (Model.HasPayrollRun || Model.HasPayslips)
+                {
+                    <div class="checklist-item">
+                        <div class="checklist-icon" style="background: var(--primary-light); color: var(--primary);">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">1. Salary Additions & Allowances Review</p>
+                            <p class="checklist-desc">
+                                Base salaries and allowances locked and processed for @Model.TotalEmployees employee(s).
+                            </p>
+                        </div>
+                        <span class="k-badge k-badge-approved">Completed</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="checklist-item" id="step1Container" style="background: #f8fafc; transition: all 0.2s ease;">
+                        <div class="checklist-icon" id="step1Icon" style="background: #e0f2fe; color: #0284c7;">
+                            <i class="bi bi-cash-stack"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">1. Salary Additions & Allowances Review</p>
+                            <p class="checklist-desc">
+                                Salary records configured for @Model.TotalEmployees employee(s) in @(Model.CurrentBranch?.Name ?? "this branch"). Review any monthly allowances before running.
+                            </p>
+                            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
+                                <a href="/Payroll/Bonuses?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline checklist-btn">
+                                    <i class="bi bi-gift"></i> Manage Allowances
+                                </a>
+                                <a href="/Payroll/EpfEtf?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline checklist-btn">
+                                    <i class="bi bi-sliders"></i> Review Salaries
+                                </a>
+                            </div>
+                            <div>
+                                <label class="step-check-label" id="step1CheckLabel">
+                                    <input type="checkbox" id="checkStep1" class="step-check-input" onchange="onStepCheckChange()" />
+                                    <span>Mark Step 1 as Verified</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span class="k-badge k-badge-pending" id="step1Badge">Pending Verification</span>
+                    </div>
+                }
+
+                <!-- Step 2: Attendance & Leave Reconciliation -->
+                @if (Model.HasPayrollRun || Model.HasPayslips)
+                {
+                    <div class="checklist-item">
+                        <div class="checklist-icon" style="background: var(--primary-light); color: var(--primary);">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">2. Attendance & Leave Reconciliation</p>
+                            <p class="checklist-desc">
+                                Attendance records and leaves reconciled and locked for @(Model.CurrentBranch?.Name ?? "this branch").
+                            </p>
+                        </div>
+                        <span class="k-badge k-badge-approved">Completed</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="checklist-item" id="step2Container" style="background: #f8fafc; transition: all 0.2s ease;">
+                        <div class="checklist-icon" id="step2Icon" style="background: #fef3c7; color: #b45309;">
+                            <i class="bi bi-hourglass-split"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">2. Attendance & Leave Reconciliation</p>
+                            <p class="checklist-desc" id="step2Text">
+                                Reconcile unpaid leaves, working days, and check-in records for @(Model.CurrentBranch?.Name ?? "this branch").
+                            </p>
+                            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
+                                <a href="/Payroll/AttendanceReview?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline checklist-btn">
+                                    <i class="bi bi-calendar-check"></i> Review Attendance
+                                </a>
+                            </div>
+                            <div>
+                                <label class="step-check-label" id="step2CheckLabel">
+                                    <input type="checkbox" id="checkStep2" class="step-check-input" onchange="onStepCheckChange()" />
+                                    <span>Mark Step 2 as Verified</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span class="k-badge k-badge-pending" id="step2Badge">Pending Verification</span>
+                    </div>
+                }
+
+                <!-- Step 3: Statutory Deductions (EPF/ETF/Tax) -->
+                @if (Model.HasPayrollRun || Model.HasPayslips)
+                {
+                    <div class="checklist-item">
+                        <div class="checklist-icon" style="background: var(--primary-light); color: var(--primary);">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">3. Statutory Deductions (EPF/ETF/Tax)</p>
+                            <p class="checklist-desc">
+                                EPF (8%/12%) and ETF (3%) contributions processed for @Model.TotalEmployees employee(s). Total: Rs @Model.TotalDeductions.ToString("N0").
+                            </p>
+                        </div>
+                        <span class="k-badge k-badge-approved">Completed</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="checklist-item" id="step3Container" style="background: #f8fafc; transition: all 0.2s ease;">
+                        <div class="checklist-icon" id="step3Icon" style="background: #e0e7ff; color: #4338ca;">
+                            <i class="bi bi-calculator"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">3. Statutory Deductions (EPF/ETF/Tax)</p>
+                            <p class="checklist-desc">
+                                @(Model.HasSalaryRecords ? $"Estimated deductions: Rs {Model.TotalDeductions:N0}. Review statutory contributions before final execution." : "Awaiting salary configurations to calculate deductions.")
+                            </p>
+                            <div style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; align-items: center;">
+                                <a href="/Payroll/EpfEtf?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline checklist-btn">
+                                    <i class="bi bi-percent"></i> Review EPF/ETF Rates
+                                </a>
+                            </div>
+                            <div>
+                                <label class="step-check-label" id="step3CheckLabel">
+                                    <input type="checkbox" id="checkStep3" class="step-check-input" onchange="onStepCheckChange()" />
+                                    <span>Mark Step 3 as Verified</span>
+                                </label>
+                            </div>
+                        </div>
+                        <span class="k-badge k-badge-pending" id="step3Badge">Pending Verification</span>
+                    </div>
+                }
+
+                <!-- Step 4: Final Verification & Generation -->
+                @if (Model.HasPayrollRun || Model.HasPayslips)
+                {
+                    <div class="checklist-item">
+                        <div class="checklist-icon" style="background: var(--primary-light); color: var(--primary);">
+                            <i class="bi bi-check-circle-fill"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title">4. Final Verification & Generation</p>
+                            <p class="checklist-desc">
+                                Payslips generated successfully for @(Model.CurrentBranch?.Name ?? "this branch") for this month.
+                            </p>
+                            <div style="display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap;">
+                                <a href="/Payroll/Payslips?branchId=@Model.BranchId" class="btn-kanrich btn-kanrich-outline checklist-btn">
+                                    <i class="bi bi-file-earmark-text"></i> View Payslips
+                                </a>
+                                <button type="button" onclick="openStartOverModal(@SriLankaTime.Now.Month, @SriLankaTime.Now.Year, '@Model.CurrentMonthName', @Model.BranchId, '@(Model.CurrentBranch?.Name ?? "Selected Branch")')" class="btn-kanrich checklist-btn" style="color: #b91c1c; border: 1px solid #fecaca; background: #fff5f5; cursor: pointer; font-weight: 600;">
+                                    <i class="bi bi-arrow-counterclockwise"></i> Start Over
+                                </button>
+                            </div>
+                        </div>
+                        <span class="k-badge k-badge-approved">Completed</span>
+                    </div>
+                }
+                else
+                {
+                    <div class="checklist-item" id="step4Container" style="background: #f8fafc; border-left: 4px solid #cbd5e1; transition: all 0.2s ease;">
+                        <div class="checklist-icon" id="step4Icon" style="background: #f1f5f9; color: #64748b;">
+                            <i class="bi bi-lock-fill"></i>
+                        </div>
+                        <div class="checklist-content">
+                            <p class="checklist-title" id="step4Title" style="color: #0f172a;">4. Final Verification & Payroll Execution</p>
+                            <p class="checklist-desc" id="step4Desc">
+                                Please check and verify Steps 1, 2, and 3 above to unlock and execute payroll for @(Model.CurrentBranch?.Name ?? "this branch").
+                            </p>
+                            <div style="margin-top: 10px;">
+                                <form method="post" asp-page-handler="RunPayroll" style="display: inline;">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="branchId" value="@Model.BranchId" />
+                                    <button type="submit" id="runPayrollBtn" disabled class="btn-kanrich btn-kanrich-primary checklist-btn" style="display: inline-flex; align-items: center; gap: 6px; padding: 7px 16px; font-weight: 700; font-size: 0.84rem; opacity: 0.5; cursor: not-allowed;">
+                                        <i class="bi bi-play-circle"></i> Run Payroll (@(Model.CurrentBranch?.Name ?? "Branch"))
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                        <span class="k-badge k-badge-secondary" id="step4Badge">Locked (0/3 verified)</span>
+                    </div>
+                }
+
+            </div>
+        </div>
+
+        <!-- History Column -->
+        <div>
+            <h3 style="font-size: 0.95rem; font-weight: 700; margin: 0 0 14px 0;"><i class="bi bi-clock-history"></i> Past Cycles (@(Model.CurrentBranch?.Name ?? "Branch"))</h3>
+            <div class="k-card" style="padding: 0;">
+                @if (!Model.PastRuns.Any())
+                {
+                    <div style="text-align: center; padding: 36px 20px; color: var(--text-secondary);">
+                        <i class="bi bi-history" style="font-size: 2.2rem; color: var(--border-color); display: block; margin-bottom: 8px;"></i>
+                        <p style="font-size: 0.8rem; font-weight: 600; margin: 0;">No Past Cycles for @(Model.CurrentBranch?.Name ?? "this branch")</p>
+                    </div>
+                }
+                else
+                {
+                    <div style="display: flex; flex-direction: column;">
+                        @foreach (var run in Model.PastRuns)
+                        {
+                            <div class="run-list-item">
+                                <div>
+                                    <p style="font-size: 0.85rem; font-weight: 700; margin: 0;">
+                                        @run.MonthName
+                                        @if (run.Branch != null)
+                                        {
+                                            <span style="font-size: 0.72rem; color: #64748b; font-weight: 600;"> · @run.Branch.Name</span>
+                                        }
+                                    </p>
+                                    <p style="font-size: 0.72rem; color: var(--text-secondary); margin: 2px 0 0 0;">Processed: @run.ProcessedAt?.ToString("dd MMM yyyy")</p>
+                                </div>
+                                <div style="text-align: right; display: flex; align-items: center; gap: 8px;">
+                                    <div>
+                                        <p style="font-size: 0.85rem; font-weight: 800; color: var(--primary); margin: 0;">Rs @run.TotalAmount.ToString("N0")</p>
+                                        <span class="k-badge k-badge-approved" style="font-size: 0.65rem; padding: 2px 6px; margin-top: 2px;">@run.Status</span>
+                                    </div>
+                                    <button type="button" onclick="openStartOverModal(@run.Month, @run.Year, '@run.MonthName', @(run.BranchId ?? Model.BranchId ?? 0), '@(run.Branch?.Name ?? Model.CurrentBranch?.Name ?? "Branch")')" title="Start Over / Reset this cycle" style="background: white; border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 8px; color: #64748b; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.color='#b91c1c'; this.style.borderColor='#fecaca'; this.style.background='#fff5f5';" onmouseout="this.style.color='#64748b'; this.style.borderColor='#e2e8f0'; this.style.background='white';">
+                                        <i class="bi bi-arrow-counterclockwise" style="font-size: 13px;"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                    <div style="padding: 12px; border-top: 1px solid var(--border-color); text-align: center;">
+                        <a href="/Payroll/Payslips?branchId=@Model.BranchId" style="font-size: 0.8rem; font-weight: 700; color: var(--primary); text-decoration: none;">View All Payslips</a>
+                    </div>
+                }
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<!-- Hidden Export Report block (used for clean print layout) -->
+<div id="exportReport" style="display:none;">
+    <div style="font-family:Arial,sans-serif; padding:20px; max-width:800px; margin:0 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #10823c; padding-bottom:16px; margin-bottom:24px;">
+            <div>
+                <h1 style="color:#10823c; font-size:24px; margin:0;">Kanrich HRMS</h1>
+                <p style="color:#666; margin:4px 0 0;">Payroll Summary Report — @(Model.CurrentBranch?.Name ?? "All Branches")</p>
+            </div>
+            <div style="text-align:right;">
+                <p style="font-size:18px; font-weight:bold; margin:0;">@Model.CurrentMonthName</p>
+                <p style="color:#666; font-size:12px;">Generated: @SriLankaTime.Now.ToString("dd MMM yyyy hh:mm tt")</p>
+            </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; margin-bottom:24px;">
+            <tr style="background:#f6f8f7;">
+                <td style="padding:12px; border:1px solid #e2e5dc; font-weight:bold;">Branch</td>
+                <td style="padding:12px; border:1px solid #e2e5dc; font-weight:bold; color:#10823c;">@(Model.CurrentBranch?.Name ?? "Selected Branch")</td>
+                <td style="padding:12px; border:1px solid #e2e5dc; font-weight:bold;">Total Employees</td>
+                <td style="padding:12px; border:1px solid #e2e5dc; font-weight:bold; color:#10823c;">@Model.TotalEmployees</td>
+            </tr>
+            <tr>
+                <td style="padding:12px; border:1px solid #e2e5dc; font-weight:bold;">Estimated Payroll Total</td>
+                <td style="padding:12px; border:1px solid #e2e5dc; font-weight:bold; color:#10823c;">Rs @Model.TotalPayroll.ToString("N2")</td>
+                <td style="padding:12px; border:1px solid #e2e5dc;">Total Deductions (EPF/ETF)</td>
+                <td style="padding:12px; border:1px solid #e2e5dc;">Rs @Model.TotalDeductions.ToString("N2")</td>
+            </tr>
+            <tr style="background:#f6f8f7;">
+                <td style="padding:12px; border:1px solid #e2e5dc;">Bonuses & Additions</td>
+                <td style="padding:12px; border:1px solid #e2e5dc;">Rs @Model.TotalBonuses.ToString("N2")</td>
+                <td style="padding:12px; border:1px solid #e2e5dc;">Last Month Total (@Model.LastMonthName)</td>
+                <td style="padding:12px; border:1px solid #e2e5dc;">@(Model.LastMonthPayroll > 0 ? "Rs " + Model.LastMonthPayroll.ToString("N2") : "No data")</td>
+            </tr>
+        </table>
+
+        @if (Model.PastRuns.Any())
+        {
+            <h3 style="border-bottom:1px solid #e2e5dc; padding-bottom:8px; margin-bottom:16px;">Past Payroll Cycles for @(Model.CurrentBranch?.Name ?? "this branch")</h3>
+            <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                    <tr style="background:#10823c; color:white;">
+                        <th style="padding:10px; text-align:left;">Month</th>
+                        <th style="padding:10px; text-align:left;">Branch</th>
+                        <th style="padding:10px; text-align:left;">Processed Date</th>
+                        <th style="padding:10px; text-align:left;">Total Amount</th>
+                        <th style="padding:10px; text-align:left;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var run in Model.PastRuns)
+                    {
+                        <tr style="border-bottom:1px solid #e2e5dc;">
+                            <td style="padding:10px;">@run.MonthName</td>
+                            <td style="padding:10px;">@(run.Branch?.Name ?? Model.CurrentBranch?.Name ?? "-")</td>
+                            <td style="padding:10px;">@run.ProcessedAt?.ToString("dd MMM yyyy")</td>
+                            <td style="padding:10px; font-weight:bold;">Rs @run.TotalAmount.ToString("N2")</td>
+                            <td style="padding:10px; color:#10823c;">@run.Status</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        <p style="margin-top:32px; font-size:11px; color:#999; text-align:center;">
+            This is a computer-generated report from Kanrich HRMS. Generated on @SriLankaTime.Now.ToString("dd MMM yyyy hh:mm tt").
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const currentBranchId = '@(Model.BranchId ?? 0)';
+        const currentMonth = '@(SriLankaTime.Now.Month)';
+        const currentYear = '@(SriLankaTime.Now.Year)';
+
+        function getStepKey(stepNum) {
+            return `payroll_step_check_${currentBranchId}_${currentYear}_${currentMonth}_step${stepNum}`;
+        }
+
+        function exportReport() {
+            const content = document.getElementById('exportReport').innerHTML;
+            const win = window.open('', '_blank', 'width=900,height=700');
+            win.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Payroll Report - @Model.CurrentMonthName (@(Model.CurrentBranch?.Name ?? "Branch"))</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; color: #111; }
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                        th { background: #10823c; color: white; padding: 10px; text-align: left; }
+                        td { padding: 10px; border: 1px solid #e2e5dc; }
+                        tr:nth-child(even) { background: #f6f8f7; }
+                        h1 { color: #10823c; }
+                        @@media print { button { display: none; } }
+                    </style>
+                </head>
+                <body>
+                    <button onclick="window.print()" style="margin-bottom:16px;padding:8px 16px;background:#10823c;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:bold;">
+                        🖨️ Print / Save as PDF
+                    </button>
+                    ${content}
+                </body>
+                </html>
+            `);
+            win.document.close();
+        }
+
+        function onStepCheckChange() {
+            const c1 = document.getElementById('checkStep1');
+            const c2 = document.getElementById('checkStep2');
+            const c3 = document.getElementById('checkStep3');
+            if (!c1 || !c2 || !c3) return;
+
+            // Save to session storage
+            sessionStorage.setItem(getStepKey(1), c1.checked ? 'true' : 'false');
+            sessionStorage.setItem(getStepKey(2), c2.checked ? 'true' : 'false');
+            sessionStorage.setItem(getStepKey(3), c3.checked ? 'true' : 'false');
+
+            updateStepUI(1, c1.checked);
+            updateStepUI(2, c2.checked);
+            updateStepUI(3, c3.checked);
+
+            const checkedCount = (c1.checked ? 1 : 0) + (c2.checked ? 1 : 0) + (c3.checked ? 1 : 0);
+            const allChecked = (checkedCount === 3);
+
+            const runBtn = document.getElementById('runPayrollBtn');
+            const step4Container = document.getElementById('step4Container');
+            const step4Icon = document.getElementById('step4Icon');
+            const step4Desc = document.getElementById('step4Desc');
+            const step4Badge = document.getElementById('step4Badge');
+
+            if (runBtn && step4Container && step4Icon && step4Badge && step4Desc) {
+                if (allChecked) {
+                    runBtn.disabled = false;
+                    runBtn.style.opacity = '1';
+                    runBtn.style.cursor = 'pointer';
+                    runBtn.style.boxShadow = '0 2px 6px rgba(16, 130, 60, 0.25)';
+
+                    step4Container.style.background = '#f0fdf4';
+                    step4Container.style.borderLeft = '4px solid #10823c';
+                    step4Icon.style.background = '#dcfce7';
+                    step4Icon.style.color = '#10823c';
+                    step4Icon.innerHTML = '<i class="bi bi-play-circle-fill"></i>';
+
+                    step4Desc.textContent = 'All 3 prerequisite steps verified! Click below to execute calculations and generate official payslips for @(Model.CurrentBranch?.Name ?? "this branch").';
+                    step4Badge.className = 'k-badge k-badge-approved';
+                    step4Badge.style.background = '#dcfce7';
+                    step4Badge.style.color = '#15803d';
+                    step4Badge.style.border = '1px solid #bbf7d0';
+                    step4Badge.textContent = 'Ready to Run (3/3 ✓)';
+                } else {
+                    runBtn.disabled = true;
+                    runBtn.style.opacity = '0.5';
+                    runBtn.style.cursor = 'not-allowed';
+                    runBtn.style.boxShadow = 'none';
+
+                    step4Container.style.background = '#f8fafc';
+                    step4Container.style.borderLeft = '4px solid #cbd5e1';
+                    step4Icon.style.background = '#f1f5f9';
+                    step4Icon.style.color = '#64748b';
+                    step4Icon.innerHTML = '<i class="bi bi-lock-fill"></i>';
+
+                    step4Desc.textContent = `Please verify and check off Steps 1, 2, and 3 above to unlock payroll execution (${checkedCount}/3 verified).`;
+                    step4Badge.className = 'k-badge k-badge-secondary';
+                    step4Badge.style.background = '';
+                    step4Badge.style.color = '';
+                    step4Badge.style.border = '';
+                    step4Badge.textContent = `Locked (${checkedCount}/3 verified)`;
+                }
+            }
+        }
+
+        function updateStepUI(stepNum, isChecked) {
+            const container = document.getElementById(`step${stepNum}Container`);
+            const icon = document.getElementById(`step${stepNum}Icon`);
+            const badge = document.getElementById(`step${stepNum}Badge`);
+            const label = document.getElementById(`step${stepNum}CheckLabel`);
+
+            if (isChecked) {
+                if (container) container.style.background = '#f0fdf4';
+                if (icon) {
+                    icon.style.background = 'var(--primary-light)';
+                    icon.style.color = 'var(--primary)';
+                    icon.innerHTML = '<i class="bi bi-check-circle-fill"></i>';
+                }
+                if (badge) {
+                    badge.className = 'k-badge k-badge-approved';
+                    badge.textContent = 'Verified ✓';
+                }
+                if (label) {
+                    label.classList.add('checked');
+                    label.querySelector('span').textContent = `Step ${stepNum} Verified ✓`;
+                }
+            } else {
+                if (container) container.style.background = '#f8fafc';
+                if (icon) {
+                    if (stepNum === 1) {
+                        icon.style.background = '#e0f2fe';
+                        icon.style.color = '#0284c7';
+                        icon.innerHTML = '<i class="bi bi-cash-stack"></i>';
+                    } else if (stepNum === 2) {
+                        icon.style.background = '#fef3c7';
+                        icon.style.color = '#b45309';
+                        icon.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                    } else if (stepNum === 3) {
+                        icon.style.background = '#e0e7ff';
+                        icon.style.color = '#4338ca';
+                        icon.innerHTML = '<i class="bi bi-calculator"></i>';
+                    }
+                }
+                if (badge) {
+                    badge.className = 'k-badge k-badge-pending';
+                    badge.textContent = 'Pending Verification';
+                }
+                if (label) {
+                    label.classList.remove('checked');
+                    label.querySelector('span').textContent = `Mark Step ${stepNum} as Verified`;
+                }
+            }
+        }
+
+        function loadStepCheckStates() {
+            const c1 = document.getElementById('checkStep1');
+            const c2 = document.getElementById('checkStep2');
+            const c3 = document.getElementById('checkStep3');
+            if (!c1 || !c2 || !c3) return;
+
+            c1.checked = sessionStorage.getItem(getStepKey(1)) === 'true';
+            c2.checked = sessionStorage.getItem(getStepKey(2)) === 'true';
+            c3.checked = sessionStorage.getItem(getStepKey(3)) === 'true';
+
+            onStepCheckChange();
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            @if (TempData["ResetChecklist"] != null)
+            {
+                <text>
+                sessionStorage.removeItem(getStepKey(1));
+                sessionStorage.removeItem(getStepKey(2));
+                sessionStorage.removeItem(getStepKey(3));
+                sessionStorage.removeItem('attendance_finalized_' + currentBranchId + '_' + currentYear + '_' + currentMonth);
+                sessionStorage.removeItem('attendance_states_' + currentBranchId + '_' + currentYear + '_' + currentMonth);
+                sessionStorage.removeItem('attendance_finalized_' + currentBranchId);
+                sessionStorage.removeItem('attendance_states_' + currentBranchId);
+                sessionStorage.removeItem('attendance_finalized');
+                sessionStorage.removeItem('attendance_states');
+                </text>
+            }
+
+            loadStepCheckStates();
+        });
+    </script>
+}
+
+<!-- Start Over Payroll Confirmation Modal -->
+<div class="modal-overlay" id="startOverModal" onclick="closeStartOverModal(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+        <div style="padding: 20px 24px; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <div style="width: 38px; height: 38px; border-radius: 50%; background: #fee2e2; color: #dc2626; display:flex; align-items:center; justify-content:center; font-size: 18px; flex-shrink: 0;">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #0f172a;">Start Over Payroll Cycle</h3>
+                    <p id="startOverModalSubtitle" style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Reset payroll run for this branch</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeStartOverModal()" style="background: none; border: none; font-size: 24px; line-height: 1; color: #94a3b8; cursor: pointer; padding: 2px 6px;">&times;</button>
+        </div>
+
+        <form method="post" asp-page-handler="StartOverPayroll" onsubmit="onStartOverSubmit()" style="margin: 0;">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="month" id="startOverMonth" value="@SriLankaTime.Now.Month" />
+            <input type="hidden" name="year" id="startOverYear" value="@SriLankaTime.Now.Year" />
+            <input type="hidden" name="branchId" id="startOverBranchId" value="@Model.BranchId" />
+
+            <div style="padding: 24px;">
+                <p style="font-size: 14px; color: #334155; line-height: 1.5; margin: 0 0 14px 0;">
+                    Are you sure you want to start over the payroll cycle for <strong id="startOverBranchName" style="color: #10823c;">@(Model.CurrentBranch?.Name ?? "Selected Branch")</strong> (<strong id="startOverMonthText" style="color: #0f172a;">@Model.CurrentMonthName</strong>)?
+                </p>
+                <div style="background: #fffbeb; border: 1px solid #fef3c7; border-radius: 8px; padding: 12px 14px; display:flex; gap:10px; align-items:flex-start;">
+                    <i class="bi bi-exclamation-triangle-fill" style="color: #d97706; font-size: 16px; margin-top: 1px;"></i>
+                    <p style="font-size: 12px; color: #92400e; margin: 0; line-height: 1.45;">
+                        All generated payslips, checklist completions, and processed totals for this branch will be reset. Other branches will remain unaffected. You can then adjust records and re-run payroll.
+                    </p>
+                </div>
+            </div>
+
+            <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #e2e8f0; display:flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" onclick="closeStartOverModal()" style="padding: 8px 16px; border: 1px solid #cbd5e1; background: white; border-radius: 6px; font-weight: 600; font-size: 13px; color: #475569; cursor: pointer;">
+                    Cancel
+                </button>
+                <button type="submit" style="padding: 8px 20px; font-size: 13px; font-weight: 700; border: none; border-radius: 6px; cursor: pointer; background: #dc2626; color: white; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                    Yes, Start Over Cycle
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function onStartOverSubmit() {
+        const branchId = document.getElementById('startOverBranchId').value || '@(Model.BranchId ?? 0)';
+        const m = document.getElementById('startOverMonth').value || '@(DateTime.Now.Month)';
+        const y = document.getElementById('startOverYear').value || '@(DateTime.Now.Year)';
+        sessionStorage.removeItem(`payroll_step_check_${branchId}_${y}_${m}_step1`);
+        sessionStorage.removeItem(`payroll_step_check_${branchId}_${y}_${m}_step2`);
+        sessionStorage.removeItem(`payroll_step_check_${branchId}_${y}_${m}_step3`);
+        sessionStorage.removeItem('attendance_finalized_' + branchId + '_' + y + '_' + m);
+        sessionStorage.removeItem('attendance_states_' + branchId + '_' + y + '_' + m);
+        sessionStorage.removeItem('attendance_finalized_' + branchId);
+        sessionStorage.removeItem('attendance_states_' + branchId);
+        sessionStorage.removeItem('attendance_finalized');
+        sessionStorage.removeItem('attendance_states');
+    }
+
+    function openStartOverModal(month, year, monthName, branchId, branchName) {
+        document.getElementById('startOverMonth').value = month;
+        document.getElementById('startOverYear').value = year;
+        if (branchId) {
+            document.getElementById('startOverBranchId').value = branchId;
+        }
+        if (branchName) {
+            document.getElementById('startOverBranchName').textContent = branchName;
+        }
+        document.getElementById('startOverMonthText').textContent = monthName;
+        document.getElementById('startOverModalSubtitle').textContent = 'Reset payroll run for ' + (branchName ? branchName + ' · ' : '') + monthName;
+        document.getElementById('startOverModal').classList.add('open');
+    }
+
+    function closeStartOverModal(e) {
+        if (!e || e.target === document.getElementById('startOverModal') || e.target.closest('button')) {
+            document.getElementById('startOverModal').classList.remove('open');
+        }
+    }
+
+    document.addEventListener("keydown", function (e) {
+        if (e.key === "Escape") {
+            closeStartOverModal();
+        }
+    });
+</script>

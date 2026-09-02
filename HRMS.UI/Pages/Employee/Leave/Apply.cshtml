@@ -112,6 +112,32 @@
     .tab-btn:hover {
         color: #10823c;
     }
+
+    /* Leave Duration & Session Buttons */
+    .btn-slot {
+        background: #ffffff;
+        border: 1px solid #d0d7ce;
+        border-radius: 8px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #4b5563;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .btn-slot:hover {
+        border-color: #10823c;
+        color: #10823c;
+    }
+    .btn-slot.active {
+        background: #10823c;
+        border-color: #10823c;
+        color: #ffffff;
+        box-shadow: 0 1px 3px rgba(16,130,60,0.25);
+    }
 </style>
 
 <div class="form-card" style="margin-top: 20px;">
@@ -163,11 +189,14 @@
             <h2 class="page-h">Apply for Standard Leave</h2>
             <p class="page-s">Submit an annual, casual, or medical leave request</p>
 
-            <form method="post" asp-page-handler="Apply">
+            <form method="post" asp-page-handler="Apply" id="standardLeaveForm" enctype="multipart/form-data">
                 <input type="hidden" name="ActiveTab" value="standard" />
                 <div class="fg">
-                    <label class="fl">Leave Type <span class="req">*</span></label>
-                    <select asp-for="LeaveType" class="fi" required>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <label class="fl" style="margin-bottom:0;">Leave Type <span class="req">*</span></label>
+                        <span id="balanceDisplay" style="font-size:12px; font-weight:700; color:#10823c;"></span>
+                    </div>
+                    <select asp-for="LeaveType" class="fi" required id="leaveTypeSelect">
                         <option value="Annual">Annual Leave</option>
                         <option value="Casual">Casual Leave</option>
                         <option value="Medical">Medical Leave</option>
@@ -177,20 +206,50 @@
                     </select>
                 </div>
 
-                <div class="grid-2">
-                    <div class="fg">
-                        <label class="fl">Start Date <span class="req">*</span></label>
-                        <input type="date" asp-for="StartDate" class="fi" required id="startDateInput" />
+                <!-- Full Day / Half Day Toggle (Shown for Casual and Annual Leaves) -->
+                <div id="dayTypeToggleGroup" style="margin-bottom: 14px; display: none;">
+                    <label class="fl" style="margin-bottom: 6px;">Leave Duration</label>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="btn-slot active" id="btnFullDay" onclick="setHalfDayMode(false)">
+                            <i class="bi bi-calendar-check"></i> Full Day
+                        </button>
+                        <button type="button" class="btn-slot" id="btnHalfDay" onclick="setHalfDayMode(true)">
+                            <i class="bi bi-pie-chart-fill"></i> Half Day (0.5 Day)
+                        </button>
                     </div>
-                    <div class="fg">
-                        <label class="fl">End Date <span class="req">*</span></label>
-                        <input type="date" asp-for="EndDate" class="fi" required id="endDateInput" />
+                    <input type="hidden" asp-for="IsHalfDay" id="isHalfDayInput" value="@(Model.IsHalfDay ? "true" : "false")" />
+                </div>
+
+                <!-- Half Day Session Selection (Morning / Afternoon) -->
+                <div id="halfDaySessionGroup" style="display: none; margin-bottom: 14px; background: #f8faf8; border: 1px solid #e1e9e3; border-radius: 8px; padding: 12px;">
+                    <label class="fl" style="margin-bottom: 6px;">Half Day Session <span class="req">*</span></label>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="btn-slot active" data-session="First Half (Morning)" onclick="selectHalfDaySession(this)">
+                            <i class="bi bi-sun"></i> First Half (Morning: 08:00 AM – 12:00 PM)
+                        </button>
+                        <button type="button" class="btn-slot" data-session="Second Half (Afternoon)" onclick="selectHalfDaySession(this)">
+                            <i class="bi bi-moon-stars"></i> Second Half (Afternoon: 12:00 PM – 04:00 PM)
+                        </button>
+                    </div>
+                    <input type="hidden" asp-for="HalfDaySession" id="halfDaySessionInput" value="@(Model.HalfDaySession ?? "First Half (Morning)")" />
+                </div>
+
+                <!-- Standard Multi-Day Date Range (Annual, Casual, Medical, etc.) -->
+                <div class="grid-2" id="standardDateRangeGroup">
+                    <div class="fg" id="startDateCol">
+                        <label class="fl" id="startDateLabel">Start Date <span class="req">*</span></label>
+                        <input type="date" asp-for="StartDate" class="fi" id="startDateInput" min="@DateTime.Today.AddDays(-2).ToString("yyyy-MM-dd")" />
+                    </div>
+                    <div class="fg" id="endDateCol">
+                        <label class="fl" id="endDateLabel">End Date <span class="req">*</span></label>
+                        <input type="date" asp-for="EndDate" class="fi" id="endDateInput" min="@DateTime.Today.AddDays(-2).ToString("yyyy-MM-dd")" />
                     </div>
                 </div>
 
                 <div class="calc-days-panel">
                     <span class="calc-days-val" id="daysCount">@Model.CalculatedDays</span>
-                    <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #7a8863; margin-top: 2px;">Estimated Leave Day(s)</div>
+                    <div id="calcDaysLabel" style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #7a8863; margin-top: 2px;">Estimated Leave Working Day(s)</div>
+                    <div id="validationWarning" style="display:none; margin-top:6px;"></div>
                 </div>
 
                 <div class="fg">
@@ -198,9 +257,15 @@
                     <textarea asp-for="Reason" class="fi" rows="3" required placeholder="Provide a brief explanation..."></textarea>
                 </div>
 
+                <div class="fg">
+                    <label class="fl">Supporting Document / Certificate (Optional)</label>
+                    <input type="file" asp-for="StandardAttachmentFile" class="fi" accept=".pdf,.jpg,.jpeg,.png" />
+                    <div style="font-size: 11px; color: #7a8863; margin-top: 3px;">e.g., Medical certificate, exam letter, death notice (PDF, JPG, PNG up to 5MB)</div>
+                </div>
+
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                     <a href="/Employee/Leave/Dashboard" class="btn-kanrich btn-kanrich-outline">Cancel</a>
-                    <button type="submit" class="btn-kanrich btn-kanrich-primary">Submit Application</button>
+                    <button type="submit" class="btn-kanrich btn-kanrich-primary" id="standardSubmitBtn">Submit Application</button>
                 </div>
             </form>
         </div>
@@ -210,18 +275,18 @@
             <h2 class="page-h">Apply for Overseas Leave</h2>
             <p class="page-s">Submit passport details and contact info for overseas leave approval</p>
 
-            <form method="post" asp-page-handler="Overseas">
+            <form method="post" asp-page-handler="Overseas" id="overseasLeaveForm" enctype="multipart/form-data">
                 <input type="hidden" name="ActiveTab" value="overseas" />
                 <div class="sub-section-header">Leave Period & Reason</div>
                 
                 <div class="grid-2">
                     <div class="fg">
                         <label class="fl">Start Date <span class="req">*</span></label>
-                        <input type="date" asp-for="OverseasStartDate" class="fi" required id="overseasStartInput" />
+                        <input type="date" asp-for="OverseasStartDate" class="fi" required id="overseasStartInput" min="@DateTime.Today.AddDays(-2).ToString("yyyy-MM-dd")" />
                     </div>
                     <div class="fg">
                         <label class="fl">End Date <span class="req">*</span></label>
-                        <input type="date" asp-for="OverseasEndDate" class="fi" required id="overseasEndInput" />
+                        <input type="date" asp-for="OverseasEndDate" class="fi" required id="overseasEndInput" min="@DateTime.Today.AddDays(-2).ToString("yyyy-MM-dd")" />
                     </div>
                 </div>
 
@@ -235,11 +300,11 @@
                 <div class="grid-2">
                     <div class="fg">
                         <label class="fl">Passport Number <span class="req">*</span></label>
-                        <input asp-for="PassportNumber" class="fi" placeholder="e.g., N1234567" required />
+                        <input asp-for="PassportNumber" class="fi" placeholder="e.g., N1234567" required id="passportNumberInput" />
                     </div>
                     <div class="fg">
                         <label class="fl">Passport Expiry Date <span class="req">*</span></label>
-                        <input type="date" asp-for="PassportExpiry" class="fi" required />
+                        <input type="date" asp-for="PassportExpiry" class="fi" required id="passportExpiryInput" />
                     </div>
                 </div>
 
@@ -254,9 +319,22 @@
                     </div>
                 </div>
 
+                <div class="grid-2">
+                    <div class="fg">
+                        <label class="fl">Passport Bio / Visa Copy <span class="req">*</span></label>
+                        <input type="file" asp-for="PassportCopyFile" class="fi" accept=".pdf,.jpg,.jpeg,.png" required />
+                        <div style="font-size: 11px; color: #7a8863; margin-top: 3px;">PDF, PNG, JPG (Max 5MB)</div>
+                    </div>
+                    <div class="fg">
+                        <label class="fl">Travel Confirmation / Ticket (Optional)</label>
+                        <input type="file" asp-for="ConfirmationLetterFile" class="fi" accept=".pdf,.jpg,.jpeg,.png" />
+                        <div style="font-size: 11px; color: #7a8863; margin-top: 3px;">PDF, PNG, JPG (Max 5MB)</div>
+                    </div>
+                </div>
+
                 <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 24px;">
                     <a href="/Employee/Leave/Dashboard" class="btn-kanrich btn-kanrich-outline">Cancel</a>
-                    <button type="submit" class="btn-kanrich btn-kanrich-primary">Submit Request</button>
+                    <button type="submit" class="btn-kanrich btn-kanrich-primary" id="overseasSubmitBtn">Submit Request</button>
                 </div>
             </form>
         </div>
@@ -270,19 +348,19 @@
 
                 <div class="info-banner">
                     <i class="bi bi-info-circle-fill"></i>
-                    <span>Maternity leave is subject to HR verification. The standard duration is 84 days.</span>
+                    <span>Maternity leave is approved by the Branch Manager and finalized by the HR Officer. The standard duration is 84 days.</span>
                 </div>
 
-                <form method="post" asp-page-handler="Maternity">
+                <form method="post" asp-page-handler="Maternity" id="maternityLeaveForm" enctype="multipart/form-data">
                     <input type="hidden" name="ActiveTab" value="maternity" />
                     <div class="grid-2">
                         <div class="fg">
                             <label class="fl">Start Date <span class="req">*</span></label>
-                            <input type="date" asp-for="MaternityStartDate" class="fi" required id="maternityStartInput" />
+                            <input type="date" asp-for="MaternityStartDate" class="fi" required id="maternityStartInput" min="@DateTime.Today.AddDays(-2).ToString("yyyy-MM-dd")" />
                         </div>
                         <div class="fg">
                             <label class="fl">End Date <span class="req">*</span></label>
-                            <input type="date" asp-for="MaternityEndDate" class="fi" required id="maternityEndInput" />
+                            <input type="date" asp-for="MaternityEndDate" class="fi" required id="maternityEndInput" min="@DateTime.Today.AddDays(-2).ToString("yyyy-MM-dd")" />
                         </div>
                     </div>
 
@@ -303,6 +381,19 @@
                         </div>
                     </div>
 
+                    <div class="grid-2">
+                        <div class="fg">
+                            <label class="fl">Medical Certificate / Scan <span class="req">*</span></label>
+                            <input type="file" asp-for="MedicalCertificateFile" class="fi" accept=".pdf,.jpg,.jpeg,.png" required />
+                            <div style="font-size: 11px; color: #7a8863; margin-top: 3px;">PDF, PNG, JPG (Max 5MB)</div>
+                        </div>
+                        <div class="fg">
+                            <label class="fl">Doctor's Letter (Optional)</label>
+                            <input type="file" asp-for="DoctorLetterFile" class="fi" accept=".pdf,.jpg,.jpeg,.png" />
+                            <div style="font-size: 11px; color: #7a8863; margin-top: 3px;">PDF, PNG, JPG (Max 5MB)</div>
+                        </div>
+                    </div>
+
                     <div class="fg">
                         <label class="fl">Additional Notes</label>
                         <textarea asp-for="MaternityReason" class="fi" rows="3" placeholder="Enter any comments or specific instructions..."></textarea>
@@ -310,7 +401,7 @@
 
                     <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                         <a href="/Employee/Leave/Dashboard" class="btn-kanrich btn-kanrich-outline">Cancel</a>
-                        <button type="submit" class="btn-kanrich btn-kanrich-primary">Submit Request</button>
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary" id="maternitySubmitBtn">Submit Request</button>
                     </div>
                 </form>
             </div>
@@ -321,6 +412,14 @@
 
 @section Scripts {
     <script>
+        // Leave Balances Map
+        const leaveBalances = {
+            @foreach (var b in Model.LeaveBalances)
+            {
+                <text>"@b.LeaveType": { total: @b.TotalDays, used: @b.UsedDays, remaining: @b.RemainingDays },</text>
+            }
+        };
+
         // Tab switching logic
         const tabBtns = document.querySelectorAll('.tab-btn');
         const tabPanes = document.querySelectorAll('.tab-pane');
@@ -347,46 +446,278 @@
             initialBtn.click();
         }
 
-        // Standard Leave Day calculations
+        // Standard Leave Elements
+        const leaveTypeSelect = document.getElementById('leaveTypeSelect');
         const startInput = document.getElementById('startDateInput');
         const endInput = document.getElementById('endDateInput');
         const daysDisplay = document.getElementById('daysCount');
+        const calcDaysLabel = document.getElementById('calcDaysLabel');
+        const balanceDisplay = document.getElementById('balanceDisplay');
+        const validationWarning = document.getElementById('validationWarning');
+        const standardSubmitBtn = document.getElementById('standardSubmitBtn');
+        const standardDateRangeGroup = document.getElementById('standardDateRangeGroup');
 
-        function updateDays() {
-            if (startInput.value && endInput.value) {
-                const s = new Date(startInput.value);
-                const e = new Date(endInput.value);
-                if (s <= e) {
-                    let count = 0;
-                    let cur = new Date(s);
-                    while (cur <= e) {
-                        const day = cur.getDay();
-                        if (day !== 0 && day !== 6) { // Skip weekends
-                            count++;
-                        }
-                        cur.setDate(cur.getDate() + 1);
-                    }
-                    daysDisplay.textContent = count;
-                } else {
-                    daysDisplay.textContent = '0';
-                }
+        function getMinAllowedDate() {
+            const d = new Date();
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() - 2);
+            return d;
+        }
+
+        function updateBalanceIndicator() {
+            const selectedType = leaveTypeSelect ? leaveTypeSelect.value : 'Annual';
+            if (leaveBalances[selectedType] !== undefined) {
+                const bal = leaveBalances[selectedType];
+                balanceDisplay.textContent = `Available: ${bal.remaining} / ${bal.total} day(s)`;
+                balanceDisplay.style.color = bal.remaining > 0 ? '#10823c' : '#ef4444';
             } else {
-                daysDisplay.textContent = '—';
+                balanceDisplay.textContent = '';
             }
         }
 
-        if (startInput && endInput) {
-            startInput.addEventListener('change', updateDays);
-            endInput.addEventListener('change', updateDays);
+        function setHalfDayMode(isHalfDay) {
+            const isHalfDayInput = document.getElementById('isHalfDayInput');
+            const btnFullDay = document.getElementById('btnFullDay');
+            const btnHalfDay = document.getElementById('btnHalfDay');
+            const halfDaySessionGroup = document.getElementById('halfDaySessionGroup');
+            const endDateCol = document.getElementById('endDateCol');
+            const startDateLabel = document.getElementById('startDateLabel');
+            const standardDateRangeGroup = document.getElementById('standardDateRangeGroup');
+
+            if (isHalfDayInput) isHalfDayInput.value = isHalfDay ? 'true' : 'false';
+
+            if (isHalfDay) {
+                if (btnFullDay) btnFullDay.classList.remove('active');
+                if (btnHalfDay) btnHalfDay.classList.add('active');
+                if (halfDaySessionGroup) halfDaySessionGroup.style.display = 'block';
+                if (endDateCol) endDateCol.style.display = 'none';
+                if (startDateLabel) startDateLabel.innerHTML = 'Leave Date <span class="req">*</span>';
+                if (standardDateRangeGroup) standardDateRangeGroup.style.gridTemplateColumns = '1fr';
+                if (startInput && endInput) endInput.value = startInput.value;
+            } else {
+                if (btnFullDay) btnFullDay.classList.add('active');
+                if (btnHalfDay) btnHalfDay.classList.remove('active');
+                if (halfDaySessionGroup) halfDaySessionGroup.style.display = 'none';
+                if (endDateCol) endDateCol.style.display = 'block';
+                if (startDateLabel) startDateLabel.innerHTML = 'Start Date <span class="req">*</span>';
+                if (standardDateRangeGroup) standardDateRangeGroup.style.gridTemplateColumns = '1fr 1fr';
+            }
+
+            updateDays();
         }
+
+        function selectHalfDaySession(btn) {
+            const session = btn.getAttribute('data-session');
+            const halfDaySessionInput = document.getElementById('halfDaySessionInput');
+            if (halfDaySessionInput) halfDaySessionInput.value = session;
+
+            const group = document.getElementById('halfDaySessionGroup');
+            if (group) {
+                group.querySelectorAll('.btn-slot').forEach(b => b.classList.remove('active'));
+            }
+            btn.classList.add('active');
+        }
+
+        function updateDays() {
+            updateBalanceIndicator();
+
+            const isCasualOrAnnual = leaveTypeSelect && (leaveTypeSelect.value === 'Casual' || leaveTypeSelect.value === 'Annual');
+            const dayTypeToggleGroup = document.getElementById('dayTypeToggleGroup');
+            const isHalfDayInput = document.getElementById('isHalfDayInput');
+            const isHalfDay = isHalfDayInput && isHalfDayInput.value === 'true';
+
+            if (dayTypeToggleGroup) {
+                dayTypeToggleGroup.style.display = isCasualOrAnnual ? 'block' : 'none';
+            }
+
+            // If selected leave is neither Casual nor Annual, ensure half-day is disabled
+            if (!isCasualOrAnnual && isHalfDay) {
+                setHalfDayMode(false);
+                return;
+            }
+
+            // Standard leaves
+            if (standardDateRangeGroup) standardDateRangeGroup.style.display = 'grid';
+
+            if (isHalfDay && isCasualOrAnnual) {
+                if (calcDaysLabel) calcDaysLabel.textContent = 'Half-Day Leave Duration';
+                if (startInput && endInput) endInput.value = startInput.value;
+
+                if (!startInput || !startInput.value) {
+                    daysDisplay.textContent = '—';
+                    daysDisplay.style.color = '#10823c';
+                    validationWarning.style.display = 'none';
+                    standardSubmitBtn.disabled = false;
+                    standardSubmitBtn.style.opacity = '1';
+                    return;
+                }
+
+                const s = new Date(startInput.value + 'T00:00:00');
+                const minAllowed = getMinAllowedDate();
+
+                if (s < minAllowed) {
+                    daysDisplay.textContent = '0';
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = '<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-circle-fill"></i> Leave date cannot be more than 2 days in the past.</span>';
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                    return;
+                }
+
+                const dayOfWeek = s.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    daysDisplay.textContent = '0';
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = '<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-circle-fill"></i> Half-day leave cannot be applied on weekends.</span>';
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                    return;
+                }
+
+                daysDisplay.textContent = '0.5';
+
+                const selectedType = leaveTypeSelect ? leaveTypeSelect.value : 'Casual';
+                const bal = leaveBalances[selectedType];
+                const available = bal ? bal.remaining : 999;
+
+                if (bal && available < 0.5) {
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = `<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-triangle-fill"></i> Requested (0.5 days) exceeds available ${selectedType} balance (${available} days).</span>`;
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                } else {
+                    daysDisplay.style.color = '#10823c';
+                    validationWarning.style.display = 'none';
+                    validationWarning.innerHTML = '';
+                    standardSubmitBtn.disabled = false;
+                    standardSubmitBtn.style.opacity = '1';
+                }
+                return;
+            }
+
+            // Normal Full Day multi-day calculations
+            if (calcDaysLabel) calcDaysLabel.textContent = 'Estimated Leave Working Day(s)';
+
+            if (startInput && startInput.value) {
+                if (endInput) {
+                    endInput.min = startInput.value;
+                    if (endInput.value && endInput.value < startInput.value) {
+                        endInput.value = startInput.value;
+                    }
+                }
+            }
+
+            if (startInput && startInput.value && endInput && endInput.value) {
+                const s = new Date(startInput.value + 'T00:00:00');
+                const e = new Date(endInput.value + 'T00:00:00');
+                const minAllowed = getMinAllowedDate();
+
+                if (s < minAllowed) {
+                    daysDisplay.textContent = '0';
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = '<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-circle-fill"></i> Start date cannot be more than 2 days in the past.</span>';
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                    return;
+                }
+
+                if (s > e) {
+                    daysDisplay.textContent = '0';
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = '<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-circle-fill"></i> End date cannot be earlier than start date.</span>';
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                    return;
+                }
+
+                let count = 0;
+                let cur = new Date(s);
+                while (cur <= e) {
+                    const day = cur.getDay();
+                    if (day !== 0 && day !== 6) { // Skip weekends (0 = Sunday, 6 = Saturday)
+                        count++;
+                    }
+                    cur.setDate(cur.getDate() + 1);
+                }
+
+                daysDisplay.textContent = count;
+
+                const selectedType = leaveTypeSelect ? leaveTypeSelect.value : 'Annual';
+                const bal = leaveBalances[selectedType];
+                const available = bal ? bal.remaining : 999;
+
+                if (count === 0) {
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = '<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-circle-fill"></i> Selected date range contains 0 working days (weekends are excluded).</span>';
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                } else if (bal && count > available) {
+                    daysDisplay.style.color = '#ef4444';
+                    validationWarning.style.display = 'block';
+                    validationWarning.innerHTML = `<span style="color:#ef4444; font-size:11.5px; font-weight:600;"><i class="bi bi-exclamation-triangle-fill"></i> Requested (${count} days) exceeds available ${selectedType} balance (${available} days).</span>`;
+                    standardSubmitBtn.disabled = true;
+                    standardSubmitBtn.style.opacity = '0.5';
+                } else {
+                    daysDisplay.style.color = '#10823c';
+                    validationWarning.style.display = 'none';
+                    validationWarning.innerHTML = '';
+                    standardSubmitBtn.disabled = false;
+                    standardSubmitBtn.style.opacity = '1';
+                }
+            } else {
+                daysDisplay.textContent = '—';
+                daysDisplay.style.color = '#10823c';
+                validationWarning.style.display = 'none';
+                standardSubmitBtn.disabled = false;
+                standardSubmitBtn.style.opacity = '1';
+            }
+        }
+
+        if (leaveTypeSelect) leaveTypeSelect.addEventListener('change', updateDays);
+        if (startInput) startInput.addEventListener('change', updateDays);
+        if (endInput) endInput.addEventListener('change', updateDays);
+
+        // Initial setup for standard leave
+        updateDays();
+
+        // Overseas Leave Validations
+        const overseasStart = document.getElementById('overseasStartInput');
+        const overseasEnd = document.getElementById('overseasEndInput');
+        const passportExpiry = document.getElementById('passportExpiryInput');
+        const overseasSubmitBtn = document.getElementById('overseasSubmitBtn');
+
+        function updateOverseasDates() {
+            if (overseasStart && overseasStart.value) {
+                if (overseasEnd) {
+                    overseasEnd.min = overseasStart.value;
+                    if (overseasEnd.value && overseasEnd.value < overseasStart.value) {
+                        overseasEnd.value = overseasStart.value;
+                    }
+                }
+            }
+            if (overseasEnd && overseasEnd.value && passportExpiry) {
+                passportExpiry.min = overseasEnd.value;
+            }
+        }
+
+        if (overseasStart) overseasStart.addEventListener('change', updateOverseasDates);
+        if (overseasEnd) overseasEnd.addEventListener('change', updateOverseasDates);
+        updateOverseasDates();
 
         // Maternity Auto End Date pre-calculation (84 days)
         const matStartInput = document.getElementById('maternityStartInput');
         const matEndInput = document.getElementById('maternityEndInput');
 
         if (matStartInput && matEndInput) {
-            matStartInput.addEventListener('change', function() {
+            function updateMaternityDates() {
                 if (matStartInput.value) {
+                    matEndInput.min = matStartInput.value;
                     const start = new Date(matStartInput.value);
                     start.setDate(start.getDate() + 83);
                     const year = start.getFullYear();
@@ -394,7 +725,8 @@
                     const day = String(start.getDate()).padStart(2, '0');
                     matEndInput.value = `${year}-${month}-${day}`;
                 }
-            });
+            }
+            matStartInput.addEventListener('change', updateMaternityDates);
         }
     </script>
 }

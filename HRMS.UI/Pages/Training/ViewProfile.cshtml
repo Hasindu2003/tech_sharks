@@ -1,0 +1,465 @@
+@page
+@model HRMS.UI.Pages.Training.ViewProfileModel
+@{
+    Layout = "_Layout";
+    bool isIntern = Model.IsIntern;
+    var primaryColor = isIntern ? "#ca8a04" : "#10823c";
+    var lightBgColor = isIntern ? "rgba(202, 138, 0, 0.08)" : "rgba(16, 130, 60, 0.08)";
+    var badgeClass = isIntern ? "status-intern" : "status-probation";
+    ViewData["Title"] = $"{Model.Profile.FullName} - Performance Profile";
+}
+
+@section Styles {
+    <style>
+        .sep-page-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+        .sep-page-sub   { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+        .back-link {
+            text-decoration: none;
+            color: #7a8863;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 18px;
+            transition: 0.2s;
+            font-weight: 500;
+            font-size: 13px;
+        }
+        .back-link:hover { color: #151811; text-decoration: none; }
+
+        /* Candidate Hero Card */
+        .hero-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .hero-left {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+        }
+        .hero-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: @lightBgColor;
+            color: @primaryColor;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            border: 2px solid #e2e5dc;
+            flex-shrink: 0;
+        }
+        .hero-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #151811;
+            margin: 0 0 4px 0;
+        }
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12.5px;
+            color: #64748b;
+            flex-wrap: wrap;
+        }
+        .hero-meta span { display: inline-flex; align-items: center; gap: 4px; }
+
+        .status-pill {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-intern { background: #fef9c3; color: #a16207; }
+        .status-probation { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+
+        /* KPI Metrics Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 10px;
+            padding: 16px 18px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.03);
+        }
+        .kpi-label {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #7a8863;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .kpi-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #151811;
+            margin-bottom: 4px;
+        }
+        .kpi-sub {
+            font-size: 11.5px;
+            color: #64748b;
+        }
+
+        /* Progress Bar */
+        .prob-track {
+            width: 100%;
+            height: 6px;
+            background-color: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        .prob-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: @primaryColor;
+            transition: width 0.3s ease;
+        }
+
+        /* Chart & Details Cards */
+        .content-card {
+            background: #ffffff;
+            border: 1px solid #e2e5dc;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,.04);
+        }
+        .content-card-header {
+            padding: 14px 20px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e2e5dc;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .content-card-title {
+            font-size: 13.5px;
+            font-weight: 700;
+            color: #151811;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-wrapper {
+            height: 280px;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* History Table */
+        .sep-table { width: 100%; border-collapse: collapse; }
+        .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+        .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+        .sep-table tbody tr:last-child td { border-bottom: none; }
+        .sep-table tbody tr:hover { background: #fafafa; }
+
+        .score-badge {
+            display: inline-block;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+        .score-high { background: #f0fdf4; color: #15803d; }
+        .score-mid  { background: #fefce8; color: #a16207; }
+        .score-low  { background: #fef2f2; color: #b91c1c; }
+
+        .btn-kanrich-eval {
+            background: @primaryColor;
+            color: #ffffff;
+            border: 1px solid @primaryColor;
+            border-radius: 6px;
+            padding: 7px 16px;
+            font-weight: 700;
+            font-size: 13px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .btn-kanrich-eval:hover {
+            opacity: 0.9;
+            color: #ffffff;
+            text-decoration: none;
+        }
+    </style>
+}
+
+<div>
+    <a href="@Model.BackUrl" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to @(isIntern ? "Intern Tracking" : "Probationary Staff Tracking")
+    </a>
+
+    <!-- 1. Hero Candidate Overview -->
+    <div class="hero-card">
+        <div class="hero-left">
+            <div class="hero-avatar">
+                @(string.IsNullOrWhiteSpace(Model.Profile.FullName) ? "?" : Model.Profile.FullName.Trim().Substring(0, 1))
+            </div>
+            <div>
+                <h1 class="hero-title">@Model.Profile.FullName</h1>
+                <div class="hero-meta">
+                    <span><i class="bi bi-person-badge"></i> EPF: <strong>@Model.Profile.EPFNumber</strong></span>
+                    <span>&bull;</span>
+                    <span><i class="bi bi-briefcase"></i> @Model.Profile.DesignationName</span>
+                    <span>&bull;</span>
+                    <span><i class="bi bi-geo-alt"></i> @Model.Profile.BranchName (@Model.Profile.DepartmentName)</span>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="status-pill @badgeClass">
+                <i class="bi @(isIntern ? "bi-mortarboard-fill" : "bi-patch-check-fill")"></i>
+                @(isIntern ? "Internship Program" : "Probation Period")
+            </span>
+            <a href="@Model.EvaluateUrl" class="btn-kanrich-eval">
+                <i class="bi bi-pencil-square"></i> New Evaluation
+            </a>
+        </div>
+    </div>
+
+    <!-- 2. KPI Metrics Grid -->
+    <div class="kpi-grid">
+        <!-- Milestone Progression -->
+        <div class="kpi-card">
+            <div class="kpi-label">
+                <span>Milestone Progress</span>
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="kpi-value">
+                Month @Model.Profile.CompletedMonths <span style="font-size: 14px; font-weight: 500; color: #64748b;">/ @Model.Profile.TotalMonths</span>
+            </div>
+            <div class="prob-track">
+                <div class="prob-fill" style="width: @(Model.Profile.ProgressPercentage.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%;"></div>
+            </div>
+            <div class="kpi-sub mt-2">
+                @(Model.Profile.CompletedMonths >= Model.Profile.TotalMonths ? "All milestones evaluated (Review Ready)" : $"{Model.Profile.TotalMonths - Model.Profile.CompletedMonths} month(s) remaining")
+            </div>
+        </div>
+
+        <!-- Metric 1 Average -->
+        <div class="kpi-card">
+            <div class="kpi-label">
+                <span>@Model.Metric1Name</span>
+                <i class="bi bi-bar-chart"></i>
+            </div>
+            <div class="kpi-value">
+                @(Model.Profile.Score1Average > 0 ? $"{Model.Profile.Score1Average}%" : "N/A")
+            </div>
+            <div class="kpi-sub">
+                @(Model.Profile.Score1Average >= 80 ? "Exceeds expectations" : Model.Profile.Score1Average >= 60 ? "Meets expectations" : "Needs development")
+            </div>
+        </div>
+
+        <!-- Metric 2 Average -->
+        <div class="kpi-card">
+            <div class="kpi-label">
+                <span>@Model.Metric2Name</span>
+                <i class="bi bi-clock-history"></i>
+            </div>
+            <div class="kpi-value">
+                @(Model.Profile.Score2Average > 0 ? $"{Model.Profile.Score2Average}%" : "N/A")
+            </div>
+            <div class="kpi-sub">
+                @(Model.Profile.Score2Average >= 80 ? "Consistently punctual" : Model.Profile.Score2Average >= 60 ? "Satisfactory attendance" : "Attendance alerts")
+            </div>
+        </div>
+
+        <!-- Metric 3 Average -->
+        <div class="kpi-card">
+            <div class="kpi-label">
+                <span>@Model.Metric3Name</span>
+                <i class="bi bi-shield-check"></i>
+            </div>
+            <div class="kpi-value">
+                @(Model.Profile.Score3Average > 0 ? $"{Model.Profile.Score3Average}%" : "N/A")
+            </div>
+            <div class="kpi-sub">
+                @(Model.Profile.Score3Average >= 80 ? "Exemplary conduct" : Model.Profile.Score3Average >= 60 ? "Professional conduct" : "Follow-up required")
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Monthly Performance Trend Chart -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2 class="content-card-title">
+                <i class="bi bi-graph-up-arrow" style="color: @primaryColor;"></i>
+                Monthly Performance Trajectory
+            </h2>
+            <span class="text-muted small">Target Benchmark: 75% Average</span>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="performanceChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 4. Chronological Evaluation History Table -->
+    <div class="content-card">
+        <div class="content-card-header">
+            <h2 class="content-card-title">
+                <i class="bi bi-journal-check" style="color: @primaryColor;"></i>
+                Milestone Evaluation Breakdown
+            </h2>
+            <span class="badge bg-light text-muted border" style="font-size: 11.5px; padding: 4px 8px;">
+                @Model.Evaluations.Count Evaluations Logged
+            </span>
+        </div>
+        <table class="sep-table" id="tblMilestoneEvaluations">
+            <thead>
+                <tr>
+                    <th>Milestone</th>
+                    <th>Evaluated By</th>
+                    <th>@Model.Metric1Name</th>
+                    <th>@Model.Metric2Name</th>
+                    <th>@Model.Metric3Name</th>
+                    <th>Composite Avg</th>
+                    <th>Evaluator Feedback</th>
+                    <th style="text-align: right;">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Evaluations.Any())
+                {
+                    <tr class="empty-row">
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="bi bi-inbox fs-4 d-block mb-1 text-secondary"></i>
+                            No monthly evaluations recorded yet for this employee.
+                        </td>
+                    </tr>
+                }
+                else
+                {
+                    @foreach (var eval in Model.Evaluations)
+                    {
+                        var avgClass = eval.AverageScore >= 80 ? "score-high" : (eval.AverageScore >= 60 ? "score-mid" : "score-low");
+                        <tr>
+                            <td>
+                                <strong>Month @eval.Month</strong>
+                            </td>
+                            <td>
+                                <span class="text-muted"><i class="bi bi-person me-1"></i>@eval.EvaluatorName</span>
+                            </td>
+                            <td>
+                                <span class="score-badge">@eval.Score1%</span>
+                            </td>
+                            <td>
+                                <span class="score-badge">@eval.Score2%</span>
+                            </td>
+                            <td>
+                                <span class="score-badge">@eval.Score3%</span>
+                            </td>
+                            <td>
+                                <span class="score-badge @avgClass" style="font-size: 12.5px;">@eval.AverageScore%</span>
+                            </td>
+                            <td style="max-width: 260px;">
+                                <span class="text-muted" style="font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                                    @(string.IsNullOrWhiteSpace(eval.Comments) ? "No narrative comments provided." : eval.Comments)
+                                </span>
+                            </td>
+                            <td style="text-align: right;" class="text-muted">
+                                @eval.EvaluationDate.ToString("dd MMM yyyy")
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('tblMilestoneEvaluations', 10);
+            }
+
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            // Gradient fill
+            const gradient = ctx.createLinearGradient(0, 0, 0, 260);
+            gradient.addColorStop(0, '@(isIntern ? "rgba(202, 138, 0, 0.2)" : "rgba(16, 130, 60, 0.2)")');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [@Html.Raw(string.Join(",", Model.Evaluations.Select(e => $"'Month {e.Month}'")))],
+                    datasets: [{
+                        label: 'Evaluation Avg',
+                        data: [@Html.Raw(string.Join(",", Model.Evaluations.Select(e => e.AverageScore)))],
+                        borderColor: '@primaryColor',
+                        backgroundColor: gradient,
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.35,
+                        pointBackgroundColor: '@primaryColor',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) { return value + "%"; },
+                                font: { family: 'Manrope', size: 11 }
+                            },
+                            grid: { color: '#f1f5f9' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Manrope', size: 11, weight: '600' } }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Average Score: ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+}

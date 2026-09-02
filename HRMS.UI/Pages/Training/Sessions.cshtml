@@ -1,0 +1,671 @@
+@page
+@model HRMS.UI.Pages.Training.SessionsModel
+@{
+    ViewData["Title"] = "Training Sessions";
+    Layout = "_Layout";
+}
+
+<style>
+    .sep-page-title { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .sep-page-sub   { font-size: 12px; color: #7a8863; margin: 0; }
+
+    .tbl-card { background: white; border: 1px solid #e2e5dc; border-radius: 10px; overflow: hidden; margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th { background: #f9fafb; padding: 12px 18px; text-align: left; font-size: 12px; font-weight: 700; color: #7a8863; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid #e2e5dc; }
+    .sep-table td { padding: 13px 18px; border-bottom: 1px solid #e2e5dc; font-size: 13.5px; color: #151811; vertical-align: middle; }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+    .status-on-track { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .status-completed { background: #e0f2fe; color: #0369a1; }
+    .status-cancelled { background: #fee2e2; color: #b91c1c; }
+    .status-past { background: #f6f8f7; color: #7a8863; }
+    .status-pending { background: #fef9c3; color: #a16207; }
+    .status-approved { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .status-rejected { background: #fee2e2; color: #b91c1c; }
+
+    .btn-view-session {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 6px;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        text-decoration: none;
+        transition: 0.15s ease;
+    }
+    .btn-view-session:hover {
+        background: #10823c;
+        color: #fff;
+        border-color: #10823c;
+        text-decoration: none;
+    }
+
+    .btn-complete-session {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 6px;
+        background: #10823c;
+        color: #ffffff;
+        border: 1px solid #10823c;
+        text-decoration: none;
+        cursor: pointer;
+        transition: 0.15s ease;
+    }
+    .btn-complete-session:hover {
+        background: #0d6e32;
+        border-color: #0d6e32;
+        color: #ffffff;
+        transform: translateY(-1px);
+    }
+
+    .btn-feedback-give {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 6px;
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+        text-decoration: none;
+        transition: 0.15s ease;
+    }
+    .btn-feedback-give:hover {
+        background: #fef3c7;
+        color: #92400e;
+        border-color: #f59e0b;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .btn-feedback-done {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 5px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 6px;
+        background: #f0fdf4;
+        color: #166534;
+        border: 1px solid #bbf7d0;
+        text-decoration: none;
+        transition: 0.15s ease;
+    }
+    .btn-feedback-done:hover {
+        background: #dcfce7;
+        color: #14532d;
+        border-color: #86efac;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+
+    .rating-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 5px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 6px;
+        background: #fffbeb;
+        border: 1px solid #fde68a;
+        color: #92400e;
+        line-height: 1;
+        cursor: default;
+    }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+
+    /* Modal Popup Form Styles */
+    .rt-modal-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(4px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 20px;
+        opacity: 0;
+        transition: opacity 0.2s ease-in-out;
+    }
+    .rt-modal-overlay.open {
+        display: flex;
+        opacity: 1;
+    }
+    .rt-modal-card {
+        background: #ffffff;
+        border-radius: 14px;
+        width: 100%;
+        max-width: 620px;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        transform: translateY(12px) scale(0.98);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .rt-modal-overlay.open .rt-modal-card {
+        transform: translateY(0) scale(1);
+    }
+    .rt-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 22px;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .rt-modal-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+    .rt-modal-icon {
+        width: 38px; height: 38px;
+        border-radius: 10px;
+        background: rgba(16, 130, 60, 0.1);
+        color: #10823c;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        flex-shrink: 0;
+    }
+    .rt-modal-title {
+        font-size: 15.5px;
+        font-weight: 800;
+        color: #0f172a;
+        margin: 0;
+    }
+    .rt-modal-sub {
+        font-size: 12px;
+        color: #64748b;
+        margin: 2px 0 0 0;
+    }
+    .rt-modal-close {
+        background: transparent;
+        border: none;
+        width: 32px; height: 32px;
+        border-radius: 8px;
+        color: #94a3b8;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+    .rt-modal-close:hover {
+        background: #f1f5f9;
+        color: #0f172a;
+    }
+    .rt-modal-body {
+        padding: 22px;
+        max-height: calc(85vh - 140px);
+        overflow-y: auto;
+    }
+    .rt-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 22px;
+        background: #f8fafc;
+        border-top: 1px solid #e2e8f0;
+    }
+    .rt-fg { margin-bottom: 16px; }
+    .rt-fg:last-child { margin-bottom: 0; }
+    .rt-fl {
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #334155;
+        margin-bottom: 6px;
+        display: block;
+    }
+    .rt-fi {
+        width: 100%;
+        padding: 9px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 13.5px;
+        color: #0f172a;
+        font-family: inherit;
+        background: #ffffff;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .rt-fi:focus {
+        outline: none;
+        border-color: #10823c;
+        box-shadow: 0 0 0 3px rgba(16, 130, 60, 0.12);
+    }
+    .rt-req { color: #ef4444; margin-left: 2px; }
+</style>
+
+<div>
+    @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer") || User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("Department Head"))
+    {
+        <a href="/Training/Dashboard" class="back-link">
+            <i class="bi bi-arrow-left"></i> Back to Training Hub
+        </a>
+    }
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+            <i class="bi bi-check-circle me-1"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+            <i class="bi bi-exclamation-circle me-1"></i> @TempData["ErrorMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:22px;">
+        <div>
+            <h1 class="sep-page-title">Training Sessions</h1>
+            <p class="sep-page-sub">View upcoming and completed training programs.</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            @if (Model.CanRequestTraining)
+            {
+                <button type="button" onclick="openRequestTrainingModal()" class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px">
+                    <i class="bi bi-send-plus"></i> Request Training Session
+                </button>
+            }
+            @if (User.IsInRole("Area Manager") || User.IsInRole("Branch Manager"))
+            {
+                <a href="/Training/Schedule" class="btn-kanrich btn-kanrich-outline" style="padding:9px 18px">
+                    <i class="bi bi-plus-circle"></i> Schedule New Session
+                </a>
+            }
+        </div>
+    </div>
+
+    <!-- Upcoming Sessions -->
+    <h3 style="font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 12px 0;">Upcoming Sessions</h3>
+    <div class="tbl-card">
+        <table class="sep-table" id="tblUpcomingSessions">
+            <thead>
+                <tr>
+                    <th>Program Title</th>
+                    <th>Location</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.UpcomingSessions.Any()) {
+                    foreach (var session in Model.UpcomingSessions) {
+                        var statusClass = session.Status == "Completed" ? "status-completed" : (session.Status == "Cancelled" ? "status-cancelled" : "status-on-track");
+                        <tr>
+                            <td>
+                                <strong>@session.Title</strong>
+                            </td>
+                            <td>@session.Location</td>
+                            <td class="text-muted">
+                                @session.Date.ToString("dd MMM yyyy")
+                                <span style="font-size: 11px; display: block; color: #7a8863;">@DateTime.Today.Add(session.StartTime).ToString("hh:mm tt")</span>
+                            </td>
+                            <td><span class="status-pill @statusClass">@session.Status</span></td>
+                            <td style="text-align: right;">
+                                <a href="/Training/SessionDetails?id=@session.Id" class="btn-view-session">
+                                    <i class="bi bi-eye"></i> View Details
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                } else {
+                    <tr class="empty-row"><td colspan="5" class="text-center py-4 text-muted">No upcoming sessions scheduled.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Past Sessions -->
+    <h3 style="font-size: 14px; font-weight: 700; color: #151811; margin: 0 0 12px 0;">Session History</h3>
+    <div class="tbl-card">
+        <table class="sep-table" id="tblPastSessions">
+            <thead>
+                <tr>
+                    <th>Program Title</th>
+                    <th>Location</th>
+                    <th>Date & Time</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.PastSessions.Any()) {
+                    foreach (var session in Model.PastSessions) {
+                        var statusClass = session.Status == "Completed" ? "status-completed" : (session.Status == "Cancelled" ? "status-cancelled" : "status-past");
+                        <tr>
+                            <td class="text-muted">@session.Title</td>
+                            <td class="text-muted">@session.Location</td>
+                            <td class="text-muted">
+                                @session.Date.ToString("dd MMM yyyy")
+                                <span style="font-size: 11px; display: block;">@DateTime.Today.Add(session.StartTime).ToString("hh:mm tt")</span>
+                            </td>
+                            <td><span class="status-pill @statusClass">@(session.Status == "Scheduled" ? "Expired" : session.Status)</span></td>
+                            <td style="text-align: right;">
+                                <div style="display: inline-flex; gap: 6px; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+                                    @if (session.Status == "Scheduled" && (User.IsInRole("Area Manager") || User.IsInRole("Branch Manager")))
+                                    {
+                                        <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@session.Id" asp-route-status="Completed" style="display:inline;">
+                                            <button type="submit" class="btn-complete-session" onclick="return confirm('Mark this past training session as Completed?');" title="Mark this completed past session">
+                                                <i class="bi bi-check2-circle"></i> Mark Completed
+                                            </button>
+                                        </form>
+                                    }
+                                    @if (session.Status == "Completed" && session.AverageRating.HasValue && session.AverageRating.Value > 0)
+                                    {
+                                        <span class="rating-pill" title="Average attendee rating: @session.AverageRating.Value.ToString("0.0")/5 (@session.FeedbackCount @(session.FeedbackCount == 1 ? "review" : "reviews"))">
+                                            <i class="bi bi-star-fill text-warning"></i>
+                                            <span>@session.AverageRating.Value.ToString("0.0")</span><span style="font-size: 10px; color: #b45309; font-weight: 500;">/5</span>
+                                            @if (session.FeedbackCount > 1)
+                                            {
+                                                <span style="font-size: 10px; color: #78350f; font-weight: 600; margin-left: 1px;">(@session.FeedbackCount)</span>
+                                            }
+                                        </span>
+                                    }
+                                    @if (session.Status == "Completed" && session.IsUserEnrolled && !Model.IsDutyAccount)
+                                    {
+                                        @if (session.HasUserFeedback)
+                                        {
+                                            <a href="/Training/SessionDetails?id=@session.Id#feedbackSection" class="btn-feedback-done" title="You rated this session @session.UserRating/5 · Click to view or edit">
+                                                <i class="bi bi-check2"></i> Your Rating: @session.UserRating/5
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a href="/Training/SessionDetails?id=@session.Id#feedbackSection" class="btn-feedback-give" title="Give your feedback & rating for this completed session">
+                                                <i class="bi bi-star me-1"></i> Give Feedback
+                                            </a>
+                                        }
+                                    }
+                                    <a href="/Training/SessionDetails?id=@session.Id" class="btn-view-session">
+                                        <i class="bi bi-eye"></i> View Details
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                } else {
+                    <tr class="empty-row"><td colspan="5" class="text-center py-4 text-muted">No past history found.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- My Training Session Requests (Employee View) -->
+    @if (!Model.IsDutyAccount)
+    {
+        <div style="display: flex; justify-content: space-between; align-items: center; margin: 28px 0 12px 0;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <h3 style="font-size: 14px; font-weight: 700; color: #151811; margin: 0;">My Training Requests</h3>
+                <span class="badge bg-light text-muted border" style="font-size: 11px; border-radius: 12px; padding: 3px 8px;">
+                    @Model.MyTrainingRequests.Count Requests
+                </span>
+            </div>
+            @if (Model.CanRequestTraining)
+            {
+                <button type="button" onclick="openRequestTrainingModal()" style="background: none; border: none; color: #10823c; font-size: 12.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; padding: 0;">
+                    <i class="bi bi-plus-circle-fill"></i> New Request
+                </button>
+            }
+        </div>
+        <div class="tbl-card">
+            <table class="sep-table" id="tblMyTrainingRequests">
+                <thead>
+                    <tr>
+                        <th style="width: 45%;">Requested Program & Objective</th>
+                        <th style="width: 25%;">Requested Date</th>
+                        <th style="width: 15%;">Status</th>
+                        <th style="width: 15%; text-align: right;">Review Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.MyTrainingRequests.Any())
+                    {
+                        foreach (var req in Model.MyTrainingRequests)
+                        {
+                            var reqStatusClass = req.Status == "Approved" ? "status-approved" : (req.Status == "Rejected" ? "status-rejected" : "status-pending");
+                            <tr>
+                                <td>
+                                    <strong style="color: #151811; font-size: 13.5px;">@req.Title</strong>
+                                    @if (!string.IsNullOrWhiteSpace(req.Description))
+                                    {
+                                        <div style="font-size: 11.5px; color: #64748b; margin-top: 3px; max-width: 480px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;" title="@req.Description">
+                                            @req.Description
+                                        </div>
+                                    }
+                                </td>
+                                <td class="text-muted">
+                                    @req.RequestedDate.ToString("dd MMM yyyy")
+                                    <span style="font-size: 11px; display: block; color: #7a8863;">@req.RequestedDate.ToString("hh:mm tt")</span>
+                                </td>
+                                <td>
+                                    <span class="status-pill @reqStatusClass">
+                                        @if (req.Status == "Pending")
+                                        {
+                                            <i class="bi bi-clock-history"></i>
+                                            <span>Pending</span>
+                                        }
+                                        else if (req.Status == "Approved")
+                                        {
+                                            <i class="bi bi-check-circle-fill"></i>
+                                            <span>Approved</span>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-x-circle-fill"></i>
+                                            <span>Declined</span>
+                                        }
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    @if (req.Status == "Pending")
+                                    {
+                                        <span style="font-size: 11.5px; color: #a16207; font-weight: 600;">
+                                            Awaiting Manager
+                                        </span>
+                                    }
+                                    else if (req.Status == "Approved")
+                                    {
+                                        <span style="font-size: 11.5px; color: #10823c; font-weight: 600;">
+                                            <i class="bi bi-calendar-check"></i> Eligible for Scheduling
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span style="font-size: 11.5px; color: #b91c1c; font-weight: 600;">
+                                            Closed
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr class="empty-row">
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                <i class="bi bi-journal-text fs-4 d-block mb-1 text-muted"></i>
+                                No training session requests submitted yet.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@if (Model.CanRequestTraining)
+{
+    <!-- Request Training Modal Popup Window -->
+    <div class="rt-modal-overlay" id="requestTrainingModal" onclick="closeRequestTrainingModal(event)">
+        <div class="rt-modal-card" onclick="event.stopPropagation()">
+            <div class="rt-modal-header">
+                <div class="rt-modal-title-wrap">
+                    <div class="rt-modal-icon">
+                        <i class="bi bi-mortarboard-fill"></i>
+                    </div>
+                    <div>
+                        <h3 class="rt-modal-title">Request Training Session</h3>
+                        <p class="rt-modal-sub">Submit a request to attend professional development programs</p>
+                    </div>
+                </div>
+                <button type="button" class="rt-modal-close" onclick="closeRequestTrainingModal()" title="Close">&times;</button>
+            </div>
+
+            <div class="rt-modal-body">
+                <form method="post" asp-page-handler="RequestTraining" id="requestTrainingForm" onsubmit="handleRequestSubmit(event)">
+                    @Html.AntiForgeryToken()
+
+                    <div class="rt-fg">
+                        <label class="rt-fl" for="modalProgramSelect">Select Training Program <span class="rt-req">*</span></label>
+                        <select asp-for="TrainingRequest.Title" id="modalProgramSelect" class="rt-fi" required onchange="toggleModalCustomProgram()">
+                            <option value="">-- Choose an Approved Program --</option>
+                            @{
+                                var programs = new List<string> {
+                                    "Gold Loan Appraising",
+                                    "Credit Evaluation & Lending",
+                                    "Leasing & Hire Purchase Operations",
+                                    "Debt Recovery & Negotiation Skills",
+                                    "AML & KYC Compliance",
+                                    "Financial Fraud Detection",
+                                    "Customer Service Excellence",
+                                    "Financial Product Sales & Marketing",
+                                    "Core Banking System (CBS) Training",
+                                    "Cybersecurity & Data Privacy",
+                                    "Advanced Microsoft Excel",
+                                    "Microfinance Field Best Practices",
+                                    "Workplace Ethics & Conduct",
+                                    "Strategic Leadership & Team Management",
+                                    "IT Infrastructure & Troubleshooting"
+                                };
+                                foreach (var p in programs) {
+                                    <option value="@p">@p</option>
+                                }
+                            }
+                            <option value="Other">-- Other / Custom Program (Specify Below) --</option>
+                        </select>
+                    </div>
+
+                    <div class="rt-fg" id="modalCustomProgramWrap" style="display: none;">
+                        <label class="rt-fl" for="modalCustomProgramInput">Custom Program Name <span class="rt-req">*</span></label>
+                        <input type="text" asp-for="CustomProgramTitle" id="modalCustomProgramInput" class="rt-fi" placeholder="e.g. Specialized Asset Valuation & Appraisal" />
+                        <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Specify the custom workshop or program you would like to request.</span>
+                    </div>
+
+                    <div class="rt-fg">
+                        <label class="rt-fl" for="modalDescription">Reason & Objective for Training <span class="rt-req">*</span></label>
+                        <textarea asp-for="TrainingRequest.Description" id="modalDescription" class="rt-fi" rows="4" 
+                                  placeholder="Briefly explain why you need this training and how it enhances your role & responsibilities..." required></textarea>
+                    </div>
+
+                    <div class="rt-modal-footer" style="padding: 16px 0 0 0; margin-top: 18px; border-top: 1px solid #e2e8f0; background: transparent;">
+                        <button type="button" class="btn-kanrich btn-kanrich-outline" onclick="closeRequestTrainingModal()">Cancel</button>
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary" id="btnSubmitTrainingRequest">
+                            <i class="bi bi-send"></i> Submit Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof initTablePagination === 'function') {
+            initTablePagination('tblUpcomingSessions', 10);
+            initTablePagination('tblPastSessions', 10);
+            initTablePagination('tblMyTrainingRequests', 10);
+        }
+    });
+
+    function openRequestTrainingModal() {
+        var modal = document.getElementById("requestTrainingModal");
+        if (modal) {
+            modal.classList.add("open");
+            document.body.style.overflow = "hidden";
+            var select = document.getElementById("modalProgramSelect");
+            if (select) select.focus();
+        }
+    }
+
+    function closeRequestTrainingModal(event) {
+        if (event && event.target && event.target !== event.currentTarget) {
+            return;
+        }
+        var modal = document.getElementById("requestTrainingModal");
+        if (modal) {
+            modal.classList.remove("open");
+            document.body.style.overflow = "";
+        }
+    }
+
+    function toggleModalCustomProgram() {
+        var select = document.getElementById("modalProgramSelect");
+        var customWrap = document.getElementById("modalCustomProgramWrap");
+        var customInput = document.getElementById("modalCustomProgramInput");
+
+        if (select && select.value === "Other") {
+            if (customWrap) customWrap.style.display = "block";
+            if (customInput) {
+                customInput.setAttribute("required", "required");
+                customInput.focus();
+            }
+        } else {
+            if (customWrap) customWrap.style.display = "none";
+            if (customInput) customInput.removeAttribute("required");
+        }
+    }
+
+    function handleRequestSubmit(e) {
+        var btn = document.getElementById("btnSubmitTrainingRequest");
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Submitting...';
+        }
+    }
+
+    document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") {
+            closeRequestTrainingModal();
+        }
+    });
+</script>

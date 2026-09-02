@@ -1,11 +1,11 @@
-﻿using HRMS.Application.Models;
+using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Termination
 {
-    [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager")]
     public class ApprovalQueueModel : PageModel
     {
         private readonly ITerminationService _terminationService;

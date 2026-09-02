@@ -1,4 +1,4 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.HRManager
 {
-    [Authorize(Roles = "HR Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer")]
     public class ReviewResignationModel : PageModel
     {
         private readonly IResignationService _resignationService;

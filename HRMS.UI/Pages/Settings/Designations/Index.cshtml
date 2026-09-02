@@ -71,7 +71,7 @@
                     <tr>
                         <th>ID</th>
                         <th>Title</th>
-                        <th>Assigned Departments</th>
+                        <th>Department</th>
                         <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
@@ -82,24 +82,21 @@
                     }
                     @foreach (var item in Model.Designations)
                     {
+                        var dept = item.DepartmentDesignations.FirstOrDefault()?.Department;
                         <tr>
                             <td style="font-weight: 600;">DSG-@item.Id.ToString("D4")</td>
-                            <td>@item.Title</td>
+                            <td style="font-weight: 700;">@item.Title</td>
                             <td>
-                                @if (item.DepartmentDesignations.Count == 0)
+                                @if (dept != null)
                                 {
-                                    <span style="color:#7a8863; font-size:12px;">Not assigned</span>
+                                    <span class="badge-dept">@dept.Name</span>
                                 }
                                 else
                                 {
-                                    @foreach (var dd in item.DepartmentDesignations)
-                                    {
-                                        <span class="badge-dept">@dd.Department.Name</span>
-                                    }
+                                    <span style="color:#7a8863; font-size:12px;">Unassigned</span>
                                 }
                             </td>
                             <td style="text-align: right; white-space: nowrap;">
-                                <a href="/Settings/Designations/Assign?id=@item.Id" class="btn-view">Assign Departments</a>
                                 <a href="/Settings/Designations/Edit?id=@item.Id" class="btn-view">Edit</a>
                             </td>
                         </tr>
@@ -113,7 +110,7 @@
 @section Scripts {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-designations', 8);
+    initTablePagination('tbl-designations', 10);
 });
 </script>
 }

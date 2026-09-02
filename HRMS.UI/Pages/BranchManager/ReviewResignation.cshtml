@@ -11,12 +11,13 @@
 else
 {
     var req = Model.ResignationRequest;
-    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
-    bool canReview = req.Status == ResignationStatusEnum.SubmittedForApproval;
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+    bool canReview = req.Status == ResignationStatusEnum.DeptHeadsApproved;
 
     <div style="margin-bottom:20px">
-        <a asp-page="/BranchManager/ReviewResignations" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
-            <i class="bi bi-arrow-left"></i> Back to Resignations
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Resignations" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
         <span class="k-badge @req.StatusBadgeClass" style="margin-left:8px">@req.StatusDisplay</span>
@@ -71,30 +72,46 @@ else
                 }
             </div>
 
-            <!-- Obligations -->
-            @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
-            {
-                <div class="k-card" style="margin-bottom:20px;border-left:4px solid #f59e0b">
-                    <div class="k-card-header" style="color:#92400e"><i class="bi bi-exclamation-triangle me-2"></i>Financial Obligations Declared</div>
-                    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:8px">
-                        @if (req.HasOutstandingLoans)
-                        {
-                            <span class="k-badge k-badge-rejected"><i class="bi bi-bank"></i> Outstanding Loan Balance</span>
-                        }
-                        @if (req.IsLoanGuarantor)
-                        {
-                            <span class="k-badge k-badge-rejected"><i class="bi bi-people"></i> Loan Guarantor</span>
-                        }
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(req.ObligationDetails))
-                    {
-                        <div style="margin-top:10px;font-size:0.88rem;color:#6b7280">@req.ObligationDetails</div>
-                    }
-                    <div style="margin-top:10px;font-size:0.85rem;color:#92400e;font-weight:500">
-                        <i class="bi bi-info-circle"></i> You may reject this resignation based on these obligations.
-                    </div>
+            <!-- Department Head Reviews -->
+            <div class="k-card" style="margin-bottom:20px">
+                <div class="k-card-header" style="display:flex;justify-content:space-between;align-items:center">
+                    <span>Department Head Reviews</span>
+                    <span class="k-badge @(req.AreAllDeptHeadsApproved ? "k-badge-approved" : "k-badge-pending")">
+                        @req.DeptHeadsApprovedCount/@req.TotalDeptHeadsCount Approved
+                    </span>
                 </div>
-            }
+                @if (req.DepartmentReviews.Any())
+                {
+                    @foreach (var dr in req.DepartmentReviews)
+                    {
+                        <div style="padding:10px 12px;border:1px solid #e5e7eb;border-radius:6px;margin-bottom:8px;background:#fcfcfc">
+                            <div style="display:flex;justify-content:space-between;align-items:center">
+                                <span style="font-weight:600;font-size:0.9rem;color:#151811">@dr.DepartmentName Department</span>
+                                @if (dr.Status == "Approved")
+                                {
+                                    <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span>
+                                }
+                                else if (dr.Status == "Rejected")
+                                {
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span>
+                                }
+                                else
+                                {
+                                    <span class="k-badge k-badge-pending">Pending</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(dr.ReviewerName))
+                            {
+                                <div style="font-size:0.8rem;color:#7a8863;margin-top:2px">Reviewer: @dr.ReviewerName (@(dr.ReviewDate?.ToString("MMM dd, yyyy") ?? ""))</div>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(dr.Comments))
+                            {
+                                <div style="font-size:0.85rem;color:#374151;margin-top:4px">"<i>@dr.Comments</i>"</div>
+                            }
+                        </div>
+                    }
+                }
+            </div>
 
             <!-- Attached Documents -->
             @if (req.Documents.Any())
@@ -135,8 +152,8 @@ else
                     <div class="ep-check-item">
                         <div class="ep-check-circle"></div>
                         <div>
-                            <div class="ep-check-label">Financial Obligations</div>
-                            <div class="ep-check-desc">@(req.HasOutstandingLoans || req.IsLoanGuarantor ? "⚠ Obligations declared — review before approving" : "✓ No obligations declared")</div>
+                            <div class="ep-check-label">Department Head Clearances</div>
+                            <div class="ep-check-desc">✓ Approved by all @req.TotalDeptHeadsCount Department Heads</div>
                         </div>
                     </div>
 
@@ -161,7 +178,7 @@ else
             {
                 <div class="k-card">
                     <div class="k-alert k-alert-info" style="margin-bottom:0">
-                        <i class="bi bi-info-circle"></i> This request has already been reviewed or is not at your review stage.
+                        <i class="bi bi-info-circle"></i> This request has already been reviewed or is currently not at the Branch Manager review stage (Status: @req.StatusDisplay).
                     </div>
                 </div>
             }

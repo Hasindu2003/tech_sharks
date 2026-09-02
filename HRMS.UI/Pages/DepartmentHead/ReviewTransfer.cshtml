@@ -11,12 +11,13 @@
 else
 {
     var req = Model.TransferRequest;
-    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
     bool canReview = req.Status == TransferStatus.Pending && req.DeptHeadReview == null;
 
     <div style="margin-bottom:20px">
-        <a asp-page="/DepartmentHead/ReviewTransfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
-            <i class="bi bi-arrow-left"></i> Back to Transfer Requests
+        <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Transfers" style="color:#6b7280;text-decoration:none;font-size:0.88rem;display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-arrow-left"></i> Back
         </a>
         <span style="color:#9ca3af;font-size:0.85rem;margin-left:8px">Request #@req.Id</span>
     </div>

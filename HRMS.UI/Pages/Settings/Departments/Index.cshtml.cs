@@ -25,6 +25,7 @@ namespace HRMS.UI.Pages.Settings.Departments
             Departments = await _context.Departments
                 .Include(d => d.BranchDepartments)
                     .ThenInclude(bd => bd.Branch)
+                .Where(d => d.Name != "Managerial" && d.Name != "Management")
                 .OrderBy(d => d.Name)
                 .ToListAsync();
         }

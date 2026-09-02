@@ -1,0 +1,429 @@
+@page
+@model HRMS.UI.Pages.Settings.OvertimePolicy.IndexModel
+@{
+    ViewData["Title"] = "Overtime & Payroll Policy";
+    ViewData["PageTitle"] = "Settings / Overtime Policy";
+    ViewData["ActiveNav"] = "Settings";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --primary-green: #10823c;
+            --primary-green-dark: #0d6e32;
+            --bg-light: #f6f8f7;
+            --border-color: #e2e5dc;
+            --text-main: #151811;
+            --text-muted: #7a8863;
+        }
+
+        .settings-container {
+            background-color: white;
+            padding: 26px 32px;
+            min-height: calc(100vh - 62px);
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            transition: color 0.2s ease;
+        }
+
+        .back-btn:hover {
+            color: var(--primary-green);
+        }
+
+        .page-header {
+            margin-bottom: 24px;
+        }
+
+        .page-header h2 {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .page-header p {
+            font-size: 13.5px;
+            color: var(--text-muted);
+        }
+
+        .policy-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .policy-sec-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .policy-sec-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .formula-box {
+            background: #f8fafc;
+            border: 1.5px dashed #cbd5e1;
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin-top: 16px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1050;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-dialog {
+            background: #ffffff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 540px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background: #f8fafc;
+        }
+    </style>
+}
+
+<div class="settings-container">
+    <a href="/Settings" class="back-btn">
+        <i class="bi bi-arrow-left"></i> Back to Settings
+    </a>
+
+    <div class="page-header">
+        <h2>Overtime & Working Hours Policy</h2>
+        <p>Define statutory working days, daily hours, and overtime rate multipliers for Kanrich Finance payroll processing.</p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" style="margin-bottom: 20px;">✓ @TempData["Success"]</div>
+    }
+
+    <!-- Corporate Global Policy Card -->
+    <div class="policy-card">
+        <div class="policy-sec-header">
+            <div>
+                <h3 class="policy-sec-title">
+                    <i class="bi bi-globe-americas" style="color: #10823c;"></i> Corporate Standard Policy (Global Default)
+                </h3>
+                <p style="font-size: 12.5px; color: #64748b; margin: 4px 0 0 0;">Applied across all branches unless a specific branch override is configured below.</p>
+            </div>
+            <span class="k-badge k-badge-approved" style="font-size: 11px;">Active Default</span>
+        </div>
+
+        <form method="post" asp-page-handler="SaveGlobalPolicy">
+            <div class="grid-4" style="margin-bottom: 20px;">
+                <div class="k-form-group">
+                    <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Standard Working Days / Month</label>
+                    <div style="position: relative;">
+                        <input type="number" id="globalWorkingDays" name="workingDays" value="@Model.GlobalPolicy.StandardMonthlyWorkingDays" min="1" max="31" class="k-form-control" style="font-weight: 700; padding-right: 48px;" oninput="updateFormulaPreview()" required />
+                        <span style="position: absolute; right: 12px; top: 9px; font-size: 11px; color: #94a3b8; font-weight: 600;">days</span>
+                    </div>
+                    <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Standard: 21 days</span>
+                </div>
+
+                <div class="k-form-group">
+                    <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Standard Daily Working Hours</label>
+                    <div style="position: relative;">
+                        <input type="number" id="globalDailyHours" name="dailyHours" value="@Model.GlobalPolicy.StandardDailyWorkingHours" min="1" max="24" step="0.5" class="k-form-control" style="font-weight: 700; padding-right: 48px;" oninput="updateFormulaPreview()" required />
+                        <span style="position: absolute; right: 12px; top: 9px; font-size: 11px; color: #94a3b8; font-weight: 600;">hrs</span>
+                    </div>
+                    <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Standard: 8.0 hrs/day</span>
+                </div>
+
+                <div class="k-form-group">
+                    <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Regular Overtime Multiplier</label>
+                    <div style="position: relative;">
+                        <input type="number" id="globalOtMultiplier" name="otMultiplier" value="@Model.GlobalPolicy.StandardOtMultiplier" min="1" max="5" step="0.25" class="k-form-control" style="font-weight: 700; padding-right: 32px;" oninput="updateFormulaPreview()" required />
+                        <span style="position: absolute; right: 12px; top: 9px; font-size: 11px; color: #94a3b8; font-weight: 600;">×</span>
+                    </div>
+                    <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Standard rate: 1.5×</span>
+                </div>
+
+                <div class="k-form-group">
+                    <label style="font-size: 12px; font-weight: 700; color: #334155; margin-bottom: 6px; display: block;">Weekend / Holiday Multiplier</label>
+                    <div style="position: relative;">
+                        <input type="number" name="weekendMultiplier" value="@Model.GlobalPolicy.WeekendOtMultiplier" min="1" max="5" step="0.25" class="k-form-control" style="font-weight: 700; padding-right: 32px;" required />
+                        <span style="position: absolute; right: 12px; top: 9px; font-size: 11px; color: #94a3b8; font-weight: 600;">×</span>
+                    </div>
+                    <span style="font-size: 11px; color: #64748b; margin-top: 4px; display: block;">Holiday rate: 2.0×</span>
+                </div>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 14px 18px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-bottom: 16px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="autoCalculate" value="true" @(Model.GlobalPolicy.AutoCalculateOtOnPayroll ? "checked" : "") id="globalAutoCalc" style="width: 18px; height: 18px; accent-color: #10823c; cursor: pointer;" />
+                    <div>
+                        <label for="globalAutoCalc" style="font-size: 13px; font-weight: 700; color: #166534; cursor: pointer; margin: 0;">Automatically Calculate OT on Monthly Payroll</label>
+                        <p style="font-size: 11.5px; color: #15803d; margin: 2px 0 0 0;">When enabled, OT hours from attendance logs are converted to payslip additions automatically during monthly payroll processing.</p>
+                    </div>
+                </div>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 8px 20px; font-weight: 700;">
+                    <i class="bi bi-check-lg"></i> Save Corporate Policy
+                </button>
+            </div>
+        </form>
+
+        <!-- Live Formula Explanation Box -->
+        <div class="formula-box">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+                <span style="font-size: 12.5px; font-weight: 800; color: #334155;">
+                    <i class="bi bi-calculator" style="color: #0284c7;"></i> Live Calculation Formula & Example
+                </span>
+                <span style="font-size: 11.5px; color: #64748b;" id="monthlyHoursLabel">
+                    Monthly Base Hours: <strong>@(Model.GlobalPolicy.StandardMonthlyWorkingDays * Model.GlobalPolicy.StandardDailyWorkingHours) hrs</strong> (@Model.GlobalPolicy.StandardMonthlyWorkingDays days × @Model.GlobalPolicy.StandardDailyWorkingHours hrs)
+                </span>
+            </div>
+            <div style="font-family: monospace; font-size: 12.5px; color: #1e293b; background: white; padding: 10px 14px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 8px;" id="formulaDisplay">
+                OT Rate/Hour = (Basic Salary ÷ (@Model.GlobalPolicy.StandardMonthlyWorkingDays × @Model.GlobalPolicy.StandardDailyWorkingHours)) × @Model.GlobalPolicy.StandardOtMultiplier
+            </div>
+            <p style="font-size: 11.5px; color: #64748b; margin: 0;" id="formulaExample">
+                <strong>Example:</strong> For an employee with Basic Salary of <strong>Rs 100,000</strong> working <strong>10 OT hours</strong>: Hourly Rate = Rs @((100000m / (Model.GlobalPolicy.StandardMonthlyWorkingDays * Model.GlobalPolicy.StandardDailyWorkingHours)).ToString("N2"))/hr → OT Rate (@Model.GlobalPolicy.StandardOtMultiplier×) = Rs @(((100000m / (Model.GlobalPolicy.StandardMonthlyWorkingDays * Model.GlobalPolicy.StandardDailyWorkingHours)) * Model.GlobalPolicy.StandardOtMultiplier).ToString("N2"))/hr → <strong>Total OT Pay = Rs @((10m * ((100000m / (Model.GlobalPolicy.StandardMonthlyWorkingDays * Model.GlobalPolicy.StandardDailyWorkingHours)) * Model.GlobalPolicy.StandardOtMultiplier)).ToString("N0"))</strong>
+            </p>
+        </div>
+    </div>
+
+    <!-- Branch Specific Overrides Table -->
+    <div class="policy-card">
+        <div class="policy-sec-header">
+            <div>
+                <h3 class="policy-sec-title">
+                    <i class="bi bi-buildings" style="color: #0284c7;"></i> Branch Policies & Overrides
+                </h3>
+                <p style="font-size: 12.5px; color: #64748b; margin: 4px 0 0 0;">View all branches and configure custom OT policy overrides where necessary.</p>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table class="k-table" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+                    <tr>
+                        <th style="text-align: left; padding: 12px 16px; font-weight: 700; color: #475569; font-size: 12px;">Branch Name</th>
+                        <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Policy Status</th>
+                        <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Working Days</th>
+                        <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Daily Hours</th>
+                        <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">OT Multiplier</th>
+                        <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Auto-Calculate</th>
+                        <th style="text-align: right; padding: 12px 16px; font-weight: 700; color: #475569; font-size: 12px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var b in Model.BranchPolicies)
+                    {
+                        <tr style="border-bottom: 1px solid #f1f5f9;">
+                            <td style="padding: 14px 16px; font-weight: 700; color: #0f172a; font-size: 13.5px;">
+                                @b.BranchName
+                            </td>
+                            <td style="text-align: center; padding: 14px;">
+                                @if (b.HasCustomOverride)
+                                {
+                                    <span class="k-badge k-badge-approved" style="font-size: 11px;">Custom Override</span>
+                                }
+                                else
+                                {
+                                    <span class="k-badge k-badge-secondary" style="font-size: 11px;">Corporate Default</span>
+                                }
+                            </td>
+                            <td style="text-align: center; padding: 14px; font-weight: 700; color: #334155; font-size: 13px;">
+                                @b.WorkingDays days
+                            </td>
+                            <td style="text-align: center; padding: 14px; font-weight: 700; color: #334155; font-size: 13px;">
+                                @b.DailyHours hrs/day
+                            </td>
+                            <td style="text-align: center; padding: 14px; font-weight: 700; color: #0284c7; font-size: 13px;">
+                                @b.OtMultiplier×
+                            </td>
+                            <td style="text-align: center; padding: 14px;">
+                                @if (b.AutoCalculate)
+                                {
+                                    <span style="color: #166534; font-weight: 700; font-size: 12px;">✓ Yes</span>
+                                }
+                                else
+                                {
+                                    <span style="color: #94a3b8; font-size: 12px;">No</span>
+                                }
+                            </td>
+                            <td style="text-align: right; padding: 14px 16px;">
+                                <button type="button" onclick="openBranchModal(@b.BranchId, '@b.BranchName', @(b.HasCustomOverride ? "true" : "false"), @b.WorkingDays, @b.DailyHours, @b.OtMultiplier, @b.WeekendMultiplier, @(b.AutoCalculate ? "true" : "false"))" class="btn-kanrich btn-kanrich-outline" style="padding: 4px 12px; font-size: 12px;">
+                                    <i class="bi bi-pencil"></i> Configure
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Branch Policy Override Modal -->
+<div class="modal-overlay" id="branchModal" onclick="closeBranchModal(event)">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <div>
+                <h3 style="margin: 0; font-size: 1.05rem;"><i class="bi bi-building" style="color: #0284c7;"></i> <span id="modalBranchName">Branch</span> OT Policy</h3>
+                <p style="margin: 4px 0 0 0; font-size: 0.78rem; color: var(--text-secondary);">Customize overtime parameters for this specific branch</p>
+            </div>
+            <button onclick="closeBranchModal()" style="background: none; border: none; font-size: 1.3rem; cursor: pointer; color: #94a3b8;">&times;</button>
+        </div>
+        <form method="post" asp-page-handler="SaveBranchOverride">
+            <input type="hidden" name="branchId" id="modalBranchId" />
+            <div style="padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+                <div style="padding: 12px 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; display: flex; align-items: center; gap: 10px;">
+                    <input type="checkbox" name="hasOverride" value="true" id="modalHasOverride" onchange="toggleOverrideInputs()" style="width: 16px; height: 16px; accent-color: #10823c; cursor: pointer;" />
+                    <label for="modalHasOverride" style="font-size: 13px; font-weight: 700; color: #0f172a; margin: 0; cursor: pointer;">Enable custom override for this branch</label>
+                </div>
+
+                <div id="overrideInputs" style="display: flex; flex-direction: column; gap: 14px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="k-form-group">
+                            <label style="font-size: 12px; font-weight: 700; color: #334155;">Monthly Working Days</label>
+                            <input type="number" name="workingDays" id="modalWorkingDays" min="1" max="31" class="k-form-control" style="font-weight: 700;" />
+                        </div>
+                        <div class="k-form-group">
+                            <label style="font-size: 12px; font-weight: 700; color: #334155;">Daily Working Hours</label>
+                            <input type="number" name="dailyHours" id="modalDailyHours" min="1" max="24" step="0.5" class="k-form-control" style="font-weight: 700;" />
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+                        <div class="k-form-group">
+                            <label style="font-size: 12px; font-weight: 700; color: #334155;">Regular OT Multiplier</label>
+                            <input type="number" name="otMultiplier" id="modalOtMultiplier" min="1" max="5" step="0.25" class="k-form-control" style="font-weight: 700;" />
+                        </div>
+                        <div class="k-form-group">
+                            <label style="font-size: 12px; font-weight: 700; color: #334155;">Weekend Multiplier</label>
+                            <input type="number" name="weekendMultiplier" id="modalWeekendMultiplier" min="1" max="5" step="0.25" class="k-form-control" style="font-weight: 700;" />
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
+                        <input type="checkbox" name="autoCalculate" value="true" id="modalAutoCalculate" style="width: 16px; height: 16px; accent-color: #10823c; cursor: pointer;" />
+                        <label for="modalAutoCalculate" style="font-size: 12.5px; font-weight: 700; color: #166534; cursor: pointer; margin: 0;">Auto-calculate OT on monthly payroll run</label>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--border-color);">
+                <button type="button" onclick="closeBranchModal()" class="btn-kanrich btn-kanrich-outline">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary"><i class="bi bi-check-lg"></i> Save Branch Policy</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateFormulaPreview() {
+            const days = parseFloat(document.getElementById('globalWorkingDays').value) || 21;
+            const hours = parseFloat(document.getElementById('globalDailyHours').value) || 8;
+            const multiplier = parseFloat(document.getElementById('globalOtMultiplier').value) || 1.5;
+
+            const totalHours = (days * hours).toFixed(1);
+            document.getElementById('monthlyHoursLabel').innerHTML = `Monthly Base Hours: <strong>${totalHours} hrs</strong> (${days} days × ${hours} hrs)`;
+
+            document.getElementById('formulaDisplay').textContent = `OT Rate/Hour = (Basic Salary ÷ (${days} × ${hours})) × ${multiplier}`;
+
+            const sampleSalary = 100000;
+            const hourlyRate = sampleSalary / (days * hours);
+            const otRate = hourlyRate * multiplier;
+            const totalOtPay = Math.round(10 * otRate);
+
+            document.getElementById('formulaExample').innerHTML = `<strong>Example:</strong> For an employee with Basic Salary of <strong>Rs 100,000</strong> working <strong>10 OT hours</strong>: Hourly Rate = Rs ${hourlyRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/hr → OT Rate (${multiplier}×) = Rs ${otRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/hr → <strong>Total OT Pay = Rs ${totalOtPay.toLocaleString('en-US')}</strong>`;
+        }
+
+        function openBranchModal(branchId, branchName, hasOverride, workingDays, dailyHours, otMultiplier, weekendMultiplier, autoCalc) {
+            document.getElementById('modalBranchId').value = branchId;
+            document.getElementById('modalBranchName').textContent = branchName;
+            document.getElementById('modalHasOverride').checked = hasOverride;
+            document.getElementById('modalWorkingDays').value = workingDays;
+            document.getElementById('modalDailyHours').value = dailyHours;
+            document.getElementById('modalOtMultiplier').value = otMultiplier;
+            document.getElementById('modalWeekendMultiplier').value = weekendMultiplier;
+            document.getElementById('modalAutoCalculate').checked = autoCalc;
+
+            toggleOverrideInputs();
+            document.getElementById('branchModal').classList.add('open');
+        }
+
+        function toggleOverrideInputs() {
+            const hasOverride = document.getElementById('modalHasOverride').checked;
+            const inputsContainer = document.getElementById('overrideInputs');
+            if (hasOverride) {
+                inputsContainer.style.opacity = '1';
+                inputsContainer.style.pointerEvents = 'auto';
+            } else {
+                inputsContainer.style.opacity = '0.4';
+                inputsContainer.style.pointerEvents = 'none';
+            }
+        }
+
+        function closeBranchModal(e) {
+            if (!e || e.target === document.getElementById('branchModal') || e.target.closest('button')) {
+                document.getElementById('branchModal').classList.remove('open');
+            }
+        }
+
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") {
+                closeBranchModal();
+            }
+        });
+    </script>
+}

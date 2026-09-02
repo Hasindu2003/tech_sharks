@@ -1,4 +1,5 @@
 using HRMS.Domain.Entities.Core;
+using HRMS.Domain.Entities.Payroll;
 using HRMS.Infrastructure.Persistence;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -32,6 +33,14 @@ namespace HRMS.UI.Pages
 
         public HRMS.Domain.Entities.Core.Employee? Employee { get; set; }
         public List<EmployeeDocument> Documents { get; set; } = new();
+        public PayrollSalary? CurrentSalary { get; set; }
+        public List<PayrollSalary> SalaryHistory { get; set; } = new();
+
+        /// <summary>
+        /// Designation resolved from the employee record, falling back to the linked login
+        /// account when the employee has no designation set. Empty when neither source has one.
+        /// </summary>
+        public string DesignationTitle { get; set; } = string.Empty;
 
         [BindProperty]
         public string DocumentType { get; set; } = string.Empty;
@@ -46,6 +55,60 @@ namespace HRMS.UI.Pages
         {
             await LoadAsync();
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostUploadAvatarAsync(IFormFile? avatarFile)
+        {
+            await LoadAsync();
+
+            if (Employee == null)
+            {
+                TempData["AvatarError"] = "Employee record not found for your account.";
+                return RedirectToPage();
+            }
+
+            if (avatarFile == null || avatarFile.Length == 0)
+            {
+                TempData["AvatarError"] = "Please select an image file to upload.";
+                return RedirectToPage();
+            }
+
+            if (avatarFile.Length > 5 * 1024 * 1024)
+            {
+                TempData["AvatarError"] = "Image size must not exceed 5 MB.";
+                return RedirectToPage();
+            }
+
+            var allowedExts = new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var ext = Path.GetExtension(avatarFile.FileName).ToLowerInvariant();
+            if (!allowedExts.Contains(ext))
+            {
+                TempData["AvatarError"] = "Only JPG, PNG, or WEBP images are allowed.";
+                return RedirectToPage();
+            }
+
+            try
+            {
+                var avatarsDir = Path.Combine(_env.WebRootPath, "uploads", "avatars");
+                if (!Directory.Exists(avatarsDir))
+                {
+                    Directory.CreateDirectory(avatarsDir);
+                }
+
+                var filePath = Path.Combine(avatarsDir, $"emp_{Employee.Id}.jpg");
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await avatarFile.CopyToAsync(stream);
+                }
+
+                TempData["AvatarSuccess"] = "Profile picture updated successfully!";
+            }
+            catch (Exception ex)
+            {
+                TempData["AvatarError"] = "Failed to save profile picture: " + ex.Message;
+            }
+
+            return RedirectToPage();
         }
 
         public async Task<IActionResult> OnPostUploadAsync()
@@ -113,21 +176,48 @@ namespace HRMS.UI.Pages
             };
             _context.EmployeeDocuments.Add(doc);
 
-            // Fetch HR / Admin users to notify
-            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
-            var hrUsers = await _userManager.GetUsersInRoleAsync("HR Manager");
-            var notifyUsers = adminUsers.Concat(hrUsers).Select(u => u.Id).Distinct();
+            // Fetch HR Officers / Admin users to notify (HR Manager is explicitly excluded)
+            var hrOfficers = await _userManager.GetUsersInRoleAsync("HR Officer");
+            var empBranchId = Employee.BranchId;
+            var targetOfficerIds = new List<string>();
 
-            foreach (var hrId in notifyUsers)
+            foreach (var officer in hrOfficers)
+            {
+                if (string.IsNullOrWhiteSpace(officer.ManagedBranches))
+                {
+                    targetOfficerIds.Add(officer.Id);
+                }
+                else
+                {
+                    var bIds = officer.ManagedBranches.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Select(s => int.TryParse(s.Trim(), out var b) ? b : 0)
+                        .Where(b => b > 0).ToList();
+                    if (bIds.Contains(empBranchId))
+                    {
+                        targetOfficerIds.Add(officer.Id);
+                    }
+                }
+            }
+
+            // Fallback: If no officer is specifically mapped to this branch, notify all HR Officers
+            if (!targetOfficerIds.Any() && hrOfficers.Any())
+            {
+                targetOfficerIds.AddRange(hrOfficers.Select(o => o.Id));
+            }
+
+            var adminUsers = await _userManager.GetUsersInRoleAsync("Admin");
+            var notifyUsers = targetOfficerIds.Concat(adminUsers.Select(u => u.Id)).Distinct();
+
+            foreach (var recipientId in notifyUsers)
             {
                 _context.Notifications.Add(new Notification
                 {
-                    UserId = hrId,
+                    UserId = recipientId,
                     Title = "New Document Upload",
-                    Message = $"{Employee.FullName} uploaded a new document.",
+                    Message = $"{Employee.FullName} uploaded a new document ({DocumentType}).",
                     TargetUrl = "/Employees?tab=documents",
                     IsRead = false,
-                    CreatedAt = DateTime.Now
+                    CreatedAt = HRMS.Domain.Common.SriLankaTime.Now
                 });
             }
 
@@ -137,17 +227,80 @@ namespace HRMS.UI.Pages
             return RedirectToPage(new { Tab = "documents" });
         }
 
+        public async Task<IActionResult> OnPostCancelDocumentAsync(int documentId)
+        {
+            await LoadAsync();
+            if (Employee == null)
+            {
+                return Challenge();
+            }
+
+            var doc = await _context.EmployeeDocuments
+                .FirstOrDefaultAsync(d => d.Id == documentId && d.EmployeeId == Employee.Id);
+
+            if (doc == null)
+            {
+                TempData["UploadError"] = "Document not found.";
+                return RedirectToPage(new { Tab = "documents" });
+            }
+
+            if (doc.Status != "Pending")
+            {
+                TempData["UploadError"] = "Only pending document requests can be cancelled.";
+                return RedirectToPage(new { Tab = "documents" });
+            }
+
+            // Remove physical file from uploads if present
+            if (!string.IsNullOrEmpty(doc.StoredFileName))
+            {
+                var filePath = Path.Combine(_env.WebRootPath, "uploads", "documents", doc.StoredFileName);
+                if (System.IO.File.Exists(filePath))
+                {
+                    try { System.IO.File.Delete(filePath); } catch { /* ignore */ }
+                }
+            }
+
+            _context.EmployeeDocuments.Remove(doc);
+            await _context.SaveChangesAsync();
+
+            TempData["UploadSuccess"] = $"Document request for \"{doc.FileName}\" has been cancelled.";
+            return RedirectToPage(new { Tab = "documents" });
+        }
+
         private async Task LoadAsync()
         {
-            var email = User.Identity?.Name;
-            if (string.IsNullOrEmpty(email)) return;
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null) return;
 
-            Employee = await _context.Employees
-                .Include(e => e.Department)
-                .Include(e => e.Designation)
-                .Include(e => e.Branch)
-                .Include(e => e.ReportingOfficer)
-                .FirstOrDefaultAsync(e => e.Email == email);
+            if (currentUser.EmployeeId.HasValue)
+            {
+                Employee = await _context.Employees
+                    .Include(e => e.Department)
+                    .Include(e => e.Designation)
+                    .Include(e => e.Branch)
+                    .Include(e => e.ReportingOfficer)
+                    .FirstOrDefaultAsync(e => e.Id == currentUser.EmployeeId.Value);
+            }
+
+            if (Employee == null && !string.IsNullOrEmpty(currentUser.Email))
+            {
+                Employee = await _context.Employees
+                    .Include(e => e.Department)
+                    .Include(e => e.Designation)
+                    .Include(e => e.Branch)
+                    .Include(e => e.ReportingOfficer)
+                    .FirstOrDefaultAsync(e => e.Email == currentUser.Email);
+            }
+
+            if (Employee == null && !string.IsNullOrEmpty(currentUser.UserName))
+            {
+                Employee = await _context.Employees
+                    .Include(e => e.Department)
+                    .Include(e => e.Designation)
+                    .Include(e => e.Branch)
+                    .Include(e => e.ReportingOfficer)
+                    .FirstOrDefaultAsync(e => e.Email == currentUser.UserName);
+            }
 
             if (Employee != null)
             {
@@ -155,6 +308,30 @@ namespace HRMS.UI.Pages
                     .Where(d => d.EmployeeId == Employee.Id)
                     .OrderByDescending(d => d.UploadedAt)
                     .ToListAsync();
+
+                var salaries = await _context.PayrollSalaries
+                    .Where(s => s.EmployeeId == Employee.Id)
+                    .OrderByDescending(s => s.EffectiveDate)
+                    .ThenByDescending(s => s.Id)
+                    .ToListAsync();
+
+                CurrentSalary = salaries.FirstOrDefault();
+                SalaryHistory = salaries;
+            }
+
+            DesignationTitle = Employee?.Designation?.Title ?? string.Empty;
+
+            if (string.IsNullOrWhiteSpace(DesignationTitle) && Employee?.DesignationId is int designationId && designationId > 0)
+            {
+                DesignationTitle = await _context.Designations
+                    .Where(d => d.Id == designationId)
+                    .Select(d => d.Title)
+                    .FirstOrDefaultAsync() ?? string.Empty;
+            }
+
+            if (string.IsNullOrWhiteSpace(DesignationTitle) && !string.IsNullOrWhiteSpace(currentUser.Designation))
+            {
+                DesignationTitle = currentUser.Designation;
             }
         }
     }

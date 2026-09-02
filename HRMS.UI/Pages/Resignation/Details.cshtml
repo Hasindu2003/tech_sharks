@@ -47,27 +47,55 @@
     .letter-banner { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
 </style>
 
-<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px;flex-wrap:wrap;gap:10px;">
     <div>
-        <a asp-page="/Resignation/MyRequests" class="back-link">
+        @{
+            var isDutyResign = User.IsInRole("Department Head") || User.IsInRole("Branch Manager") || User.IsInRole("Area Manager") || User.IsInRole("HR Manager") || User.IsInRole("HR Officer") || User.IsInRole("Admin");
+            var backUrlResign = isDutyResign ? "/Separation/Dashboard?ActiveTab=Resignations" : "/Transfer/Separation?ActiveTab=Resignation";
+        }
+        <a href="@backUrlResign" class="back-link">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
             Back
         </a>
         <h2 class="page-h">Resignation Request <span style="color:#10823c">#@r.Id</span></h2>
         <span class="k-badge @r.StatusBadgeClass">@r.StatusDisplay</span>
     </div>
+
+    @if (r.Status == ResignationStatusEnum.Draft)
+    {
+        <div style="display:flex; gap:8px; align-items:center;">
+            <a asp-page="/Resignation/EditDraft" asp-route-id="@r.Id" class="btn-create" style="padding:7px 14px; font-size:12.5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Edit Draft
+            </a>
+            <form method="post" asp-page-handler="DeleteDraft" asp-route-id="@r.Id" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this draft resignation? This action cannot be undone.');">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn-outline" style="padding:7px 14px; font-size:12.5px; background:#fee2e2; color:#b91c1c; border-color:#fecaca;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                    Delete Draft
+                </button>
+            </form>
+        </div>
+    }
 </div>
 
 <!-- Approval Timeline -->
 <div class="detail-card" style="margin-top:16px">
     <div class="dlt">Approval Timeline</div>
     @{
+        var dhStatusDate = r.Status >= ResignationStatusEnum.DeptHeadsApproved 
+            ? "Approved" 
+            : (r.Status == ResignationStatusEnum.DeptHeadRejected 
+                ? "Rejected" 
+                : (r.TotalDeptHeadsCount > 0 ? $"{r.DeptHeadsApprovedCount}/{r.TotalDeptHeadsCount} Approved" : "Pending"));
+
         var steps = new[] {
-            ("Submitted", r.ResignationDate.ToString("dd MMM yyyy"), r.Status >= ResignationStatusEnum.SubmittedForApproval),
-            ("Branch Manager", r.BMReviewDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status > ResignationStatusEnum.SubmittedForApproval),
-            ("Area Manager", r.AMReviewDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status > ResignationStatusEnum.BMApproved),
-            ("HR Manager", r.HRReviewDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status >= ResignationStatusEnum.HRApproved),
-            ("Completed", r.AccountDeactivatedDate?.ToString("dd MMM yyyy") ?? "Pending", r.Status == ResignationStatusEnum.Completed)
+            ("1. Submitted", r.ResignationDate.ToString("dd MMM yyyy"), r.Status >= ResignationStatusEnum.SubmittedForApproval),
+            ("2. Dept Heads", dhStatusDate, r.Status >= ResignationStatusEnum.DeptHeadsApproved),
+            ("3. Branch Manager", r.BMReviewDate?.ToString("dd MMM yyyy") ?? (r.Status >= ResignationStatusEnum.DeptHeadsApproved ? "Pending" : "Waiting"), r.Status >= ResignationStatusEnum.BMApproved),
+            ("4. Area Manager", r.AMReviewDate?.ToString("dd MMM yyyy") ?? (r.Status >= ResignationStatusEnum.BMApproved ? "Pending" : "Waiting"), r.Status >= ResignationStatusEnum.AMApproved),
+            ("5. HR Officer", r.HRReviewDate?.ToString("dd MMM yyyy") ?? (r.Status >= ResignationStatusEnum.AMApproved ? "Pending" : "Waiting"), r.Status >= ResignationStatusEnum.HRApproved),
+            ("6. Completed", r.AccountDeactivatedDate?.ToString("dd MMM yyyy") ?? (r.Status >= ResignationStatusEnum.HRApproved ? "Effective Date" : "Waiting"), r.Status == ResignationStatusEnum.Completed)
         };
     }
     <div class="timeline-wrap">
@@ -100,9 +128,6 @@
         <div class="ir"><span class="ik">Submitted On</span><span class="iv">@r.ResignationDate.ToString("dd MMM yyyy")</span></div>
         <div class="ir"><span class="ik">Last Working Day</span><span class="iv" style="color:#10823c;font-weight:700">@r.EffectiveDate.ToString("dd MMM yyyy")</span></div>
         <div class="ir"><span class="ik">Notice Period</span><span class="iv">@r.NoticePeriodDays days</span></div>
-        <div class="ir"><span class="ik">Has Loans</span><span class="iv">@(r.HasOutstandingLoans ? "Yes" : "No")</span></div>
-        <div class="ir"><span class="ik">Loan Guarantor</span><span class="iv">@(r.IsLoanGuarantor ? "Yes" : "No")</span></div>
-        <div class="ir"><span class="ik">Override</span><span class="iv">@(r.HasOverridePermission ? "Yes" : "No")</span></div>
     </div>
 </div>
 
@@ -113,10 +138,60 @@
 </div>
 
 <!-- Review Comments -->
-@if (r.BMReview != null || r.AMReview != null || r.HRReview != null)
+@if (r.DepartmentReviews.Any() || r.BMReview != null || r.AMReview != null || r.HRReview != null)
 {
     <div class="detail-card">
-        <div class="dlt">Review Comments</div>
+        <div class="dlt">Approval & Review Feedback</div>
+
+        <!-- Department Head Reviews -->
+        @if (r.DepartmentReviews.Any())
+        {
+            <div style="margin-bottom:14px">
+                <div style="font-size:12.5px;font-weight:700;color:#151811;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+                    <span>Department Head Reviews (Branch)</span>
+                    <span class="k-badge @(r.AreAllDeptHeadsApproved ? "k-badge-approved" : "k-badge-pending")">
+                        @r.DeptHeadsApprovedCount/@r.TotalDeptHeadsCount Approved
+                    </span>
+                </div>
+                @foreach (var dr in r.DepartmentReviews)
+                {
+                    var isApproved = dr.Status == "Approved";
+                    var isRejected = dr.Status == "Rejected";
+                    <div class="review-block @(isApproved ? "review-approved" : (isRejected ? "review-rejected" : ""))" style="margin-bottom:8px">
+                        <div class="review-header" style="justify-content:space-between">
+                            <div style="display:flex;align-items:center;gap:8px">
+                                <strong>@dr.DepartmentName Dept Head</strong>
+                                @if (isApproved)
+                                {
+                                    <span class="k-badge k-badge-approved"><i class="bi bi-check"></i> Approved</span>
+                                }
+                                else if (isRejected)
+                                {
+                                    <span class="k-badge k-badge-rejected"><i class="bi bi-x"></i> Rejected</span>
+                                }
+                                else
+                                {
+                                    <span class="k-badge k-badge-pending"><i class="bi bi-hourglass-split"></i> Pending</span>
+                                }
+                            </div>
+                            @if (dr.ReviewDate.HasValue)
+                            {
+                                <span style="font-size:11.5px;color:#7a8863">@dr.ReviewDate.Value.ToString("dd MMM yyyy HH:mm")</span>
+                            }
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(dr.ReviewerName))
+                        {
+                            <div style="font-size:12px;color:#7a8863;margin-bottom:2px">Reviewer: @dr.ReviewerName</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(dr.Comments))
+                        {
+                            <p style="margin:4px 0 0;font-size:13px;color:#374151">"@dr.Comments"</p>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
         @if (r.BMReview != null)
         {
             <div class="review-block @(r.BMReview == "Approved" ? "review-approved" : "review-rejected")">
@@ -143,7 +218,7 @@
         {
             <div class="review-block @(r.HRReview == "Approved" ? "review-approved" : "review-rejected")">
                 <div class="review-header">
-                    <strong>HR Manager</strong>
+                    <strong>HR Officer / HR Manager</strong>
                     <span class="k-badge @(r.HRReview == "Approved" ? "k-badge-approved" : "k-badge-rejected")">@r.HRReview</span>
                     <span style="font-size:12px;color:#7a8863">@r.HRReviewDate?.ToString("dd MMM yyyy HH:mm")</span>
                 </div>

@@ -1,4 +1,5 @@
-﻿using HRMS.Domain.Entities.Termination;
+using HRMS.Domain.Entities.Termination;
+using HRMS.Domain.Common;
 using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
@@ -10,7 +11,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HRMS.UI.Pages.Termination
 {
-    [Authorize(Roles = "HR Manager")]
+    [Authorize(Roles = "HR Manager,HR Officer")]
     public class EditRequestModel : PageModel
     {
         private readonly ITerminationService _terminationService;
@@ -39,8 +40,6 @@ namespace HRMS.UI.Pages.Termination
             [StringLength(1000, MinimumLength = 10)]
             public string ReasonForTermination { get; set; } = string.Empty;
 
-            [Required]
-            [DataType(DataType.Date)]
             public DateTime? InitiationDate { get; set; }
 
             [Required]
@@ -71,7 +70,12 @@ namespace HRMS.UI.Pages.Termination
         {
             CurrentRequest = await _terminationService.GetTerminationByIdAsync(id);
             if (CurrentRequest == null) return NotFound();
-            if (CurrentRequest.Status != TerminationStatusEnum.New && CurrentRequest.Status != TerminationStatusEnum.Rejected)
+
+            if (CurrentRequest.Status != TerminationStatusEnum.Draft &&
+                CurrentRequest.Status != TerminationStatusEnum.DeptHeadRejected &&
+                CurrentRequest.Status != TerminationStatusEnum.BMRejected &&
+                CurrentRequest.Status != TerminationStatusEnum.AMRejected &&
+                CurrentRequest.Status != TerminationStatusEnum.HRRejected)
                 return RedirectToPage("/Termination/Details", new { id });
 
             Input = new InputModel
@@ -104,20 +108,22 @@ namespace HRMS.UI.Pages.Termination
 
             if (!ModelState.IsValid) return Page();
 
+            if (!ValidateDates()) return Page();
+
             var vm = new TerminationRequestViewModel
             {
                 Id = Input.Id,
                 TerminationType = Input.TerminationType,
                 ReasonForTermination = Input.ReasonForTermination ?? "",
-                InitiationDate = Input.InitiationDate ?? DateTime.Today,
-                EffectiveTerminationDate = Input.EffectiveTerminationDate ?? DateTime.Today,
-                SupervisorRemarks = Input.SupervisorRemarks,
-                SpecialRemarks = Input.SpecialRemarks,
-                DirectObligations = Input.DirectObligations,
-                IndirectObligations = Input.IndirectObligations,
-                HasOutstandingLoans = Input.HasOutstandingLoans,
-                IsLoanGuarantor = Input.IsLoanGuarantor,
-                HasOverridePermission = Input.HasOverridePermission
+                InitiationDate = CurrentRequest.InitiationDate != default ? CurrentRequest.InitiationDate : (Input.InitiationDate ?? SriLankaTime.Today),
+                EffectiveTerminationDate = Input.EffectiveTerminationDate ?? SriLankaTime.Today,
+                SupervisorRemarks = Input.SupervisorRemarks ?? CurrentRequest.SupervisorRemarks,
+                SpecialRemarks = Input.SpecialRemarks ?? CurrentRequest.SpecialRemarks,
+                DirectObligations = Input.DirectObligations ?? CurrentRequest.DirectObligations,
+                IndirectObligations = Input.IndirectObligations ?? CurrentRequest.IndirectObligations,
+                HasOutstandingLoans = CurrentRequest.HasOutstandingLoans,
+                IsLoanGuarantor = CurrentRequest.IsLoanGuarantor,
+                HasOverridePermission = CurrentRequest.HasOverridePermission
             };
 
             await _terminationService.UpdateTerminationRequestAsync(vm);
@@ -135,20 +141,30 @@ namespace HRMS.UI.Pages.Termination
 
             if (!ModelState.IsValid) return Page();
 
+            if (!ValidateDates()) return Page();
+
+            var hasExistingDocs = ExistingDocuments.Any();
+            var hasNewDocs = Input.Documents != null && Input.Documents.Any(d => d != null && d.Length > 0);
+            if (!hasExistingDocs && !hasNewDocs)
+            {
+                ModelState.AddModelError("Input.Documents", "At least one supporting document must be attached to submit a termination request.");
+                return Page();
+            }
+
             var vm = new TerminationRequestViewModel
             {
                 Id = Input.Id,
                 TerminationType = Input.TerminationType,
                 ReasonForTermination = Input.ReasonForTermination,
-                InitiationDate = Input.InitiationDate ?? DateTime.Today,
-                EffectiveTerminationDate = Input.EffectiveTerminationDate ?? DateTime.Today,
-                SupervisorRemarks = Input.SupervisorRemarks,
-                SpecialRemarks = Input.SpecialRemarks,
-                DirectObligations = Input.DirectObligations,
-                IndirectObligations = Input.IndirectObligations,
-                HasOutstandingLoans = Input.HasOutstandingLoans,
-                IsLoanGuarantor = Input.IsLoanGuarantor,
-                HasOverridePermission = Input.HasOverridePermission
+                InitiationDate = CurrentRequest.InitiationDate != default ? CurrentRequest.InitiationDate : (Input.InitiationDate ?? SriLankaTime.Today),
+                EffectiveTerminationDate = Input.EffectiveTerminationDate ?? SriLankaTime.Today,
+                SupervisorRemarks = Input.SupervisorRemarks ?? CurrentRequest.SupervisorRemarks,
+                SpecialRemarks = Input.SpecialRemarks ?? CurrentRequest.SpecialRemarks,
+                DirectObligations = Input.DirectObligations ?? CurrentRequest.DirectObligations,
+                IndirectObligations = Input.IndirectObligations ?? CurrentRequest.IndirectObligations,
+                HasOutstandingLoans = CurrentRequest.HasOutstandingLoans,
+                IsLoanGuarantor = CurrentRequest.IsLoanGuarantor,
+                HasOverridePermission = CurrentRequest.HasOverridePermission
             };
 
             await _terminationService.UpdateTerminationRequestAsync(vm);
@@ -163,6 +179,19 @@ namespace HRMS.UI.Pages.Termination
 
             TempData["SuccessMessage"] = "Termination request submitted for approval successfully.";
             return RedirectToPage("/Termination/Requests");
+        }
+
+        private bool ValidateDates()
+        {
+            if (Input.EffectiveTerminationDate.HasValue)
+            {
+                if (Input.EffectiveTerminationDate.Value.Date < SriLankaTime.Today)
+                {
+                    ModelState.AddModelError("Input.EffectiveTerminationDate", "Effective termination date cannot be in the past.");
+                    return false;
+                }
+            }
+            return true;
         }
 
         public async Task<IActionResult> OnPostRemoveDocumentAsync(int documentId, int requestId)

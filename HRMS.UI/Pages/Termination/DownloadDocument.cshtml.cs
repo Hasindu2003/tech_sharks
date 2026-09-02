@@ -1,11 +1,11 @@
-﻿using HRMS.Application.Services;
+using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Termination
 {
-    [Authorize]
+    [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager,Employee")]
     public class DownloadDocumentModel : PageModel
     {
         private readonly ITerminationService _terminationService;

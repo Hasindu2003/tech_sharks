@@ -115,38 +115,48 @@
         </div>
     }
 
-    <!-- HR Managers -->
-    <div class="section-label">HR Managers</div>
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div id="errorBanner" style="background:#fef2f2;color:#991b1b;padding:14px 20px;border-radius:10px;margin-bottom:20px;font-size:14px;font-weight:600;border:1px solid #ef4444;display:flex;justify-content:space-between;align-items:center;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div style="background:#ef4444;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </div>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+            <button onclick="document.getElementById('errorBanner').style.display='none'" style="background:none;border:none;color:#991b1b;cursor:pointer;padding:4px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
+    }
+
+    <!-- Corporate Management (Head Office) -->
+    <div class="section-label">Corporate Management (Head Office)</div>
     <div class="table-card">
-        <table class="emp-table" id="tbl-hr-mgr">
+        <table class="emp-table" id="tbl-corporate-mgr">
             <thead>
                 <tr>
+                    <th>Role</th>
                     <th>Name</th>
-                    <th>Email</th>
-                    <th>Branch</th>
-                    <th style="text-align:right;">Actions</th>
+                    <th>Username</th>
+                    <th>Branch / Department</th>
                 </tr>
             </thead>
             <tbody>
-                @if (!Model.HRManagers.Any())
+                @if (!Model.CorporateHeads.Any())
                 {
-                    <tr class="empty-row"><td colspan="4">No HR Manager accounts yet.</td></tr>
+                    <tr class="empty-row"><td colspan="4">No corporate management accounts yet.</td></tr>
                 }
-                @foreach (var item in Model.HRManagers)
+                @foreach (var item in Model.CorporateHeads)
                 {
+                    var isHr = item.UserName == "hrmanager" || item.Department.Contains("Human Resources") || item.FullName.Contains("HR");
                     <tr>
-                        <td style="font-weight:700;">@item.FullName</td>
-                        <td style="color:var(--text-muted);">@item.Email</td>
-                        <td>@item.BranchOrArea</td>
-                        <td style="text-align:right;">
-                            <a href="/Admin/DutyAccounts/Edit?userId=@item.UserId" class="action-link">Edit</a>
-                            <form method="post" asp-page-handler="Delete" style="display:inline;"
-                                  onsubmit="return confirm('Delete duty account \'@item.FullName\'? This cannot be undone.');">
-                                <input type="hidden" name="userId" value="@item.UserId" />
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="action-del">Delete</button>
-                            </form>
+                        <td>
+                            <span class="role-badge badge-hr">HR Manager</span>
                         </td>
+                        <td style="font-weight:700;">@item.FullName</td>
+                        <td><code style="background:#eef7f0; color:#10823c; padding:3px 7px; border-radius:5px; font-weight:700; font-size:12px;">@item.UserName</code></td>
+                        <td>@item.BranchOrArea &middot; @item.Department</td>
                     </tr>
                 }
             </tbody>
@@ -160,7 +170,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Username</th>
                     <th>Area</th>
                     <th>Managed Branches</th>
                     <th style="text-align:right;">Actions</th>
@@ -175,7 +185,7 @@
                 {
                     <tr>
                         <td style="font-weight:700;">@item.FullName</td>
-                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td><code style="background:#eef7f0; color:#10823c; padding:3px 7px; border-radius:5px; font-weight:700; font-size:12px;">@item.UserName</code></td>
                         <td>@item.BranchOrArea</td>
                         <td style="color:var(--text-muted);font-size:12px;">@(string.IsNullOrEmpty(item.ManagedBranchNames) ? "-" : item.ManagedBranchNames)</td>
                         <td style="text-align:right;">
@@ -200,7 +210,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Username</th>
                     <th>Branch</th>
                     <th>Department</th>
                     <th style="text-align:right;">Actions</th>
@@ -215,7 +225,7 @@
                 {
                     <tr>
                         <td style="font-weight:700;">@item.FullName</td>
-                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td><code style="background:#eef7f0; color:#10823c; padding:3px 7px; border-radius:5px; font-weight:700; font-size:12px;">@item.UserName</code></td>
                         <td>@item.BranchOrArea</td>
                         <td>@item.Department</td>
                         <td style="text-align:right;">
@@ -240,7 +250,7 @@
             <thead>
                 <tr>
                     <th>Name</th>
-                    <th>Email</th>
+                    <th>Username</th>
                     <th>Branch</th>
                     <th style="text-align:right;">Actions</th>
                 </tr>
@@ -254,7 +264,7 @@
                 {
                     <tr>
                         <td style="font-weight:700;">@item.FullName</td>
-                        <td style="color:var(--text-muted);">@item.Email</td>
+                        <td><code style="background:#eef7f0; color:#10823c; padding:3px 7px; border-radius:5px; font-weight:700; font-size:12px;">@item.UserName</code></td>
                         <td>@item.BranchOrArea</td>
                         <td style="text-align:right;">
                             <a href="/Admin/DutyAccounts/Edit?userId=@item.UserId" class="action-link">Edit</a>
@@ -275,10 +285,10 @@
 @section Scripts {
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    initTablePagination('tbl-hr-mgr', 8);
-    initTablePagination('tbl-area-mgr', 8);
-    initTablePagination('tbl-dept-heads', 8);
-    initTablePagination('tbl-branch-mgr', 8);
+    initTablePagination('tbl-corporate-mgr', 10);
+    initTablePagination('tbl-area-mgr', 10);
+    initTablePagination('tbl-dept-heads', 10);
+    initTablePagination('tbl-branch-mgr', 10);
 });
 </script>
 }

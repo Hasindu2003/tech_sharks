@@ -16,9 +16,8 @@ namespace HRMS.Infrastructure
 
             // Use a placeholder connection string — EF CLI only needs it to build the model,
             // not to actually connect for migration generation.
-            optionsBuilder.UseMySql(
-                "Server=localhost;Port=3306;Database=hrms_db_2;User=root;Password=;",
-                new MySqlServerVersion(new Version(8, 0, 0)));
+            optionsBuilder.UseSqlServer(
+                "Server=tcp:hrmskanrich.database.windows.net,1433;Initial Catalog=HRMS;Persist Security Info=False;User ID=hrmsadmin;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;");
 
             return new ApplicationDbContext(optionsBuilder.Options);
         }

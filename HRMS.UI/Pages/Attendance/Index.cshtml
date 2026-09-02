@@ -163,23 +163,23 @@
         <h1 class="page-h">Attendance Records</h1>
         <p class="page-s">View and filter daily attendance logs</p>
     </div>
-    @if (User.IsInRole("HR Manager"))
+    @if (User.IsInRole("Branch Manager"))
     {
         <a asp-page="/BiometricLogs/Create" class="btn-kanrich btn-kanrich-primary" style="padding:9px 18px">
-            <i class="bi bi-plus-circle"></i> Add Biometric Log
+            <i class="bi bi-upload"></i> Import / Add Biometric Logs
         </a>
     }
 </div>
 
 <!-- Filter Bar -->
 <div class="filter-card">
-    <form method="get" style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; align-items:end;">
+    <form method="get" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:16px; align-items:end;">
         @if (Model.ShowBranchFilter)
         {
             <div class="fg">
                 <label class="fl">Branch</label>
                 <select asp-for="FilterBranchId" class="fi" onchange="this.form.submit()">
-                    <option value="">-- All Managed Branches --</option>
+                    <option value="">@Model.BranchFilterPlaceholder</option>
                     @foreach (var br in Model.ManagedBranchesList)
                     {
                         <option value="@br.Id">@br.Name</option>
@@ -210,7 +210,7 @@
                     <option value="">-- All Employees --</option>
                     @foreach (var emp in Model.Employees)
                     {
-                        <option value="@emp.Id">@emp.FullName (@emp.EPFNumber)</option>
+                        <option value="@emp.Id">@emp.NameWithInitials (@emp.EPFNumber)</option>
                     }
                 </select>
                 <div class="custom-dropdown" id="employeeDropdown">
@@ -227,7 +227,7 @@
                         <div class="custom-dropdown-option" data-value="">-- All Employees --</div>
                         @foreach (var emp in Model.Employees)
                         {
-                            <div class="custom-dropdown-option" data-value="@emp.Id">@emp.FullName (@emp.EPFNumber)</div>
+                            <div class="custom-dropdown-option" data-value="@emp.Id">@emp.NameWithInitials (@emp.EPFNumber)</div>
                         }
                         <div class="custom-dropdown-no-results" id="employeeNoResults" style="display:none">No employees found.</div>
                     </div>
@@ -245,11 +245,13 @@
             <input type="date" asp-for="ToDate" class="fi" />
         </div>
         
-        <div style="grid-column: span 2; display:flex; justify-content:flex-end; gap:10px; margin-top:8px;">
-            <a asp-page="./Index" class="btn-kanrich btn-kanrich-outline" style="padding:9px 24px; height: 38px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none;">Reset</a>
-            <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding:9px 36px; height: 38px;">
+        <div style="display:flex; gap:8px; align-items:flex-end;">
+            <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding:9px 24px; height: 38px; flex:1; display:inline-flex; align-items:center; justify-content:center; gap:6px;">
                 <i class="bi bi-funnel"></i> Filter
             </button>
+            <a asp-page="./Index" class="btn-kanrich btn-kanrich-outline" style="padding:9px 18px; height: 38px; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; color: #475569; border: 1px solid #d1d5db; background: #fff; border-radius: 6px; font-weight: 600; font-size: 13px;">
+                Reset
+            </a>
         </div>
     </form>
 </div>
@@ -266,6 +268,7 @@
                 <th>Clock In</th>
                 <th>Clock Out</th>
                 <th>Total Hours</th>
+                <th>OT Hours</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -277,7 +280,7 @@
                     <tr>
                         <td style="font-weight: 600;">@att.Date.ToString("yyyy-MM-dd")</td>
                         <td>
-                            <div style="font-weight: 600; color: #151811;">@att.Employee?.FullName</div>
+                            <div style="font-weight: 600; color: #151811;">@(att.Employee?.NameWithInitials ?? att.Employee?.FullName)</div>
                             <div style="font-size: 11px; color: #7a8863;">@att.Employee?.EPFNumber</div>
                         </td>
                         <td>@(att.TimeIn?.ToString("HH:mm:ss") ?? "—")</td>
@@ -290,6 +293,30 @@
                             else
                             {
                                 <span style="color:#d1d5db">—</span>
+                            }
+                        </td>
+                        <td>
+                            @{
+                                double otHours = 0;
+                                if (att.TotalHours.HasValue && att.TotalHours.Value > 8.0)
+                                {
+                                    otHours = att.TotalHours.Value - 8.0;
+                                }
+                                else if (att.TimeIn.HasValue && att.TimeOut.HasValue)
+                                {
+                                    var diff = (att.TimeOut.Value - att.TimeIn.Value).TotalHours;
+                                    if (diff > 8.0) otHours = diff - 8.0;
+                                }
+                            }
+                            @if (otHours > 0)
+                            {
+                                <span class="hours-badge" style="background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; font-weight: 700;">
+                                    +@otHours.ToString("F2") hrs
+                                </span>
+                            }
+                            else
+                            {
+                                <span style="color: #9ca3af; font-size: 12.5px;">0 hrs</span>
                             }
                         </td>
                         <td>
@@ -319,7 +346,7 @@
             else
             {
                 <tr>
-                    <td colspan="6" style="text-align: center; color: #9ca3af; padding: 48px 24px;">
+                    <td colspan="7" style="text-align: center; color: #9ca3af; padding: 48px 24px;">
                         <i class="bi bi-inbox" style="font-size: 2.2rem; display: block; margin-bottom: 10px;"></i>
                         No attendance records found for this selection.
                     </td>

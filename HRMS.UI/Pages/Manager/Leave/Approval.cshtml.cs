@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.UI.Pages.Manager.Leave
 {
-    [Authorize(Roles = "Department Head, Branch Manager, Area Manager, HR Manager")]
+    [Authorize(Roles = "Department Head, Branch Manager, Area Manager, HR Manager, HR Officer, Admin")]
     public class ApprovalModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -31,17 +31,36 @@ namespace HRMS.UI.Pages.Manager.Leave
             public int LeaveId { get; set; }
             public string EmployeeName { get; set; } = null!;
             public string LeaveType { get; set; } = null!;
+            public bool IsHalfDay { get; set; }
+            public string? HalfDaySession { get; set; }
             public DateTime StartDate { get; set; }
             public DateTime EndDate { get; set; }
-            public int TotalDays { get; set; }
+            public double TotalDays { get; set; }
             public string ActionTaken { get; set; } = null!; // Approved / Rejected
             public string? Comments { get; set; }
             public DateTime ActionDate { get; set; }
             public string OverallStatus { get; set; } = null!;
+            public string? AdditionalInfo { get; set; }
         }
 
+        [BindProperty(SupportsGet = true)]
+        public string Tab { get; set; } = "standard";
+
         public List<Domain.Entities.Leave.Leave> PendingLeaves { get; set; } = new();
+        public List<Domain.Entities.Leave.Leave> PendingStandardLeaves { get; set; } = new();
+        public List<Domain.Entities.Leave.Leave> PendingMaternityLeaves { get; set; } = new();
+        public List<Domain.Entities.Leave.Leave> PendingOverseasLeaves { get; set; } = new();
+
         public List<ReviewedLeaveViewModel> ReviewedLeaves { get; set; } = new();
+        public List<ReviewedLeaveViewModel> ReviewedStandardLeaves { get; set; } = new();
+        public List<ReviewedLeaveViewModel> ReviewedMaternityLeaves { get; set; } = new();
+        public List<ReviewedLeaveViewModel> ReviewedOverseasLeaves { get; set; } = new();
+
+        public int StandardCount => PendingStandardLeaves.Count;
+        public int MaternityCount => PendingMaternityLeaves.Count;
+        public int OverseasCount => PendingOverseasLeaves.Count;
+        public int TotalPendingCount => PendingLeaves.Count;
+
         public int ManagerId { get; set; }
 
         [TempData]
@@ -73,26 +92,66 @@ namespace HRMS.UI.Pages.Manager.Leave
                 ManagerId = employee.Id;
                 PendingLeaves = await _leaveService.GetPendingApprovalsAsync(ManagerId);
 
+                // Categorize Pending Leaves
+                PendingStandardLeaves = PendingLeaves
+                    .Where(l => !string.Equals(l.LeaveType, "Maternity", StringComparison.OrdinalIgnoreCase) && 
+                                !string.Equals(l.LeaveType, "Overseas", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                PendingMaternityLeaves = PendingLeaves
+                    .Where(l => string.Equals(l.LeaveType, "Maternity", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                PendingOverseasLeaves = PendingLeaves
+                    .Where(l => string.Equals(l.LeaveType, "Overseas", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
                 // Query manager's action history
-                ReviewedLeaves = await _context.LeaveApprovals
+                var approvalsRaw = await _context.LeaveApprovals
                     .Include(la => la.Leave)
                         .ThenInclude(l => l.Employee)
+                    .Include(la => la.Leave)
+                        .ThenInclude(l => l.MaternityLeave)
+                    .Include(la => la.Leave)
+                        .ThenInclude(l => l.OverseasLeave)
                     .Where(la => la.ApproverId == employee.Id)
                     .OrderByDescending(la => la.ApprovalDate)
-                    .Select(la => new ReviewedLeaveViewModel
-                    {
-                        LeaveId = la.LeaveId,
-                        EmployeeName = la.Leave.Employee.FullName,
-                        LeaveType = la.Leave.LeaveType,
-                        StartDate = la.Leave.StartDate,
-                        EndDate = la.Leave.EndDate,
-                        TotalDays = la.Leave.TotalDays,
-                        ActionTaken = la.Status,
-                        Comments = la.Comments,
-                        ActionDate = la.ApprovalDate,
-                        OverallStatus = la.Leave.Status
-                    })
                     .ToListAsync();
+
+                ReviewedLeaves = approvalsRaw.Select(la => new ReviewedLeaveViewModel
+                {
+                    LeaveId = la.LeaveId,
+                    EmployeeName = la.Leave?.Employee != null ? la.Leave.Employee.NameWithInitials : "Unknown",
+                    LeaveType = la.Leave?.LeaveType ?? "",
+                    IsHalfDay = la.Leave?.IsHalfDay ?? false,
+                    HalfDaySession = la.Leave?.HalfDaySession,
+                    StartDate = la.Leave?.StartDate ?? DateTime.MinValue,
+                    EndDate = la.Leave?.EndDate ?? DateTime.MinValue,
+                    TotalDays = la.Leave?.TotalDays ?? 0,
+                    ActionTaken = la.Status,
+                    Comments = la.Comments,
+                    ActionDate = la.ApprovalDate,
+                    OverallStatus = la.Leave?.Status ?? "",
+                    AdditionalInfo = la.Leave?.LeaveType == "Overseas" && la.Leave?.OverseasLeave != null 
+                        ? $"Destination: {la.Leave.OverseasLeave.Country}" 
+                        : (la.Leave?.LeaveType == "Maternity" && la.Leave?.MaternityLeave != null 
+                            ? $"Child #{la.Leave.MaternityLeave.ChildNumber}" 
+                            : null)
+                }).ToList();
+
+                // Categorize Reviewed History
+                ReviewedStandardLeaves = ReviewedLeaves
+                    .Where(r => !string.Equals(r.LeaveType, "Maternity", StringComparison.OrdinalIgnoreCase) && 
+                                !string.Equals(r.LeaveType, "Overseas", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                ReviewedMaternityLeaves = ReviewedLeaves
+                    .Where(r => string.Equals(r.LeaveType, "Maternity", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+
+                ReviewedOverseasLeaves = ReviewedLeaves
+                    .Where(r => string.Equals(r.LeaveType, "Overseas", StringComparison.OrdinalIgnoreCase))
+                    .ToList();
             }
         }
 

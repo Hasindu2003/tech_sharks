@@ -1,44 +1,39 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Persistence;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace HRMS.UI.Pages.Transfer
 {
-    [Authorize(Roles = "Employee,Branch Manager,HR Manager")]
+    [Authorize(Roles = "Employee")]
     public class ApplyModel : PageModel
     {
         private readonly ITransferRequestService _transferService;
         private readonly UserManager<ApplicationUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public ApplyModel(ITransferRequestService transferService, UserManager<ApplicationUser> userManager)
+        public ApplyModel(ITransferRequestService transferService, UserManager<ApplicationUser> userManager, ApplicationDbContext context)
         {
             _transferService = transferService;
             _userManager = userManager;
+            _context = context;
         }
 
         [BindProperty]
         public InputModel Input { get; set; } = new();
 
         public List<string> AvailableBranches { get; set; } = new();
-
-        private static readonly List<string> AllBranches =
-        [
-            "Head Office - Colombo",
-            "Kandy Branch",
-            "Galle Branch",
-            "Negombo Branch",
-            "Jaffna Branch",
-            "Kurunegala Branch",
-            "Matara Branch",
-            "Ratnapura Branch",
-            "Badulla Branch",
-            "Anuradhapura Branch"
-        ];
 
         public class InputModel
         {
@@ -119,13 +114,17 @@ namespace HRMS.UI.Pages.Transfer
             if (!ModelState.IsValid)
                 return Page();
 
-            var user = await _userManager.GetUserAsync(User);
+            var user = await ResolveCurrentUserAsync();
             if (user == null) return Challenge();
+
+            var employee = await ResolveEmployeeAsync(user);
+
+            var joinDate = employee?.DateJoined ?? (user.DateOfJoining != default ? user.DateOfJoining : (DateTime?)null);
+            var yearsOfService = joinDate.HasValue ? Math.Max(0, (int)((DateTime.Today - joinDate.Value).TotalDays / 365.25)) : 0;
 
             var userRole = User.IsInRole("HR Manager") ? "HR Manager"
                          : User.IsInRole("Branch Manager") ? "Branch Manager"
                          : "Employee";
-            var yearsOfService = Math.Max(0, (int)((DateTime.Today - user.DateOfJoining).TotalDays / 365.25));
 
             byte[]? documentData = null;
             string? documentFileName = null;
@@ -142,18 +141,18 @@ namespace HRMS.UI.Pages.Transfer
 
             var request = new TransferRequestViewModel
             {
-                EmployeeName = user.FullName,
-                EpfNumber = user.EpfNumber,
-                EmployeeEmail = user.Email!,
-                CurrentBranch = user.Branch,
-                CurrentDesignation = user.Designation,
-                Department = user.Department ?? "",
+                EmployeeName = FirstNonBlank(employee?.FullName, employee?.Initials, user.FullName),
+                EpfNumber = FirstNonBlank(employee?.EPFNumber, user.EpfNumber),
+                EmployeeEmail = FirstNonBlank(employee?.Email, user.Email, user.UserName),
+                CurrentBranch = FirstNonBlank(employee?.Branch?.Name, user.Branch),
+                CurrentDesignation = await ResolveDesignationAsync(employee, user),
+                Department = FirstNonBlank(employee?.Department?.Name, user.Department),
                 RequestedBranch = Input.RequestedBranch,
                 Reason = Input.Reason,
                 PreferredDate = Input.PreferredDate!.Value,
                 YearsOfService = yearsOfService,
-                JoinDate = user.DateOfJoining != default ? user.DateOfJoining : (DateTime?)null,
-                RequestedBy = user.Email!,
+                JoinDate = joinDate,
+                RequestedBy = user.Email ?? user.UserName ?? "",
                 RequestedByRole = userRole
             };
 
@@ -165,16 +164,84 @@ namespace HRMS.UI.Pages.Transfer
 
         private async Task PopulateUserDetailsAsync()
         {
-            var user = await _userManager.GetUserAsync(User);
-            if (user != null)
-            {
-                Input.EmployeeName = user.FullName;
-                Input.EpfNumber = user.EpfNumber;
-                Input.CurrentBranch = user.Branch;
-                Input.CurrentDesignation = user.Designation;
-                Input.Department = user.Department ?? "";
-                AvailableBranches = AllBranches.Where(b => b != user.Branch).ToList();
-            }
+            var user = await ResolveCurrentUserAsync();
+            if (user == null) return;
+
+            var employee = await ResolveEmployeeAsync(user);
+
+            Input.EmployeeName = FirstNonBlank(employee?.FullName, employee?.Initials, user.FullName);
+            Input.EpfNumber = FirstNonBlank(employee?.EPFNumber, user.EpfNumber);
+            Input.CurrentBranch = FirstNonBlank(employee?.Branch?.Name, user.Branch);
+            Input.CurrentDesignation = await ResolveDesignationAsync(employee, user);
+            Input.Department = FirstNonBlank(employee?.Department?.Name, user.Department);
+
+            var dbBranches = await _context.Branches
+                .OrderBy(b => b.Name)
+                .Select(b => b.Name)
+                .ToListAsync();
+
+            AvailableBranches = dbBranches
+                .Where(b => !string.Equals(b, Input.CurrentBranch, StringComparison.OrdinalIgnoreCase))
+                .ToList();
         }
+
+        private async Task<ApplicationUser?> ResolveCurrentUserAsync()
+        {
+            var username = User.Identity?.Name;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null && !string.IsNullOrEmpty(username))
+            {
+                user = await _userManager.FindByNameAsync(username) ?? await _userManager.FindByEmailAsync(username);
+            }
+            return user;
+        }
+
+        private async Task<HRMS.Domain.Entities.Core.Employee?> ResolveEmployeeAsync(ApplicationUser user)
+        {
+            var query = _context.Employees
+                .Include(e => e.Branch)
+                .Include(e => e.Department)
+                .Include(e => e.Designation);
+
+            if (user.EmployeeId.HasValue)
+            {
+                var byId = await query.FirstOrDefaultAsync(e => e.Id == user.EmployeeId.Value);
+                if (byId != null) return byId;
+            }
+
+            foreach (var email in new[] { user.Email, user.UserName, User.Identity?.Name })
+            {
+                if (string.IsNullOrEmpty(email)) continue;
+                var match = await query.FirstOrDefaultAsync(e => e.Email == email);
+                if (match != null) return match;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Designation can be missing from the loaded navigation property while the foreign key
+        /// is still set, and the linked login account may hold a blank string rather than null,
+        /// so fall back through both before giving up.
+        /// </summary>
+        private async Task<string> ResolveDesignationAsync(
+            HRMS.Domain.Entities.Core.Employee? employee, ApplicationUser user)
+        {
+            var title = FirstNonBlank(employee?.Designation?.Title, user.Designation);
+            if (!string.IsNullOrWhiteSpace(title)) return title;
+
+            if (employee?.DesignationId is int designationId && designationId > 0)
+            {
+                title = await _context.Designations
+                    .Where(d => d.Id == designationId)
+                    .Select(d => d.Title)
+                    .FirstOrDefaultAsync() ?? string.Empty;
+            }
+
+            return title;
+        }
+
+        private static string FirstNonBlank(params string?[] values)
+            => values.FirstOrDefault(v => !string.IsNullOrWhiteSpace(v))?.Trim() ?? string.Empty;
     }
 }

@@ -365,6 +365,11 @@ FodyWeavers.xsd
 # ASP.NET Core - Settings files (may contain secrets/connection strings)
 appsettings.json
 appsettings.Development.json
+appsettings.Production.json
+appsettings.Local.json
+!appsettings.example.json
+!appsettings.Example.json
+!appsettings.json.example
 
 # Local databases (SQLite, etc.)
 *.db
@@ -372,5 +377,25 @@ appsettings.Development.json
 
 # Visual Studio backup temp files
 *.Backup.tmp
-# Google service account key
+
+# Google service account key & credentials
 HRMS.UI/google-calendar-key.json
+*google-calendar-key*.json
+*service-account*.json
+
+# Publish and build output archives
+publish/
+publish_test/
+PubTmp/
+*.zip
+*.tar.gz
+*.7z
+
+# Uploaded runtime user documents (preserve folder structure via .gitkeep)
+HRMS.UI/wwwroot/uploads/*
+!HRMS.UI/wwwroot/uploads/**/.gitkeep
+!HRMS.UI/wwwroot/uploads/*/
+
+# Microsoft Office temporary files
+~$*
+

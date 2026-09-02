@@ -11,9 +11,9 @@ namespace HRMS.Domain.Entities.Leave
         public Employee Employee { get; set; } = null!;
 
         public string LeaveType { get; set; } = null!;
-        public int TotalDays { get; set; }
-        public int UsedDays { get; set; }
-        public int RemainingDays { get; set; }
+        public double TotalDays { get; set; }
+        public double UsedDays { get; set; }
+        public double RemainingDays { get; set; }
 
         public int Year { get; set; }
     }

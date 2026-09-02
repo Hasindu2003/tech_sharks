@@ -1,0 +1,130 @@
+@page
+@model HRMS.UI.Pages.Training.DetailsModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Request Approval";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 22px 0; }
+
+    .details-card {
+        background: #fff;
+        border: 1px solid #e2e5dc;
+        border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+        overflow: hidden;
+    }
+    .details-card-header {
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #7a8863;
+        padding: 14px 20px;
+        border-bottom: 1px solid #e2e5dc;
+        background: #f9fafb;
+    }
+    .details-card-body { padding: 20px; }
+
+    .info-label { color: #7a8863; font-size: 0.75rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .info-value { color: #151811; font-size: 0.95rem; font-weight: 600; margin-bottom: 20px; }
+
+    .status-badge { padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .status-pending { background: #fef9c3; color: #a16207; }
+    .status-approved { background: rgba(16, 130, 60, 0.1); color: #10823c; }
+    .status-rejected { background: #fee2e2; color: #b91c1c; }
+
+    .description-box { background: #f6f8f7; padding: 15px; border-radius: 8px; border: 1px solid #e2e5dc; min-height: 100px; color: #151811; line-height: 1.6; font-size: 0.9rem; }
+
+    .back-link {
+        text-decoration: none;
+        color: #7a8863;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        margin-bottom: 15px;
+        transition: 0.2s;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    .back-link:hover { color: #151811; text-decoration: none; }
+</style>
+
+<div>
+    <a href="/Training/Manage" class="back-link">
+        <i class="bi bi-arrow-left"></i> Back to Requests
+    </a>
+
+    <h1 class="page-h">Application Details</h1>
+    <p class="page-s">Review the training program request details below.</p>
+
+    <div class="details-card">
+        <div class="details-card-header">Application Information</div>
+        <div class="details-card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-group">
+                        <p class="info-label">Employee Name</p>
+                        <p class="info-value">@Model.RequestDetails?.EmployeeName</p>
+                    </div>
+
+                    <div class="detail-group">
+                        <p class="info-label">Program Title</p>
+                        <p class="info-value">@Model.RequestDetails?.Title</p>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="detail-group">
+                        <p class="info-label">Requested Date</p>
+                        <p class="info-value">@Model.RequestDetails?.RequestedDate.ToString("dd MMM yyyy")</p>
+                    </div>
+
+                    <div class="detail-group">
+                        <p class="info-label">Current Status</p>
+                        <div class="info-value">
+                            <span class="status-badge @(Model.RequestDetails?.Status == "Pending" ? "status-pending" : Model.RequestDetails?.Status == "Approved" ? "status-approved" : "status-rejected")">
+                                @if(Model.RequestDetails?.Status == "Pending") { <i class="bi bi-clock-history"></i> }
+                                else if(Model.RequestDetails?.Status == "Approved") { <i class="bi bi-check-circle"></i> }
+                                else { <i class="bi bi-x-circle"></i> }
+                                @Model.RequestDetails?.Status
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-12 mt-2">
+                    <p class="info-label">Description / Reason for Training</p>
+                    <div class="description-box mb-4">
+                        @Model.RequestDetails?.Description
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px; border-top: 1px solid #e2e5dc; padding-top: 20px;">
+                @if (Model.RequestDetails?.Status == "Pending")
+                {
+                    <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@Model.RequestDetails?.Id" asp-route-status="Approved">
+                        <button type="submit" class="btn-kanrich btn-kanrich-primary">
+                            <i class="bi bi-check2-all"></i> Approve Request
+                        </button>
+                    </form>
+
+                    <form method="post" asp-page-handler="UpdateStatus" asp-route-id="@Model.RequestDetails?.Id" asp-route-status="Rejected">
+                        <button type="submit" class="btn-kanrich btn-kanrich-danger">
+                            <i class="bi bi-x-lg"></i> Reject Request
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <div style="font-size: 0.9rem; color: #7a8863; display: flex; align-items: center; gap: 6px;">
+                        <i class="bi bi-info-circle"></i> This request has already been @Model.RequestDetails?.Status.ToLower().
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

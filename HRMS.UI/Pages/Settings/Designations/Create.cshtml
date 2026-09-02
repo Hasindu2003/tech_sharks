@@ -19,14 +19,22 @@
 <div style="padding: 24px;">
     <div class="form-container">
         <h2 style="margin-bottom: 8px;">Add Designation Type</h2>
-        <p style="color:#7a8863; font-size:13px; margin-bottom:24px;">Create a global designation type (e.g. Software Engineer, Manager). Then assign it to departments.</p>
+        <p style="color:#7a8863; font-size:13px; margin-bottom:24px;">Create a designation title and specify the department it belongs to.</p>
 
         <form method="post">
-            <div asp-validation-summary="All"></div>
+            <div asp-validation-summary="ModelOnly" style="color:#dc3545; font-size:13px; margin-bottom:12px;"></div>
             <div class="form-group">
                 <label>Job Title <span style="color:#ef4444">*</span></label>
                 <input type="text" asp-for="NewDesignation.Title" class="form-control" required placeholder="e.g. Software Engineer" />
                 <span asp-validation-for="NewDesignation.Title" style="color:#dc3545; font-size:12px;"></span>
+            </div>
+
+            <div class="form-group">
+                <label>Department <span style="color:#ef4444">*</span></label>
+                <select asp-for="NewDesignation.DepartmentId" asp-items="Model.DepartmentList" class="form-control" required>
+                    <option value="">-- Select Department --</option>
+                </select>
+                <span asp-validation-for="NewDesignation.DepartmentId" style="color:#dc3545; font-size:12px;"></span>
             </div>
 
             <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">

@@ -61,7 +61,7 @@
 
         <p><strong>Subject: Acceptance of Resignation</strong></p>
 
-        <p>Dear <strong>@r.EmployeeName.Split(' ')[0]</strong>,</p>
+        <p>Dear <strong>@((r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? "Employee")</strong>,</p>
 
         <p style="text-align:justify">
             This is to formally acknowledge and accept your resignation submitted on

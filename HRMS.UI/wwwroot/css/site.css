@@ -278,6 +278,30 @@ body {
     font-size: 0.9rem;
 }
 
+/* ── Standardized Hub & Page Titles ── */
+.sep-page-title,
+h1.sep-page-title,
+h2.sep-page-title,
+.page-header h1.sep-page-title,
+.page-header h2.sep-page-title {
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    color: #151811 !important;
+    margin: 0 0 3px 0 !important;
+    line-height: 1.3 !important;
+}
+
+.sep-page-sub,
+p.sep-page-sub,
+div.sep-page-sub,
+.page-header .sep-page-sub {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: #7a8863 !important;
+    margin: 0 0 22px 0 !important;
+    line-height: 1.5 !important;
+}
+
 /* ── Form Controls (Kanrich) ── */
 .k-form-group { margin-bottom: 20px; }
 .k-form-group label {
@@ -752,4 +776,159 @@ select.k-form-control { cursor: pointer; }
 /* Disable textarea resize globally to maintain layout consistency */
 textarea {
     resize: none !important;
+}
+
+/* ── Welfare, Payroll & Performance Refinements ── */
+.payroll-shell, .perf-shell, .form-shell, .list-shell, .tracking-shell, .approval-shell {
+    padding: 0 !important;
+    background: transparent !important;
+    min-height: auto !important;
+}
+
+/* Reconcile Page Headers to Match Separation (19px h2, 12px subtitle) */
+.payroll-shell .page-header h2,
+.perf-shell .page-header h2,
+.form-shell .page-header h2,
+.list-shell .page-header h2,
+.tracking-shell .page-header h2,
+.approval-shell .page-header h2 {
+    font-size: 19px !important;
+    font-weight: 800 !important;
+    color: #151811 !important;
+    letter-spacing: -0.3px !important;
+}
+.payroll-shell .page-header .page-subtitle,
+.perf-shell .page-header .page-subtitle,
+.form-shell .page-header .page-subtitle,
+.list-shell .page-header .page-subtitle,
+.tracking-shell .page-header .page-subtitle,
+.approval-shell .page-header .page-subtitle {
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    color: #7a8863 !important;
+}
+
+/* Reconcile Sub-navigation Tab Links (13px text, smaller padding) */
+.payroll-shell div[style*="display: flex; gap: 8px"],
+.perf-shell div[style*="display: flex; gap: 8px"],
+.form-shell div[style*="display: flex; gap: 8px"],
+.list-shell div[style*="display: flex; gap: 8px"],
+.tracking-shell div[style*="display: flex; gap: 8px"],
+.approval-shell div[style*="display: flex; gap: 8px"] {
+    margin-bottom: 20px !important;
+}
+.payroll-shell div[style*="display: flex; gap: 8px"] a,
+.perf-shell div[style*="display: flex; gap: 8px"] a,
+.form-shell div[style*="display: flex; gap: 8px"] a,
+.list-shell div[style*="display: flex; gap: 8px"] a,
+.tracking-shell div[style*="display: flex; gap: 8px"] a,
+.approval-shell div[style*="display: flex; gap: 8px"] a {
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    border-radius: 6px !important;
+}
+
+/* Reconcile Stat Cards to Compact Form (16px padding, smaller icons and values) */
+.payroll-shell .stat-card,
+.perf-shell .stat-card,
+.list-shell .stat-card,
+.approval-shell .stat-card,
+.approval-shell .stat-item {
+    padding: 16px !important;
+    gap: 14px !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05) !important;
+}
+.payroll-shell .stat-icon,
+.perf-shell .stat-icon,
+.list-shell .stat-icon,
+.approval-shell .stat-icon,
+.approval-shell .stat-icon-box {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    font-size: 1.15rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.payroll-shell .stat-label,
+.perf-shell .stat-label,
+.list-shell .stat-label,
+.approval-shell .stat-label {
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #151811 !important;
+    margin-bottom: 3px !important;
+}
+.payroll-shell .stat-value,
+.perf-shell .stat-value,
+.list-shell .stat-value,
+.approval-shell .stat-value,
+.approval-shell .stat-val {
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
+    color: #151811 !important;
+    line-height: 1.2 !important;
+}
+.payroll-shell .stat-sub,
+.perf-shell .stat-sub,
+.list-shell .stat-sub,
+.approval-shell .stat-sub {
+    font-size: 11px !important;
+    font-weight: 400 !important;
+    color: #7a8863 !important;
+    margin-top: 2px !important;
+}
+
+/* Reconcile Cards & Tables to Compact Form */
+.payroll-shell .k-card,
+.perf-shell .k-card,
+.form-shell .k-card,
+.list-shell .k-card,
+.tracking-shell .k-card,
+.approval-shell .k-card,
+.approval-shell .req-card {
+    border-radius: 10px !important;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05) !important;
+}
+.payroll-shell .k-card-header,
+.perf-shell .k-card-header,
+.form-shell .k-card-header,
+.list-shell .k-card-header,
+.tracking-shell .k-card-header,
+.approval-shell .k-card-header {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    margin-bottom: 14px !important;
+    padding-bottom: 8px !important;
+}
+.payroll-shell .k-table thead th,
+.perf-shell .k-table thead th,
+.list-shell .k-table thead th,
+.approval-shell .k-table thead th {
+    padding: 10px 14px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    background: #f9fafb !important;
+}
+.payroll-shell .k-table tbody td,
+.perf-shell .k-table tbody td,
+.list-shell .k-table tbody td,
+.approval-shell .k-table tbody td {
+    padding: 11px 14px !important;
+    font-size: 13px !important;
+}
+
+/* Reconcile Buttons */
+.payroll-shell .btn-kanrich,
+.perf-shell .btn-kanrich,
+.form-shell .btn-kanrich,
+.list-shell .btn-kanrich,
+.tracking-shell .btn-kanrich,
+.approval-shell .btn-kanrich {
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    border-radius: 6px !important;
 }

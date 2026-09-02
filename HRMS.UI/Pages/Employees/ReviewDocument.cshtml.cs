@@ -13,8 +13,7 @@ namespace HRMS.UI.Pages.Employees
 {
     using Employee = HRMS.Domain.Entities.Core.Employee;
 
-    [Authorize(Roles = "HR Manager")]
-
+    [Authorize(Roles = "HR Officer,Admin")]
     public class ReviewDocumentModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -44,6 +43,14 @@ namespace HRMS.UI.Pages.Employees
             if (Document == null)
                 return NotFound();
 
+            if (User.IsInRole("HR Officer") && Document.Employee != null)
+            {
+                var currentUser = await _userManager.GetUserAsync(User);
+                var allowed = ParseManagedBranches(currentUser?.ManagedBranches);
+                if (allowed != null && !allowed.Contains(Document.Employee.BranchId))
+                    return Forbid();
+            }
+
             Employee = Document.Employee;
             return Page();
         }
@@ -57,13 +64,21 @@ namespace HRMS.UI.Pages.Employees
 
             if (doc != null)
             {
+                if (User.IsInRole("HR Officer") && doc.Employee != null)
+                {
+                    var currentUser = await _userManager.GetUserAsync(User);
+                    var allowed = ParseManagedBranches(currentUser?.ManagedBranches);
+                    if (allowed != null && !allowed.Contains(doc.Employee.BranchId))
+                        return Forbid();
+                }
                 doc.Status           = "Approved";
                 doc.ReviewedAt       = DateTime.Now;
                 doc.ReviewedByUserId = _userManager.GetUserId(User);
                 
                 _context.Update(doc); // Force tracking update
 
-                var empUser = await _userManager.FindByEmailAsync(doc.Employee.Email);
+                var empEmail = doc.Employee?.Email;
+                var empUser = !string.IsNullOrEmpty(empEmail) ? await _userManager.FindByEmailAsync(empEmail) : null;
                 if (empUser != null)
                 {
                     _context.Notifications.Add(new Notification
@@ -73,7 +88,7 @@ namespace HRMS.UI.Pages.Employees
                         Message = $"Your document '{doc.FileName}' has been approved.",
                         TargetUrl = "/Profile?tab=documents",
                         IsRead = false,
-                        CreatedAt = DateTime.Now
+                        CreatedAt = HRMS.Domain.Common.SriLankaTime.Now
                     });
                 }
 
@@ -91,6 +106,14 @@ namespace HRMS.UI.Pages.Employees
 
             if (doc != null)
             {
+                if (User.IsInRole("HR Officer") && doc.Employee != null)
+                {
+                    var currentUser = await _userManager.GetUserAsync(User);
+                    var allowed = ParseManagedBranches(currentUser?.ManagedBranches);
+                    if (allowed != null && !allowed.Contains(doc.Employee.BranchId))
+                        return Forbid();
+                }
+
                 doc.Status           = "Rejected";
                 doc.ReviewedAt       = DateTime.Now;
                 doc.ReviewedByUserId = _userManager.GetUserId(User);
@@ -98,7 +121,8 @@ namespace HRMS.UI.Pages.Employees
 
                 _context.Update(doc); // Force tracking update
 
-                var empUser = await _userManager.FindByEmailAsync(doc.Employee.Email);
+                var empEmail = doc.Employee?.Email;
+                var empUser = !string.IsNullOrEmpty(empEmail) ? await _userManager.FindByEmailAsync(empEmail) : null;
                 if (empUser != null)
                 {
                     _context.Notifications.Add(new Notification
@@ -108,13 +132,22 @@ namespace HRMS.UI.Pages.Employees
                         Message = $"Your document '{doc.FileName}' was rejected. {(string.IsNullOrEmpty(RejectionNotes) ? "" : $"Reason: {RejectionNotes}")}",
                         TargetUrl = "/Profile?tab=documents",
                         IsRead = false,
-                        CreatedAt = DateTime.Now
+                        CreatedAt = HRMS.Domain.Common.SriLankaTime.Now
                     });
                 }
 
                 await _context.SaveChangesAsync();
             }
             return RedirectToPage("/Employees/Index", new { tab = "documents" });
+        }
+
+        private static List<int>? ParseManagedBranches(string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return null;
+            return csv.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                      .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+                      .Where(id => id > 0)
+                      .ToList();
         }
     }
 }

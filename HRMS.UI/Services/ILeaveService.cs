@@ -14,7 +14,8 @@ namespace HRMS.UI.Services
         Task<List<Leave>> GetPendingApprovalsAsync(int approverId);
         Task<Leave> ApproveLeaveAsync(int leaveId, int approverId, string comments);
         Task<Leave> RejectLeaveAsync(int leaveId, int approverId, string reason);
-        Task<int> CalculateLeaveDaysAsync(DateTime startDate, DateTime endDate);
-        Task<bool> HasEnoughBalanceAsync(int employeeId, string leaveType, int days);
+        Task<double> CalculateLeaveDaysAsync(DateTime startDate, DateTime endDate);
+        Task<bool> HasEnoughBalanceAsync(int employeeId, string leaveType, double days);
+        Task<string> GetApplicantWorkflowRoleAsync(Domain.Entities.Core.Employee applicant);
     }
 }

@@ -31,5 +31,8 @@ namespace HRMS.Infrastructure.Identity
 
         /// <summary>CSV of branch IDs managed by an Area Manager. Null for all other roles.</summary>
         public string? ManagedBranches { get; set; }
+
+        /// <summary>Indicates whether the user must change their initial or reset password upon next login.</summary>
+        public bool MustChangePassword { get; set; } = true;
     }
 }

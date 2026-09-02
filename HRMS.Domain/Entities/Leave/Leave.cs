@@ -13,7 +13,9 @@ namespace HRMS.Domain.Entities.Leave
         public DateTime AppliedDate { get; set; } = DateTime.Now;
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
-        public int TotalDays { get; set; }
+        public double TotalDays { get; set; }
+        public bool IsHalfDay { get; set; } = false;
+        public string? HalfDaySession { get; set; } // "First Half (Morning)" or "Second Half (Afternoon)"
 
         public string LeaveType { get; set; } = null!;  // Normal, Maternity, Overseas
         public string Status { get; set; } = null!;     // Pending / Approved / Rejected

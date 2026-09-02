@@ -1,6 +1,7 @@
 using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -54,8 +55,8 @@ namespace HRMS.UI.Pages.Resignation
         public async Task<IActionResult> OnPostAsync(
             int id,
             string action,
-            DateTime effectiveDate,
-            string reasonForResignation,
+            DateTime? effectiveDate,
+            string? reasonForResignation,
             string? additionalRemarks,
             bool hasOutstandingLoans,
             bool isLoanGuarantor,
@@ -75,34 +76,31 @@ namespace HRMS.UI.Pages.Resignation
                 return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
             }
 
+            var finalEffectiveDate = effectiveDate.HasValue && effectiveDate.Value != default 
+                ? effectiveDate.Value 
+                : (existing.EffectiveDate != default ? existing.EffectiveDate : SriLankaTime.Today.AddMonths(1));
+
             // For submit: enforce strict validation
             if (action == "submit")
             {
-                if (effectiveDate.Date < DateTime.Today.AddDays(14))
+                if (finalEffectiveDate.Date < SriLankaTime.Today.AddMonths(1))
                 {
-                    TempData["ErrorMessage"] = "Effective date must be at least 14 days from today.";
+                    TempData["ErrorMessage"] = "Last working day must be at least 1 month from the requesting date.";
                     return RedirectToPage("/Resignation/EditDraft", new { id });
                 }
 
-                if (string.IsNullOrWhiteSpace(reasonForResignation) || reasonForResignation.Length < 20)
+                if (string.IsNullOrWhiteSpace(reasonForResignation) || reasonForResignation.Trim().Length < 20)
                 {
                     TempData["ErrorMessage"] = "Reason for resignation must be at least 20 characters.";
                     return RedirectToPage("/Resignation/EditDraft", new { id });
                 }
             }
-            else
-            {
-                // Draft: allow flexible data
-                if (effectiveDate == default)
-                    effectiveDate = existing.EffectiveDate;
 
-                if (string.IsNullOrWhiteSpace(reasonForResignation))
-                    reasonForResignation = existing.ReasonForResignation;
-            }
+            var cleanReason = reasonForResignation?.Trim() ?? existing.ReasonForResignation ?? string.Empty;
 
             // Save updated fields
-            var (updated, updateError) = await _resignationService.UpdateDraftAsync(
-                id, effectiveDate, reasonForResignation, additionalRemarks, hasOutstandingLoans, isLoanGuarantor);
+            (bool updated, string? updateError) = await _resignationService.UpdateDraftAsync(
+                id, finalEffectiveDate, cleanReason, additionalRemarks, hasOutstandingLoans, isLoanGuarantor);
 
             if (!updated)
             {
@@ -139,6 +137,23 @@ namespace HRMS.UI.Pages.Resignation
 
             TempData["SuccessMessage"] = "Draft saved successfully.";
             return RedirectToPage("/Resignation/EditDraft", new { id });
+        }
+
+        public async Task<IActionResult> OnPostDeleteAsync(int id)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Challenge();
+
+            var identifier = user.Email ?? user.UserName ?? "";
+            (bool success, string? error) = await _resignationService.DeleteDraftAsync(id, identifier);
+            if (!success)
+            {
+                TempData["ErrorMessage"] = error;
+                return RedirectToPage("/Resignation/EditDraft", new { id });
+            }
+
+            TempData["SuccessMessage"] = "Draft resignation has been deleted successfully.";
+            return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
         }
     }
 }

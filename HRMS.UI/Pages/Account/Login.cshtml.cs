@@ -10,10 +10,12 @@ namespace HRMS.UI.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager)
+        public LoginModel(SignInManager<ApplicationUser> signInManager, UserManager<ApplicationUser> userManager)
         {
             _signInManager = signInManager;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -23,16 +25,13 @@ namespace HRMS.UI.Pages.Account
 
         public class InputModel
         {
-            [Required(ErrorMessage = "Email address is required.")]
-            [EmailAddress(ErrorMessage = "Please enter a valid email address.")]
-            [RegularExpression(@"^[a-zA-Z0-9._%+-]+@kanrich\.lk$",
-                ErrorMessage = "Only @kanrich.lk email addresses are allowed.")]
-            [Display(Name = "Email")]
-            public string Email { get; set; } = string.Empty;
+            [Required(ErrorMessage = "Username is required.")]
+            [Display(Name = "Username")]
+            public string Username { get; set; } = string.Empty;
 
             [Required(ErrorMessage = "Password is required.")]
-            [StringLength(100, MinimumLength = 8,
-                ErrorMessage = "Password must be at least 8 characters long.")]
+            [StringLength(100, MinimumLength = 6,
+                ErrorMessage = "Password must be at least 6 characters long.")]
             [DataType(DataType.Password)]
             [Display(Name = "Password")]
             public string Password { get; set; } = string.Empty;
@@ -52,11 +51,24 @@ namespace HRMS.UI.Pages.Account
             if (!ModelState.IsValid)
                 return Page();
 
+            var trimmedUsername = Input.Username.Trim();
+            var user = await _userManager.FindByNameAsync(trimmedUsername);
+
+            if (user == null)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid username or password. Please check your credentials and try again.");
+                return Page();
+            }
+
             var result = await _signInManager.PasswordSignInAsync(
-                Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: true);
+                user.UserName!, Input.Password, Input.RememberMe, lockoutOnFailure: true);
 
             if (result.Succeeded)
             {
+                if (user.MustChangePassword)
+                {
+                    return RedirectToPage("/Account/FirstLoginChangePassword");
+                }
                 return RedirectToPage("/Index");
             }
             else if (result.IsLockedOut)
@@ -71,7 +83,7 @@ namespace HRMS.UI.Pages.Account
             }
             else
             {
-                ModelState.AddModelError(string.Empty, "Invalid email or password. Please check your credentials and try again.");
+                ModelState.AddModelError(string.Empty, "Invalid username or password. Please check your credentials and try again.");
                 return Page();
             }
         }

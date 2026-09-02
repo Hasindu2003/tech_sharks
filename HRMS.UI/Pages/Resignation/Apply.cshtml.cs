@@ -1,6 +1,7 @@
-﻿using HRMS.Infrastructure.Identity;
+using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -90,9 +91,9 @@ namespace HRMS.UI.Pages.Resignation
 
             if (Input.EffectiveDate.HasValue)
             {
-                var minDate = DateTime.Today.AddDays(14);
+                var minDate = SriLankaTime.Today.AddMonths(1);
                 if (Input.EffectiveDate.Value.Date < minDate)
-                    ModelState.AddModelError("Input.EffectiveDate", "Effective date must be at least 14 days from today (minimum notice period).");
+                    ModelState.AddModelError("Input.EffectiveDate", "Last working day must be at least 1 month from the requesting date.");
             }
 
             if (!ModelState.IsValid) return Page();
@@ -113,8 +114,8 @@ namespace HRMS.UI.Pages.Resignation
 
         private async Task<int> SaveRequestAsync(ApplicationUser user, bool submit)
         {
-            var today = DateTime.Today;
-            var effectiveDate = Input.EffectiveDate ?? today.AddDays(30);
+            var today = SriLankaTime.Today;
+            var effectiveDate = Input.EffectiveDate ?? today.AddMonths(1);
             var noticeDays = (effectiveDate - today).Days;
 
             var vm = new ResignationRequestViewModel

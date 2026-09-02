@@ -35,15 +35,50 @@ namespace HRMS.UI.Pages.Transfer
 
         public async Task OnGetAsync()
         {
+            var username = User.Identity?.Name;
             var user = await _userManager.GetUserAsync(User);
-            if (user != null)
+            if (user == null && !string.IsNullOrEmpty(username))
             {
-                MyRequests = await _transferService.GetRequestsByUserAsync(user.Email!);
+                user = await _userManager.FindByNameAsync(username) ?? await _userManager.FindByEmailAsync(username);
+            }
+
+            var identifier = user?.Email ?? user?.UserName ?? username ?? "";
+            if (!string.IsNullOrEmpty(identifier))
+            {
+                MyRequests = await _transferService.GetRequestsByUserAsync(identifier);
                 TransferCount = MyRequests.Count;
 
-                MyResignations = await _resignationService.GetMyResignationsAsync(user.Email!);
+                MyResignations = await _resignationService.GetMyResignationsAsync(identifier);
                 ResignationCount = MyResignations.Count;
             }
+        }
+
+        public async Task<IActionResult> OnPostDeleteDraftAsync(int id)
+        {
+            var username = User.Identity?.Name;
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null && !string.IsNullOrEmpty(username))
+            {
+                user = await _userManager.FindByNameAsync(username) ?? await _userManager.FindByEmailAsync(username);
+            }
+
+            var identifier = user?.Email ?? user?.UserName ?? username ?? "";
+            if (string.IsNullOrEmpty(identifier))
+            {
+                return Challenge();
+            }
+
+            (bool success, string? error) = await _resignationService.DeleteDraftAsync(id, identifier);
+            if (!success)
+            {
+                TempData["ErrorMessage"] = error;
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Resignation draft has been deleted successfully.";
+            }
+
+            return RedirectToPage(new { ActiveTab = "Resignation" });
         }
     }
 }

@@ -86,11 +86,22 @@ else
                         <td style="color:#7a8863">@req.NoticePeriodDays</td>
                         <td><span class="k-badge @req.StatusBadgeClass">@req.StatusDisplay</span></td>
                         <td><span class="k-badge k-badge-info">@req.DocumentCount file(s)</span></td>
-                        <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end">
-                            <a asp-page="/Resignation/Details" asp-route-id="@req.Id" class="btn-action">View</a>
-                            @if (req.Status == ResignationStatusEnum.HRApproved && req.AcceptanceLetterGenerated)
+                        <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end;align-items:center">
+                            @if (req.Status == ResignationStatusEnum.Draft)
                             {
-                                <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@req.Id" class="btn-action" style="color:#10823c">Letter</a>
+                                <a asp-page="/Resignation/EditDraft" asp-route-id="@req.Id" class="btn-action">Edit</a>
+                                <form method="post" asp-page-handler="DeleteDraft" asp-route-id="@req.Id" style="display:inline;margin:0" onsubmit="return confirm('Are you sure you want to delete this draft?');">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn-action" style="color:#b91c1c;border-color:#fecaca;background:#fee2e2">Delete</button>
+                                </form>
+                            }
+                            else
+                            {
+                                <a asp-page="/Resignation/Details" asp-route-id="@req.Id" class="btn-action">View</a>
+                                @if (req.Status == ResignationStatusEnum.HRApproved && req.AcceptanceLetterGenerated)
+                                {
+                                    <a asp-page="/Resignation/AcceptanceLetter" asp-route-id="@req.Id" class="btn-action" style="color:#10823c">Letter</a>
+                                }
                             }
                         </td>
                     </tr>

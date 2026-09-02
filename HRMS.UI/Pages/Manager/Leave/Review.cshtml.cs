@@ -13,7 +13,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace HRMS.UI.Pages.Manager.Leave
 {
-    [Authorize(Roles = "Department Head, Branch Manager, Area Manager, HR Manager")]
+    [Authorize(Roles = "Department Head, Branch Manager, Area Manager, HR Manager, HR Officer, Admin")]
     public class ReviewModel : PageModel
     {
         private readonly ApplicationDbContext _context;
@@ -31,6 +31,7 @@ namespace HRMS.UI.Pages.Manager.Leave
         public List<Domain.Entities.Leave.Leave> LeaveHistory { get; set; } = new();
         public List<LeaveEntitlement> LeaveBalances { get; set; } = new();
         public bool CanApprove { get; set; }
+        public string ApplicantWorkflowRole { get; set; } = "Employee";
         public List<LeaveApproval> ApprovalSteps { get; set; } = new();
 
         [TempData]
@@ -64,6 +65,11 @@ namespace HRMS.UI.Pages.Manager.Leave
             }
 
             LeaveItem = leave;
+
+            if (leave.Employee != null)
+            {
+                ApplicantWorkflowRole = await _leaveService.GetApplicantWorkflowRoleAsync(leave.Employee);
+            }
 
             // Fetch approval timeline steps
             ApprovalSteps = await _context.LeaveApprovals
@@ -102,30 +108,60 @@ namespace HRMS.UI.Pages.Manager.Leave
                 managerEmp = await _context.Employees.FirstOrDefaultAsync(e => e.Email == user.Email);
             }
 
-            if (managerEmp != null)
-            {
-                var userRoles = await (from ur in _context.UserRoles
-                                       join r in _context.Roles on ur.RoleId equals r.Id
-                                       where ur.UserId == user.Id
-                                       select r.Name)
-                                      .ToListAsync();
+            var userRoles = await (from ur in _context.UserRoles
+                                   join r in _context.Roles on ur.RoleId equals r.Id
+                                   where ur.UserId == user.Id
+                                   select r.Name)
+                                  .ToListAsync();
 
-                if (leave.Status == "Pending" || leave.Status == "PendingDH")
-                {
-                    CanApprove = userRoles.Contains("Department Head") && 
-                                 leave.Employee?.BranchId == managerEmp.BranchId && 
-                                 leave.Employee?.DepartmentId == managerEmp.DepartmentId;
-                }
-                else if (leave.Status == "PendingBM")
-                {
-                    CanApprove = userRoles.Contains("Branch Manager") && 
-                                 leave.Employee?.BranchId == managerEmp.BranchId;
-                }
-                else if (leave.Status == "PendingHR")
-                {
-                    CanApprove = userRoles.Contains("HR Manager") && 
-                                 leave.Employee?.BranchId == managerEmp.BranchId;
-                }
+            int approverBranchId = managerEmp?.BranchId ?? 0;
+            string? approverBranchName = user.Branch ?? managerEmp?.Branch?.Name;
+            if (approverBranchId == 0 && !string.IsNullOrEmpty(approverBranchName))
+            {
+                var b = await _context.Branches.FirstOrDefaultAsync(br => br.Name == approverBranchName);
+                if (b != null) approverBranchId = b.Id;
+            }
+
+            int approverDeptId = managerEmp?.DepartmentId ?? 0;
+            string? approverDeptName = user.Department ?? managerEmp?.Department?.Name;
+            if (approverDeptId == 0 && !string.IsNullOrEmpty(approverDeptName))
+            {
+                var d = await _context.Departments.FirstOrDefaultAsync(dp => dp.Name == approverDeptName);
+                if (d != null) approverDeptId = d.Id;
+            }
+
+            List<int> managedBranchIds = new();
+            if (!string.IsNullOrEmpty(user.ManagedBranches))
+            {
+                managedBranchIds = user.ManagedBranches.Split(',')
+                    .Select(s => int.TryParse(s.Trim(), out var bid) ? bid : 0)
+                    .Where(bid => bid > 0)
+                    .ToList();
+            }
+
+            if (userRoles.Contains("Admin"))
+            {
+                CanApprove = leave.Status.StartsWith("Pending");
+            }
+            else if (leave.Status == "Pending" || leave.Status == "PendingDH")
+            {
+                CanApprove = userRoles.Contains("Department Head") &&
+                    ((approverBranchId > 0 && leave.Employee?.BranchId == approverBranchId) || (!string.IsNullOrEmpty(approverBranchName) && leave.Employee?.Branch?.Name == approverBranchName)) &&
+                    ((approverDeptId > 0 && leave.Employee?.DepartmentId == approverDeptId) || (!string.IsNullOrEmpty(approverDeptName) && leave.Employee?.Department?.Name == approverDeptName));
+            }
+            else if (leave.Status == "PendingBM")
+            {
+                CanApprove = userRoles.Contains("Branch Manager") &&
+                    ((approverBranchId > 0 && leave.Employee?.BranchId == approverBranchId) || (!string.IsNullOrEmpty(approverBranchName) && leave.Employee?.Branch?.Name == approverBranchName));
+            }
+            else if (leave.Status == "PendingAM")
+            {
+                CanApprove = userRoles.Contains("Area Manager") &&
+                    (managedBranchIds.Any() ? (leave.Employee?.BranchId != null && managedBranchIds.Contains(leave.Employee.BranchId)) : (approverBranchId == 0 || leave.Employee?.BranchId == approverBranchId || leave.Employee?.Branch?.Name == approverBranchName));
+            }
+            else if (leave.Status == "PendingHR")
+            {
+                CanApprove = userRoles.Contains("HR Manager") || userRoles.Contains("HR Officer");
             }
 
             return Page();
@@ -157,9 +193,13 @@ namespace HRMS.UI.Pages.Manager.Leave
 
             try
             {
+                var leave = await _context.Leaves.FindAsync(id);
+                string tab = leave?.LeaveType?.Equals("Maternity", StringComparison.OrdinalIgnoreCase) == true ? "maternity" 
+                           : leave?.LeaveType?.Equals("Overseas", StringComparison.OrdinalIgnoreCase) == true ? "overseas" : "standard";
+
                 await _leaveService.ApproveLeaveAsync(id, employee.Id, comments);
                 SuccessMessage = "Leave approved successfully!";
-                return RedirectToPage("/Manager/Leave/Approval");
+                return RedirectToPage("/Manager/Leave/Approval", new { tab });
             }
             catch (System.Exception ex)
             {
@@ -194,9 +234,13 @@ namespace HRMS.UI.Pages.Manager.Leave
 
             try
             {
+                var leave = await _context.Leaves.FindAsync(id);
+                string tab = leave?.LeaveType?.Equals("Maternity", StringComparison.OrdinalIgnoreCase) == true ? "maternity" 
+                           : leave?.LeaveType?.Equals("Overseas", StringComparison.OrdinalIgnoreCase) == true ? "overseas" : "standard";
+
                 await _leaveService.RejectLeaveAsync(id, employee.Id, reason);
                 SuccessMessage = "Leave rejected successfully!";
-                return RedirectToPage("/Manager/Leave/Approval");
+                return RedirectToPage("/Manager/Leave/Approval", new { tab });
             }
             catch (System.Exception ex)
             {

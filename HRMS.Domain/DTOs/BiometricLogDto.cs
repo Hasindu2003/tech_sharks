@@ -16,10 +16,10 @@ namespace HRMS.Domain.DTOs
 
         [Required(ErrorMessage = "Device ID is required")]
         [StringLength(50, ErrorMessage = "Device ID cannot exceed 50 characters")]
-        public string DeviceId { get; set; }
+        public string DeviceId { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Log type is required")]
-        public string LogType { get; set; }
+        public string LogType { get; set; } = string.Empty;
     }
     
     public class BiometricLogResponseDto

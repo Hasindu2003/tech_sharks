@@ -1,6 +1,7 @@
 using HRMS.Infrastructure.Identity;
 using HRMS.Application.Models;
 using HRMS.Application.Services;
+using HRMS.Domain.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -26,8 +27,8 @@ namespace HRMS.UI.Pages.Resignation
 
         public async Task<IActionResult> OnPostAsync(
             string action,
-            DateTime effectiveDate,
-            string reasonForResignation,
+            DateTime? effectiveDate,
+            string? reasonForResignation,
             string? additionalRemarks,
             bool hasOutstandingLoans,
             bool isLoanGuarantor,
@@ -36,32 +37,28 @@ namespace HRMS.UI.Pages.Resignation
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
+            var finalEffectiveDate = effectiveDate.HasValue && effectiveDate.Value != default 
+                ? effectiveDate.Value 
+                : SriLankaTime.Today.AddMonths(1);
+
             // ── Strict validation applies to "submit" only, not drafts ──
             if (action == "submit")
             {
-                if (effectiveDate.Date < DateTime.Today.AddDays(14))
+                if (finalEffectiveDate.Date < SriLankaTime.Today.AddMonths(1))
                 {
-                    TempData["ErrorMessage"] = "Effective date must be at least 14 days from today.";
+                    TempData["ErrorMessage"] = "Last working day must be at least 1 month from the requesting date.";
                     return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
                 }
 
-                if (string.IsNullOrWhiteSpace(reasonForResignation) || reasonForResignation.Length < 20)
+                if (string.IsNullOrWhiteSpace(reasonForResignation) || reasonForResignation.Trim().Length < 20)
                 {
                     TempData["ErrorMessage"] = "Reason for resignation must be at least 20 characters.";
                     return RedirectToPage("/Transfer/Separation", new { ActiveTab = "Resignation" });
                 }
             }
-            else
-            {
-                // Draft: ensure at least some minimal data exists
-                if (effectiveDate == default)
-                    effectiveDate = DateTime.Today.AddDays(14);
 
-                if (string.IsNullOrWhiteSpace(reasonForResignation))
-                    reasonForResignation = "(draft)";
-            }
-
-            var noticeDays = (effectiveDate.Date - DateTime.Today).Days;
+            var cleanReason = reasonForResignation?.Trim() ?? string.Empty;
+            var noticeDays = Math.Max(0, (finalEffectiveDate.Date - SriLankaTime.Today).Days);
 
             var vm = new ResignationRequestViewModel
             {
@@ -71,9 +68,9 @@ namespace HRMS.UI.Pages.Resignation
                 Branch               = user.Branch,
                 Department           = user.Department ?? "",
                 Designation          = user.Designation,
-                ReasonForResignation = reasonForResignation,
-                ResignationDate      = DateTime.Today,
-                EffectiveDate        = effectiveDate,
+                ReasonForResignation = cleanReason,
+                ResignationDate      = SriLankaTime.Today,
+                EffectiveDate        = finalEffectiveDate,
                 NoticePeriodDays     = noticeDays,
                 AdditionalRemarks    = additionalRemarks,
                 HasOutstandingLoans  = hasOutstandingLoans,

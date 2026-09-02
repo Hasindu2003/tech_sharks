@@ -23,8 +23,19 @@ namespace HRMS.Application.Designations.Commands
             if (titleExists)
                 return Result.Failure($"A designation titled '{command.Title}' already exists.");
 
-            _context.Designations.Add(new Designation { Title = command.Title.Trim() });
+            var designation = new Designation { Title = command.Title.Trim() };
+            _context.Designations.Add(designation);
             await _context.SaveChangesAsync();
+
+            if (command.DepartmentId > 0)
+            {
+                _context.DepartmentDesignations.Add(new DepartmentDesignation
+                {
+                    DepartmentId = command.DepartmentId,
+                    DesignationId = designation.Id
+                });
+                await _context.SaveChangesAsync();
+            }
 
             return Result.Success();
         }

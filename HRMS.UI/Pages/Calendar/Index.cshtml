@@ -1,0 +1,1002 @@
+@page
+@model HRMS.UI.Pages.Calendar.IndexModel
+@{
+    ViewData["Title"] = "Calendar";
+    ViewData["PageTitle"] = "Corporate Calendar";
+    ViewData["ActiveNav"] = "Calendar";
+
+    var prevMonthDate = Model.CurrentDate.AddMonths(-1);
+    var nextMonthDate = Model.CurrentDate.AddMonths(1);
+    var prevWeekDate = Model.CurrentDate.AddDays(-7);
+    var nextWeekDate = Model.CurrentDate.AddDays(7);
+    var prevDayDate = Model.CurrentDate.AddDays(-1);
+    var nextDayDate = Model.CurrentDate.AddDays(1);
+
+    string navPrevUrl = Model.CurrentView switch
+    {
+        "week" => $"?view=week&date={prevWeekDate:yyyy-MM-dd}&category={Model.SelectedCategory}&branchId={Model.SelectedBranchId}",
+        "day" => $"?view=day&date={prevDayDate:yyyy-MM-dd}&category={Model.SelectedCategory}&branchId={Model.SelectedBranchId}",
+        _ => $"?view={Model.CurrentView}&date={prevMonthDate:yyyy-MM-dd}&category={Model.SelectedCategory}&branchId={Model.SelectedBranchId}"
+    };
+
+    string navNextUrl = Model.CurrentView switch
+    {
+        "week" => $"?view=week&date={nextWeekDate:yyyy-MM-dd}&category={Model.SelectedCategory}&branchId={Model.SelectedBranchId}",
+        "day" => $"?view=day&date={nextDayDate:yyyy-MM-dd}&category={Model.SelectedCategory}&branchId={Model.SelectedBranchId}",
+        _ => $"?view={Model.CurrentView}&date={nextMonthDate:yyyy-MM-dd}&category={Model.SelectedCategory}&branchId={Model.SelectedBranchId}"
+    };
+
+    string dateDisplayTitle = Model.CurrentView switch
+    {
+        "week" => (Model.WeekDays.Count > 0 ? $"Week of {Model.WeekDays.First():MMM dd} - {Model.WeekDays.Last():MMM dd, yyyy}" : $"{Model.CurrentDate:MMMM yyyy}"),
+        "day" => Model.CurrentDate.ToString("dddd, MMMM dd, yyyy"),
+        "agenda" => $"{Model.CurrentDate:MMMM yyyy} Agenda",
+        _ => Model.CurrentDate.ToString("MMMM yyyy")
+    };
+}
+
+@section Styles {
+    <style>
+        .cal-shell {
+            padding: 24px;
+            background: #ffffff;
+            min-height: calc(100vh - 62px);
+        }
+
+        /* ── Top Toolbar ── */
+        .cal-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .cal-nav-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .cal-title-header {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+            letter-spacing: -0.3px;
+            margin: 0;
+            min-width: 220px;
+        }
+        .cal-view-pills {
+            display: inline-flex;
+            background: #f1f5f9;
+            padding: 4px;
+            border-radius: 8px;
+            gap: 4px;
+        }
+        .cal-view-btn {
+            border: none;
+            background: transparent;
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #475569;
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .cal-view-btn.active {
+            background: #ffffff;
+            color: #10823c;
+            font-weight: 700;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        /* ── KPI Summary Cards ── */
+        .cal-kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .cal-kpi-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 14px 18px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .cal-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+        .cal-kpi-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            flex-shrink: 0;
+        }
+        .cal-kpi-val {
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.1;
+            margin: 0;
+        }
+        .cal-kpi-lbl {
+            font-size: 0.76rem;
+            font-weight: 600;
+            color: #64748b;
+            margin: 2px 0 0 0;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Category Filters ── */
+        .cal-filters {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        .category-pills {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .cat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-decoration: none;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            color: #475569;
+            transition: all 0.15s ease;
+        }
+        .cat-pill:hover, .cat-pill.active {
+            border-color: transparent;
+            color: #ffffff;
+        }
+        .cat-pill.active-all { background: #0f172a; color: #fff; }
+        .cat-pill.active-training { background: #10823c; color: #fff; }
+        .cat-pill.active-meeting { background: #0284c7; color: #fff; }
+        .cat-pill.active-event { background: #7c3aed; color: #fff; }
+        .cat-pill.active-personal { background: #d97706; color: #fff; }
+
+        /* ── Month Grid View ── */
+        .month-grid {
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #ffffff;
+        }
+        .month-header-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .month-header-cell {
+            padding: 10px 4px;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .month-days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            grid-auto-rows: 120px;
+            background: #e2e8f0;
+            gap: 1px;
+        }
+        .day-cell {
+            height: 120px;
+            max-height: 120px;
+            background: #ffffff;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden;
+            transition: background 0.12s ease;
+        }
+        .day-cell:hover {
+            background: #fafafa;
+        }
+        .day-cell.other-month {
+            background: #f8fafc;
+            opacity: 0.55;
+        }
+        .day-cell.is-today {
+            background: #f0fdf4;
+        }
+        .day-cell-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+            flex-shrink: 0;
+        }
+        .day-number {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #1e293b;
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .day-cell.is-today .day-number {
+            background: #10823c;
+            color: #ffffff;
+        }
+        .btn-add-day-quick {
+            opacity: 0;
+            border: none;
+            background: transparent;
+            color: #10823c;
+            cursor: pointer;
+            padding: 0;
+            font-size: 0.88rem;
+            transition: opacity 0.15s;
+        }
+        .day-cell:hover .btn-add-day-quick {
+            opacity: 1;
+        }
+
+        /* ── Event Badges in Cells ── */
+        .day-events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow: hidden;
+            flex: 1;
+        }
+        .event-badge {
+            display: block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.70rem;
+            font-weight: 600;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+            line-height: 1.25;
+            flex-shrink: 0;
+            transition: opacity 0.15s ease, transform 0.1s ease;
+        }
+        .event-badge:hover {
+            opacity: 0.9;
+            transform: scale(0.99);
+        }
+        .more-events-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: #64748b;
+            padding: 1px 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            border-radius: 3px;
+            white-space: nowrap;
+            transition: color 0.15s ease;
+            flex-shrink: 0;
+        }
+        .more-events-badge:hover {
+            color: #10823c;
+            text-decoration: underline;
+        }
+        .badge-training {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 3px solid #10823c;
+        }
+        .badge-meeting {
+            background: #e0f2fe;
+            color: #0369a1;
+            border-left: 3px solid #0284c7;
+        }
+        .badge-event {
+            background: #f3e8ff;
+            color: #6b21a8;
+            border-left: 3px solid #7c3aed;
+        }
+        .badge-personal {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 3px solid #d97706;
+        }
+        .badge-reminder {
+            background: #ffe4e6;
+            color: #9f1239;
+            border-left: 3px solid #e11d48;
+        }
+
+        /* ── Week View ── */
+        .week-view-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 12px;
+        }
+        .week-day-col {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 480px;
+        }
+        .week-day-col.is-today {
+            border-color: #10823c;
+            box-shadow: 0 0 0 1px #10823c;
+        }
+        .week-day-header {
+            padding: 10px 12px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .week-day-events {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        .week-event-card {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .week-event-card:hover {
+            box-shadow: 0 3px 8px rgba(0,0,0,0.06);
+            transform: translateY(-1px);
+        }
+
+        /* ── Day & Agenda View ── */
+        .agenda-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .agenda-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            transition: all 0.15s ease;
+        }
+        .agenda-item:hover {
+            border-color: #cbd5e1;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+        }
+        .agenda-date-box {
+            width: 60px;
+            height: 60px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* ── Modals ── */
+        .cal-modal {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(15, 23, 42, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(2px);
+        }
+        .cal-modal.open {
+            display: flex;
+        }
+        .cal-modal-content {
+            background: #ffffff;
+            border-radius: 14px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: modalFadeIn 0.2s ease-out;
+        }
+        @@keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .cal-modal-header {
+            padding: 16px 22px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .cal-modal-body {
+            padding: 22px;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+        .cal-modal-footer {
+            padding: 14px 22px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        @@media (max-width: 900px) {
+            .cal-kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .week-view-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+}
+
+<div class="cal-shell">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; padding: 12px 18px; border-radius: 8px; margin-bottom: 18px; font-size: 0.86rem; font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+            <span><i class="bi bi-check-circle-fill" style="margin-right: 6px; color: #10823c;"></i> @TempData["SuccessMessage"]</span>
+            <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #166534; cursor: pointer;"><i class="bi bi-x"></i></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; padding: 12px 18px; border-radius: 8px; margin-bottom: 18px; font-size: 0.86rem; font-weight: 600; display: flex; align-items: center; justify-content: space-between;">
+            <span><i class="bi bi-exclamation-triangle-fill" style="margin-right: 6px; color: #dc2626;"></i> @TempData["ErrorMessage"]</span>
+            <button type="button" onclick="this.parentElement.remove()" style="background: none; border: none; color: #991b1b; cursor: pointer;"><i class="bi bi-x"></i></button>
+        </div>
+    }
+
+    <!-- ── KPI Summary Cards ── -->
+    <div class="cal-kpi-grid">
+        <div class="cal-kpi-card">
+            <div class="cal-kpi-icon" style="background: #e0f2fe; color: #0284c7;"><i class="bi bi-calendar-event"></i></div>
+            <div>
+                <p class="cal-kpi-val">@Model.TotalEventsThisMonth</p>
+                <p class="cal-kpi-lbl">Total Events</p>
+            </div>
+        </div>
+        <div class="cal-kpi-card">
+            <div class="cal-kpi-icon" style="background: #dcfce7; color: #10823c;"><i class="bi bi-mortarboard"></i></div>
+            <div>
+                <p class="cal-kpi-val">@Model.UpcomingTrainingsCount</p>
+                <p class="cal-kpi-lbl">Training Sessions</p>
+            </div>
+        </div>
+        <div class="cal-kpi-card">
+            <div class="cal-kpi-icon" style="background: #e0f2fe; color: #0369a1;"><i class="bi bi-camera-video"></i></div>
+            <div>
+                <p class="cal-kpi-val">@Model.UpcomingMeetingsCount</p>
+                <p class="cal-kpi-lbl">Meetings</p>
+            </div>
+        </div>
+        <div class="cal-kpi-card">
+            <div class="cal-kpi-icon" style="background: #fef3c7; color: #d97706;"><i class="bi bi-person-check"></i></div>
+            <div>
+                <p class="cal-kpi-val">@Model.PersonalEventsCount</p>
+                <p class="cal-kpi-lbl">Personal Reminders</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Main Calendar Toolbar ── -->
+    <div class="cal-toolbar">
+        <div class="cal-nav-group">
+            <h2 class="cal-title-header">@dateDisplayTitle</h2>
+            <div style="display: flex; gap: 4px;">
+                <a href="@navPrevUrl" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 10px;"><i class="bi bi-chevron-left"></i></a>
+                <a href="?view=@Model.CurrentView&date=@SriLankaTime.Today.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 12px; font-size: 0.8rem;">Today</a>
+                <a href="@navNextUrl" class="btn-kanrich btn-kanrich-outline" style="padding: 6px 10px;"><i class="bi bi-chevron-right"></i></a>
+            </div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <!-- View Switcher -->
+            <div class="cal-view-pills">
+                <a href="?view=month&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "month" ? "active" : "")">Month</a>
+                <a href="?view=week&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "week" ? "active" : "")">Week</a>
+                <a href="?view=day&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "day" ? "active" : "")">Day</a>
+                <a href="?view=agenda&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "agenda" ? "active" : "")">Agenda</a>
+            </div>
+
+            <!-- Add Event Action Button -->
+            <button type="button" onclick="openAddEventModal('@Model.CurrentDate.ToString("yyyy-MM-dd")')" class="btn-kanrich btn-kanrich-primary" style="padding: 7px 16px; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                <i class="bi bi-plus-lg"></i> Add Event
+            </button>
+        </div>
+    </div>
+
+    <!-- ── Category Filters & Branch Selector ── -->
+    <div class="cal-filters">
+        <div class="category-pills">
+            <a href="?view=@Model.CurrentView&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&branchId=@Model.SelectedBranchId" class="cat-pill @(string.IsNullOrEmpty(Model.SelectedCategory) || Model.SelectedCategory == "All" ? "active-all" : "")">
+                <i class="bi bi-grid-fill"></i> All Events
+            </a>
+            <a href="?view=@Model.CurrentView&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=Training&branchId=@Model.SelectedBranchId" class="cat-pill @(Model.SelectedCategory == "Training" ? "active-training" : "")">
+                <i class="bi bi-mortarboard-fill" style="color: #10823c;"></i> Training Sessions
+            </a>
+            <a href="?view=@Model.CurrentView&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=Meeting&branchId=@Model.SelectedBranchId" class="cat-pill @(Model.SelectedCategory == "Meeting" ? "active-meeting" : "")">
+                <i class="bi bi-camera-video-fill" style="color: #0284c7;"></i> Meetings
+            </a>
+            <a href="?view=@Model.CurrentView&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=Event&branchId=@Model.SelectedBranchId" class="cat-pill @(Model.SelectedCategory == "Event" ? "active-event" : "")">
+                <i class="bi bi-calendar-event-fill" style="color: #7c3aed;"></i> Company Events
+            </a>
+            <a href="?view=@Model.CurrentView&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=Personal&branchId=@Model.SelectedBranchId" class="cat-pill @(Model.SelectedCategory == "Personal" ? "active-personal" : "")">
+                <i class="bi bi-person-fill" style="color: #d97706;"></i> Personal
+            </a>
+        </div>
+
+        @if (Model.CanCreateCompanyEvents && Model.Branches.Count > 0)
+        {
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <label style="font-size: 0.78rem; font-weight: 700; color: #64748b; margin: 0;">Branch:</label>
+                <select onchange="location.href='?view=@Model.CurrentView&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=' + this.value;" style="font-size: 0.82rem; font-weight: 600; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #fff;">
+                    <option value="" selected="@(!Model.SelectedBranchId.HasValue || Model.SelectedBranchId == 0)">All Branches</option>
+                    @foreach (var b in Model.Branches)
+                    {
+                        <option value="@b.Id" selected="@(Model.SelectedBranchId == b.Id)">@b.Name</option>
+                    }
+                </select>
+            </div>
+        }
+    </div>
+
+    <!-- ── 1. MONTH VIEW ── -->
+    @if (Model.CurrentView == "month")
+    {
+        <div class="month-grid">
+            <div class="month-header-row">
+                <div class="month-header-cell">Mon</div>
+                <div class="month-header-cell">Tue</div>
+                <div class="month-header-cell">Wed</div>
+                <div class="month-header-cell">Thu</div>
+                <div class="month-header-cell">Fri</div>
+                <div class="month-header-cell">Sat</div>
+                <div class="month-header-cell">Sun</div>
+            </div>
+            <div class="month-days-grid">
+                @foreach (var cell in Model.MonthDays)
+                {
+                    <div class="day-cell @(!cell.IsCurrentMonth ? "other-month" : "") @(cell.IsToday ? "is-today" : "")">
+                        <div class="day-cell-top">
+                            <span class="day-number">@cell.DayNumber</span>
+                            <button type="button" class="btn-add-day-quick" onclick="openAddEventModal('@cell.Date.ToString("yyyy-MM-dd")')" title="Add event on this day"><i class="bi bi-plus-circle"></i></button>
+                        </div>
+                        <div class="day-events-list">
+                            @{
+                                var visibleEvents = cell.Events.Take(2).ToList();
+                                var moreCount = cell.Events.Count - visibleEvents.Count;
+                            }
+                            @foreach (var evt in visibleEvents)
+                            {
+                                var badgeClass = evt.Category.ToLowerInvariant() switch
+                                {
+                                    "training" => "badge-training",
+                                    "meeting" => "badge-meeting",
+                                    "event" => "badge-event",
+                                    "personal" => "badge-personal",
+                                    "reminder" => "badge-reminder",
+                                    _ => "badge-event"
+                                };
+                                <div class="event-badge @badgeClass" 
+                                     onclick="openEventDetailsModal(@evt.Id, '@evt.Title.Replace("'", "\\'") ', '@evt.Category', '@evt.StartTime.ToString("MMM dd, yyyy · hh:mm tt")', '@evt.EndTime.ToString("hh:mm tt")', '@evt.Location.Replace("'", "\\'") ', '@evt.MeetingLink.Replace("'", "\\'") ', '@evt.Description.Replace("'", "\\'").Replace("\n", " ")', '@evt.TrainerName', @evt.AttendeeCount, @(evt.IsTraining ? "true" : "false"), @(evt.CanEdit ? "true" : "false"), @(evt.CanDelete ? "true" : "false"), '@evt.CreatorName')"
+                                     title="@evt.StartTime.ToString("hh:mm tt") @evt.Title">
+                                    @if (evt.IsTraining) { <i class="bi bi-mortarboard-fill" style="margin-right: 2px;"></i> }
+                                    else if (evt.Category == "Meeting") { <i class="bi bi-camera-video-fill" style="margin-right: 2px;"></i> }
+                                    else if (evt.Category == "Personal") { <i class="bi bi-person-fill" style="margin-right: 2px;"></i> }
+                                    @evt.StartTime.ToString("hh:mm tt") @evt.Title
+                                </div>
+                            }
+                            @if (moreCount > 0)
+                            {
+                                <a href="?view=day&date=@cell.Date.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="more-events-badge" title="View all @cell.Events.Count events for @cell.Date.ToString("MMM dd")">
+                                    +@moreCount more
+                                </a>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <!-- ── 2. WEEK VIEW ── -->
+    @if (Model.CurrentView == "week")
+    {
+        <div class="week-view-grid">
+            @foreach (var day in Model.WeekDays)
+            {
+                var dayEvents = Model.Events.Where(e => e.StartTime.Date == day.Date).OrderBy(e => e.StartTime).ToList();
+                bool isToday = (day.Date == SriLankaTime.Today);
+                <div class="week-day-col @(isToday ? "is-today" : "")">
+                    <div class="week-day-header">
+                        <p style="font-size: 0.76rem; font-weight: 700; color: #64748b; margin: 0; text-transform: uppercase;">@day.ToString("ddd")</p>
+                        <p style="font-size: 1.15rem; font-weight: 800; color: @(isToday ? "#10823c" : "#0f172a"); margin: 2px 0 0 0;">@day.Day</p>
+                    </div>
+                    <div class="week-day-events">
+                        @if (dayEvents.Count == 0)
+                        {
+                            <div style="text-align: center; padding: 24px 8px; color: #94a3b8; font-size: 0.78rem;">
+                                No events
+                                <div style="margin-top: 6px;">
+                                    <button type="button" onclick="openAddEventModal('@day.ToString("yyyy-MM-dd")')" class="btn-kanrich btn-kanrich-outline" style="padding: 3px 8px; font-size: 0.72rem;"><i class="bi bi-plus"></i> Add</button>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var evt in dayEvents)
+                            {
+                                var borderCol = evt.CategoryColor;
+                                <div class="week-event-card" style="border-left: 4px solid @borderCol;"
+                                     onclick="openEventDetailsModal(@evt.Id, '@evt.Title.Replace("'", "\\'") ', '@evt.Category', '@evt.StartTime.ToString("MMM dd, yyyy · hh:mm tt")', '@evt.EndTime.ToString("hh:mm tt")', '@evt.Location.Replace("'", "\\'") ', '@evt.MeetingLink.Replace("'", "\\'") ', '@evt.Description.Replace("'", "\\'").Replace("\n", " ")', '@evt.TrainerName', @evt.AttendeeCount, @(evt.IsTraining ? "true" : "false"), @(evt.CanEdit ? "true" : "false"), @(evt.CanDelete ? "true" : "false"), '@evt.CreatorName')">
+                                    <span style="font-size: 0.7rem; font-weight: 700; color: @borderCol; text-transform: uppercase;">@evt.Category</span>
+                                    <p style="font-size: 0.84rem; font-weight: 700; color: #0f172a; margin: 2px 0 4px 0; line-height: 1.25;">@evt.Title</p>
+                                    <p style="font-size: 0.74rem; color: #64748b; margin: 0;"><i class="bi bi-clock" style="margin-right: 4px;"></i>@evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")</p>
+                                    @if (!string.IsNullOrWhiteSpace(evt.Location))
+                                    {
+                                        <p style="font-size: 0.72rem; color: #64748b; margin: 2px 0 0 0;"><i class="bi bi-geo-alt" style="margin-right: 4px;"></i>@evt.Location</p>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- ── 3. DAY / AGENDA VIEW ── -->
+    @if (Model.CurrentView == "day" || Model.CurrentView == "agenda")
+    {
+        <div class="agenda-list">
+            @if (Model.Events.Count == 0)
+            {
+                <div style="text-align: center; padding: 60px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
+                    <i class="bi bi-calendar-x" style="font-size: 2.5rem; color: #94a3b8;"></i>
+                    <h4 style="font-size: 1.1rem; font-weight: 700; color: #334155; margin: 12px 0 4px 0;">No Events Scheduled</h4>
+                    <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 16px;">There are no training sessions or meetings scheduled for this timeframe.</p>
+                    <button type="button" onclick="openAddEventModal('@Model.CurrentDate.ToString("yyyy-MM-dd")')" class="btn-kanrich btn-kanrich-primary" style="padding: 7px 18px;"><i class="bi bi-plus-lg"></i> Add New Event</button>
+                </div>
+            }
+            else
+            {
+                @foreach (var evt in Model.Events)
+                {
+                    <div class="agenda-item" style="border-left: 4px solid @evt.CategoryColor;">
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                            <div class="agenda-date-box">
+                                <span style="font-size: 0.7rem; font-weight: 700; color: #64748b; text-transform: uppercase;">@evt.StartTime.ToString("MMM")</span>
+                                <span style="font-size: 1.2rem; font-weight: 800; color: #0f172a; line-height: 1;">@evt.StartTime.Day</span>
+                            </div>
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                    <span style="font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: @evt.CategoryColor; color: #fff;">@evt.Category</span>
+                                    <span style="font-size: 0.78rem; font-weight: 600; color: #64748b;"><i class="bi bi-clock"></i> @evt.StartTime.ToString("hh:mm tt") - @evt.EndTime.ToString("hh:mm tt")</span>
+                                    @if (evt.IsTraining)
+                                    {
+                                        <span style="font-size: 0.72rem; font-weight: 600; color: #10823c; background: #dcfce7; padding: 2px 8px; border-radius: 4px;"><i class="bi bi-mortarboard"></i> Corporate Training</span>
+                                    }
+                                </div>
+                                <h4 style="font-size: 0.96rem; font-weight: 700; color: #0f172a; margin: 0 0 4px 0;">@evt.Title</h4>
+                                <div style="display: flex; align-items: center; gap: 14px; font-size: 0.78rem; color: #64748b;">
+                                    @if (!string.IsNullOrWhiteSpace(evt.Location))
+                                    {
+                                        <span><i class="bi bi-geo-alt"></i> @evt.Location</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(evt.TrainerName))
+                                    {
+                                        <span><i class="bi bi-person-badge"></i> Trainer: @evt.TrainerName</span>
+                                    }
+                                    @if (evt.AttendeeCount > 0)
+                                    {
+                                        <span><i class="bi bi-people"></i> @evt.AttendeeCount attendees</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            @if (!string.IsNullOrWhiteSpace(evt.MeetingLink))
+                            {
+                                <a href="@evt.MeetingLink" target="_blank" class="btn-kanrich btn-kanrich-primary" style="padding: 5px 12px; font-size: 0.78rem;"><i class="bi bi-camera-video"></i> Join Meeting</a>
+                            }
+                            <button type="button" class="btn-kanrich btn-kanrich-outline" style="padding: 5px 12px; font-size: 0.78rem;" 
+                                    onclick="openEventDetailsModal(@evt.Id, '@evt.Title.Replace("'", "\\'") ', '@evt.Category', '@evt.StartTime.ToString("MMM dd, yyyy · hh:mm tt")', '@evt.EndTime.ToString("hh:mm tt")', '@evt.Location.Replace("'", "\\'") ', '@evt.MeetingLink.Replace("'", "\\'") ', '@evt.Description.Replace("'", "\\'").Replace("\n", " ")', '@evt.TrainerName', @evt.AttendeeCount, @(evt.IsTraining ? "true" : "false"), @(evt.CanEdit ? "true" : "false"), @(evt.CanDelete ? "true" : "false"), '@evt.CreatorName')">
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    }
+
+</div>
+
+<!-- ── MODAL: Create / Edit Event ── -->
+<div class="cal-modal" id="eventModal" onclick="closeModalOnBackdrop(event, 'eventModal')">
+    <div class="cal-modal-content">
+        <form method="post" id="eventForm" asp-page-handler="CreateEvent">
+            <input type="hidden" asp-for="Input.Id" id="modalEventId" />
+            <div class="cal-modal-header">
+                <h3 style="font-size: 1rem; font-weight: 700; color: #0f172a; margin: 0;" id="eventModalTitle">Add New Event</h3>
+                <button type="button" onclick="closeModal('eventModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">&times;</button>
+            </div>
+            <div class="cal-modal-body">
+                <div class="k-form-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Event Title *</label>
+                    <input type="text" asp-for="Input.Title" id="inputTitle" required class="k-form-control" placeholder="e.g. Budget Meeting / Project Review" />
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                    <div class="k-form-group">
+                        <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Event Type</label>
+                        <select asp-for="Input.EventType" id="inputType" class="k-form-control">
+                            <option value="Meeting">Meeting</option>
+                            <option value="Personal">Personal Task</option>
+                            <option value="Reminder">Reminder</option>
+                            @if (Model.CanCreateCompanyEvents)
+                            {
+                                <option value="Event">Company Event</option>
+                                <option value="Holiday">Holiday</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="k-form-group">
+                        <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Date *</label>
+                        <input type="date" asp-for="Input.StartDate" id="inputDate" required class="k-form-control" />
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;" id="timeFieldsRow">
+                    <div class="k-form-group">
+                        <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Start Time</label>
+                        <input type="time" asp-for="Input.StartTime" id="inputStartTime" class="k-form-control" />
+                    </div>
+                    <div class="k-form-group">
+                        <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">End Time</label>
+                        <input type="time" asp-for="Input.EndTime" id="inputEndTime" class="k-form-control" />
+                    </div>
+                </div>
+
+                <div class="k-form-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Location / Venue</label>
+                    <input type="text" asp-for="Input.Location" id="inputLocation" class="k-form-control" placeholder="e.g. Boardroom 2 / Colombo Branch" />
+                </div>
+
+                <div class="k-form-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Meeting Link (Teams / Zoom / Google Meet)</label>
+                    <input type="url" asp-for="Input.MeetingLink" id="inputMeetingLink" class="k-form-control" placeholder="https://teams.microsoft.com/..." />
+                </div>
+
+                <div class="k-form-group" style="margin-bottom: 14px;">
+                    <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Description / Notes</label>
+                    <textarea asp-for="Input.Description" id="inputDescription" rows="3" class="k-form-control" placeholder="Add any details or agenda points..."></textarea>
+                </div>
+
+                @if (Model.CanCreateCompanyEvents)
+                {
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div class="k-form-group">
+                            <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Target Branch</label>
+                            <select asp-for="Input.BranchId" id="inputBranch" class="k-form-control">
+                                <option value="">All Branches (Global)</option>
+                                @foreach (var b in Model.Branches)
+                                {
+                                    <option value="@b.Id">@b.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="k-form-group">
+                            <label style="font-size: 0.78rem; font-weight: 700; color: #334155;">Target Department</label>
+                            <select asp-for="Input.DepartmentId" id="inputDept" class="k-form-control">
+                                <option value="">All Departments</option>
+                                @foreach (var d in Model.Departments)
+                                {
+                                    <option value="@d.Id">@d.Name</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="cal-modal-footer">
+                <button type="button" onclick="closeModal('eventModal')" class="btn-kanrich btn-kanrich-outline">Cancel</button>
+                <button type="submit" class="btn-kanrich btn-kanrich-primary" id="btnSaveEvent">Save Event</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ── MODAL: Event Details View ── -->
+<div class="cal-modal" id="detailsModal" onclick="closeModalOnBackdrop(event, 'detailsModal')">
+    <div class="cal-modal-content">
+        <div class="cal-modal-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="dtlCategoryBadge" style="font-size: 0.74rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; background: #10823c; color: #fff;">Training</span>
+                <h3 style="font-size: 1.05rem; font-weight: 800; color: #0f172a; margin: 0;" id="dtlTitle">Event Details</h3>
+            </div>
+            <button type="button" onclick="closeModal('detailsModal')" style="background: none; border: none; font-size: 1.2rem; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+        <div class="cal-modal-body">
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; align-items: flex-start; gap: 10px;">
+                    <i class="bi bi-clock" style="color: #10823c; font-size: 1.1rem; margin-top: 2px;"></i>
+                    <div>
+                        <p style="font-size: 0.76rem; font-weight: 700; color: #64748b; margin: 0;">Time</p>
+                        <p style="font-size: 0.88rem; font-weight: 600; color: #0f172a; margin: 0;" id="dtlTime">Aug 25, 2026 · 10:00 AM - 11:30 AM</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 10px;" id="dtlLocationRow">
+                    <i class="bi bi-geo-alt" style="color: #0284c7; font-size: 1.1rem; margin-top: 2px;"></i>
+                    <div>
+                        <p style="font-size: 0.76rem; font-weight: 700; color: #64748b; margin: 0;">Location / Venue</p>
+                        <p style="font-size: 0.88rem; font-weight: 600; color: #0f172a; margin: 0;" id="dtlLocation">Head Office Training Hall</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 10px; display: none;" id="dtlTrainerRow">
+                    <i class="bi bi-person-badge" style="color: #7c3aed; font-size: 1.1rem; margin-top: 2px;"></i>
+                    <div>
+                        <p style="font-size: 0.76rem; font-weight: 700; color: #64748b; margin: 0;">Trainer / Host</p>
+                        <p style="font-size: 0.88rem; font-weight: 600; color: #0f172a; margin: 0;" id="dtlTrainer">Internal Trainer</p>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: flex-start; gap: 10px; display: none;" id="dtlMeetingLinkRow">
+                    <i class="bi bi-camera-video" style="color: #0284c7; font-size: 1.1rem; margin-top: 2px;"></i>
+                    <div>
+                        <p style="font-size: 0.76rem; font-weight: 700; color: #64748b; margin: 0;">Meeting Link</p>
+                        <a href="#" target="_blank" id="dtlMeetingLink" style="font-size: 0.84rem; color: #0284c7; font-weight: 600; word-break: break-all;">Join Meeting</a>
+                    </div>
+                </div>
+
+                <div style="border-top: 1px solid #e2e8f0; padding-top: 10px;">
+                    <p style="font-size: 0.76rem; font-weight: 700; color: #64748b; margin: 0 0 4px 0;">Description & Notes</p>
+                    <p style="font-size: 0.84rem; color: #334155; line-height: 1.5; margin: 0; white-space: pre-wrap;" id="dtlDescription">No additional notes provided.</p>
+                </div>
+            </div>
+        </div>
+        <div class="cal-modal-footer">
+            <form method="post" asp-page-handler="DeleteEvent" id="deleteEventForm" style="display: inline;">
+                <input type="hidden" name="id" id="deleteEventId" />
+                <button type="button" onclick="confirmDeleteEvent()" id="btnDeleteEvent" class="btn-kanrich" style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; display: none;">
+                    <i class="bi bi-trash"></i> Delete
+                </button>
+            </form>
+            <button type="button" onclick="closeModal('detailsModal')" class="btn-kanrich btn-kanrich-outline">Close</button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAddEventModal(defaultDate) {
+            document.getElementById('eventForm').action = '?handler=CreateEvent';
+            document.getElementById('eventModalTitle').textContent = 'Add New Event';
+            document.getElementById('modalEventId').value = '0';
+            document.getElementById('inputTitle').value = '';
+            document.getElementById('inputType').value = 'Meeting';
+            document.getElementById('inputDate').value = defaultDate || new Date().toISOString().split('T')[0];
+            document.getElementById('inputStartTime').value = '09:00';
+            document.getElementById('inputEndTime').value = '10:00';
+            document.getElementById('inputLocation').value = '';
+            document.getElementById('inputMeetingLink').value = '';
+            document.getElementById('inputDescription').value = '';
+            document.getElementById('btnSaveEvent').textContent = 'Save Event';
+            document.getElementById('eventModal').classList.add('open');
+        }
+
+        function openEventDetailsModal(id, title, category, timeStr, endTimeStr, location, meetingLink, description, trainer, attendees, isTraining, canEdit, canDelete, creator) {
+            document.getElementById('dtlTitle').textContent = title;
+            document.getElementById('dtlCategoryBadge').textContent = category;
+            document.getElementById('dtlTime').textContent = timeStr + ' - ' + endTimeStr;
+            document.getElementById('dtlDescription').textContent = description || 'No description provided.';
+            
+            // Location
+            const locRow = document.getElementById('dtlLocationRow');
+            if (location && location.trim() !== '') {
+                document.getElementById('dtlLocation').textContent = location;
+                locRow.style.display = 'flex';
+            } else {
+                locRow.style.display = 'none';
+            }
+
+            // Trainer
+            const trainerRow = document.getElementById('dtlTrainerRow');
+            if (isTraining && trainer && trainer.trim() !== '') {
+                document.getElementById('dtlTrainer').textContent = trainer + (attendees > 0 ? ` (${attendees} attendees)` : '');
+                trainerRow.style.display = 'flex';
+            } else {
+                trainerRow.style.display = 'none';
+            }
+
+            // Meeting Link
+            const meetRow = document.getElementById('dtlMeetingLinkRow');
+            const meetLink = document.getElementById('dtlMeetingLink');
+            if (meetingLink && meetingLink.trim() !== '') {
+                meetLink.href = meetingLink;
+                meetLink.textContent = meetingLink;
+                meetRow.style.display = 'flex';
+            } else {
+                meetRow.style.display = 'none';
+            }
+
+            // Delete button authorization
+            const deleteBtn = document.getElementById('btnDeleteEvent');
+            const deleteIdInput = document.getElementById('deleteEventId');
+            if (canDelete && !isTraining) {
+                deleteIdInput.value = id;
+                deleteBtn.style.display = 'inline-block';
+            } else {
+                deleteBtn.style.display = 'none';
+            }
+
+            document.getElementById('detailsModal').classList.add('open');
+        }
+
+        function confirmDeleteEvent() {
+            if (confirm('Are you sure you want to delete this event from your calendar?')) {
+                document.getElementById('deleteEventForm').submit();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('open');
+        }
+
+        function closeModalOnBackdrop(e, modalId) {
+            if (e.target === document.getElementById(modalId)) {
+                closeModal(modalId);
+            }
+        }
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal('eventModal');
+                closeModal('detailsModal');
+            }
+        });
+    </script>
+}

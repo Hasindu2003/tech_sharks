@@ -1,6 +1,6 @@
 @page
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "HR Manager,Area Manager,Branch Manager")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager")]
 @model HRMS.UI.Pages.Termination.ApprovalQueueModel
 @{
     ViewData["Title"] = "Termination Approvals";
@@ -55,7 +55,6 @@
                     <th>Employee</th>
                     <th>Type</th>
                     <th>Effective Date</th>
-                    <th>Obligations</th>
                     <th>Documents</th>
                     <th>Submitted</th>
                     <th style="text-align:right"></th>
@@ -64,7 +63,8 @@
             <tbody>
                 @foreach (var req in Model.PendingRequests)
                 {
-                    var initials = string.Join("", req.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (req.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td style="font-weight:600;color:#7a8863">#@req.Id</td>
                         <td>
@@ -78,20 +78,6 @@
                         </td>
                         <td style="color:#7a8863">@req.TerminationTypeDisplay</td>
                         <td style="font-weight:600;color:#10823c">@req.EffectiveTerminationDate.ToString("MMM dd, yyyy")</td>
-                        <td>
-                            @if (req.HasOutstandingLoans || req.IsLoanGuarantor)
-                            {
-                                <span class="k-badge k-badge-pending">Has Obligations</span>
-                                @if (req.HasOverridePermission)
-                                {
-                                    <br /><span class="k-badge k-badge-info" style="margin-top:4px">Override</span>
-                                }
-                            }
-                            else
-                            {
-                                <span class="k-badge k-badge-approved">Clear</span>
-                            }
-                        </td>
                         <td><span class="k-badge k-badge-info">@req.DocumentCount file(s)</span></td>
                         <td style="color:#7a8863">@req.CreatedDate.ToString("MMM dd, yyyy")</td>
                         <td style="text-align:right">

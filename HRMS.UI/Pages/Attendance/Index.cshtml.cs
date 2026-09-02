@@ -25,6 +25,7 @@ namespace HRMS.UI.Pages.Attendance
         public bool IsManager { get; set; }
         public bool ShowBranchFilter { get; set; }
         public bool ShowDepartmentFilter { get; set; }
+        public string BranchFilterPlaceholder { get; set; } = "-- All Branches --";
         public int CurrentUserEmployeeId { get; set; }
 
         [BindProperty(SupportsGet = true)]
@@ -48,23 +49,31 @@ namespace HRMS.UI.Pages.Attendance
             _userManager = userManager;
         }
 
-        public async Task OnGetAsync()
+        public async Task<IActionResult> OnGetAsync()
         {
+            if (User.IsInRole("Admin"))
+            {
+                return Forbid();
+            }
+
             var currentUser = await _userManager.GetUserAsync(User);
-            if (currentUser == null) return;
+            if (currentUser == null) return Challenge();
 
             // Determine if the user is a manager (can filter/view others)
-            IsManager = User.IsInRole("Admin") || 
-                        User.IsInRole("HR Manager") || 
+            IsManager = User.IsInRole("HR Manager") || 
+                        User.IsInRole("HR Officer") || 
                         User.IsInRole("Area Manager") || 
                         User.IsInRole("Branch Manager") || 
                         User.IsInRole("Department Head");
 
-            ShowBranchFilter = User.IsInRole("Admin") || User.IsInRole("Area Manager");
-            ShowDepartmentFilter = User.IsInRole("Admin") || 
+            ShowBranchFilter = User.IsInRole("HR Manager") || 
+                               User.IsInRole("HR Officer") || 
+                               User.IsInRole("Area Manager");
+
+            ShowDepartmentFilter = User.IsInRole("HR Manager") || 
+                                   User.IsInRole("HR Officer") || 
                                    User.IsInRole("Area Manager") || 
-                                   User.IsInRole("Branch Manager") || 
-                                   User.IsInRole("HR Manager");
+                                   User.IsInRole("Branch Manager");
 
             // Look up the employee record for this user
             var employeeRecord = await _context.Employees.FirstOrDefaultAsync(e => e.Email == currentUser.Email);
@@ -90,48 +99,50 @@ namespace HRMS.UI.Pages.Attendance
                     DepartmentsList = await _context.Departments.OrderBy(d => d.Name).ToListAsync();
                 }
 
-                if (User.IsInRole("Admin"))
+                if (User.IsInRole("HR Manager"))
                 {
-                    // Admin: see all branches, all departments
+                    // HR Manager: access to all branches & departments
+                    BranchFilterPlaceholder = "-- All Branches --";
                     ManagedBranchesList = await _context.Branches.OrderBy(b => b.Name).ToListAsync();
-                    
+
                     if (FilterBranchId.HasValue && FilterBranchId.Value > 0)
                     {
                         query = query.Where(a => a.Employee.BranchId == FilterBranchId.Value);
                         employeeQuery = employeeQuery.Where(e => e.BranchId == FilterBranchId.Value);
                     }
                 }
-                else if (User.IsInRole("Area Manager"))
+                else if (User.IsInRole("Area Manager") || User.IsInRole("HR Officer"))
                 {
-                    // Area Manager: see designated branches
+                    // Area Manager & HR Officer: see designated assigned branches
+                    BranchFilterPlaceholder = "-- All Assigned Branches --";
                     var managedStr = currentUser.ManagedBranches ?? "";
-                    var amBranchIds = managedStr
+                    var assignedBranchIds = managedStr
                         .Split(',', StringSplitOptions.RemoveEmptyEntries)
                         .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
                         .Where(id => id > 0)
                         .ToList();
 
-                    if (!amBranchIds.Any()) amBranchIds.Add(-1); // Safety fallback
+                    if (!assignedBranchIds.Any()) assignedBranchIds.Add(-1); // Safety fallback
 
                     ManagedBranchesList = await _context.Branches
-                        .Where(b => amBranchIds.Contains(b.Id))
+                        .Where(b => assignedBranchIds.Contains(b.Id))
                         .OrderBy(b => b.Name)
                         .ToListAsync();
 
-                    if (FilterBranchId.HasValue && FilterBranchId.Value > 0 && amBranchIds.Contains(FilterBranchId.Value))
+                    if (FilterBranchId.HasValue && FilterBranchId.Value > 0 && assignedBranchIds.Contains(FilterBranchId.Value))
                     {
                         query = query.Where(a => a.Employee.BranchId == FilterBranchId.Value);
                         employeeQuery = employeeQuery.Where(e => e.BranchId == FilterBranchId.Value);
                     }
                     else
                     {
-                        query = query.Where(a => amBranchIds.Contains(a.Employee.BranchId));
-                        employeeQuery = employeeQuery.Where(e => amBranchIds.Contains(e.BranchId));
+                        query = query.Where(a => assignedBranchIds.Contains(a.Employee.BranchId));
+                        employeeQuery = employeeQuery.Where(e => assignedBranchIds.Contains(e.BranchId));
                     }
                 }
-                else if (User.IsInRole("Branch Manager") || User.IsInRole("HR Manager"))
+                else if (User.IsInRole("Branch Manager"))
                 {
-                    // Branch/HR Manager: scoped to their own branch
+                    // Branch Manager: scoped to their own branch
                     int scopedBranchId = -1;
                     if (!string.IsNullOrWhiteSpace(currentUser.Branch))
                     {
@@ -195,6 +206,7 @@ namespace HRMS.UI.Pages.Attendance
             }
 
             Attendances = await query.OrderByDescending(a => a.Date).ToListAsync();
+            return Page();
         }
     }
 }

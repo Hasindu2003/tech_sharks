@@ -1,0 +1,930 @@
+@page
+@model HRMS.UI.Pages.CVBank.IndexModel
+@{
+    ViewData["Title"] = "CV Bank - Job Positions & Talent Pipeline";
+    Layout = "_Layout";
+    bool isJobsTab = Model.Tab == "jobs";
+}
+
+<style>
+    .page-h { font-size: 19px; font-weight: 800; color: #151811; margin: 0 0 3px 0; font-family: 'Manrope', sans-serif; }
+    .page-s { font-size: 12px; color: #7a8863; margin: 0 0 20px 0; font-family: 'Manrope', sans-serif; }
+
+    /* Top KPI Cards */
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 20px;
+    }
+    @@media (max-width: 992px) {
+        .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+    @@media (max-width: 576px) {
+        .kpi-row { grid-template-columns: 1fr; }
+    }
+
+    .kpi-box {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    }
+    .kpi-box-label {
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #7a8863;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .kpi-box-val {
+        font-size: 22px;
+        font-weight: 800;
+        color: #151811;
+    }
+
+    /* Tab Switcher */
+    .cv-tab-bar {
+        display: flex;
+        gap: 8px;
+        border-bottom: 2px solid #e2e5dc;
+        margin-bottom: 20px;
+    }
+    .cv-tab-item {
+        padding: 10px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        color: #7a8863;
+        text-decoration: none;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.15s;
+    }
+    .cv-tab-item:hover {
+        color: #151811;
+        text-decoration: none;
+    }
+    .cv-tab-item.active {
+        color: #10823c;
+        border-bottom-color: #10823c;
+    }
+    .cv-tab-badge {
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: #f1f5f9;
+        color: #475569;
+        font-weight: 700;
+    }
+    .cv-tab-item.active .cv-tab-badge {
+        background: #dcfce7;
+        color: #15803d;
+    }
+
+    /* Horizontal Search & Filter Bar */
+    .search-filter-bar {
+        background: #ffffff;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .search-input-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 240px;
+    }
+    .search-input-wrap i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #7a8863;
+        font-size: 13px;
+    }
+    .search-input {
+        width: 100%;
+        height: 38px;
+        padding: 8px 12px 8px 34px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: 'Manrope', sans-serif;
+        color: #151811;
+        background: #fff;
+        box-sizing: border-box;
+    }
+    .search-input:focus { outline: none; border-color: #10823c; box-shadow: 0 0 0 2px rgba(16,130,60,.1); }
+
+    .select-input {
+        height: 38px;
+        padding: 7px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 13px;
+        font-family: 'Manrope', sans-serif;
+        color: #151811;
+        background: #fff;
+        box-sizing: border-box;
+    }
+    .select-input:focus { outline: none; border-color: #10823c; }
+
+    /* Table Container */
+    .tbl-card {
+        background: white;
+        border: 1px solid #e2e5dc;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 28px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.03);
+    }
+    .sep-table { width: 100%; border-collapse: collapse; }
+    .sep-table th {
+        background: #f9fafb;
+        padding: 12px 18px;
+        text-align: left;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #7a8863;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid #e2e5dc;
+    }
+    .sep-table td {
+        padding: 14px 18px;
+        border-bottom: 1px solid #e2e5dc;
+        font-size: 13px;
+        color: #151811;
+        vertical-align: middle;
+        font-family: 'Manrope', sans-serif;
+    }
+    .sep-table tbody tr:last-child td { border-bottom: none; }
+    .sep-table tbody tr:hover { background: #fafafa; }
+
+    /* Candidate Avatar & Details */
+    .candidate-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: #f0fdf4;
+        color: #15803d;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 13px;
+        border: 1px solid #bbf7d0;
+        flex-shrink: 0;
+    }
+
+    .pos-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #15803d;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        padding: 3px 8px;
+        border-radius: 6px;
+    }
+
+    .job-code-badge {
+        display: inline-block;
+        font-family: monospace;
+        font-size: 11.5px;
+        font-weight: 700;
+        color: #0369a1;
+        background: #e0f2fe;
+        border: 1px solid #bae6fd;
+        padding: 2px 7px;
+        border-radius: 4px;
+    }
+
+    .score-badge-high {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        font-weight: 800;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .score-badge-mid {
+        background: #fefce8;
+        color: #a16207;
+        border: 1px solid #fef08a;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .score-badge-low {
+        background: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .status-pill-open {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        font-weight: 700;
+        font-size: 11.5px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .status-pill-closed {
+        background: #f1f5f9;
+        color: #64748b;
+        border: 1px solid #cbd5e1;
+        font-weight: 600;
+        font-size: 11.5px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .btn-action-view {
+        background-color: #f8fafc;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-decoration: none;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+    .btn-action-view:hover { background-color: #334155; color: #fff; border-color: #334155; text-decoration: none; }
+
+    .btn-action-qr {
+        background-color: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        border-radius: 6px;
+        padding: 5px 12px;
+        font-weight: 700;
+        font-size: 0.75rem;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+    }
+    .btn-action-qr:hover { background-color: #15803d; color: #fff; border-color: #15803d; }
+
+    .btn-action-del {
+        background-color: #fff;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 0.75rem;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        cursor: pointer;
+    }
+    .btn-action-del:hover { background-color: #dc2626; color: #fff; border-color: #dc2626; }
+
+    .tag-chip {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: #f1f5f9;
+        color: #334155;
+        display: inline-block;
+        margin-right: 3px;
+        margin-bottom: 2px;
+    }
+</style>
+
+<div>
+    <!-- Page Header -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; flex-wrap: wrap; gap: 12px;">
+        <div>
+            <h1 class="page-h">CV Bank & Recruitment Portal</h1>
+            <p class="page-s">Manage targeted job openings with dedicated QR codes, review applicant rankings, and evaluate adaptive competency scores.</p>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+            <a asp-page="CreateJob" class="btn-kanrich btn-kanrich-primary" style="padding: 9px 16px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <i class="bi bi-briefcase-fill"></i> Open Job Position
+            </a>
+            <a asp-page="Create" class="btn-kanrich btn-kanrich-outline" style="padding: 9px 16px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 700;">
+                <i class="bi bi-person-plus"></i> Add Candidate Directly
+            </a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show py-2 px-3 mb-3" role="alert" style="font-size: 13px;">
+            <i class="bi bi-check-circle me-1"></i> @TempData["SuccessMessage"]
+            <button type="button" class="btn-close py-2" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- 1. Top Metrics -->
+    <div class="kpi-row">
+        <div class="kpi-box">
+            <div class="kpi-box-label">
+                <span>Active Job Openings</span>
+                <i class="bi bi-briefcase-fill text-success"></i>
+            </div>
+            <div class="kpi-box-val text-success">@Model.ActiveOpeningsCount</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-box-label">
+                <span>Total Candidates Applied</span>
+                <i class="bi bi-folder2 text-primary"></i>
+            </div>
+            <div class="kpi-box-val">@Model.TotalCandidates</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-box-label">
+                <span>Top Tier Candidates (&ge; 75)</span>
+                <i class="bi bi-star-fill text-warning"></i>
+            </div>
+            <div class="kpi-box-val">@Model.HighRankedCount</div>
+        </div>
+        <div class="kpi-box">
+            <div class="kpi-box-label">
+                <span>Avg Adaptive Score</span>
+                <i class="bi bi-graph-up text-secondary"></i>
+            </div>
+            <div class="kpi-box-val">@(Model.AverageScore > 0 ? $"{Model.AverageScore}%" : "N/A")</div>
+        </div>
+    </div>
+
+    <!-- 2. Tab Navigation Bar -->
+    <div class="cv-tab-bar">
+        <a href="?Tab=jobs" class="cv-tab-item @(isJobsTab ? "active" : "")">
+            <i class="bi bi-grid"></i> Job Openings
+            <span class="cv-tab-badge">@Model.JobOpenings.Count</span>
+        </a>
+        <a href="?Tab=candidates" class="cv-tab-item @(!isJobsTab ? "active" : "")">
+            <i class="bi bi-people"></i> Candidate Pipeline & CVs
+            <span class="cv-tab-badge">@Model.CVList.Count</span>
+        </a>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    <!-- TAB 1: JOB OPENINGS & DEDICATED QR CODES -->
+    <!-- ═══════════════════════════════════════════════════════════════ -->
+    @if (isJobsTab)
+    {
+        <div class="tbl-card">
+            <table class="sep-table" id="jobsTable">
+                <thead>
+                    <tr>
+                        <th style="padding-left: 20px;">Position & Reference Code</th>
+                        <th>Branch & Department</th>
+                        <th>Minimum Qualifications (Adaptive Benchmarks)</th>
+                        <th>Timeline & Status</th>
+                        <th class="text-center">Applicants</th>
+                        <th style="text-align: right; padding-right: 20px;">Recruitment Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.JobOpenings.Any())
+                    {
+                        @foreach (var job in Model.JobOpenings)
+                        {
+                            var deptName = job.Department?.Name ?? "All Departments";
+                            var branchName = job.Branch?.Name ?? "Head Office / All Branches";
+                            var appCount = job.Applications?.Count ?? 0;
+                            var isClosed = job.Status == "Closed" || (job.ClosingDate.HasValue && job.ClosingDate.Value.Date < DateTime.Today);
+
+                            <tr>
+                                <td style="padding-left: 20px;">
+                                    <div class="d-flex align-items-center gap-2 mb-1">
+                                        <strong style="color: #151811; font-size: 14px;">@job.Title</strong>
+                                        <span class="job-code-badge">@job.JobCode</span>
+                                    </div>
+                                    <div class="text-muted" style="font-size: 11.5px;">
+                                        <span class="badge bg-light text-dark border me-1">@job.EmploymentType</span>
+                                        <span>Posted on @job.CreatedDate.ToString("dd MMM yyyy")</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-weight: 600; color: #151811; font-size: 12.5px;">
+                                        <i class="bi bi-geo-alt text-success me-1"></i>@branchName
+                                    </div>
+                                    <div class="text-muted" style="font-size: 11.5px; margin-top: 2px;">
+                                        <i class="bi bi-building me-1"></i>@deptName
+                                    </div>
+                                </td>
+                                <td>
+                                    <div style="font-size: 12px; margin-bottom: 3px;">
+                                        <strong>@(job.MinimumExperienceYears > 0 ? $"{job.MinimumExperienceYears} Yrs" : "Entry-Level")</strong> Experience
+                                        &bull;
+                                        <span class="badge @(job.MinimumEducationLevel == "Masters" ? "bg-primary" : (job.MinimumEducationLevel == "Degree" ? "bg-success" : "bg-secondary"))" style="font-size: 10px;">
+                                            @(job.MinimumEducationLevel == "None" ? "Open / Diploma" : (job.MinimumEducationLevel == "Degree" ? "Bachelor's Degree" : "Master's Degree"))
+                                        </span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(job.RequiredSkills))
+                                    {
+                                        <div class="text-muted text-truncate" style="font-size: 11px; max-width: 240px;" title="@job.RequiredSkills">
+                                            <i class="bi bi-tags me-1"></i>@job.RequiredSkills
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @if (isClosed)
+                                    {
+                                        <span class="status-pill-closed"><i class="bi bi-dash-circle"></i> Closed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="status-pill-open"><i class="bi bi-check-circle"></i> Active / Open</span>
+                                    }
+                                    <div class="text-muted" style="font-size: 11px; margin-top: 3px;">
+                                        @(job.ClosingDate.HasValue ? $"Closes {job.ClosingDate.Value:dd MMM yyyy}" : "Continuous / No Expiry")
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <a asp-page="Index" asp-route-Tab="candidates" asp-route-JobId="@job.Id" class="badge @(appCount > 0 ? "bg-success" : "bg-light text-muted border")" style="font-size: 12px; padding: 5px 10px; text-decoration: none;" title="Filter candidates for this role">
+                                        @appCount @(appCount == 1 ? "Applicant" : "Applicants")
+                                    </a>
+                                </td>
+                                <td style="text-align: right; padding-right: 20px;">
+                                    <div class="d-inline-flex gap-2 justify-content-end align-items-center flex-wrap">
+                                        <!-- Download Dedicated Job QR Flyer -->
+                                        <button type="button" 
+                                                class="btn-action-qr"
+                                                onclick="downloadJobQRFlyer(@job.Id, '@job.JobCode', '@Html.Raw(job.Title.Replace("'", "\\'"))', '@Html.Raw(branchName.Replace("'", "\\'"))', '@Html.Raw(deptName.Replace("'", "\\'"))', '@(job.MinimumExperienceYears > 0 ? $"{job.MinimumExperienceYears}+ Yrs Exp" : "Entry Level")', '@(job.MinimumEducationLevel == "None" ? "General / Diploma" : (job.MinimumEducationLevel == "Degree" ? "Bachelor\\'s Degree" : "Master\\'s Degree"))')"
+                                                title="Generate and download recruitment flyer with dedicated QR code for @job.Title">
+                                            <i class="bi bi-qr-code"></i> Download QR
+                                        </button>
+
+                                        <!-- View Applicants -->
+                                        <a asp-page="Index" asp-route-Tab="candidates" asp-route-JobId="@job.Id" class="btn-action-view" title="View candidates applied for this position">
+                                            <i class="bi bi-people"></i> View Candidates
+                                        </a>
+
+                                        <!-- Toggle Status -->
+                                        <form method="post" asp-page-handler="ToggleJobStatus" asp-route-id="@job.Id" style="display:inline;">
+                                            <button type="submit" class="btn-action-view" title="@(job.Status == "Open" ? "Close Vacancy" : "Re-open Vacancy")">
+                                                <i class="bi @(job.Status == "Open" ? "bi-pause-circle text-warning" : "bi-play-circle text-success")"></i>
+                                            </button>
+                                        </form>
+
+                                        <!-- Delete Job -->
+                                        <form method="post" asp-page-handler="DeleteJob" asp-route-id="@job.Id" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete job opening @job.Title? Existing applicant CVs will be retained in the general CV bank.');">
+                                            <button type="submit" class="btn-action-del" title="Delete Job Opening">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div style="color: #7a8863; margin-bottom: 8px;">
+                                    <i class="bi bi-briefcase" style="font-size: 2.5rem; opacity: 0.6;"></i>
+                                </div>
+                                <div style="font-size: 15px; font-weight: 700; color: #151811; margin-bottom: 4px;">No Job Openings Published</div>
+                                <p style="font-size: 12.5px; color: #7a8863; margin-bottom: 12px;">Create your first targeted job position to generate dedicated QR codes for applicant scanning.</p>
+                                <a asp-page="CreateJob" class="btn-kanrich btn-kanrich-primary" style="padding: 8px 18px; text-decoration: none;">
+                                    <i class="bi bi-plus-circle me-1"></i> Open First Job Position
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+        <!-- TAB 2: CANDIDATE PIPELINE & CV BANK -->
+        <!-- ═══════════════════════════════════════════════════════════════ -->
+
+        <!-- Filter Bar -->
+        <form method="get" class="search-filter-bar">
+            <input type="hidden" name="Tab" value="candidates" />
+
+            <div class="search-input-wrap">
+                <i class="bi bi-search"></i>
+                <input asp-for="Search" class="search-input" placeholder="Search by candidate name, email, skills, job code..." />
+            </div>
+
+            <!-- Filter by specific Job Opening -->
+            <select asp-for="JobId" class="select-input" style="min-width: 200px;">
+                <option value="">All Job Openings & General</option>
+                @foreach (var job in Model.JobOpenings)
+                {
+                    <option value="@job.Id">[@job.JobCode] @job.Title</option>
+                }
+            </select>
+
+            <select asp-for="Position" class="select-input" style="min-width: 170px;">
+                <option value="">All Target Roles</option>
+                @foreach (var pos in Model.PositionOptions)
+                {
+                    <option value="@pos">@pos</option>
+                }
+            </select>
+
+            <select asp-for="MinScore" class="select-input" style="min-width: 140px;">
+                <option value="">All Scores</option>
+                <option value="50">Score &ge; 50</option>
+                <option value="75">Score &ge; 75 (Top Tier)</option>
+            </select>
+
+            <button type="submit" class="btn-kanrich btn-kanrich-primary" style="height: 38px; padding: 0 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+
+            @if (!string.IsNullOrEmpty(Model.Search) || (!string.IsNullOrEmpty(Model.Position) && Model.Position != "All") || Model.MinScore.HasValue || Model.JobId.HasValue)
+            {
+                <a asp-page="Index" asp-route-Tab="candidates" class="btn-kanrich btn-kanrich-outline" style="height: 38px; padding: 0 14px; font-size: 13px; display: inline-flex; align-items: center; gap: 4px;" title="Reset all filters">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            }
+        </form>
+
+        <!-- Main Candidates Table -->
+        <div class="tbl-card">
+            <table class="sep-table" id="candidatesTable">
+                <thead>
+                    <tr>
+                        <th style="padding-left: 20px;">Candidate Details</th>
+                        <th>Target Job Opening</th>
+                        <th>Experience & Degrees</th>
+                        <th>Key Skills</th>
+                        <th class="text-center">Adaptive Score</th>
+                        <th style="text-align: right; padding-right: 20px;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.CVList.Any())
+                    {
+                        @foreach (var item in Model.CVList)
+                        {
+                            var badgeStyle = item.ExperienceScore >= 75 ? "score-badge-high" : (item.ExperienceScore >= 50 ? "score-badge-mid" : "score-badge-low");
+                            <tr>
+                                <td style="padding-left: 20px;">
+                                    <div>
+                                        <div style="font-weight: 700; color: #151811; font-size: 13.5px;">@item.CandidateName</div>
+                                        <div class="text-muted" style="font-size: 11.5px; margin-top: 2px;">
+                                            <span>@item.Email</span>
+                                            @if (!string.IsNullOrEmpty(item.ContactNumber) && item.ContactNumber != "N/A")
+                                            {
+                                                <span> &bull; @item.ContactNumber</span>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (item.JobOpening != null)
+                                    {
+                                        <div class="d-flex flex-column gap-1 align-items-start">
+                                            <span class="pos-pill">
+                                                <i class="bi bi-briefcase"></i> @item.JobOpening.Title
+                                            </span>
+                                            <span class="job-code-badge" style="font-size: 10px;">
+                                                @item.JobOpening.JobCode
+                                            </span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <span class="pos-pill">
+                                            <i class="bi bi-briefcase"></i> @item.AppliedPosition
+                                        </span>
+                                        <div class="text-muted" style="font-size: 10.5px; margin-top: 2px;">General Pool</div>
+                                    }
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong>@item.ExperienceYears Year@(item.ExperienceYears != 1 ? "s" : "")</strong> Experience
+                                    </div>
+                                    <div class="mt-1">
+                                        @if (item.HasMasters)
+                                        {
+                                            <span class="badge bg-primary" style="font-size: 10px; margin-right: 2px;">Master's Degree</span>
+                                        }
+                                        @if (item.HasDegree)
+                                        {
+                                            <span class="badge bg-secondary" style="font-size: 10px;">Bachelor's Degree</span>
+                                        }
+                                        @if (!item.HasDegree && !item.HasMasters)
+                                        {
+                                            <span class="text-muted" style="font-size: 11px;">Diploma / High School</span>
+                                        }
+                                    </div>
+                                </td>
+                                <td style="max-width: 220px;">
+                                    @if (!string.IsNullOrEmpty(item.Skills) && item.Skills != "Not Specified" && item.Skills != "Not Provided")
+                                    {
+                                        var skills = item.Skills.Split(new[] { ',', ';', '/' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                                        foreach (var skill in skills.Take(3))
+                                        {
+                                            <span class="tag-chip">@skill</span>
+                                        }
+                                        if (skills.Length > 3)
+                                        {
+                                            <span class="text-muted small">+@(skills.Length - 3)</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted" style="font-size: 11.5px;">None specified</span>
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    <span class="@badgeStyle" title="Calculated adaptively against job minimum requirements">
+                                        <i class="bi @(item.ExperienceScore >= 75 ? "bi-award-fill" : "bi-check2")"></i>
+                                        @item.ExperienceScore / 100
+                                    </span>
+                                </td>
+                                <td style="text-align: right; padding-right: 20px;">
+                                    <div class="d-inline-flex gap-2 justify-content-end align-items-center">
+                                        <a asp-page="ViewCV" asp-route-id="@item.Id" class="btn-action-view">
+                                            <i class="bi bi-file-earmark-person"></i> View CV
+                                        </a>
+                                        <form method="post" asp-page-handler="Delete" asp-route-id="@item.Id" style="display:inline;" onsubmit="return confirm('Are you sure you want to remove candidate @item.CandidateName from the CV Bank?');">
+                                            <button type="submit" class="btn-action-del" title="Delete Candidate">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div style="color: #7a8863; margin-bottom: 8px;">
+                                    <i class="bi bi-folder-x" style="font-size: 2.5rem; opacity: 0.6;"></i>
+                                </div>
+                                <div style="font-size: 15px; font-weight: 700; color: #151811; margin-bottom: 4px;">No Candidates Available</div>
+                                <p style="font-size: 12.5px; color: #7a8863; margin-bottom: 0;">There are no candidate resumes matching your filter.</p>
+                                @if (!string.IsNullOrEmpty(Model.Search) || (!string.IsNullOrEmpty(Model.Position) && Model.Position != "All") || Model.MinScore.HasValue || Model.JobId.HasValue)
+                                {
+                                    <div class="mt-3">
+                                        <a asp-page="Index" asp-route-Tab="candidates" class="btn-kanrich btn-kanrich-outline" style="padding: 7px 14px; text-decoration: none;">
+                                            <i class="bi bi-x-circle me-1"></i> Clear Filters
+                                        </a>
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Off-screen Container for Instant Canvas QR Generation -->
+<div id="jobQrContainer" style="position: absolute; left: -9999px; top: -9999px; visibility: hidden;"></div>
+
+@section Scripts {
+    <!-- QR Code Generator Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script>
+        const baseUrl = (window.location && window.location.origin) 
+            ? window.location.origin 
+            : '@Html.Raw(Model.PublicBaseUrl)';
+
+        function downloadJobQRFlyer(jobId, jobCode, jobTitle, branchName, deptName, minExp, minEdu) {
+            const targetUrl = `${baseUrl}/Apply?jobId=${jobId}`;
+            const qrContainer = document.getElementById("jobQrContainer");
+            qrContainer.innerHTML = "";
+
+            // 1. Generate High-Resolution QR Code (640x640)
+            new QRCode(qrContainer, {
+                text: targetUrl,
+                width: 640,
+                height: 640,
+                colorDark: "#10823c",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            // 2. Load Company Logo and render High-Definition Canvas Flyer (1400x1900)
+            const logoImg = new Image();
+            logoImg.crossOrigin = "anonymous";
+
+            const proceedWithFlyer = function () {
+                setTimeout(function () {
+                    const canvas = document.createElement("canvas");
+                    const ctx = canvas.getContext("2d");
+                    
+                    // High-DPI Ultra-Sharp Canvas Resolution
+                    canvas.width = 1400;
+                    canvas.height = 1900;
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
+
+                    // Background
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Outer Frame
+                    ctx.strokeStyle = "#e2e8f0";
+                    ctx.lineWidth = 8;
+                    ctx.strokeRect(32, 32, canvas.width - 64, canvas.height - 64);
+
+                    // Inner Green Accent Border
+                    ctx.strokeStyle = "#10823c";
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(44, 44, canvas.width - 88, canvas.height - 88);
+
+                    // Top Header Banner
+                    ctx.fillStyle = "#10823c";
+                    ctx.fillRect(48, 48, canvas.width - 96, 290);
+
+                    // Logo Container (White Card on Top Banner)
+                    const logoCardW = 440;
+                    const logoCardH = 105;
+                    const logoCardX = (canvas.width - logoCardW) / 2;
+                    const logoCardY = 75;
+
+                    ctx.fillStyle = "#ffffff";
+                    if (ctx.roundRect) {
+                        ctx.beginPath();
+                        ctx.roundRect(logoCardX, logoCardY, logoCardW, logoCardH, 16);
+                        ctx.fill();
+                    } else {
+                        ctx.fillRect(logoCardX, logoCardY, logoCardW, logoCardH);
+                    }
+
+                    // Draw High-Res Logo if available
+                    if (logoImg && logoImg.complete && logoImg.naturalWidth > 0) {
+                        const aspect = logoImg.naturalWidth / logoImg.naturalHeight;
+                        let drawH = 75;
+                        let drawW = drawH * aspect;
+                        if (drawW > 390) {
+                            drawW = 390;
+                            drawH = drawW / aspect;
+                        }
+                        const drawX = (canvas.width - drawW) / 2;
+                        const drawY = logoCardY + (logoCardH - drawH) / 2;
+                        ctx.drawImage(logoImg, drawX, drawY, drawW, drawH);
+                    } else {
+                        ctx.fillStyle = "#10823c";
+                        ctx.font = "bold 32px 'Manrope', Arial, sans-serif";
+                        ctx.textAlign = "center";
+                        ctx.fillText("KANRICH FINANCE", canvas.width / 2, logoCardY + 65);
+                    }
+
+                    // Top Banner Text
+                    ctx.fillStyle = "#ffffff";
+                    ctx.font = "bold 32px 'Manrope', Arial, sans-serif";
+                    ctx.textAlign = "center";
+                    ctx.fillText("KANRICH FINANCE LIMITED", canvas.width / 2, 235);
+
+                    ctx.font = "bold 23px 'Manrope', Arial, sans-serif";
+                    ctx.fillStyle = "#dcfce7";
+                    ctx.fillText(`OFFICIAL CAREERS NOTICE • REF: ${jobCode}`, canvas.width / 2, 290);
+
+                    // Job Title Hero Box
+                    ctx.fillStyle = "#0f172a";
+                    ctx.font = "bold 52px 'Manrope', Arial, sans-serif";
+                    ctx.fillText(jobTitle, canvas.width / 2, 435);
+
+                    // Branch & Department
+                    ctx.fillStyle = "#0284c7";
+                    ctx.font = "bold 28px 'Manrope', Arial, sans-serif";
+                    ctx.fillText(`${branchName} • ${deptName}`, canvas.width / 2, 495);
+
+                    // Benchmark Pill
+                    const pillW = 860;
+                    const pillH = 68;
+                    const pillX = (canvas.width - pillW) / 2;
+                    const pillY = 535;
+
+                    ctx.fillStyle = "#f0fdf4";
+                    if (ctx.roundRect) {
+                        ctx.beginPath();
+                        ctx.roundRect(pillX, pillY, pillW, pillH, 12);
+                        ctx.fill();
+                        ctx.strokeStyle = "#bbf7d0";
+                        ctx.lineWidth = 3;
+                        ctx.stroke();
+                    } else {
+                        ctx.fillRect(pillX, pillY, pillW, pillH);
+                        ctx.strokeStyle = "#bbf7d0";
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(pillX, pillY, pillW, pillH);
+                    }
+
+                    ctx.fillStyle = "#15803d";
+                    ctx.font = "bold 26px 'Manrope', Arial, sans-serif";
+                    ctx.fillText(`Requirements: ${minExp} • ${minEdu}`, canvas.width / 2, pillY + 44);
+
+                    // Scan Instruction text
+                    ctx.fillStyle = "#475569";
+                    ctx.font = "600 27px 'Manrope', Arial, sans-serif";
+                    ctx.fillText("Scan this QR code with your smartphone camera to apply", canvas.width / 2, 665);
+
+                    // Draw High-Res QR Code from container
+                    const qrElem = document.querySelector("#jobQrContainer canvas") || document.querySelector("#jobQrContainer img");
+                    if (qrElem) {
+                        const qrSize = 620;
+                        const qrX = (canvas.width - qrSize) / 2;
+                        const qrY = 715;
+
+                        // QR Container Box
+                        ctx.fillStyle = "#f8fafc";
+                        ctx.strokeStyle = "#cbd5e1";
+                        ctx.lineWidth = 4;
+                        if (ctx.roundRect) {
+                            ctx.beginPath();
+                            ctx.roundRect(qrX - 30, qrY - 30, qrSize + 60, qrSize + 60, 20);
+                            ctx.fill();
+                            ctx.stroke();
+                        } else {
+                            ctx.fillRect(qrX - 30, qrY - 30, qrSize + 60, qrSize + 60);
+                            ctx.strokeRect(qrX - 30, qrY - 30, qrSize + 60, qrSize + 60);
+                        }
+
+                        ctx.drawImage(qrElem, qrX, qrY, qrSize, qrSize);
+                    }
+
+                    // Bottom Feature Highlights
+                    ctx.fillStyle = "#10823c";
+                    ctx.font = "bold 28px 'Manrope', Arial, sans-serif";
+                    ctx.fillText("Instant Mobile Application • Fast-Track HR Review", canvas.width / 2, 1515);
+
+                    ctx.fillStyle = "#64748b";
+                    ctx.font = "500 24px 'Manrope', Arial, sans-serif";
+                    ctx.fillText("Point your phone's camera at the QR code above to submit your details & CV.", canvas.width / 2, 1565);
+
+                    // Footer bar
+                    ctx.fillStyle = "#f1f5f9";
+                    ctx.fillRect(48, 1720, canvas.width - 96, 88);
+                    ctx.fillStyle = "#64748b";
+                    ctx.font = "500 22px 'Manrope', Arial, sans-serif";
+                    ctx.fillText("© Kanrich Finance Limited • Official Talent Acquisition Portal", canvas.width / 2, 1774);
+
+                    // Trigger Download
+                    const link = document.createElement('a');
+                    const safeName = jobCode.replace(/[^a-zA-Z0-9_-]/g, '_');
+                    link.download = `Kanrich_Job_QR_${safeName}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                }, 200);
+            };
+
+            logoImg.onload = proceedWithFlyer;
+            logoImg.onerror = proceedWithFlyer;
+            logoImg.src = "/images/logo.png";
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (document.getElementById("jobsTable")) {
+                initTablePagination("jobsTable", 10);
+            }
+            if (document.getElementById("candidatesTable")) {
+                initTablePagination("candidatesTable", 10);
+            }
+        });
+    </script>
+}

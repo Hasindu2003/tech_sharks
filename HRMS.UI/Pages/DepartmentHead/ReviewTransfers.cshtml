@@ -22,10 +22,28 @@
     .btn-action:hover { background: #e8f3ec; }
 </style>
 
-<div class="page-header" style="margin-bottom:24px">
+<div class="page-header" style="margin-bottom:18px">
     <div>
-        <h1 style="font-size:19px;font-weight:800;color:#151811;margin:0 0 3px">Separation</h1>
-        <div style="font-size:12px;color:#7a8863">@Model.DeptHeadDepartment — @Model.DeptHeadBranch</div>
+        <h1 style="font-size:19px;font-weight:800;color:#151811;margin:0 0 3px">Separation Management</h1>
+        <div style="font-size:12px;color:#7a8863">@Model.DeptHeadDepartment &mdash; @Model.DeptHeadBranch</div>
+    </div>
+</div>
+
+<div style="display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid #e2e5dc;padding-bottom:12px">
+    <a asp-page="/DepartmentHead/ReviewTransfers" 
+       class="btn-kanrich btn-kanrich-primary btn-kanrich-sm"
+       style="display:inline-flex;align-items:center;gap:6px">
+        <i class="bi bi-arrow-left-right"></i> Transfers
+    </a>
+    <a asp-page="/DepartmentHead/ReviewResignations" 
+       class="btn-kanrich btn-kanrich-outline btn-kanrich-sm"
+       style="display:inline-flex;align-items:center;gap:6px">
+        <i class="bi bi-box-arrow-right"></i> Resignations
+    </a>
+    <div style="margin-left:auto">
+        <a asp-page="/Separation/Dashboard" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="display:inline-flex;align-items:center;gap:6px">
+            <i class="bi bi-grid"></i> Separation Hub
+        </a>
     </div>
 </div>
 
@@ -63,7 +81,8 @@
             <tbody>
                 @foreach (var r in Model.PendingRequests)
                 {
-                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     <tr>
                         <td>
                             <div class="employee-cell">
@@ -119,7 +138,8 @@ else
             <tbody>
                 @foreach (var r in Model.ReviewedRequests)
                 {
-                    var initials = string.Join("", r.EmployeeName.Split(' ').Take(2).Select(w => w[0])).ToUpper();
+                    var nameParts = (r.EmployeeName ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                    var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
                     var isApproved = r.DeptHeadReview == "Approved";
                     <tr>
                         <td>

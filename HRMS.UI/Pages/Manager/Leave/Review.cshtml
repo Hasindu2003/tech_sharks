@@ -91,21 +91,43 @@
     .emp-profile-header {
         display: flex;
         align-items: center;
-        gap: 14px;
+        gap: 16px;
         margin-bottom: 20px;
         padding-bottom: 16px;
         border-bottom: 1px solid #f1f5f9;
     }
     .emp-avatar {
-        width: 48px;
-        height: 48px;
+        width: 58px;
+        height: 58px;
         border-radius: 50%;
         background: linear-gradient(135deg, #10823c, #0d6e32);
         color: #ffffff;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 18px;
+        font-size: 19px;
+        font-weight: 800;
+        overflow: hidden;
+        flex-shrink: 0;
+        border: 2px solid #e2e8f0;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+        position: relative;
+    }
+    .emp-avatar-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+    .emp-avatar-fallback {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #10823c, #0d6e32);
+        color: #ffffff;
+        font-size: 19px;
         font-weight: 800;
     }
     .emp-meta {
@@ -131,7 +153,7 @@
         border-radius: 12px;
         text-transform: uppercase;
     }
-    .badge-Pending, .badge-PendingDH, .badge-PendingBM, .badge-PendingHR { background: #fef3c7; color: #d97706; }
+    .badge-Pending, .badge-PendingDH, .badge-PendingBM, .badge-PendingAM, .badge-PendingHR { background: #fef3c7; color: #d97706; }
     .badge-Approved { background: #dcfce7; color: #166534; }
     .badge-Rejected { background: #fee2e2; color: #991b1b; }
 
@@ -250,7 +272,7 @@
 </style>
 
 <div class="review-header">
-    <a asp-page="./Approval" class="btn-back" title="Back to Inbox">
+    <a asp-page="./Approval" asp-route-tab="@(Model.LeaveItem?.LeaveType?.Equals("Maternity", StringComparison.OrdinalIgnoreCase) == true ? "maternity" : Model.LeaveItem?.LeaveType?.Equals("Overseas", StringComparison.OrdinalIgnoreCase) == true ? "overseas" : "standard")" class="btn-back" title="Back to Inbox">
         <i class="bi bi-arrow-left"></i>
     </a>
     <div>
@@ -284,7 +306,7 @@
                 <span class="detail-label">Leave Type</span>
                 <span class="detail-val">
                     <span class="badge-status" style="background:#cbd5e1; color:#1e293b; font-size: 11.5px;">
-                        @Model.LeaveItem.LeaveType
+                        @(Model.LeaveItem?.LeaveType ?? "—")
                     </span>
                 </span>
             </div>
@@ -292,36 +314,48 @@
             <div class="detail-row">
                 <span class="detail-label">Duration</span>
                 <span class="detail-val">
-                    @Model.LeaveItem.StartDate.ToString("MMM dd, yyyy") – @Model.LeaveItem.EndDate.ToString("MMM dd, yyyy")
-                    <span style="color:#10823c; margin-left: 6px;">(@Model.LeaveItem.TotalDays Days)</span>
+                    @if (Model.LeaveItem != null && Model.LeaveItem.IsHalfDay)
+                    {
+                        @Model.LeaveItem.StartDate.ToString("MMMM dd, yyyy")
+                        <span style="color:#10823c; margin-left: 6px;">(0.5 Days &ndash; @(Model.LeaveItem.HalfDaySession ?? "Half Day"))</span>
+                    }
+                    else if (Model.LeaveItem != null)
+                    {
+                        @Model.LeaveItem.StartDate.ToString("MMMM dd, yyyy") <text>&ndash;</text> @Model.LeaveItem.EndDate.ToString("MMMM dd, yyyy")
+                        <span style="color:#10823c; margin-left: 6px;">(@(Model.LeaveItem.TotalDays % 1 == 0 ? $"{Model.LeaveItem.TotalDays:0}" : $"{Model.LeaveItem.TotalDays:0.0}") Days)</span>
+                    }
+                    else
+                    {
+                        <span>—</span>
+                    }
                 </span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Status</span>
                 <span class="detail-val">
-                    <span class="badge-status badge-@Model.LeaveItem.Status">@Model.LeaveItem.Status</span>
+                    <span class="badge-status badge-@(Model.LeaveItem?.Status)">@(Model.LeaveItem?.Status ?? "N/A")</span>
                 </span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Applied Date</span>
-                <span class="detail-val">@Model.LeaveItem.AppliedDate.ToString("MMMM dd, yyyy HH:mm")</span>
+                <span class="detail-val">@(Model.LeaveItem?.AppliedDate.ToString("MMMM dd, yyyy HH:mm") ?? "—")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Remarks/Reason</span>
                 <span class="detail-val" style="font-weight: 500; font-style: italic;">
-                    @(string.IsNullOrWhiteSpace(Model.LeaveItem.Reason) ? "No remarks provided." : Model.LeaveItem.Reason)
+                    @(string.IsNullOrWhiteSpace(Model.LeaveItem?.Reason) ? "No remarks provided." : Model.LeaveItem.Reason)
                 </span>
             </div>
 
-            @if (!string.IsNullOrEmpty(Model.LeaveItem.AttachmentPath))
+            @if (!string.IsNullOrEmpty(Model.LeaveItem?.AttachmentPath))
             {
                 <div class="detail-row">
                     <span class="detail-label">Attachment</span>
                     <span class="detail-val">
-                        <a href="@Model.LeaveItem.AttachmentPath" target="_blank" class="attachment-badge">
+                        <a href="@Model.LeaveItem.AttachmentPath" class="attachment-badge js-doc-preview" data-doc-title="Leave Attachment">
                             <i class="bi bi-file-earmark-arrow-down"></i> View Attached File
                         </a>
                     </span>
@@ -329,7 +363,7 @@
             }
 
             @* Special details for Maternity Leave *@
-            @if (Model.LeaveItem.MaternityLeave != null)
+            @if (Model.LeaveItem?.MaternityLeave != null)
             {
                 <h4 class="card-sec-title" style="margin-top: 24px; font-size: 13.5px; border-bottom: 1px dashed #e2e8f0;">
                     <i class="bi bi-heart-pulse"></i> Maternity Leave Sub-Details
@@ -355,7 +389,7 @@
                     <div class="detail-row">
                         <span class="detail-label">Medical Certificate</span>
                         <span class="detail-val">
-                            <a href="@Model.LeaveItem.MaternityLeave.MedicalCertificatePath" target="_blank" class="attachment-badge">
+                            <a href="@Model.LeaveItem.MaternityLeave.MedicalCertificatePath" class="attachment-badge js-doc-preview" data-doc-title="Medical Certificate">
                                 <i class="bi bi-file-earmark-check"></i> View MC
                             </a>
                         </span>
@@ -364,10 +398,10 @@
                 @if (!string.IsNullOrEmpty(Model.LeaveItem.MaternityLeave.DoctorLetterPath))
                 {
                     <div class="detail-row">
-                        <span class="detail-label">Doctor Letter</span>
+                        <span class="detail-label">Doctor's Letter</span>
                         <span class="detail-val">
-                            <a href="@Model.LeaveItem.MaternityLeave.DoctorLetterPath" target="_blank" class="attachment-badge">
-                                <i class="bi bi-file-earmark-text"></i> View Doctor Letter
+                            <a href="@Model.LeaveItem.MaternityLeave.DoctorLetterPath" class="attachment-badge js-doc-preview" data-doc-title="Doctor Letter">
+                                <i class="bi bi-file-earmark-medical"></i> View Letter
                             </a>
                         </span>
                     </div>
@@ -375,7 +409,7 @@
             }
 
             @* Special details for Overseas Leave *@
-            @if (Model.LeaveItem.OverseasLeave != null)
+            @if (Model.LeaveItem?.OverseasLeave != null)
             {
                 <h4 class="card-sec-title" style="margin-top: 24px; font-size: 13.5px; border-bottom: 1px dashed #e2e8f0;">
                     <i class="bi bi-globe"></i> Overseas Leave Sub-Details
@@ -401,7 +435,7 @@
                     <div class="detail-row">
                         <span class="detail-label">Passport Copy</span>
                         <span class="detail-val">
-                            <a href="@Model.LeaveItem.OverseasLeave.PassportCopyPath" target="_blank" class="attachment-badge">
+                            <a href="@Model.LeaveItem.OverseasLeave.PassportCopyPath" class="attachment-badge js-doc-preview" data-doc-title="Passport Copy">
                                 <i class="bi bi-file-earmark-check"></i> View Copy
                             </a>
                         </span>
@@ -412,7 +446,7 @@
                     <div class="detail-row">
                         <span class="detail-label">Confirmation Letter</span>
                         <span class="detail-val">
-                            <a href="@Model.LeaveItem.OverseasLeave.ConfirmationLetterPath" target="_blank" class="attachment-badge">
+                            <a href="@Model.LeaveItem.OverseasLeave.ConfirmationLetterPath" class="attachment-badge js-doc-preview" data-doc-title="Confirmation Letter">
                                 <i class="bi bi-file-earmark-text"></i> View Letter
                             </a>
                         </span>
@@ -431,7 +465,7 @@
                     <div class="action-buttons">
                         <form method="post" asp-page-handler="Reject" id="rejectForm" style="display:inline;">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@Model.LeaveItem.Id" />
+                            <input type="hidden" name="id" value="@(Model.LeaveItem?.Id ?? 0)" />
                             <input type="hidden" name="reason" id="rejectReasonInput" />
                             <button type="button" onclick="submitDecision('Reject')" class="btn-action btn-reject">
                                 <i class="bi bi-x-circle"></i> Reject Request
@@ -440,7 +474,7 @@
 
                         <form method="post" asp-page-handler="Approve" id="approveForm" style="display:inline;">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@Model.LeaveItem.Id" />
+                            <input type="hidden" name="id" value="@(Model.LeaveItem?.Id ?? 0)" />
                             <input type="hidden" name="comments" id="approveCommentsInput" />
                             <button type="button" onclick="submitDecision('Approve')" class="btn-action btn-approve">
                                 <i class="bi bi-check-circle"></i> Approve Request
@@ -451,18 +485,18 @@
             }
             else
             {
-                @if (!Model.ApprovalSteps.Any() && (Model.LeaveItem.Status == "Approved" || Model.LeaveItem.Status == "Rejected"))
+                @if (!Model.ApprovalSteps.Any() && (Model.LeaveItem?.Status == "Approved" || Model.LeaveItem?.Status == "Rejected"))
                 {
                     <div style="margin-top: 24px; padding: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px;">
                         <div style="font-size: 12.5px; font-weight: 700; color: #64748b; margin-bottom: 4px;">Decision Log</div>
-                        @if (Model.LeaveItem.Status == "Approved")
+                        @if (Model.LeaveItem?.Status == "Approved")
                         {
                             <div style="font-size:13px; color:#1e293b;">
                                 <strong>Approved By:</strong> @(Model.LeaveItem.ApprovedBy?.FullName ?? "Manager") <br/>
                                 <strong>Approved Date:</strong> @(Model.LeaveItem.ApprovedDate?.ToString("MMM dd, yyyy HH:mm") ?? "N/A")
                             </div>
                         }
-                        else if (Model.LeaveItem.Status == "Rejected")
+                        else if (Model.LeaveItem?.Status == "Rejected")
                         {
                             <div style="font-size:13px; color:#1e293b;">
                                 <strong>Reason:</strong> @(Model.LeaveItem.RejectionReason ?? "No reason given")
@@ -488,7 +522,7 @@
                                 <div style="position: absolute; left: -26px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: @(step.Status == "Approved" ? "#10823c" : "#ef4444"); border: 2px solid #ffffff; box-shadow: 0 0 0 2px @(step.Status == "Approved" ? "#dcfce7" : "#fee2e2");"></div>
                                 
                                 <div style="font-size: 12px; color: #64748b;">
-                                    <strong style="color: #1e293b;">@step.Approver.FullName</strong>
+                                    <strong style="color: #1e293b;">@(step.Approver?.FullName ?? "Approver")</strong>
                                     <span style="margin: 0 4px; color: #cbd5e1;">|</span>
                                     @step.ApprovalDate.ToString("MMM dd, yyyy HH:mm")
                                 </div>
@@ -517,50 +551,73 @@
             </h3>
 
             <div class="emp-profile-header">
+                @{
+                    var emp = Model.LeaveItem?.Employee;
+                    var empNameWithInitials = emp?.NameWithInitials ?? emp?.FullName ?? "Employee";
+                    var nameParts = (emp?.FullName ?? empNameWithInitials).Split(new[] { ' ', '.' }, StringSplitOptions.RemoveEmptyEntries);
+                    var avatarChars = nameParts.Length > 1 
+                        ? $"{nameParts[0][0]}{nameParts[^1][0]}".ToUpper() 
+                        : (nameParts.Length == 1 ? nameParts[0].Substring(0, Math.Min(2, nameParts[0].Length)).ToUpper() : "EE");
+                }
                 <div class="emp-avatar">
-                    @(Model.LeaveItem.Employee?.Initials ?? Model.LeaveItem.Employee?.FullName?.Substring(0, 2).ToUpper() ?? "EE")
+                    @if (emp != null)
+                    {
+                        <img src="/uploads/avatars/emp_@(emp.Id).jpg" 
+                             class="emp-avatar-img" 
+                             alt="@empNameWithInitials" 
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                        <div class="emp-avatar-fallback" style="display:none;">
+                            @avatarChars
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="emp-avatar-fallback">
+                            EE
+                        </div>
+                    }
                 </div>
                 <div class="emp-meta">
-                    <span class="emp-name">@Model.LeaveItem.Employee?.FullName</span>
-                    <span class="emp-title">@(Model.LeaveItem.Employee?.Designation?.Title ?? "Employee")</span>
+                    <span class="emp-name" title="@emp?.FullName">@empNameWithInitials</span>
+                    <span class="emp-title">@(emp?.Designation?.Title ?? "Employee")</span>
                 </div>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">EPF No</span>
-                <span class="detail-val">@Model.LeaveItem.Employee?.EPFNumber</span>
+                <span class="detail-val">@(emp?.EPFNumber ?? "—")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Branch</span>
-                <span class="detail-val">@Model.LeaveItem.Employee?.Branch?.Name</span>
+                <span class="detail-val">@(emp?.Branch?.Name ?? "—")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Department</span>
-                <span class="detail-val">@(Model.LeaveItem.Employee?.Department?.Name ?? "N/A")</span>
+                <span class="detail-val">@(emp?.Department?.Name ?? "N/A")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Email</span>
-                <span class="detail-val">@Model.LeaveItem.Employee?.Email</span>
+                <span class="detail-val">@(emp?.Email ?? "—")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Phone</span>
-                <span class="detail-val">@Model.LeaveItem.Employee?.PhoneNumber</span>
+                <span class="detail-val">@(emp?.PhoneNumber ?? "—")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Joined Date</span>
-                <span class="detail-val">@(Model.LeaveItem.Employee?.DateJoined?.ToString("MMMM dd, yyyy") ?? "N/A")</span>
+                <span class="detail-val">@(emp?.DateJoined?.ToString("MMMM dd, yyyy") ?? "N/A")</span>
             </div>
 
             <div class="detail-row">
                 <span class="detail-label">Status</span>
                 <span class="detail-val">
                     <span class="badge-status" style="background:#e0f2fe; color:#0369a1;">
-                        @Model.LeaveItem.Employee?.Status
+                        @(emp?.Status ?? "Active")
                     </span>
                 </span>
             </div>
@@ -571,7 +628,7 @@
 <!-- Leave Balances Section -->
 <div class="history-card" style="margin-bottom: 24px;">
     <h3 class="card-sec-title">
-        <i class="bi bi-pie-chart"></i> Leave Entitlements (@Model.LeaveItem.StartDate.Year)
+        <i class="bi bi-pie-chart"></i> Leave Entitlements (@(Model.LeaveItem?.StartDate.Year ?? DateTime.Now.Year))
     </h3>
     @if (Model.LeaveBalances.Any())
     {
@@ -584,12 +641,12 @@
                             @balance.LeaveType
                         </div>
                         <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">
-                            Total: @balance.TotalDays | Used: @balance.UsedDays
+                            Total: @(balance.TotalDays % 1 == 0 ? $"{balance.TotalDays:0}" : $"{balance.TotalDays:0.0}") | Used: @(balance.UsedDays % 1 == 0 ? $"{balance.UsedDays:0}" : $"{balance.UsedDays:0.0}")
                         </div>
                     </div>
                     <div style="text-align: right; flex-shrink: 0;">
                         <span style="font-size: 15px; font-weight: 800; color: #10823c;">
-                            @balance.RemainingDays
+                            @(balance.RemainingDays % 1 == 0 ? $"{balance.RemainingDays:0}" : $"{balance.RemainingDays:0.0}")
                         </span>
                         <span style="font-size: 9.5px; color: #64748b; font-weight: 700; display: block; margin-top: -2px; text-transform: uppercase;">
                             Left
@@ -602,7 +659,7 @@
     else
     {
         <div style="text-align: center; font-size: 13px; color: #94a3b8; padding: 12px 0;">
-            No leave entitlement records for @Model.LeaveItem.StartDate.Year
+            No leave entitlement records for @(Model.LeaveItem?.StartDate.Year ?? DateTime.Now.Year)
         </div>
     }
 </div>
@@ -636,10 +693,18 @@
                                 <span class="badge-status" style="background:#f1f5f9; color:#475569; font-weight:700;">
                                     @hist.LeaveType
                                 </span>
+                                @if (hist.IsHalfDay)
+                                {
+                                    <span style="display:block; font-size:10.5px; color:#10823c; font-weight:600; margin-top:2px;">
+                                        <i class="bi bi-pie-chart-fill"></i> @(hist.HalfDaySession ?? "Half Day")
+                                    </span>
+                                }
                             </td>
                             <td>@hist.StartDate.ToString("MMM dd, yyyy")</td>
                             <td>@hist.EndDate.ToString("MMM dd, yyyy")</td>
-                            <td style="font-weight: 700;">@hist.TotalDays</td>
+                            <td style="font-weight: 700; color:#10823c;">
+                                @(hist.TotalDays % 1 == 0 ? $"{hist.TotalDays:0}" : $"{hist.TotalDays:0.0}") @(hist.TotalDays == 1 ? "day" : "days")
+                            </td>
                             <td>
                                 <span class="badge-status badge-@hist.Status">@hist.Status</span>
                             </td>

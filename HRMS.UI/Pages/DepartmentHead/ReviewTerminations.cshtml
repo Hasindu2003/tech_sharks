@@ -1,0 +1,172 @@
+@page
+@model HRMS.UI.Pages.DepartmentHead.ReviewTerminationsModel
+@{
+    ViewData["Title"] = "Review Terminations";
+}
+
+<div class="page-header" style="margin-bottom: 24px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+        <div>
+            <h2 style="font-size:24px;font-weight:700;color:var(--text-primary);margin:0 0 4px 0">Separation Reviews</h2>
+            <p class="page-subtitle" style="margin:0;color:var(--text-secondary)">
+                Department Head Review Queue &bull; 
+                <span class="badge" style="background:#e8f5e9;color:#2e7d32;font-size:12px;font-weight:600">@Model.DeptHeadDepartment</span>
+                <span class="badge" style="background:#f3e8ff;color:#7e22ce;font-size:12px;font-weight:600;margin-left:4px">@Model.DeptHeadBranch</span>
+            </p>
+        </div>
+        <div>
+            <a asp-page="/Separation/Dashboard" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="display:inline-flex;align-items:center;gap:6px">
+                <i class="bi bi-grid"></i> Separation Hub
+            </a>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="k-nav-tabs" style="display:flex;gap:8px;margin-top:20px;border-bottom:1px solid var(--border-color);padding-bottom:8px">
+        <a asp-page="/DepartmentHead/ReviewTransfers" class="k-tab-link" style="padding:8px 16px;border-radius:6px;font-weight:600;text-decoration:none;color:var(--text-secondary)">
+            <i class="bi bi-arrow-left-right"></i> Transfers
+        </a>
+        <a asp-page="/DepartmentHead/ReviewResignations" class="k-tab-link" style="padding:8px 16px;border-radius:6px;font-weight:600;text-decoration:none;color:var(--text-secondary)">
+            <i class="bi bi-box-arrow-right"></i> Resignations
+        </a>
+        <a asp-page="/DepartmentHead/ReviewTerminations" class="k-tab-link active" style="padding:8px 16px;border-radius:6px;font-weight:600;text-decoration:none;background:#e8f5e9;color:#2e7d32">
+            <i class="bi bi-person-x"></i> Terminations
+            @if (Model.PendingRequests.Any())
+            {
+                <span class="badge" style="background:#ef4444;color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;margin-left:6px">@Model.PendingRequests.Count</span>
+            }
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="k-alert k-alert-success" style="margin-bottom:20px">
+        <i class="bi bi-check-circle-fill"></i> @TempData["SuccessMessage"]
+    </div>
+}
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="k-alert k-alert-danger" style="margin-bottom:20px">
+        <i class="bi bi-exclamation-triangle-fill"></i> @TempData["ErrorMessage"]
+    </div>
+}
+
+<!-- Pending Approvals Queue -->
+<div class="k-card" style="margin-bottom:24px">
+    <div class="k-card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span><i class="bi bi-clock-history" style="color:#d97706;margin-right:6px"></i> Awaiting Your Review (@Model.PendingRequests.Count)</span>
+    </div>
+
+    @if (!Model.PendingRequests.Any())
+    {
+        <div style="text-align:center;padding:40px 20px;color:var(--text-muted)">
+            <div style="width:56px;height:56px;border-radius:50%;background:#e8f5e9;color:#2e7d32;display:flex;align-items:center;justify-content:center;margin:0 auto 16px auto;font-size:24px">
+                <i class="bi bi-check-circle"></i>
+            </div>
+            <h4 style="font-size:16px;font-weight:600;margin-bottom:4px;color:var(--text-primary)">All Caught Up!</h4>
+            <p style="margin:0;font-size:14px">There are no pending employee termination clearance requests for your department.</p>
+        </div>
+    }
+    else
+    {
+        <div class="k-table-responsive">
+            <table class="k-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Designation</th>
+                        <th>Type</th>
+                        <th>Effective Date</th>
+                        <th>Clearance Status</th>
+                        <th style="text-align:right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.PendingRequests)
+                    {
+                        var nameParts = item.EmployeeName.Split(' ').Where(p => p.Length > 0).ToArray();
+                        var initials = nameParts.Length > 0 ? string.Join("", nameParts.Take(2).Select(w => w[0])).ToUpper() : "EM";
+                        <tr>
+                            <td>
+                                <div style="display:flex;align-items:center;gap:10px">
+                                    <div style="width:36px;height:36px;border-radius:50%;background:#fee2e2;color:#dc2626;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px">
+                                        @initials
+                                    </div>
+                                    <div>
+                                        <div style="font-weight:600;color:var(--text-primary)">@item.EmployeeName</div>
+                                        <div style="font-size:12px;color:var(--text-muted)">EPF: @item.EpfNumber</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@item.Designation</td>
+                            <td><span class="badge" style="background:#fef3c7;color:#92400e;font-weight:600">@item.TerminationTypeDisplay</span></td>
+                            <td>@item.EffectiveTerminationDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <span class="badge" style="background:#fef3c7;color:#92400e">
+                                    @item.DeptHeadsApprovedCount / @item.TotalDeptHeadsCount Approved
+                                </span>
+                            </td>
+                            <td style="text-align:right">
+                                <a asp-page="/DepartmentHead/ReviewTermination" asp-route-id="@item.Id" class="btn-kanrich btn-kanrich-primary btn-kanrich-sm">
+                                    Review &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+<!-- Recently Reviewed -->
+<div class="k-card">
+    <div class="k-card-header">
+        <span><i class="bi bi-clock" style="color:#6b7280;margin-right:6px"></i> Recently Reviewed</span>
+    </div>
+
+    @if (!Model.ReviewedRequests.Any())
+    {
+        <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:14px">
+            No previously reviewed termination requests found.
+        </div>
+    }
+    else
+    {
+        <div class="k-table-responsive">
+            <table class="k-table">
+                <thead>
+                    <tr>
+                        <th>Employee</th>
+                        <th>Type</th>
+                        <th>Effective Date</th>
+                        <th>Overall Status</th>
+                        <th style="text-align:right">Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.ReviewedRequests)
+                    {
+                        <tr>
+                            <td>
+                                <div style="font-weight:600">@item.EmployeeName</div>
+                                <div style="font-size:12px;color:var(--text-muted)">EPF: @item.EpfNumber</div>
+                            </td>
+                            <td>@item.TerminationTypeDisplay</td>
+                            <td>@item.EffectiveTerminationDate.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <span class="k-badge @item.StatusBadgeClass">@item.StatusDisplay</span>
+                            </td>
+                            <td style="text-align:right">
+                                <a asp-page="/DepartmentHead/ReviewTermination" asp-route-id="@item.Id" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm">
+                                    View &rarr;
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

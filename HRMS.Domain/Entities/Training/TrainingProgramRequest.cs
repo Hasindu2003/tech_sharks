@@ -12,5 +12,6 @@ namespace HRMS.Domain.Entities.Training
         public string? Description { get; set; }
         public DateTime RequestedDate { get; set; }
         public string Status { get; set; } = null!;  // Pending / Approved / Rejected
+        public DateTime? ScheduledDate { get; set; }
     }
 }

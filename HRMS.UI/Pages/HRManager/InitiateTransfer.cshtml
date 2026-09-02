@@ -1,29 +1,44 @@
 @page
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "HR Manager")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer")]
 @model HRMS.UI.Pages.HRManager.InitiateTransferModel
 @{
     ViewData["Title"] = "Initiate Transfer";
 }
 
 <div class="page-header" style="margin-bottom: 24px;">
-    <a asp-page="/HRManager/ReviewTransfers" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="border: none; padding-left: 0; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">
-        <i class="bi bi-arrow-left"></i> Back to Review Transfers
+    <a asp-page="/Separation/Dashboard" asp-route-ActiveTab="Transfers" class="btn-kanrich btn-kanrich-outline btn-kanrich-sm" style="border: none; padding-left: 0; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">
+        <i class="bi bi-arrow-left"></i> Back to Separation Hub
     </a>
     <h2>Initiate Transfer</h2>
-    <p class="page-subtitle">Initiate a transfer request for an employee to another branch</p>
+    <p class="page-subtitle">Initiate a transfer request for an employee in your assigned branches</p>
 </div>
 
 <div asp-validation-summary="ModelOnly" class="k-alert k-alert-danger" style="display:@(ViewData.ModelState.ErrorCount > 0 ? "flex" : "none")"></div>
 
-<form method="post" enctype="multipart/form-data">
+<form method="post" enctype="multipart/form-data" id="transferForm">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start">
-        <!-- Left Column -->
+        <!-- Left Column: Employee & Branch Selection -->
         <div>
-            <!-- Employee Selection -->
+            <!-- Branch & Employee Selection Card -->
             <div class="k-card" style="margin-bottom:20px">
-                <div class="k-card-header"><i class="bi bi-person-lines-fill" style="color:#1a7a3a;margin-right:6px"></i> Select Employee</div>
+                <div class="k-card-header">
+                    <i class="bi bi-person-badge" style="color:#1a7a3a;margin-right:6px"></i> 
+                    Employee Selection
+                </div>
                 
+                <!-- 1. Current Branch Selection -->
+                <div class="k-form-group">
+                    <label asp-for="Input.SelectedBranchId">
+                        <i class="bi bi-building" style="color:#1a7a3a;margin-right:4px"></i> Current Branch <span style="color:#ef4444">*</span>
+                    </label>
+                    <select asp-for="Input.SelectedBranchId" id="currentBranchSelect" class="k-form-control" asp-items="Model.AssignedBranchList">
+                        <option value="">-- Select Assigned Branch --</option>
+                    </select>
+                    <span asp-validation-for="Input.SelectedBranchId" class="text-danger small"></span>
+                </div>
+
+                <!-- 2. Employee Selection -->
                 <div class="k-form-group">
                     <label asp-for="Input.SelectedEmployeeId">
                         <i class="bi bi-person" style="color:#1a7a3a;margin-right:4px"></i> Employee <span style="color:#ef4444">*</span>
@@ -33,24 +48,43 @@
                     </select>
                     <div class="custom-dropdown" id="employeeDropdown">
                         <div class="custom-dropdown-trigger" id="employeeTrigger">
-                            <span id="employeeTriggerText">-- Select Employee --</span>
+                            <span id="employeeTriggerText">-- Select Branch First --</span>
                             <i class="bi bi-chevron-down custom-dropdown-chevron"></i>
                         </div>
                         <div class="custom-dropdown-list" id="employeeList">
                             <div class="custom-dropdown-search-box">
                                 <i class="bi bi-search custom-dropdown-search-icon"></i>
                                 <input type="text" id="employeeSearch" class="custom-dropdown-search-input"
-                                       placeholder="Search by EPF number..." autocomplete="off" />
+                                       placeholder="Search by EPF number or Name..." autocomplete="off" />
                             </div>
-                            <div class="custom-dropdown-option" data-value="">-- Select Employee --</div>
-                            @foreach (var emp in Model.Employees)
-                            {
-                                <div class="custom-dropdown-option" data-value="@emp.Value">@emp.Text</div>
-                            }
-                            <div class="custom-dropdown-no-results" id="employeeNoResults" style="display:none">No employees found.</div>
+                            <div class="custom-dropdown-options-container" id="employeeOptionsContainer">
+                                <div class="custom-dropdown-option" data-value="">-- Select Employee --</div>
+                                @foreach (var emp in Model.Employees)
+                                {
+                                    <div class="custom-dropdown-option" data-value="@emp.Value">@emp.Text</div>
+                                }
+                            </div>
+                            <div class="custom-dropdown-no-results" id="employeeNoResults" style="display:none">No active employees found in this branch.</div>
                         </div>
                     </div>
                     <span asp-validation-for="Input.SelectedEmployeeId" class="text-danger small"></span>
+                </div>
+
+                <!-- Selected Employee Summary Card -->
+                <div id="empSummaryCard" style="display:none;background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin-top:12px">
+                    <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
+                        <div id="empAvatar" style="width:38px;height:38px;border-radius:50%;background:#e8f3ec;color:#10823c;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">EM</div>
+                        <div>
+                            <div id="empName" style="font-size:14px;font-weight:700;color:#151811">Employee Name</div>
+                            <div id="empSub" style="font-size:12px;color:#64748b">EPF · Designation</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;border-top:1px solid #e2e8f0;padding-top:8px">
+                        <div><span style="color:#64748b">Department:</span> <strong id="empDept" style="color:#1e293b">-</strong></div>
+                        <div><span style="color:#64748b">Current Branch:</span> <strong id="empBranch" style="color:#1e293b">-</strong></div>
+                        <div><span style="color:#64748b">Service Period:</span> <strong id="empService" style="color:#1e293b">-</strong></div>
+                        <div><span style="color:#64748b">Email:</span> <strong id="empEmail" style="color:#1e293b">-</strong></div>
+                    </div>
                 </div>
             </div>
 
@@ -75,26 +109,13 @@
                     <label asp-for="Input.RequestedBranch">
                         <i class="bi bi-geo-alt" style="color:#1a7a3a;margin-right:4px"></i> Target Branch <span style="color:#ef4444">*</span>
                     </label>
-                    <select asp-for="Input.RequestedBranch" id="branchSelect" style="display:none">
+                    <select asp-for="Input.RequestedBranch" id="branchSelect" class="k-form-control">
                         <option value="">-- Select Target Branch --</option>
                         @foreach (var branch in Model.AllBranches)
                         {
                             <option value="@branch">@branch</option>
                         }
                     </select>
-                    <div class="custom-dropdown" id="branchDropdown">
-                        <div class="custom-dropdown-trigger" id="branchTrigger">
-                            <span id="branchTriggerText">-- Select Target Branch --</span>
-                            <i class="bi bi-chevron-down custom-dropdown-chevron"></i>
-                        </div>
-                        <div class="custom-dropdown-list" id="branchList">
-                            <div class="custom-dropdown-option" data-value="">-- Select Target Branch --</div>
-                            @foreach (var branch in Model.AllBranches)
-                            {
-                                <div class="custom-dropdown-option" data-value="@branch">@branch</div>
-                            }
-                        </div>
-                    </div>
                     <span asp-validation-for="Input.RequestedBranch" class="text-danger small"></span>
                 </div>
 
@@ -177,7 +198,7 @@
             border: 1px solid #d1d5db;
             border-radius: 6px;
             box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-            max-height: calc(6 * 2.5rem);
+            max-height: calc(6 * 2.5rem + 3rem);
             overflow-y: auto;
             z-index: 999;
         }
@@ -202,9 +223,6 @@
         }
         .custom-dropdown-option[data-value=""] {
             color: #9ca3af;
-        }
-        #employeeList {
-            max-height: calc(6 * 2.5rem + 2.75rem);
         }
         .custom-dropdown-search-box {
             position: sticky;
@@ -241,6 +259,8 @@
         }
     </style>
     <script>
+        let currentBranchEmployees = [];
+
         const reasonField = document.getElementById('Input_Reason');
         const charCount = document.getElementById('charCount');
         if (reasonField && charCount) {
@@ -249,6 +269,7 @@
                 charCount.textContent = this.value.length;
             });
         }
+
         const dateField = document.getElementById('Input_PreferredDate');
         if (dateField) {
             dateField.addEventListener('change', function () {
@@ -262,6 +283,7 @@
                 }
             });
         }
+
         const fileInput = document.getElementById('Input_Document');
         if (fileInput) {
             fileInput.addEventListener('change', function () {
@@ -272,102 +294,226 @@
             });
         }
 
-        function initCustomDropdown({ selectId, triggerId, listId, triggerTextId, dropdownId, placeholder, searchInputId, noResultsId }) {
-            const select      = document.getElementById(selectId);
-            const trigger     = document.getElementById(triggerId);
-            const list        = document.getElementById(listId);
-            const triggerText = document.getElementById(triggerTextId);
-            const options     = list.querySelectorAll('.custom-dropdown-option');
-            const searchInput = searchInputId ? document.getElementById(searchInputId) : null;
-            const noResults   = noResultsId   ? document.getElementById(noResultsId)   : null;
+        // Custom Employee Dropdown Logic
+        const employeeSelect = document.getElementById('employeeSelect');
+        const employeeTrigger = document.getElementById('employeeTrigger');
+        const employeeTriggerText = document.getElementById('employeeTriggerText');
+        const employeeList = document.getElementById('employeeList');
+        const employeeDropdown = document.getElementById('employeeDropdown');
+        const employeeSearch = document.getElementById('employeeSearch');
+        const employeeOptionsContainer = document.getElementById('employeeOptionsContainer');
+        const employeeNoResults = document.getElementById('employeeNoResults');
+        const currentBranchSelect = document.getElementById('currentBranchSelect');
+        const targetBranchSelect = document.getElementById('branchSelect');
 
-            function closeDropdown() {
-                list.classList.remove('open');
-                trigger.classList.remove('open');
-                if (searchInput) {
-                    searchInput.value = '';
-                    options.forEach(o => o.style.display = '');
-                    if (noResults) noResults.style.display = 'none';
-                }
+        function closeEmployeeDropdown() {
+            employeeList.classList.remove('open');
+            employeeTrigger.classList.remove('open');
+            if (employeeSearch) {
+                employeeSearch.value = '';
+                filterEmployeeOptions('');
             }
+        }
 
-            trigger.addEventListener('click', function () {
-                document.querySelectorAll('.custom-dropdown-list.open').forEach(function (l) {
-                    if (l !== list) {
-                        l.classList.remove('open');
-                        l.previousElementSibling.classList.remove('open');
-                    }
-                });
-                const isOpen = list.classList.contains('open');
-                list.classList.toggle('open', !isOpen);
-                trigger.classList.toggle('open', !isOpen);
-                if (!isOpen && searchInput) {
-                    setTimeout(() => searchInput.focus(), 50);
-                }
-            });
-
-            if (searchInput) {
-                searchInput.addEventListener('click', e => e.stopPropagation());
-                searchInput.addEventListener('input', function () {
-                    const query = this.value.trim().toLowerCase();
-                    let anyVisible = false;
-                    options.forEach(function (opt) {
-                        if (!opt.dataset.value) { opt.style.display = 'none'; return; }
-                        // Extract EPF from text format "Name (EPF) - Designation"
-                        const epf = (opt.textContent.match(/\(([^)]+)\)/) || [])[1] || '';
-                        const match = !query || epf.toLowerCase().includes(query);
-                        opt.style.display = match ? '' : 'none';
-                        if (match) anyVisible = true;
-                    });
-                    if (noResults) noResults.style.display = anyVisible ? 'none' : '';
-                });
+        employeeTrigger.addEventListener('click', function () {
+            if (!currentBranchSelect.value) {
+                alert('Please select a Current Branch first.');
+                currentBranchSelect.focus();
+                return;
             }
+            const isOpen = employeeList.classList.contains('open');
+            employeeList.classList.toggle('open', !isOpen);
+            employeeTrigger.classList.toggle('open', !isOpen);
+            if (!isOpen && employeeSearch) {
+                setTimeout(() => employeeSearch.focus(), 50);
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!employeeDropdown.contains(e.target)) {
+                closeEmployeeDropdown();
+            }
+        });
+
+        function filterEmployeeOptions(query) {
+            const cleanQuery = (query || '').trim().toLowerCase();
+            const options = employeeOptionsContainer.querySelectorAll('.custom-dropdown-option');
+            let anyVisible = false;
 
             options.forEach(function (opt) {
-                opt.addEventListener('click', function () {
-                    const value = this.dataset.value;
-                    select.value = value;
-                    triggerText.textContent = value ? this.textContent.trim() : placeholder;
-                    options.forEach(o => o.classList.remove('selected'));
-                    if (value) this.classList.add('selected');
-                    closeDropdown();
-                    select.dispatchEvent(new Event('change'));
-                });
-            });
-
-            document.addEventListener('click', function (e) {
-                if (!document.getElementById(dropdownId).contains(e.target)) {
-                    closeDropdown();
+                const val = opt.dataset.value;
+                if (!val) {
+                    opt.style.display = cleanQuery ? 'none' : '';
+                    return;
                 }
+                const text = opt.textContent.toLowerCase();
+                const epfMatch = (opt.textContent.match(/\(([^)]+)\)/) || [])[1] || '';
+                const match = !cleanQuery || text.includes(cleanQuery) || epfMatch.toLowerCase().includes(cleanQuery);
+                opt.style.display = match ? '' : 'none';
+                if (match) anyVisible = true;
             });
 
-            if (select.value) {
-                const preselected = list.querySelector(`.custom-dropdown-option[data-value="${CSS.escape(select.value)}"]`);
-                if (preselected) {
-                    triggerText.textContent = preselected.textContent.trim();
-                    preselected.classList.add('selected');
+            if (employeeNoResults) {
+                employeeNoResults.style.display = (options.length > 1 && !anyVisible) ? '' : 'none';
+            }
+        }
+
+        if (employeeSearch) {
+            employeeSearch.addEventListener('click', e => e.stopPropagation());
+            employeeSearch.addEventListener('input', function () {
+                filterEmployeeOptions(this.value);
+            });
+        }
+
+        function updateEmployeeSummary(emp) {
+            const summaryCard = document.getElementById('empSummaryCard');
+            if (!emp) {
+                summaryCard.style.display = 'none';
+                return;
+            }
+            summaryCard.style.display = 'block';
+            
+            const fullName = (emp.fullName || emp.FullName || 'Unknown Employee').trim();
+            const epf = emp.epfNumber || emp.EPFNumber || emp.epfnumber || 'N/A';
+            const designation = (emp.designationTitle || emp.DesignationTitle || '').trim();
+            const department = (emp.departmentName || emp.DepartmentName || '').trim();
+            const branch = emp.branchName || emp.BranchName || 'N/A';
+            const dateJoined = emp.dateJoined || emp.DateJoined || '-';
+            const years = (emp.yearsOfService !== undefined) ? emp.yearsOfService : (emp.YearsOfService !== undefined ? emp.YearsOfService : 0);
+            const email = emp.email || emp.Email || '-';
+
+            const nameParts = fullName.split(' ').filter(p => p.length > 0);
+            const initials = nameParts.length > 0 ? nameParts.slice(0, 2).map(w => w[0]).join('').toUpperCase() : 'EM';
+
+            const desigDisplay = (designation && designation !== 'N/A') ? designation : (department && department !== 'N/A' && department !== 'General' ? department : 'General Staff');
+
+            document.getElementById('empAvatar').textContent = initials;
+            document.getElementById('empName').textContent = fullName;
+            document.getElementById('empSub').textContent = `${epf} · ${desigDisplay}`;
+            document.getElementById('empDept').textContent = department && department !== 'N/A' ? department : 'General';
+            document.getElementById('empBranch').textContent = branch;
+            document.getElementById('empService').textContent = `${years} Years (Joined ${dateJoined})`;
+            document.getElementById('empEmail').textContent = email;
+
+            // Filter target branch dropdown so it does not contain the employee's current branch
+            if (targetBranchSelect && branch && branch !== 'N/A') {
+                for (let i = 0; i < targetBranchSelect.options.length; i++) {
+                    const opt = targetBranchSelect.options[i];
+                    if (opt.value && opt.value.toLowerCase() === branch.toLowerCase()) {
+                        opt.disabled = true;
+                        opt.style.display = 'none';
+                        if (targetBranchSelect.value === opt.value) {
+                            targetBranchSelect.value = '';
+                        }
+                    } else {
+                        opt.disabled = false;
+                        opt.style.display = '';
+                    }
                 }
             }
         }
 
-        initCustomDropdown({
-            selectId:      'employeeSelect',
-            triggerId:     'employeeTrigger',
-            listId:        'employeeList',
-            triggerTextId: 'employeeTriggerText',
-            dropdownId:    'employeeDropdown',
-            placeholder:   '-- Select Employee --',
-            searchInputId: 'employeeSearch',
-            noResultsId:   'employeeNoResults'
-        });
+        function bindEmployeeOptions(employees) {
+            currentBranchEmployees = employees || [];
+            employeeOptionsContainer.innerHTML = '<div class="custom-dropdown-option" data-value="">-- Select Employee --</div>';
+            employeeSelect.innerHTML = '<option value="">-- Select Employee --</option>';
 
-        initCustomDropdown({
-            selectId:      'branchSelect',
-            triggerId:     'branchTrigger',
-            listId:        'branchList',
-            triggerTextId: 'branchTriggerText',
-            dropdownId:    'branchDropdown',
-            placeholder:   '-- Select Target Branch --'
-        });
+            if (!employees || employees.length === 0) {
+                employeeTriggerText.textContent = '-- No Employees Found --';
+                employeeNoResults.style.display = '';
+                updateEmployeeSummary(null);
+                return;
+            }
+
+            employeeNoResults.style.display = 'none';
+            employeeTriggerText.textContent = '-- Select Employee --';
+
+            employees.forEach(emp => {
+                const fullName = emp.fullName || emp.FullName || 'Unknown';
+                const epf = emp.epfNumber || emp.EPFNumber || emp.epfnumber || 'N/A';
+                const designation = (emp.designationTitle || emp.DesignationTitle || '').trim();
+                const department = (emp.departmentName || emp.DepartmentName || '').trim();
+                const empId = emp.id !== undefined ? emp.id : (emp.Id !== undefined ? emp.Id : '');
+
+                const desigSuffix = (designation && designation !== 'N/A') ? ` - ${designation}` : (department && department !== 'N/A' && department !== 'General' ? ` - ${department}` : '');
+                const optText = `${fullName} (${epf})${desigSuffix}`;
+                
+                // Select element
+                const selectOpt = document.createElement('option');
+                selectOpt.value = empId;
+                selectOpt.textContent = optText;
+                employeeSelect.appendChild(selectOpt);
+
+                // Custom dropdown item
+                const dropOpt = document.createElement('div');
+                dropOpt.className = 'custom-dropdown-option';
+                dropOpt.dataset.value = empId;
+                dropOpt.textContent = optText;
+                dropOpt.addEventListener('click', function () {
+                    const val = this.dataset.value;
+                    employeeSelect.value = val;
+                    employeeTriggerText.textContent = val ? this.textContent.trim() : '-- Select Employee --';
+                    
+                    employeeOptionsContainer.querySelectorAll('.custom-dropdown-option').forEach(o => o.classList.remove('selected'));
+                    if (val) this.classList.add('selected');
+
+                    closeEmployeeDropdown();
+                    const selectedEmp = currentBranchEmployees.find(e => (e.id !== undefined ? e.id : e.Id) == val);
+                    updateEmployeeSummary(selectedEmp);
+                });
+                employeeOptionsContainer.appendChild(dropOpt);
+            });
+        }
+
+        // When Current Branch changes
+        if (currentBranchSelect) {
+            currentBranchSelect.addEventListener('change', async function () {
+                const branchId = this.value;
+                employeeSelect.value = '';
+                employeeTriggerText.textContent = branchId ? 'Loading employees...' : '-- Select Branch First --';
+                updateEmployeeSummary(null);
+
+                // Also update target branch dropdown to disable the selected originating branch
+                const selectedBranchName = currentBranchSelect.options[currentBranchSelect.selectedIndex]?.text;
+                if (targetBranchSelect && selectedBranchName) {
+                    for (let i = 0; i < targetBranchSelect.options.length; i++) {
+                        const opt = targetBranchSelect.options[i];
+                        if (opt.value && opt.value.toLowerCase() === selectedBranchName.toLowerCase()) {
+                            opt.disabled = true;
+                            opt.style.display = 'none';
+                            if (targetBranchSelect.value === opt.value) {
+                                targetBranchSelect.value = '';
+                            }
+                        } else {
+                            opt.disabled = false;
+                            opt.style.display = '';
+                        }
+                    }
+                }
+
+                if (!branchId) {
+                    bindEmployeeOptions([]);
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`?handler=EmployeesByBranch&branchId=${branchId}`);
+                    if (response.ok) {
+                        const employees = await response.json();
+                        bindEmployeeOptions(employees);
+                    } else {
+                        bindEmployeeOptions([]);
+                    }
+                } catch (err) {
+                    console.error('Failed to load branch employees', err);
+                    bindEmployeeOptions([]);
+                }
+            });
+
+            // If a branch is pre-selected (e.g. only 1 assigned branch or validation reload)
+            if (currentBranchSelect.value) {
+                currentBranchSelect.dispatchEvent(new Event('change'));
+            }
+        }
     </script>
 }

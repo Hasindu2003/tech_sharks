@@ -1,4 +1,4 @@
-﻿namespace HRMS.Application.Models
+namespace HRMS.Application.Models
 {
     public class ResignationRequestViewModel
     {
@@ -56,6 +56,14 @@
         public DateTime? AccountDeactivatedDate { get; set; }
         public string? AccountDeactivatedBy { get; set; }
 
+        // ── Department Reviews (Stage 2: All Department Heads in Branch) ──
+        public List<ResignationDepartmentReviewViewModel> DepartmentReviews { get; set; } = new();
+        public int TotalDeptHeadsCount => DepartmentReviews.Count;
+        public int DeptHeadsApprovedCount => DepartmentReviews.Count(d => d.Status == "Approved");
+        public int DeptHeadsRejectedCount => DepartmentReviews.Count(d => d.Status == "Rejected");
+        public int DeptHeadsPendingCount => DepartmentReviews.Count(d => d.Status == "Pending");
+        public bool AreAllDeptHeadsApproved => TotalDeptHeadsCount > 0 && DeptHeadsApprovedCount == TotalDeptHeadsCount;
+
         // ── Documents ──
         public List<ResignationDocumentViewModel> Documents { get; set; } = new();
         public int DocumentCount { get; set; }
@@ -64,13 +72,17 @@
         public string StatusDisplay => Status switch
         {
             ResignationStatusEnum.Draft => "Draft",
-            ResignationStatusEnum.SubmittedForApproval => "Submitted for Approval",
+            ResignationStatusEnum.SubmittedForApproval => TotalDeptHeadsCount > 0
+                ? $"Pending Dept Heads ({DeptHeadsApprovedCount}/{TotalDeptHeadsCount})"
+                : "Pending Dept Heads",
+            ResignationStatusEnum.DeptHeadRejected => "Rejected by Department Head",
+            ResignationStatusEnum.DeptHeadsApproved => "Dept Heads Approved – Awaiting Branch Manager",
             ResignationStatusEnum.BMApproved => "Acknowledged by Branch Manager",
             ResignationStatusEnum.BMRejected => "Rejected by Branch Manager",
             ResignationStatusEnum.AMApproved => "Approved by Area Manager",
             ResignationStatusEnum.AMRejected => "Rejected by Area Manager",
-            ResignationStatusEnum.HRApproved => "Approved by HR Manager",
-            ResignationStatusEnum.HRRejected => "Rejected by HR Manager",
+            ResignationStatusEnum.HRApproved => "Approved by HR Officer",
+            ResignationStatusEnum.HRRejected => "Rejected by HR Officer",
             ResignationStatusEnum.Completed => "Completed",
             _ => "Unknown"
         };
@@ -79,6 +91,8 @@
         {
             ResignationStatusEnum.Draft => "k-badge-info",
             ResignationStatusEnum.SubmittedForApproval => "k-badge-pending",
+            ResignationStatusEnum.DeptHeadRejected => "k-badge-rejected",
+            ResignationStatusEnum.DeptHeadsApproved => "k-badge-info",
             ResignationStatusEnum.BMApproved => "k-badge-pending",
             ResignationStatusEnum.BMRejected => "k-badge-rejected",
             ResignationStatusEnum.AMApproved => "k-badge-pending",
@@ -95,6 +109,20 @@
                                               && IsEffectiveDateReached;
     }
 
+    public class ResignationDepartmentReviewViewModel
+    {
+        public int Id { get; set; }
+        public int ResignationRequestId { get; set; }
+        public int? DepartmentId { get; set; }
+        public string DepartmentName { get; set; } = string.Empty;
+        public string? ReviewerUserId { get; set; }
+        public string? ReviewerName { get; set; }
+        public string? ReviewerEmail { get; set; }
+        public string Status { get; set; } = "Pending";
+        public string? Comments { get; set; }
+        public DateTime? ReviewDate { get; set; }
+    }
+
     public class ResignationDocumentViewModel
     {
         public int Id { get; set; }
@@ -106,13 +134,15 @@
     public enum ResignationStatusEnum
     {
         Draft = 0,
-        SubmittedForApproval = 1,
-        BMApproved = 2,
-        BMRejected = 3,
-        AMApproved = 4,
-        AMRejected = 5,
-        HRApproved = 6,
-        HRRejected = 7,
-        Completed = 8
+        SubmittedForApproval = 1,  // Pending Department Heads
+        DeptHeadRejected = 2,
+        DeptHeadsApproved = 3,     // Awaiting Branch Manager
+        BMApproved = 4,            // Awaiting Area Manager
+        BMRejected = 5,
+        AMApproved = 6,            // Awaiting HR Finalization
+        AMRejected = 7,
+        HRApproved = 8,            // Finalized by HR
+        HRRejected = 9,
+        Completed = 10             // Account Deactivated
     }
 }
