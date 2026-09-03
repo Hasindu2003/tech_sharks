@@ -529,6 +529,14 @@
         transform: scale(0.96) translateY(10px);
         transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
+    .wf-modal-card form {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        margin: 0;
+    }
     .wf-modal-overlay.active .wf-modal-card {
         transform: scale(1) translateY(0);
     }
@@ -544,9 +552,26 @@
     .wf-modal-body {
         padding: 20px 22px;
         overflow-y: auto;
+        overflow-x: hidden;
+        flex: 1;
+        min-height: 0;
         display: flex;
         flex-direction: column;
         gap: 16px;
+    }
+    .wf-modal-body::-webkit-scrollbar {
+        width: 6px;
+    }
+    .wf-modal-body::-webkit-scrollbar-track {
+        background: #f1f5f9;
+        border-radius: 4px;
+    }
+    .wf-modal-body::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+    }
+    .wf-modal-body::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
     }
     .wf-modal-foot {
         padding: 14px 22px;
@@ -944,11 +969,11 @@
             </button>
         </div>
 
-        <form method="post" id="welfareDecisionForm">
+        <form method="post" id="welfareDecisionForm" style="display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;">
             @Html.AntiForgeryToken()
             <input type="hidden" name="RequestId" id="mRequestIdInput" value="0" />
 
-            <div class="wf-modal-body">
+            <div class="wf-modal-body" style="flex: 1; min-height: 0; overflow-y: auto;">
                 
                 <!-- Employee Profile Card -->
                 <div class="profile-card-box">

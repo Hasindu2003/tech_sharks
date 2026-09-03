@@ -6092,6 +6092,23 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 371 — Fix Welfare Review Modal Scrolling & Approve Button Visibility
+
+### Problem & Requirement
+- On the Welfare Approvals page (`/Welfare/Approvals/DepartmentHeadApproval`), when opening the review modal for a welfare request, the modal body did not scroll.
+- As a result, longer welfare requests caused the bottom action area (containing the Remarks input and the "Approve & Forward to HR" / "Reject" buttons) to be cut off outside the visible screen.
+
+### Solution
+1. **Modal Form Flex Container & Scroll Constraints (`Welfare/Approvals/DepartmentHeadApproval.cshtml`)**:
+   - Set `.wf-modal-card form` to `display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; margin: 0;` so the inner form correctly participates in flex layout constraints within the `max-height: 90vh` modal card.
+   - Updated `.wf-modal-body` with `flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;` and styled clean custom scrollbars.
+   - Anchored `.wf-modal-foot` with `flex-shrink: 0` ensuring the Close, Reject, and Approve buttons remain pinned in full view at the bottom of the modal while the middle content scrolls smoothly.
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
