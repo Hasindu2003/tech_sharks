@@ -5816,6 +5816,24 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 355 — Fix Branch Clearances Badge for Managerial Resignations on Separation Dashboard
+
+### Problem & Requirement
+- When a managerial employee (e.g. Area Manager, Branch Manager, Department Head) submits a resignation notification, it is routed directly to HR for administrative review without passing through branch department head reviews.
+- On the Separation Management Dashboard (`/Separation/Dashboard`), the "Branch Clearances" column displayed `0/0 Dept Heads` in a pending (yellow) badge for managerial resignations.
+- The requirement was to display `Direct HR Review` instead of `0/0 Dept Heads` for managerial resignations.
+
+### Solution
+1. **Separation Dashboard View (`Separation/Dashboard.cshtml`)**:
+   - Updated the Resignations "Awaiting Your Review" table: when `r.IsManagerialNotification || r.TotalDeptHeadsCount == 0`, display a blue badge `Direct HR Review` (`k-badge-info` with `bi-shield-check` icon) instead of `0/0 Dept Heads`.
+2. **Department Head Resignations View (`DepartmentHead/ReviewResignations.cshtml`)**:
+   - Added the same check for consistency across pending resignation review tables.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

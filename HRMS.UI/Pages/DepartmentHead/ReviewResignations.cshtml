@@ -108,9 +108,18 @@
                         <td style="font-weight:600;color:#10823c">@r.EffectiveDate.ToString("dd MMM yyyy")</td>
                         <td style="color:#7a8863">@r.NoticePeriodDays days</td>
                         <td>
-                            <span class="k-badge k-badge-pending">
-                                <i class="bi bi-people"></i> @r.DeptHeadsApprovedCount/@r.TotalDeptHeadsCount Dept Heads
-                            </span>
+                            @if (r.IsManagerialNotification || r.TotalDeptHeadsCount == 0)
+                            {
+                                <span class="k-badge k-badge-info">
+                                    <i class="bi bi-shield-check"></i> Direct HR Review
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="k-badge @(r.AreAllDeptHeadsApproved ? "k-badge-approved" : "k-badge-pending")">
+                                    <i class="bi bi-people"></i> @r.DeptHeadsApprovedCount/@r.TotalDeptHeadsCount Dept Heads
+                                </span>
+                            }
                         </td>
                         <td style="text-align:right">
                             <a asp-page="/DepartmentHead/ReviewResignation" asp-route-id="@r.Id" class="btn-action">
