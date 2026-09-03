@@ -5712,6 +5712,23 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 349 — Fix Stacked Layout and Badge Spacing on Official Application Portal
+
+### Problem & Requirement
+- On the public application portal header (`/Apply`), the "Official Application Portal" badge and Kanrich logo were crowded together and breaking awkwardly onto two lines on narrow screens.
+- The requirement was to fix the header layout so the logo and badge are properly spaced, do not squish, and scale responsively across all devices.
+
+### Solution
+1. **Header Layout & Badge Styling (`Apply.cshtml`)**:
+   - Added `white-space: nowrap;` and `flex-shrink: 0;` to `.portal-badge` so the badge text never wraps into stacked lines.
+   - Enhanced `.public-navbar` with generous horizontal padding, explicit element separation gap (`gap: 20px`), and subtle shadow.
+   - Added mobile responsive media queries scaling down the logo and badge proportionally while retaining clean separation.
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
