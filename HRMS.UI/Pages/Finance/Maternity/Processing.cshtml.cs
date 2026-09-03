@@ -35,6 +35,7 @@ namespace HRMS.UI.Pages.Finance.Maternity
         {
             ApprovedLeaves = await _context.Leaves
                 .Include(l => l.Employee)
+                .Include(l => l.MaternityLeave)
                 .Include(l => l.MaternityPayment)
                 .Where(l => l.LeaveType == "Maternity" && l.Status == "Approved")
                 .Where(l => l.MaternityPayment == null || l.MaternityPayment.Status != "Processed")

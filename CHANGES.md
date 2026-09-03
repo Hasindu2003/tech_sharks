@@ -6024,6 +6024,23 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 367 — Fix Missing Child Number Display on Maternity Payroll Processing Page
+
+### Problem & Requirement
+- On the Maternity Payroll Processing page (`/Finance/Maternity/Processing`), the Child Number detail item displayed empty text (`Child #`) without the child number.
+- The root cause was that `ProcessingModel.OnGetAsync` queried `_context.Leaves` without `.Include(l => l.MaternityLeave)`, causing `leave.MaternityLeave` navigation property to evaluate to `null`.
+
+### Solution
+1. **Eager Loading Navigation Property (`Finance/Maternity/Processing.cshtml.cs`)**:
+   - Added `.Include(l => l.MaternityLeave)` to the `ApprovedLeaves` query in `ProcessingModel.OnGetAsync()`.
+2. **Safe Razor Fallback Formatting (`Finance/Maternity/Processing.cshtml`)**:
+   - Updated the Child Number markup to `@(leave.MaternityLeave?.ChildNumber ?? 1)` ensuring reliable rendering.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
