@@ -5782,6 +5782,25 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 353 — Display Employee Name with Initials on Biometric Logs Pages
+
+### Problem & Requirement
+- On the Biometric Raw Logs page (`/BiometricLogs`) and Biometric Logs History page (`/BiometricLogs/History`), employee names in the filter dropdown and table rows were shown as full names.
+- The requirement was to display the employee's name with initials instead of their full name across the Biometric Logs pages.
+
+### Solution
+1. **Biometric Raw Logs View (`BiometricLogs/Index.cshtml`)**:
+   - Updated the employee filter dropdown to display `NameWithInitials` (falling back to `FullName`).
+   - Updated the table employee column to display `log.Employee.NameWithInitials`.
+2. **Biometric Logs History View (`BiometricLogs/History.cshtml`)**:
+   - Updated the employee filter dropdown to display `NameWithInitials`.
+   - Updated the history table employee column to display `log.Employee.NameWithInitials`.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

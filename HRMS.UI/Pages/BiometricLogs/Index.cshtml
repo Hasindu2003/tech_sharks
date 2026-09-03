@@ -100,7 +100,8 @@
                 <option value="">-- All Employees --</option>
                 @foreach (var emp in Model.Employees)
                 {
-                    <option value="@emp.Id">@emp.FullName (@emp.EPFNumber)</option>
+                    var empDisplayName = !string.IsNullOrWhiteSpace(emp.NameWithInitials) ? emp.NameWithInitials : emp.FullName;
+                    <option value="@emp.Id">@empDisplayName (@emp.EPFNumber)</option>
                 }
             </select>
         </div>
@@ -145,7 +146,7 @@
                     <tr>
                         <td><span style="font-weight: 700; color: #7a8863;">#@log.Id</span></td>
                         <td>
-                            <div style="font-weight: 600; color: #151811;">@log.Employee?.FullName</div>
+                            <div style="font-weight: 600; color: #151811;">@(!string.IsNullOrWhiteSpace(log.Employee?.NameWithInitials) ? log.Employee.NameWithInitials : log.Employee?.FullName)</div>
                             <div style="font-size: 11px; color: #7a8863;">ID: @log.EmployeeId | EPF: @log.Employee?.EPFNumber</div>
                         </td>
                         <td>
