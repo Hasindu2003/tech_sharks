@@ -5956,6 +5956,25 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 363 — Remove Agenda View Option from Calendar Page
+
+### Problem & Requirement
+- The Calendar page included an "Agenda" view option alongside Month, Week, and Day views.
+- The requirement was to remove the Agenda view from the view switcher pills and consolidate the views to Month, Week, and Day.
+
+### Solution
+1. **Calendar View Switcher (`Calendar/Index.cshtml`)**:
+   - Removed the "Agenda" tab pill from the view switcher button group.
+   - Updated `dateDisplayTitle` switch expression to support Month, Week, and Day views.
+   - Configured the Day view container to display events specifically matching the selected date.
+2. **Page Model Constraints (`Calendar/Index.cshtml.cs`)**:
+   - Updated `CurrentView` validation to restrict allowed views to `"month"`, `"week"`, and `"day"`.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

@@ -29,7 +29,7 @@ namespace HRMS.UI.Pages.Calendar
         }
 
         // View State
-        public string CurrentView { get; set; } = "month"; // "month", "week", "day", "agenda"
+        public string CurrentView { get; set; } = "month"; // "month", "week", "day"
         public DateTime CurrentDate { get; set; } = SriLankaTime.Today;
         public string? SelectedCategory { get; set; }
         public int? SelectedBranchId { get; set; }
@@ -61,7 +61,7 @@ namespace HRMS.UI.Pages.Calendar
         public async Task<IActionResult> OnGetAsync(string? view, string? date, string? category, int? branchId)
         {
             CurrentView = (view ?? "month").ToLowerInvariant();
-            if (!new[] { "month", "week", "day", "agenda" }.Contains(CurrentView))
+            if (!new[] { "month", "week", "day" }.Contains(CurrentView))
                 CurrentView = "month";
 
             if (DateTime.TryParse(date, out var parsedDate))

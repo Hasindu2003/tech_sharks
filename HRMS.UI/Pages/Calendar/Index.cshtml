@@ -30,7 +30,6 @@
     {
         "week" => (Model.WeekDays.Count > 0 ? $"Week of {Model.WeekDays.First():MMM dd} - {Model.WeekDays.Last():MMM dd, yyyy}" : $"{Model.CurrentDate:MMMM yyyy}"),
         "day" => Model.CurrentDate.ToString("dddd, MMMM dd, yyyy"),
-        "agenda" => $"{Model.CurrentDate:MMMM yyyy} Agenda",
         _ => Model.CurrentDate.ToString("MMMM yyyy")
     };
 }
@@ -536,7 +535,6 @@
                 <a href="?view=month&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "month" ? "active" : "")">Month</a>
                 <a href="?view=week&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "week" ? "active" : "")">Week</a>
                 <a href="?view=day&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "day" ? "active" : "")">Day</a>
-                <a href="?view=agenda&date=@Model.CurrentDate.ToString("yyyy-MM-dd")&category=@Model.SelectedCategory&branchId=@Model.SelectedBranchId" class="cal-view-btn @(Model.CurrentView == "agenda" ? "active" : "")">Agenda</a>
             </div>
 
             <!-- Add Event Action Button -->
@@ -686,22 +684,23 @@
         </div>
     }
 
-    <!-- ── 3. DAY / AGENDA VIEW ── -->
-    @if (Model.CurrentView == "day" || Model.CurrentView == "agenda")
+    <!-- ── 3. DAY VIEW ── -->
+    @if (Model.CurrentView == "day")
     {
+        var dayEvents = Model.Events.Where(e => e.StartTime.Date == Model.CurrentDate.Date).OrderBy(e => e.StartTime).ToList();
         <div class="agenda-list">
-            @if (Model.Events.Count == 0)
+            @if (dayEvents.Count == 0)
             {
                 <div style="text-align: center; padding: 60px 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;">
                     <i class="bi bi-calendar-x" style="font-size: 2.5rem; color: #94a3b8;"></i>
-                    <h4 style="font-size: 1.1rem; font-weight: 700; color: #334155; margin: 12px 0 4px 0;">No Events Scheduled</h4>
-                    <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 16px;">There are no training sessions or meetings scheduled for this timeframe.</p>
+                    <h4 style="font-size: 1.1rem; font-weight: 700; color: #334155; margin: 12px 0 4px 0;">No Events Scheduled for Today</h4>
+                    <p style="font-size: 0.84rem; color: #64748b; margin-bottom: 16px;">There are no training sessions or meetings scheduled for @Model.CurrentDate.ToString("MMMM dd, yyyy").</p>
                     <button type="button" onclick="openAddEventModal('@Model.CurrentDate.ToString("yyyy-MM-dd")')" class="btn-kanrich btn-kanrich-primary" style="padding: 7px 18px;"><i class="bi bi-plus-lg"></i> Add New Event</button>
                 </div>
             }
             else
             {
-                @foreach (var evt in Model.Events)
+                @foreach (var evt in dayEvents)
                 {
                     <div class="agenda-item" style="border-left: 4px solid @evt.CategoryColor;">
                         <div style="display: flex; align-items: center; gap: 16px;">
