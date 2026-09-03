@@ -309,7 +309,7 @@ namespace HRMS.UI.Services.Impl
             return leave;
         }
 
-        public async Task<Leave> ProcessMaternityPayrollAsync(int leaveId, string salaryType, decimal percentage, string nursingConfig)
+        public async Task<Leave> ProcessMaternityPayrollAsync(int leaveId, string salaryType, decimal percentage, string? nursingConfig = null)
         {
             var leave = await _context.Leaves
                 .Include(l => l.MaternityPayment)

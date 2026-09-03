@@ -13,6 +13,6 @@ namespace HRMS.UI.Services
         Task<Leave> HrVerifyMaternityLeaveAsync(int leaveId, string comments, bool approved);
         Task<List<Leave>> GetPendingAdminApprovalsAsync();
         Task<Leave> AdminApproveMaternityLeaveAsync(int leaveId, string comments, bool approved);
-        Task<Leave> ProcessMaternityPayrollAsync(int leaveId, string salaryType, decimal percentage, string nursingConfig);
+        Task<Leave> ProcessMaternityPayrollAsync(int leaveId, string salaryType, decimal percentage, string? nursingConfig = null);
     }
 }

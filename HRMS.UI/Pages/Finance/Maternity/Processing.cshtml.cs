@@ -43,7 +43,7 @@ namespace HRMS.UI.Pages.Finance.Maternity
                 .ToListAsync();
         }
 
-        public async Task<IActionResult> OnPostProcessAsync(int leaveId, string salaryType, decimal percentage, string nursingConfig)
+        public async Task<IActionResult> OnPostProcessAsync(int leaveId, string salaryType, decimal percentage)
         {
             try
             {
@@ -63,7 +63,7 @@ namespace HRMS.UI.Pages.Finance.Maternity
                     }
                 }
 
-                await _maternityService.ProcessMaternityPayrollAsync(leaveId, salaryType, percentage, nursingConfig);
+                await _maternityService.ProcessMaternityPayrollAsync(leaveId, salaryType, percentage, null);
                 SuccessMessage = "Maternity payroll processed successfully!";
             }
             catch (System.Exception ex)

@@ -6040,6 +6040,24 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 368 — Remove Nursing Break Configuration Field from Maternity Payroll Processing Page
+
+### Problem & Requirement
+- The Maternity Payroll Processing page (`/Finance/Maternity/Processing`) included a "Nursing Break Configuration" text input field.
+- The requirement was to remove this field from the maternity payroll processing form.
+
+### Solution
+1. **Removed Form Input (`Finance/Maternity/Processing.cshtml`)**:
+   - Removed the `Nursing Break Configuration` input element, label, and container markup from the processing card form.
+2. **Updated Handler & Service Signatures (`Finance/Maternity/Processing.cshtml.cs`, `IMaternityLeaveService.cs`, & `MaternityLeaveService.cs`)**:
+   - Removed `nursingConfig` from `OnPostProcessAsync` parameters in `Processing.cshtml.cs`.
+   - Updated `IMaternityLeaveService.ProcessMaternityPayrollAsync` and its implementation `MaternityLeaveService` to make `string? nursingConfig = null` optional with a default `null` fallback.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
