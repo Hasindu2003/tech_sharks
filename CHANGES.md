@@ -6057,6 +6057,27 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 369 — Display Employee Profile Picture in Top Navigation Bar
+
+### Problem & Requirement
+- In the top navigation bar (`_Layout.cshtml`), the user profile button displayed only a simple static initial character inside a green circle without showing the employee's uploaded profile picture.
+- The requirement was to display the employee's uploaded profile picture in the top navigation bar with a seamless fallback to their initials.
+
+### Solution
+1. **Top Navigation Bar Avatar Rendering (`Shared/_Layout.cshtml`)**:
+   - Injected `ApplicationDbContext` and `UserManager<ApplicationUser>` into `_Layout.cshtml`.
+   - Resolved the current logged-in employee ID and details (`currentEmployeeId`, `employeeInitials`, `employeeDisplayName`).
+   - Updated the `.avatar` link to render `<img src="/uploads/avatars/emp_{id}.jpg" />` with an automatic `onerror` fallback to the styled gradient initials circle (`.avatar-fallback`) if no photo is uploaded or if image loading fails.
+   - Added styles for `.avatar img` (`width: 100%; height: 100%; object-fit: cover; border-radius: 50%;`) and `.avatar .avatar-fallback`.
+2. **Current User Profile Integration (`Pages/BasePageModel.cs` & `Pages/_ViewImports.cshtml`)**:
+   - Added `PhotoUrl = $"/uploads/avatars/emp_{emp.Id}.jpg"` to `CurrentUserProfile` in `BasePageModel.cs`.
+   - Added `@using Microsoft.EntityFrameworkCore` to `_ViewImports.cshtml` and `_Layout.cshtml`.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

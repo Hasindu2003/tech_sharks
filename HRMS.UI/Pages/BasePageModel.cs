@@ -64,7 +64,7 @@ namespace HRMS.UI.Pages
                     Department = emp.Department?.Name ?? string.Empty,
                     EmployeeCode = $"EMP-{emp.Id:D5}",
                     Status = emp.Status ?? "Active",
-                    PhotoUrl = null
+                    PhotoUrl = $"/uploads/avatars/emp_{emp.Id}.jpg"
                 };
             }
             else

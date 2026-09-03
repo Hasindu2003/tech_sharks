@@ -1,3 +1,6 @@
+@using Microsoft.EntityFrameworkCore
+@inject HRMS.Infrastructure.Persistence.ApplicationDbContext _layoutDbContext
+@inject Microsoft.AspNetCore.Identity.UserManager<HRMS.Infrastructure.Identity.ApplicationUser> _layoutUserManager
 @{
     // Pages set ViewData["ActiveNav"] to highlight the current nav item.
     // e.g. ViewData["ActiveNav"] = "Calendar";
@@ -96,6 +99,14 @@
             display: flex; align-items: center; justify-content: center;
             color: #fff; font-size: 12px; font-weight: 700;
             box-shadow: 0 0 0 2px rgba(16,130,60,.2); cursor: pointer;
+            overflow: hidden; position: relative; flex-shrink: 0;
+        }
+        .avatar img {
+            width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;
+        }
+        .avatar .avatar-fallback {
+            width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 12px; font-weight: 700; border-radius: 50%;
         }
 
         /* ── PAGE CONTENT ── */
@@ -789,11 +800,71 @@
                                         User.IsInRole("Branch Manager") ||
                                         User.IsInRole("Welfare Manager") ||
                                         User.IsInRole("Department Head");
-                    var userInitial = User.Identity?.Name?.Substring(0, 1).ToUpper() ?? "U";
+
+                    int? currentEmployeeId = null;
+                    string employeeInitials = "U";
+                    string employeeDisplayName = "My Profile";
+
+                    if (User.Identity?.IsAuthenticated == true)
+                    {
+                        var username = User.Identity.Name;
+                        var loggedUser = await _layoutUserManager.GetUserAsync(User);
+                        if (loggedUser != null && loggedUser.EmployeeId.HasValue)
+                        {
+                            currentEmployeeId = loggedUser.EmployeeId.Value;
+                        }
+
+                        if (currentEmployeeId.HasValue)
+                        {
+                            var emp = await _layoutDbContext.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == currentEmployeeId.Value);
+                            if (emp != null)
+                            {
+                                employeeDisplayName = emp.FullName ?? "My Profile";
+                                if (!string.IsNullOrWhiteSpace(emp.Initials))
+                                    employeeInitials = emp.Initials;
+                                else if (!string.IsNullOrWhiteSpace(emp.FullName))
+                                    employeeInitials = emp.FullName.Substring(0, 1).ToUpper();
+                            }
+                        }
+                        else if (!string.IsNullOrEmpty(username))
+                        {
+                            var emp = await _layoutDbContext.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Email == username);
+                            if (emp != null)
+                            {
+                                currentEmployeeId = emp.Id;
+                                employeeDisplayName = emp.FullName ?? "My Profile";
+                                if (!string.IsNullOrWhiteSpace(emp.Initials))
+                                    employeeInitials = emp.Initials;
+                                else if (!string.IsNullOrWhiteSpace(emp.FullName))
+                                    employeeInitials = emp.FullName.Substring(0, 1).ToUpper();
+                            }
+                            else if (!string.IsNullOrEmpty(loggedUser?.FullName))
+                            {
+                                employeeDisplayName = loggedUser.FullName;
+                                employeeInitials = loggedUser.FullName.Substring(0, 1).ToUpper();
+                            }
+                            else
+                            {
+                                employeeInitials = username.Substring(0, 1).ToUpper();
+                            }
+                        }
+                    }
                 }
                 @if (!isDutyAccount)
                 {
-                    <a href="/Profile" class="avatar" style="text-decoration: none;" title="View My Profile">@userInitial</a>
+                    <a href="/Profile" class="avatar" style="text-decoration: none;" title="View Profile: @employeeDisplayName">
+                        @if (currentEmployeeId.HasValue)
+                        {
+                            <img src="/uploads/avatars/emp_@(currentEmployeeId.Value).jpg" 
+                                 alt="@employeeDisplayName"
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                            <span class="avatar-fallback" style="display:none;">@employeeInitials</span>
+                        }
+                        else
+                        {
+                            <span class="avatar-fallback">@employeeInitials</span>
+                        }
+                    </a>
                 }
             </div>
         </header>
