@@ -314,7 +314,7 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Phone Number <span class="required-mark">*</span></label>
-                    <input asp-for="NewEmployee.PhoneNumber" class="form-control" placeholder="e.g. 0771234567" id="phoneInput" />
+                    <input asp-for="NewEmployee.PhoneNumber" class="form-control" placeholder="e.g. 0771234567" id="phoneInput" maxlength="10" />
                     <span asp-validation-for="NewEmployee.PhoneNumber" id="phoneError" class="field-error"></span>
                 </div>
 
@@ -344,7 +344,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Spouse Contact No</label>
-                            <input asp-for="NewEmployee.SpouseContactNo" class="form-control" placeholder="e.g. 0771234567" id="spousePhoneInput" />
+                            <input asp-for="NewEmployee.SpouseContactNo" class="form-control" placeholder="e.g. 0771234567" id="spousePhoneInput" maxlength="10" />
                             <span asp-validation-for="NewEmployee.SpouseContactNo" id="spousePhoneError" class="field-error"></span>
                         </div>
                     </div>
@@ -700,7 +700,10 @@
             }
             if (phoneInput) {
                 phoneInput.addEventListener('blur', validatePhone);
-                phoneInput.addEventListener('input', function() { if (phoneInput.value.trim()) clearError('phoneError'); });
+                phoneInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                    if (this.value.trim()) clearError('phoneError');
+                });
             }
 
             // --- Email Validation ---
@@ -737,7 +740,13 @@
                 clearError('spousePhoneError');
                 return true;
             }
-            if (spousePhoneInput) spousePhoneInput.addEventListener('blur', validateSpousePhone);
+            if (spousePhoneInput) {
+                spousePhoneInput.addEventListener('blur', validateSpousePhone);
+                spousePhoneInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/\D/g, '').slice(0, 10);
+                    if (this.value.trim()) clearError('spousePhoneError');
+                });
+            }
 
             // --- Spouse Details Checkbox Toggle ---
             function updateSpouseFieldsState() {

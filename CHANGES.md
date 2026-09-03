@@ -5974,6 +5974,24 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 364 — Enforce Maximum Length of 10 Digits for Phone Numbers in Employee Creation Form
+
+### Problem & Requirement
+- In the Employee creation/editing form, phone number inputs allowed entering more than 10 characters without an explicit client-side length cap.
+- The requirement was to enforce a maximum length of 10 digits for phone numbers in the employee creation form.
+
+### Solution
+1. **HTML Input Constraints (`Employees/Create.cshtml`)**:
+   - Added `maxlength="10"` to both the primary Phone Number input (`#phoneInput`) and Spouse Contact No input (`#spousePhoneInput`).
+2. **Client-Side Real-Time Formatting & Validation (`Employees/Create.cshtml`)**:
+   - Added input event listeners to sanitize non-digit characters and truncate input values at 10 digits in real time as the user types.
+   - Preserved exact 10-digit Sri Lankan phone number format validation (`/^0\d{9}$/`) on blur and submit.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
