@@ -161,7 +161,7 @@
             <input id="payslipSearch" oninput="filterPayslips()" class="k-form-control" style="width: 220px; padding: 6px 12px; font-size: 0.8rem;" placeholder="Search employee..." />
         </div>
         <div style="font-size: 0.8rem; color: var(--text-secondary);">
-            Total Payslips: <strong style="color: var(--text-primary);">@Model.Payslips.Count</strong>
+            Total Payslips: <strong id="payslipTotalCount" style="color: var(--text-primary);">@Model.Payslips.Count</strong>
         </div>
     </div>
 
@@ -481,11 +481,35 @@
         function filterPayslips() {
             const search = document.getElementById('payslipSearch').value.toLowerCase();
             const run    = document.getElementById('runFilter').value;
+            let matchedCount = 0;
+
             document.querySelectorAll('.payslip-row').forEach(row => {
                 const matchName = !search || row.dataset.name.includes(search);
                 const matchRun  = !run    || row.dataset.run === run;
-                row.style.display = matchName && matchRun ? '' : 'none';
+                const isVisible = matchName && matchRun;
+
+                row.setAttribute('data-filter-hidden', isVisible ? 'false' : 'true');
+                if (isVisible) matchedCount++;
             });
+
+            const countEl = document.getElementById('payslipTotalCount');
+            if (countEl) {
+                countEl.textContent = matchedCount;
+            }
+
+            const table = document.getElementById('payslipTable');
+            if (table && typeof table._tablePaginationRender === 'function') {
+                if (typeof table._tablePaginationResetPage === 'function') {
+                    table._tablePaginationResetPage();
+                }
+                table._tablePaginationRender();
+            }
         }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('payslipTable', 10);
+            }
+        });
     </script>
 }

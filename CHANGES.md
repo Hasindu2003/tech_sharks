@@ -5901,6 +5901,23 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 360 — Add Pagination to the Payslips Table in Payroll Tab
+
+### Problem & Requirement
+- The employee payslips list in the Payroll portal rendered all records in a single continuous table without pagination.
+- The requirement was to add table pagination to the table in the Payroll tab.
+
+### Solution
+1. **Table Pagination Integration (`Payroll/PaySlips.cshtml`)**:
+   - Initialized the global table pagination engine (`initTablePagination('payslipTable', 10)`) on DOM content load.
+   - Updated `filterPayslips()` to manage `data-filter-hidden` attributes and trigger pagination re-rendering/page reset on search and run filter changes.
+   - Added live count update to `payslipTotalCount`.
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
