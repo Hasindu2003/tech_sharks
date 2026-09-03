@@ -5917,6 +5917,27 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 361 — Add Pagination to Attendance Review, Allowances, and EPF/ETF Tables
+
+### Problem & Requirement
+- The data tables in the corporate/manager Payroll sub-tabs (Attendance Review, Allowances & Additions, and EPF & ETF Statutory Review) lacked dynamic table pagination.
+- The requirement was to apply consistent table pagination to these tables in the Payroll module.
+
+### Solution
+1. **Attendance Review (`Payroll/AttendanceReview.cshtml`)**:
+   - Replaced hardcoded static buttons with the system's dynamic `initTablePagination('attendanceTable', 10)` engine.
+   - Updated `filterTable()` to manage `data-filter-hidden` attributes and trigger table pagination re-rendering/page reset on filter changes.
+2. **Allowances & Additions (`Payroll/Bonuses.cshtml`)**:
+   - Integrated `initTablePagination('allowanceTable', 10)` on page load.
+   - Enhanced `filterTable()` and CSV export to seamlessly respect pagination state and filter visibility.
+3. **EPF & ETF Statutory Review (`Payroll/EpfEtf.cshtml`)**:
+   - Integrated `initTablePagination('epfTable', 10)` on page load with filter synchronisation.
+4. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

@@ -347,15 +347,6 @@
                 </tbody>
             </table>
         </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-top: 1px solid var(--border-color);">
-            <span style="font-size: 0.75rem; color: var(--text-secondary);" id="recordCount">Showing @Model.AttendanceData.Count employees</span>
-            <div style="display: flex; gap: 4px;">
-                <button class="btn-kanrich btn-kanrich-outline btn-action-small" style="padding: 4px 8px;"><i class="bi bi-chevron-left"></i></button>
-                <button class="btn-kanrich btn-kanrich-primary btn-action-small" style="padding: 4px 8px;">1</button>
-                <button class="btn-kanrich btn-kanrich-outline btn-action-small" style="padding: 4px 8px;">2</button>
-                <button class="btn-kanrich btn-kanrich-outline btn-action-small" style="padding: 4px 8px;"><i class="bi bi-chevron-right"></i></button>
-            </div>
-        </div>
     </div>
 
 </div>
@@ -464,17 +455,24 @@
                 const matchDept   = !dept   || (row.dataset.dept || '').toLowerCase().includes(dept);
                 const matchStatus = !status || (row.dataset.status || '').toLowerCase() === status;
 
-                if (matchName && matchDept && matchStatus) {
-                    row.style.display = '';
+                const isVisible = matchName && matchDept && matchStatus;
+                row.setAttribute('data-filter-hidden', isVisible ? 'false' : 'true');
+                if (isVisible) {
                     visibleCount++;
-                } else {
-                    row.style.display = 'none';
                 }
             });
 
             const recordCount = document.getElementById('recordCount');
             if (recordCount) {
                 recordCount.textContent = `Showing ${visibleCount} employees`;
+            }
+
+            const table = document.getElementById('attendanceTable');
+            if (table && typeof table._tablePaginationRender === 'function') {
+                if (typeof table._tablePaginationResetPage === 'function') {
+                    table._tablePaginationResetPage();
+                }
+                table._tablePaginationRender();
             }
         }
 
@@ -620,6 +618,9 @@
         });
 
         document.addEventListener('DOMContentLoaded', function () {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('attendanceTable', 10);
+            }
             filterTable();
         });
     </script>

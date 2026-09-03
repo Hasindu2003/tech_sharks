@@ -701,13 +701,12 @@
                 const matchType = !type || rowType === type;
                 const matchDept = !dept || rowDept === dept;
                 const matchCycle = !cycle || rowCycle === cycle;
+                const isVisible = matchSearch && matchType && matchDept && matchCycle;
 
-                if (matchSearch && matchType && matchDept && matchCycle) {
-                    row.style.display = '';
+                row.setAttribute('data-filter-hidden', isVisible ? 'false' : 'true');
+                if (isVisible) {
                     visibleCount++;
                     sumAmount += parseFloat(row.dataset.amount || 0);
-                } else {
-                    row.style.display = 'none';
                 }
             });
 
@@ -721,6 +720,14 @@
             const footTotal = document.getElementById('footTotal');
             if (footTotal) {
                 footTotal.textContent = 'Rs ' + formatMoney(sumAmount);
+            }
+
+            const table = document.getElementById('allowanceTable');
+            if (table && typeof table._tablePaginationRender === 'function') {
+                if (typeof table._tablePaginationResetPage === 'function') {
+                    table._tablePaginationResetPage();
+                }
+                table._tablePaginationRender();
             }
         }
 
@@ -762,7 +769,7 @@
             ];
 
             document.querySelectorAll('.allowance-row').forEach(row => {
-                if (row.style.display !== 'none') {
+                if (row.getAttribute('data-filter-hidden') !== 'true') {
                     const name = row.querySelector('td:nth-child(1) p:first-child')?.textContent.trim() || '';
                     const epf = (row.dataset.epf || '').toUpperCase();
                     const dept = row.dataset.dept || '';
@@ -796,6 +803,9 @@
         }
 
         document.addEventListener("DOMContentLoaded", function () {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('allowanceTable', 10);
+            }
             filterTable();
         });
 

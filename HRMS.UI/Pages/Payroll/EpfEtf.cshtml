@@ -613,17 +613,16 @@
 
                 const matchSearch = !search || name.includes(search) || epf.includes(search);
                 const matchDept = !dept || rowDept === dept;
+                const isVisible = matchSearch && matchDept;
 
-                if (matchSearch && matchDept) {
-                    row.style.display = '';
+                row.setAttribute('data-filter-hidden', isVisible ? 'false' : 'true');
+                if (isVisible) {
                     visibleCount++;
                     sumBasic += parseFloat(row.dataset.basic || 0);
                     sumEpfEmp += parseFloat(row.dataset.epfemp || 0);
                     sumEpfCo += parseFloat(row.dataset.epfco || 0);
                     sumEtf += parseFloat(row.dataset.etf || 0);
                     sumStatutory += parseFloat(row.dataset.statutory || 0);
-                } else {
-                    row.style.display = 'none';
                 }
             });
 
@@ -645,6 +644,14 @@
             if (footEpfCo) footEpfCo.textContent = 'Rs ' + formatMoney(sumEpfCo);
             if (footEtf) footEtf.textContent = 'Rs ' + formatMoney(sumEtf);
             if (footStatutory) footStatutory.textContent = 'Rs ' + formatMoney(sumStatutory);
+
+            const table = document.getElementById('epfTable');
+            if (table && typeof table._tablePaginationRender === 'function') {
+                if (typeof table._tablePaginationResetPage === 'function') {
+                    table._tablePaginationResetPage();
+                }
+                table._tablePaginationRender();
+            }
         }
 
         function formatMoney(num) {
@@ -687,7 +694,7 @@
             ];
 
             document.querySelectorAll('.epf-row').forEach(row => {
-                if (row.style.display !== 'none') {
+                if (row.getAttribute('data-filter-hidden') !== 'true') {
                     const name = row.querySelector('td:nth-child(1) p:first-child')?.textContent.trim() || '';
                     const epf = (row.dataset.epf || '').toUpperCase();
                     const dept = row.dataset.dept || '';
@@ -721,6 +728,13 @@
             link.click();
             document.body.removeChild(link);
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof initTablePagination === 'function') {
+                initTablePagination('epfTable', 10);
+            }
+            filterTable();
+        });
 
         document.addEventListener("keydown", function (e) {
             if (e.key === "Escape") {
