@@ -102,15 +102,16 @@
                     <div class="grid-2">
                         <div class="fg">
                             <label class="fl">Salary Adjustment Type <span class="req">*</span></label>
-                            <select name="salaryType" class="fi" required>
-                                <option value="Full">Full Pay</option>
+                            <select name="salaryType" class="fi salary-type-select" required onchange="handleSalaryTypeChange(this)">
+                                <option value="Full" selected>Full Pay</option>
                                 <option value="Half">Half Pay</option>
                                 <option value="NoPay">No Pay</option>
                             </select>
                         </div>
-                        <div class="fg">
+                        <div class="fg percentage-group" style="display: none;">
                             <label class="fl">Salary Percentage (%) <span class="req">*</span></label>
-                            <input type="number" name="percentage" class="fi" value="100" min="0" max="100" required />
+                            <input type="number" name="percentage" class="fi percentage-input" value="100" min="1" max="99" placeholder="e.g. 50" />
+                            <small style="font-size: 11.5px; color: #7a8863; margin-top: 3px; display: block;">Specify payout percentage for half pay (1% - 99%).</small>
                         </div>
                     </div>
                     
@@ -136,4 +137,38 @@ else
         <div style="font-size: 14.5px; font-weight: 700; color: #374151; margin-bottom: 4px;">No Pending Leaves</div>
         <div style="font-size: 12.5px; color: #9ca3af;">There are no approved maternity leaves waiting for payroll processing.</div>
     </div>
+}
+
+@section Scripts {
+<script>
+    function handleSalaryTypeChange(selectEl) {
+        const form = selectEl.closest('form');
+        if (!form) return;
+        const percentageGroup = form.querySelector('.percentage-group');
+        const percentageInput = form.querySelector('.percentage-input');
+        if (!percentageGroup || !percentageInput) return;
+
+        const val = selectEl.value;
+        if (val === 'Half') {
+            percentageGroup.style.display = 'block';
+            percentageInput.value = '50';
+            percentageInput.setAttribute('required', 'required');
+            percentageInput.focus();
+        } else if (val === 'Full') {
+            percentageGroup.style.display = 'none';
+            percentageInput.value = '100';
+            percentageInput.removeAttribute('required');
+        } else if (val === 'NoPay') {
+            percentageGroup.style.display = 'none';
+            percentageInput.value = '0';
+            percentageInput.removeAttribute('required');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.salary-type-select').forEach(function(selectEl) {
+            handleSalaryTypeChange(selectEl);
+        });
+    });
+</script>
 }

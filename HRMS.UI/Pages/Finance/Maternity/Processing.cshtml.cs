@@ -46,6 +46,22 @@ namespace HRMS.UI.Pages.Finance.Maternity
         {
             try
             {
+                if (string.Equals(salaryType, "Full", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    percentage = 100m;
+                }
+                else if (string.Equals(salaryType, "NoPay", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    percentage = 0m;
+                }
+                else if (string.Equals(salaryType, "Half", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    if (percentage <= 0m || percentage >= 100m)
+                    {
+                        percentage = 50m;
+                    }
+                }
+
                 await _maternityService.ProcessMaternityPayrollAsync(leaveId, salaryType, percentage, nursingConfig);
                 SuccessMessage = "Maternity payroll processed successfully!";
             }

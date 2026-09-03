@@ -319,7 +319,12 @@ namespace HRMS.UI.Services.Impl
 
             var payment = leave.MaternityPayment ?? new MaternityPayment { LeaveId = leaveId };
             payment.SalaryAdjustmentType = salaryType;
-            payment.SalaryPercentage = percentage;
+            if (string.Equals(salaryType, "Full", StringComparison.OrdinalIgnoreCase))
+                payment.SalaryPercentage = 100m;
+            else if (string.Equals(salaryType, "NoPay", StringComparison.OrdinalIgnoreCase))
+                payment.SalaryPercentage = 0m;
+            else
+                payment.SalaryPercentage = (percentage > 0m && percentage < 100m) ? percentage : 50m;
             payment.NursingBreakConfig = nursingConfig;
             payment.Status = "Processed";
             payment.PaymentDate = DateTime.Now;

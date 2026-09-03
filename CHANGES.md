@@ -6007,6 +6007,24 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 366 — Restrict Percentage Input to Half Pay on Maternity Payroll Processing Page
+
+### Problem & Requirement
+- On the Maternity Payroll Processing page (`/Finance/Maternity/Processing`), the Salary Percentage input was visible and selectable for all salary adjustment types including "Full Pay".
+- The requirement was to make percentage selection available only for "Half Pay", locking "Full Pay" to 100% and "No Pay" to 0%.
+
+### Solution
+1. **Dynamic Visibility & Field Control (`Finance/Maternity/Processing.cshtml`)**:
+   - Encapsulated the Salary Percentage input field inside a conditional `.percentage-group` container that is hidden by default (`display: none;`).
+   - Added `handleSalaryTypeChange` script: when "Half Pay" is selected, dynamically shows the percentage input field with required validation and a 50% default value (ranging 1%–99%). When "Full Pay" or "No Pay" is selected, hides the input field and resets its value to 100% and 0% respectively.
+2. **Backend Normalization & Safety (`Finance/Maternity/Processing.cshtml.cs` & `MaternityLeaveService.cs`)**:
+   - Added server-side validation ensuring that when `salaryType == "Full"`, `SalaryPercentage` is set to `100m`, when `salaryType == "NoPay"`, it is set to `0m`, and when `salaryType == "Half"`, a valid percentage between 1% and 99% is applied (defaulting to 50%).
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
