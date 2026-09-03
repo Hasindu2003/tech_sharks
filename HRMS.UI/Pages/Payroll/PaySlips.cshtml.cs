@@ -33,7 +33,7 @@ namespace HRMS.UI.Pages.Payroll
 
         public async Task<IActionResult> OnGetAsync(int? branchId)
         {
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("Admin") || User.IsInRole("Department Head") || User.IsInRole("Area Manager") || User.IsInRole("Welfare Manager"))
             {
                 return Forbid();
             }
@@ -42,8 +42,7 @@ namespace HRMS.UI.Pages.Payroll
 
             bool isCorporate = User.IsInRole("HR Manager") || User.IsInRole("HR Officer");
             bool isBranchManager = User.IsInRole("Branch Manager");
-            bool isAreaManager = User.IsInRole("Area Manager");
-            bool isManagerOrCorporate = isCorporate || isBranchManager || isAreaManager;
+            bool isManagerOrCorporate = isCorporate || isBranchManager;
             IsEmployee = !isManagerOrCorporate;
 
             if (isManagerOrCorporate)
@@ -55,7 +54,7 @@ namespace HRMS.UI.Pages.Payroll
                 {
                     ManagedBranchesList = await _db.Branches.OrderBy(b => b.Name).ToListAsync();
                 }
-                else if (User.IsInRole("HR Officer") || User.IsInRole("Area Manager"))
+                else if (User.IsInRole("HR Officer"))
                 {
                     var allowedIds = ParseManagedBranches(userAccount?.ManagedBranches);
                     if (allowedIds != null && allowedIds.Any())

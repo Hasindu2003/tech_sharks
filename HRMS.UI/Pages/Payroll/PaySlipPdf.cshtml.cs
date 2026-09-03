@@ -35,7 +35,7 @@ namespace HRMS.UI.Pages.Payroll
 
         public async Task<IActionResult> OnGetAsync(int? id, [FromQuery(Name = "id")] int? queryId)
         {
-            if (User.IsInRole("Admin"))
+            if (User.IsInRole("Admin") || User.IsInRole("Department Head") || User.IsInRole("Area Manager") || User.IsInRole("Welfare Manager"))
             {
                 return Forbid();
             }
@@ -98,14 +98,6 @@ namespace HRMS.UI.Pages.Payroll
                         bmBranchId = b?.Id;
                     }
                     if (bmBranchId.HasValue && Payslip.Employee?.BranchId == bmBranchId.Value)
-                    {
-                        hasAccess = true;
-                    }
-                }
-                else if (User.IsInRole("Area Manager"))
-                {
-                    var allowedIds = ParseManagedBranches(userAccount?.ManagedBranches);
-                    if (allowedIds != null && Payslip.Employee?.BranchId != null && allowedIds.Contains(Payslip.Employee.BranchId))
                     {
                         hasAccess = true;
                     }

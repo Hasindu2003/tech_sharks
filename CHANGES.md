@@ -5884,6 +5884,24 @@ Resignation and Termination review, approval, details, and report views displaye
 4. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 359 — Remove Payroll Tab from Department Head and Area Manager Portals
+
+### Problem & Requirement
+- The sidebar navigation included the Payroll navigation tab for Department Heads and Area Managers.
+- The requirement was to remove the Payroll tab completely from both the Department Head and Area Manager portals.
+
+### Solution
+1. **Sidebar Navigation (`Shared/_Layout.cshtml`)**:
+   - Excluded `Department Head` and `Area Manager` roles from rendering the Payroll navigation link in the main navigation sidebar.
+   - Payroll remains accessible to `HR Manager` & `HR Officer` (full corporate processing) and `Branch Manager` (branch payslips review) and regular `Employee` users.
+2. **Access Security (`Payroll/PaySlips.cshtml.cs`, `Payroll/PaySlipPdf.cshtml.cs`)**:
+   - Added explicit `Forbid()` guards for `Department Head` and `Area Manager` to prevent unauthorized direct URL access.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

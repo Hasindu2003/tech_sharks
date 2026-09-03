@@ -689,7 +689,7 @@
                         </li>
                     }
 
-                    @if (!User.IsInRole("Admin") && !User.IsInRole("Welfare Manager"))
+                    @if (!User.IsInRole("Admin") && !User.IsInRole("Welfare Manager") && !User.IsInRole("Department Head") && !User.IsInRole("Area Manager"))
                     {
                         <li class="nav-item @(activeNav == "Payroll" ? "active" : "")">
                             @if (User.IsInRole("HR Manager") || User.IsInRole("HR Officer"))
