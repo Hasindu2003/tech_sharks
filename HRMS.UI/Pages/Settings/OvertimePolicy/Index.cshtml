@@ -209,15 +209,8 @@
                 </div>
             </div>
 
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 14px 18px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; margin-bottom: 16px;">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="autoCalculate" value="true" @(Model.GlobalPolicy.AutoCalculateOtOnPayroll ? "checked" : "") id="globalAutoCalc" style="width: 18px; height: 18px; accent-color: #10823c; cursor: pointer;" />
-                    <div>
-                        <label for="globalAutoCalc" style="font-size: 13px; font-weight: 700; color: #166534; cursor: pointer; margin: 0;">Automatically Calculate OT on Monthly Payroll</label>
-                        <p style="font-size: 11.5px; color: #15803d; margin: 2px 0 0 0;">When enabled, OT hours from attendance logs are converted to payslip additions automatically during monthly payroll processing.</p>
-                    </div>
-                </div>
-                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 8px 20px; font-weight: 700;">
+            <div style="display: flex; justify-content: flex-end; margin-bottom: 16px;">
+                <button type="submit" class="btn-kanrich btn-kanrich-primary" style="padding: 9px 24px; font-weight: 700;">
                     <i class="bi bi-check-lg"></i> Save Corporate Policy
                 </button>
             </div>
@@ -262,7 +255,6 @@
                         <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Working Days</th>
                         <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Daily Hours</th>
                         <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">OT Multiplier</th>
-                        <th style="text-align: center; padding: 12px 14px; font-weight: 700; color: #475569; font-size: 12px;">Auto-Calculate</th>
                         <th style="text-align: right; padding: 12px 16px; font-weight: 700; color: #475569; font-size: 12px;">Actions</th>
                     </tr>
                 </thead>
@@ -292,18 +284,8 @@
                             <td style="text-align: center; padding: 14px; font-weight: 700; color: #0284c7; font-size: 13px;">
                                 @b.OtMultiplier×
                             </td>
-                            <td style="text-align: center; padding: 14px;">
-                                @if (b.AutoCalculate)
-                                {
-                                    <span style="color: #166534; font-weight: 700; font-size: 12px;">✓ Yes</span>
-                                }
-                                else
-                                {
-                                    <span style="color: #94a3b8; font-size: 12px;">No</span>
-                                }
-                            </td>
                             <td style="text-align: right; padding: 14px 16px;">
-                                <button type="button" onclick="openBranchModal(@b.BranchId, '@b.BranchName', @(b.HasCustomOverride ? "true" : "false"), @b.WorkingDays, @b.DailyHours, @b.OtMultiplier, @b.WeekendMultiplier, @(b.AutoCalculate ? "true" : "false"))" class="btn-kanrich btn-kanrich-outline" style="padding: 4px 12px; font-size: 12px;">
+                                <button type="button" onclick="openBranchModal(@b.BranchId, '@b.BranchName', @(b.HasCustomOverride ? "true" : "false"), @b.WorkingDays, @b.DailyHours, @b.OtMultiplier, @b.WeekendMultiplier)" class="btn-kanrich btn-kanrich-outline" style="padding: 4px 12px; font-size: 12px;">
                                     <i class="bi bi-pencil"></i> Configure
                                 </button>
                             </td>
@@ -354,10 +336,6 @@
                             <input type="number" name="weekendMultiplier" id="modalWeekendMultiplier" min="1" max="5" step="0.25" class="k-form-control" style="font-weight: 700;" />
                         </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px;">
-                        <input type="checkbox" name="autoCalculate" value="true" id="modalAutoCalculate" style="width: 16px; height: 16px; accent-color: #10823c; cursor: pointer;" />
-                        <label for="modalAutoCalculate" style="font-size: 12.5px; font-weight: 700; color: #166534; cursor: pointer; margin: 0;">Auto-calculate OT on monthly payroll run</label>
-                    </div>
                 </div>
             </div>
             <div style="display: flex; justify-content: flex-end; gap: 10px; padding: 16px 20px; border-top: 1px solid var(--border-color);">
@@ -388,7 +366,7 @@
             document.getElementById('formulaExample').innerHTML = `<strong>Example:</strong> For an employee with Basic Salary of <strong>Rs 100,000</strong> working <strong>10 OT hours</strong>: Hourly Rate = Rs ${hourlyRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/hr → OT Rate (${multiplier}×) = Rs ${otRate.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}/hr → <strong>Total OT Pay = Rs ${totalOtPay.toLocaleString('en-US')}</strong>`;
         }
 
-        function openBranchModal(branchId, branchName, hasOverride, workingDays, dailyHours, otMultiplier, weekendMultiplier, autoCalc) {
+        function openBranchModal(branchId, branchName, hasOverride, workingDays, dailyHours, otMultiplier, weekendMultiplier) {
             document.getElementById('modalBranchId').value = branchId;
             document.getElementById('modalBranchName').textContent = branchName;
             document.getElementById('modalHasOverride').checked = hasOverride;
@@ -396,7 +374,6 @@
             document.getElementById('modalDailyHours').value = dailyHours;
             document.getElementById('modalOtMultiplier').value = otMultiplier;
             document.getElementById('modalWeekendMultiplier').value = weekendMultiplier;
-            document.getElementById('modalAutoCalculate').checked = autoCalc;
 
             toggleOverrideInputs();
             document.getElementById('branchModal').classList.add('open');

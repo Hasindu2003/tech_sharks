@@ -36,8 +36,7 @@ namespace HRMS.UI.Pages.Settings.OvertimePolicy
             int workingDays, 
             decimal dailyHours, 
             decimal otMultiplier, 
-            decimal weekendMultiplier, 
-            bool autoCalculate)
+            decimal weekendMultiplier)
         {
             var global = await _db.PayrollPolicySettings
                 .FirstOrDefaultAsync(p => p.BranchId == null);
@@ -55,7 +54,7 @@ namespace HRMS.UI.Pages.Settings.OvertimePolicy
             global.StandardDailyWorkingHours = Math.Max(1.0m, Math.Min(24.0m, dailyHours));
             global.StandardOtMultiplier = Math.Max(1.0m, Math.Min(5.0m, otMultiplier));
             global.WeekendOtMultiplier = Math.Max(1.0m, Math.Min(5.0m, weekendMultiplier));
-            global.AutoCalculateOtOnPayroll = autoCalculate;
+            global.AutoCalculateOtOnPayroll = true;
             global.LastModifiedDate = DateTime.Now;
             global.ModifiedBy = User.Identity?.Name ?? "Admin";
 
@@ -71,8 +70,7 @@ namespace HRMS.UI.Pages.Settings.OvertimePolicy
             int? workingDays,
             decimal? dailyHours,
             decimal? otMultiplier,
-            decimal? weekendMultiplier,
-            bool autoCalculate)
+            decimal? weekendMultiplier)
         {
             var branchSetting = await _db.PayrollPolicySettings
                 .FirstOrDefaultAsync(p => p.BranchId == branchId);
@@ -101,7 +99,7 @@ namespace HRMS.UI.Pages.Settings.OvertimePolicy
             branchSetting.StandardDailyWorkingHours = Math.Max(1.0m, Math.Min(24.0m, dailyHours ?? 8.0m));
             branchSetting.StandardOtMultiplier = Math.Max(1.0m, Math.Min(5.0m, otMultiplier ?? 1.5m));
             branchSetting.WeekendOtMultiplier = Math.Max(1.0m, Math.Min(5.0m, weekendMultiplier ?? 2.0m));
-            branchSetting.AutoCalculateOtOnPayroll = autoCalculate;
+            branchSetting.AutoCalculateOtOnPayroll = true;
             branchSetting.LastModifiedDate = DateTime.Now;
             branchSetting.ModifiedBy = User.Identity?.Name ?? "Admin";
 

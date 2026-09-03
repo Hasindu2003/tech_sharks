@@ -5764,6 +5764,25 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 352 — Enforce Automatic OT Calculation and Remove Redundant Checkbox from Overtime Policy
+
+### Problem & Requirement
+- The Overtime Policy page (`/Settings/OvertimePolicy`) featured a toggle checkbox for "Automatically Calculate OT on Monthly Payroll".
+- The requirement was to remove this toggle from the UI so that OT is always and consistently calculated automatically from attendance logs during monthly payroll processing.
+
+### Solution
+1. **Corporate Policy UI (`Settings/OvertimePolicy/Index.cshtml`)**:
+   - Removed the "Automatically Calculate OT on Monthly Payroll" checkbox container.
+   - Cleanly positioned the "Save Corporate Policy" button at the end of the form.
+   - Removed the "Auto-Calculate" column from the Branch Policies & Overrides table and removed the toggle from the Branch modal.
+2. **Backend Handlers (`Settings/OvertimePolicy/Index.cshtml.cs`)**:
+   - Updated `OnPostSaveGlobalPolicyAsync` and `OnPostSaveBranchOverrideAsync` to remove the parameter and permanently enforce `AutoCalculateOtOnPayroll = true`.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
