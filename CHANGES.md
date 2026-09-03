@@ -5833,6 +5833,23 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 356 — Fix Access Denied on Termination Supporting Document Downloads
+
+### Problem & Requirement
+- During the termination review and clearance workflow, when Department Heads (and other authorized reviewers) clicked on supporting documents attached to a termination request, the system returned an "Access Denied" (403) error because the `Department Head` role was missing from the `DownloadDocument` endpoint authorization.
+- The requirement was to fix access permissions so reviewers can view and download attached supporting documents seamlessly.
+
+### Solution
+1. **Document Download Endpoint (`Termination/DownloadDocument.cshtml.cs`)**:
+   - Updated authorization from a restricted role list to `[Authorize]`, matching the Resignation and Transfer document download controllers and allowing all authenticated reviewers participating in the workflow (including Department Heads and Admins) to view documents.
+2. **Termination Report View (`Termination/TerminationReport.cshtml`, `TerminationReport.cshtml.cs`)**:
+   - Added `Department Head` and `Admin` to the authorized roles for consistency across termination artifacts.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

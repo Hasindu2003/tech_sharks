@@ -1,6 +1,6 @@
 @page "{id:int}"
 @using Microsoft.AspNetCore.Authorization
-@attribute [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager,Employee")]
+@attribute [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager,Department Head,Employee,Admin")]
 @model HRMS.UI.Pages.Termination.TerminationReportModel
 @{
     ViewData["Title"] = "Termination Report";

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace HRMS.UI.Pages.Termination
 {
-    [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager,Employee")]
+    [Authorize(Roles = "HR Manager,HR Officer,Area Manager,Branch Manager,Department Head,Employee,Admin")]
     public class TerminationReportModel : PageModel
     {
         private readonly ITerminationService _terminationService;
