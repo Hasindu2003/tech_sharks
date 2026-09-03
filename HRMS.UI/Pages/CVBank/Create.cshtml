@@ -213,18 +213,6 @@
                     </div>
 
                     <div class="fg">
-                        <label class="fl">Target Job Vacancy (Optional)</label>
-                        <select asp-for="CVInput.JobOpeningId" id="hrJobOpening" class="fi" onchange="onJobOpeningChange(this);">
-                            <option value="" data-skills="Credit Analysis, Financial Reporting, Risk Assessment, Auditing & Compliance, Loan Operations, Customer Service, MS Excel & Modeling">-- General Talent Pool (No Specific Vacancy) --</option>
-                            @foreach (var job in Model.JobOpenings)
-                            {
-                                <option value="@job.Id" data-title="@job.Title" data-skills="@job.RequiredSkills">[@job.JobCode] @job.Title (@(job.Branch?.Name ?? "All Branches"))</option>
-                            }
-                        </select>
-                        <small class="text-muted" style="font-size: 11px;">Selecting a vacancy dynamically loads that role's required skills checklist for evaluation.</small>
-                    </div>
-
-                    <div class="fg">
                         <label class="fl">Applied Position <span class="req">*</span></label>
                         <select asp-for="CVInput.AppliedPosition" id="hrCandidatePos" class="fi" required>
                             <option value="">-- Select Position --</option>
@@ -491,25 +479,6 @@
             }
         }
 
-        function onJobOpeningChange(selectEl) {
-            const selectedOpt = selectEl.options[selectEl.selectedIndex];
-            if (selectedOpt && selectedOpt.dataset) {
-                if (selectedOpt.dataset.title) {
-                    const title = selectedOpt.dataset.title;
-                    const posSelect = document.getElementById('hrCandidatePos');
-                    if (posSelect) {
-                        for (let i = 0; i < posSelect.options.length; i++) {
-                            if (posSelect.options[i].value === title) {
-                                posSelect.selectedIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                }
-                populateHrSkills(selectedOpt.dataset.skills);
-            }
-        }
-
         function calcScore() {
             const exp = Math.min(10, Math.max(0, parseInt(document.getElementById('expInput').value) || 0));
             if (exp > 10) exp = 10;
@@ -573,13 +542,7 @@
             document.getElementById('mastInput').addEventListener('change', calcScore);
             calcScore();
 
-            const jobSelect = document.getElementById('hrJobOpening');
-            if (jobSelect) {
-                const opt = jobSelect.options[jobSelect.selectedIndex];
-                populateHrSkills(opt ? opt.dataset.skills : '');
-            } else {
-                populateHrSkills('');
-            }
+            populateHrSkills('');
         });
 
         function validateCreateForm(form) {

@@ -5681,6 +5681,24 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 347 — Remove Target Job Vacancy Field from Add Candidate Form
+
+### Problem & Requirement
+- On the **Add Candidate to CV Bank** page (`/CVBank/Create`), the form contained both `Applied Position` and `Target Job Vacancy (Optional)`.
+- The requirement was to remove the `Target Job Vacancy` field from the registration form so candidates are registered directly with their Applied Position.
+
+### Solution
+1. **Markup & View (`CVBank/Create.cshtml`)**:
+   - Removed the `Target Job Vacancy (Optional)` dropdown input group.
+   - Cleaned up vacancy event handlers and updated client-side initialization to populate standard skills evaluation checklist.
+2. **Page Model (`CVBank/Create.cshtml.cs`)**:
+   - Explicitly assigned `CVInput.JobOpeningId = null;` upon direct candidate registration.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

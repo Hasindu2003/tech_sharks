@@ -179,14 +179,7 @@ namespace HRMS.UI.Pages.CVBank
 
             try
             {
-                if (CVInput.JobOpeningId.HasValue && CVInput.JobOpeningId.Value > 0)
-                {
-                    var job = await _cvService.GetJobOpeningByIdAsync(CVInput.JobOpeningId.Value);
-                    if (job != null)
-                    {
-                        CVInput.AppliedPosition = job.Title;
-                    }
-                }
+                CVInput.JobOpeningId = null;
 
                 if (UploadedCV != null && UploadedCV.Length > 0)
                 {
