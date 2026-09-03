@@ -5746,6 +5746,25 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 351 — Remove Duty Accounts from Admin Sidebar and Fix User Accounts Active Tab Highlight
+
+### Problem & Requirement
+- The Admin sidebar contained a direct link to Duty Accounts, which is already integrated and accessible within the System Settings page (`/Settings`).
+- When navigating to the **User Accounts** section (`/Admin/Users`), the sidebar tab did not activate (green highlight) due to an `ActiveNav` key mismatch.
+- The requirements were to remove the standalone Duty Accounts sidebar link for Admin, and fix the User Accounts active tab highlight.
+
+### Solution
+1. **Sidebar Navigation (`_Layout.cshtml`)**:
+   - Removed the `Duty Accounts` `<li>` element from the Admin navigation section.
+   - Updated the active check for User Accounts to match `activeNav == "Users" || activeNav == "AdminUsers"`.
+2. **Page View (`Admin/Users/Index.cshtml`)**:
+   - Set `ViewData["ActiveNav"] = "Users"` for consistency.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

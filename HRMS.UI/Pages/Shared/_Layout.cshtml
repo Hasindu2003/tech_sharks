@@ -484,21 +484,7 @@
                                 System Settings
                             </a>
                         </li>
-                        <li class="nav-item @(activeNav == "DutyAccounts" ? "active" : "")">
-                            <a href="/Admin/DutyAccounts">
-                                <span class="nav-icon">
-                                    <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
-                                        <circle cx="9" cy="7" r="4"/>
-                                        <line x1="19" y1="8" x2="23" y2="8"/>
-                                        <line x1="19" y1="12" x2="23" y2="12"/>
-                                        <line x1="19" y1="16" x2="23" y2="16"/>
-                                    </svg>
-                                </span>
-                                Duty Accounts
-                            </a>
-                        </li>
-                        <li class="nav-item @(activeNav == "Users" ? "active" : "")">
+                        <li class="nav-item @(activeNav == "Users" || activeNav == "AdminUsers" ? "active" : "")">
                             <a href="/Admin/Users">
                                 <span class="nav-icon">
                                     <svg viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
