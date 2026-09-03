@@ -403,11 +403,6 @@
                     <input type="date" asp-for="NewEmployee.DateJoined" class="form-control" id="dateJoinedInput" />
                     <span asp-validation-for="NewEmployee.DateJoined" id="dateJoinedError" class="field-error"></span>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Date Confirmed</label>
-                    <input type="date" asp-for="NewEmployee.DateConfirmed" class="form-control" id="dateConfirmedInput" />
-                    <span asp-validation-for="NewEmployee.DateConfirmed" id="dateConfirmedError" class="field-error"></span>
-                </div>
 
                 <!-- Row 3: Conditional Period -->
                 <div class="form-group" id="probationPeriodGroup" style="display:none;">
@@ -534,7 +529,6 @@
             const deptSelect = document.getElementById('departmentSelect');
             const desigSelect = document.getElementById('designationSelect');
             const dateJoinedInput = document.getElementById('dateJoinedInput');
-            const dateConfirmedInput = document.getElementById('dateConfirmedInput');
             const resAddrInput = document.getElementById('residentialAddressInput');
             const epfInput = document.getElementById('epfInput');
             const etfInput = document.getElementById('etfInput');
@@ -815,29 +809,12 @@
                     }
                 }
                 clearError('dateJoinedError');
-                validateDateConfirmed();
                 return true;
             }
             if (dateJoinedInput) {
                 dateJoinedInput.addEventListener('change', validateDateJoined);
                 dateJoinedInput.addEventListener('blur', validateDateJoined);
             }
-
-            // --- Date Confirmed Validation ---
-            function validateDateConfirmed() {
-                if (!dateConfirmedInput || !dateConfirmedInput.value) { clearError('dateConfirmedError'); return true; }
-                const dc = new Date(dateConfirmedInput.value);
-                if (dateJoinedInput && dateJoinedInput.value) {
-                    const dj = new Date(dateJoinedInput.value);
-                    if (dc < dj) {
-                        showError('dateConfirmedError', 'Date Confirmed must be on or after Date Joined.');
-                        return false;
-                    }
-                }
-                clearError('dateConfirmedError');
-                return true;
-            }
-            if (dateConfirmedInput) dateConfirmedInput.addEventListener('change', validateDateConfirmed);
 
             // --- Employee Type Toggle (Intern vs Probationary vs Permanent) ---
             const probationGroup = document.getElementById('probationPeriodGroup');
@@ -1055,14 +1032,13 @@
                     const deptOk = validateDepartment();
                     const desigOk = validateDesignation();
                     const djOk = validateDateJoined();
-                    const dcOk = validateDateConfirmed();
                     const epfOk = validateEPF();
                     const etfOk = validateETF();
                     const spOk = validateSpousePhone();
                     const expOk = validateExperience();
 
                     if (!nameOk || !initialsOk || !nicOk || !dobOk || !sexOk || !phoneOk || !emailOk || !addrOk ||
-                        !empTypeOk || !branchOk || !deptOk || !desigOk || !djOk || !dcOk || !epfOk || !etfOk || !spOk || !expOk) {
+                        !empTypeOk || !branchOk || !deptOk || !desigOk || !djOk || !epfOk || !etfOk || !spOk || !expOk) {
                         e.preventDefault();
                         const firstErr = document.querySelector('.field-error[style*="block"]');
                         if (firstErr) firstErr.scrollIntoView({ behavior: 'smooth', block: 'center' });

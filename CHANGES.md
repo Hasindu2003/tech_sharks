@@ -5991,6 +5991,23 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 365 — Remove Date Confirmed Field from Employee Creation Form
+
+### Problem & Requirement
+- The employee creation/editing form contained a `Date Confirmed` field under the Employment Details section.
+- The requirement was to remove the `Date Confirmed` field from the employee creation form.
+
+### Solution
+1. **Removed Form Field & Labels (`Employees/Create.cshtml`)**:
+   - Removed the `Date Confirmed` input field, label, and validation span from the Employment Details section.
+2. **Removed Associated Script References (`Employees/Create.cshtml`)**:
+   - Removed the `dateConfirmedInput` DOM reference, `validateDateConfirmed()` function, event listeners, and form submission validation checks.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
