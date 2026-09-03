@@ -439,7 +439,12 @@ namespace HRMS.UI.Pages.Welfare
 
                 TempData["Success"] = IsDraft
                     ? $"Draft saved successfully (WF-{request.RequestId:D4})! You can edit or submit it anytime from My Requests."
-                    : "Your welfare request has been submitted to the Welfare Manager for approval.";
+                    : $"Welfare request WF-{request.RequestId:D4} has been submitted successfully.";
+
+                if (User.IsInRole("Welfare Manager"))
+                {
+                    return RedirectToPage("/Welfare/Approvals/DepartmentHeadApproval");
+                }
 
                 return RedirectToPage("/Welfare/RequestList");
             }

@@ -6108,6 +6108,24 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 372 — Update Welfare Request Submission Message and Welfare Manager Redirect
+
+### Problem & Requirement
+- When a welfare request was submitted, the success message previously displayed: `"Your welfare request has been submitted to the Welfare Manager for approval."`
+- When viewed by a Welfare Manager or in the Welfare Manager portal, this phrasing was awkward, inaccurate, and confusing.
+
+### Solution
+1. **Clean Submission Messaging (`Welfare/RequestForm.cshtml.cs`)**:
+   - Updated the submission success message to `$"Welfare request WF-{request.RequestId:D4} has been submitted successfully."`
+2. **Role-Aware Post-Submission Redirect (`Welfare/RequestForm.cshtml.cs`)**:
+   - If the logged-in user is a `Welfare Manager`, redirect them directly to `/Welfare/Approvals/DepartmentHeadApproval`.
+   - Otherwise, redirect employees to `/Welfare/RequestList`.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
