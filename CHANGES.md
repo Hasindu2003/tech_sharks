@@ -5800,6 +5800,23 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 354 — Provide Granular Skip Reasons and Future Date Feedback on Biometric Import
+
+### Problem & Requirement
+- When importing a biometric log file where rows were skipped because punch timestamps are in the future, the system returned a generic error message: *"No valid punch records were imported (X rows skipped). Ensure employee IDs in the file correspond to employees in your branch."*
+- The requirement was to provide exact, granular feedback identifying when rows are skipped specifically due to future timestamps.
+
+### Solution
+1. **Granular Skip Counters (`BiometricLogs/Create.cshtml.cs`)**:
+   - Split generic skipped counter into separate tracked categories: `skippedFuture`, `skippedBranchMismatch`, `skippedInvalidFormat`, and `skippedErrors`.
+   - If all skipped rows are due to future timestamps, returned the specific validation message: *"No valid punch records were imported (X rows skipped). Biometric punches cannot be in the future — all timestamps in the file are beyond current date/time."*
+   - For mixed skip reasons, compiled detailed parenthetical summaries (e.g. `X future date/time punch(es), Y non-branch or duty employee(s)`).
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

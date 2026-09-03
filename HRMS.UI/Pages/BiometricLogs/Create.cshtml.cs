@@ -185,7 +185,6 @@ namespace HRMS.UI.Pages.BiometricLogs
             if (currentUser == null) return Challenge();
 
             int imported = 0;
-            int skipped = 0;
 
             try
             {
@@ -314,6 +313,11 @@ namespace HRMS.UI.Pages.BiometricLogs
 
                 var branchEmployeeIdsSet = new HashSet<int>(validEmployeeIds);
 
+                int skippedFuture = 0;
+                int skippedBranchMismatch = 0;
+                int skippedInvalidFormat = 0;
+                int skippedErrors = 0;
+
                 for (int r = 1; r < rows.Count; r++)
                 {
                     var parts = rows[r];
@@ -328,7 +332,7 @@ namespace HRMS.UI.Pages.BiometricLogs
                     {
                         if (parts.Count <= Math.Max(idxId, Math.Max(idxDate, idxTime)))
                         {
-                            skipped++;
+                            skippedInvalidFormat++;
                             continue;
                         }
 
@@ -336,7 +340,7 @@ namespace HRMS.UI.Pages.BiometricLogs
                         var cleanIdStr = System.Text.RegularExpressions.Regex.Replace(rawIdStr, @"^[^\d]+", "");
                         if (!int.TryParse(cleanIdStr, out empId) || empId <= 0)
                         {
-                            skipped++;
+                            skippedInvalidFormat++;
                             continue;
                         }
 
@@ -344,7 +348,7 @@ namespace HRMS.UI.Pages.BiometricLogs
                         var timeStr = parts[idxTime].Trim();
                         if (!TryParseBiometricDateTime(dateStr, timeStr, out logTime))
                         {
-                            skipped++;
+                            skippedInvalidFormat++;
                             continue;
                         }
 
@@ -370,7 +374,7 @@ namespace HRMS.UI.Pages.BiometricLogs
                     {
                         if (parts.Count <= Math.Max(idxUserId, idxVerifyTime))
                         {
-                            skipped++;
+                            skippedInvalidFormat++;
                             continue;
                         }
 
@@ -378,14 +382,14 @@ namespace HRMS.UI.Pages.BiometricLogs
                         var cleanLegacyId = System.Text.RegularExpressions.Regex.Replace(rawLegacyId, @"^[^\d]+", "");
                         if (!int.TryParse(cleanLegacyId, out empId) || empId <= 0)
                         {
-                            skipped++;
+                            skippedInvalidFormat++;
                             continue;
                         }
 
                         var timeStr = parts[idxVerifyTime].Trim();
                         if (!DateTime.TryParse(timeStr, out logTime))
                         {
-                            skipped++;
+                            skippedInvalidFormat++;
                             continue;
                         }
 
@@ -406,13 +410,13 @@ namespace HRMS.UI.Pages.BiometricLogs
 
                     if (!branchEmployeeIdsSet.Contains(empId))
                     {
-                        skipped++;
+                        skippedBranchMismatch++;
                         continue;
                     }
 
                     if (logTime > SriLankaTime.Now.AddMinutes(1))
                     {
-                        skipped++;
+                        skippedFuture++;
                         continue;
                     }
 
@@ -432,20 +436,36 @@ namespace HRMS.UI.Pages.BiometricLogs
                     catch (Exception ex)
                     {
                         _logger.LogWarning(ex, "Failed to import punch log for Employee {EmpId} at {Time}", empId, logTime);
-                        skipped++;
+                        skippedErrors++;
                     }
                 }
 
-                _logger.LogInformation("Import biometric punches completed. Imported: {Imported}, Skipped: {Skipped}", imported, skipped);
+                int totalSkipped = skippedFuture + skippedBranchMismatch + skippedInvalidFormat + skippedErrors;
+                _logger.LogInformation("Import biometric punches completed. Imported: {Imported}, Skipped: {Skipped} (Future: {Future}, Branch: {Branch}, Invalid: {Invalid}, Errors: {Errors})",
+                    imported, totalSkipped, skippedFuture, skippedBranchMismatch, skippedInvalidFormat, skippedErrors);
+
+                var skipDetails = new List<string>();
+                if (skippedFuture > 0) skipDetails.Add($"{skippedFuture} future date/time punch(es)");
+                if (skippedBranchMismatch > 0) skipDetails.Add($"{skippedBranchMismatch} non-branch or duty employee(s)");
+                if (skippedInvalidFormat > 0) skipDetails.Add($"{skippedInvalidFormat} invalid format/empty row(s)");
+                if (skippedErrors > 0) skipDetails.Add($"{skippedErrors} error(s)");
+                string skipReasonText = skipDetails.Any() ? $" ({string.Join(", ", skipDetails)})" : "";
 
                 if (imported > 0)
                 {
-                    TempData["SuccessMessage"] = $"Successfully imported {imported} punch log(s). {skipped} row(s) skipped (unmatched or non-branch employees).";
+                    TempData["SuccessMessage"] = $"Successfully imported {imported} punch log(s)." + (totalSkipped > 0 ? $" {totalSkipped} row(s) skipped{skipReasonText}." : "");
                     return RedirectToPage("/Attendance/Index");
                 }
                 else
                 {
-                    ModelState.AddModelError("CsvFile", $"No valid punch records were imported ({skipped} rows skipped). Ensure employee IDs in the file correspond to employees in your branch.");
+                    if (skippedFuture > 0 && skippedBranchMismatch == 0 && skippedInvalidFormat == 0 && skippedErrors == 0)
+                    {
+                        ModelState.AddModelError("CsvFile", $"No valid punch records were imported ({skippedFuture} rows skipped). Biometric punches cannot be in the future — all timestamps in the file are beyond current date/time.");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("CsvFile", $"No valid punch records were imported ({totalSkipped} rows skipped{skipReasonText}). Please check your file.");
+                    }
                     await LoadEmployeesAsync();
                     return Page();
                 }
