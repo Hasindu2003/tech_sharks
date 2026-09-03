@@ -152,8 +152,12 @@ namespace HRMS.UI.Pages.CVBank
                 ModelState.AddModelError("CVInput.ExperienceYears", "Experience must be between 0 and 50 years.");
             }
 
-            // 6. Validate Uploaded Document
-            if (UploadedCV != null && UploadedCV.Length > 0)
+            // 6. Validate Uploaded Document (Mandatory)
+            if (UploadedCV == null || UploadedCV.Length == 0)
+            {
+                ModelState.AddModelError("UploadedCV", "Please attach candidate Resume / CV document (PDF or Word).");
+            }
+            else
             {
                 var allowedExtensions = new[] { ".pdf", ".docx", ".doc" };
                 var ext = Path.GetExtension(UploadedCV.FileName).ToLowerInvariant();

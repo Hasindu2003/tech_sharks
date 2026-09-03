@@ -5664,6 +5664,24 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 346 — Mandatory Resume / CV Attachment on Add Candidate Form
+
+### Problem & Requirement
+- On the **Add Candidate to CV Bank** page (`/CVBank/Create`), the resume attachment input was previously optional.
+- The requirement was to make attaching a resume/CV a mandatory field.
+
+### Solution
+1. **Server-Side Validation (`CVBank/Create.cshtml.cs`)**:
+   - Updated validation in `OnPostAsync()` to enforce `UploadedCV != null && UploadedCV.Length > 0`. If missing, returns the model error: *"Please attach candidate Resume / CV document (PDF or Word)."*
+2. **Client-Side Validation & UI Feedback (`CVBank/Create.cshtml`)**:
+   - Added required asterisk `<span class="req">*</span>` and the `required` attribute to the file input.
+   - Updated the `validateHrFile()` JavaScript validation routine to reject submissions where no resume file has been attached with real-time visual feedback.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

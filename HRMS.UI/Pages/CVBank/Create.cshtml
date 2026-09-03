@@ -290,11 +290,11 @@
                         </label>
                     </div>
 
-                    <div class="sub-section-header">Attach Resume / CV</div>
+                    <div class="sub-section-header">Attach Resume / CV <span class="req">*</span></div>
 
                     <div class="fg">
-                        <label class="fl">Upload CV Document (PDF, DOCX, Max 15MB)</label>
-                        <input asp-for="UploadedCV" id="hrCandidateFile" type="file" class="fi" accept=".pdf,.docx,.doc" />
+                        <label class="fl">Upload CV Document (PDF, DOCX, Max 15MB) <span class="req">*</span></label>
+                        <input asp-for="UploadedCV" id="hrCandidateFile" type="file" class="fi" accept=".pdf,.docx,.doc" required />
                         <div id="hrFileFeedback" class="input-feedback"></div>
                         <span asp-validation-for="UploadedCV" class="input-feedback error"></span>
                     </div>
@@ -410,26 +410,25 @@
             const el = document.getElementById('hrCandidateFile');
             const fb = document.getElementById('hrFileFeedback');
             const files = el.files;
-            if (files && files.length > 0) {
-                const allowedExts = ['.pdf', '.docx', '.doc'];
-                const fileName = files[0].name.toLowerCase();
-                const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
-                if (!isValidExt) {
-                    setHrFeedback(el, fb, false, 'Invalid format. Only PDF (.pdf) or Word (.docx, .doc) files are accepted.');
-                    return false;
-                }
-                if (files[0].size > 15 * 1024 * 1024) {
-                    setHrFeedback(el, fb, false, 'File size exceeds 15MB limit.');
-                    return false;
-                }
-                el.classList.remove('is-invalid');
-                el.classList.add('is-valid');
-                fb.className = 'input-feedback success';
-                fb.innerHTML = '<i class="bi bi-check-circle me-1"></i> Document attached: ' + files[0].name + ' (' + (files[0].size / (1024*1024)).toFixed(2) + ' MB)';
-                return true;
+            if (!files || files.length === 0) {
+                setHrFeedback(el, fb, false, 'Candidate Resume / CV document is required.');
+                return false;
+            }
+            const allowedExts = ['.pdf', '.docx', '.doc'];
+            const fileName = files[0].name.toLowerCase();
+            const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+            if (!isValidExt) {
+                setHrFeedback(el, fb, false, 'Invalid format. Only PDF (.pdf) or Word (.docx, .doc) files are accepted.');
+                return false;
+            }
+            if (files[0].size > 15 * 1024 * 1024) {
+                setHrFeedback(el, fb, false, 'File size exceeds 15MB limit.');
+                return false;
             }
             el.classList.remove('is-invalid');
-            fb.innerHTML = '';
+            el.classList.add('is-valid');
+            fb.className = 'input-feedback success';
+            fb.innerHTML = '<i class="bi bi-check-circle me-1"></i> Document attached: ' + files[0].name + ' (' + (files[0].size / (1024*1024)).toFixed(2) + ' MB)';
             return true;
         }
 
