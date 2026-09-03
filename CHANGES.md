@@ -5698,6 +5698,21 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 348 — Remove HR Officers Branch Allocation Quick Action Tile from Dashboard
+
+### Problem & Requirement
+- In the HR Manager dashboard view (`/Index`), the Quick Actions section displayed a tile linking to `/HRManager/AssignBranches` ("HR Officers - Branch allocations").
+- The requirement was to remove this quick action tile from the HR Manager portal dashboard.
+
+### Solution
+1. **Dashboard Layout (`Index.cshtml`)**:
+   - Removed the quick action card linking to `/HRManager/AssignBranches` from the Quick Actions grid.
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
