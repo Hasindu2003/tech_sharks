@@ -5728,6 +5728,25 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 350 — Remove Dashboard Tab for Admin and Set System Settings as Default Page
+
+### Problem & Requirement
+- The Admin portal sidebar included a "Dashboard" nav tab linking to `/Index`.
+- The requirement was to remove the Dashboard tab from the Admin portal and make the System Settings page (`/Settings`) the default selected landing page for Administrator accounts.
+
+### Solution
+1. **Sidebar Navigation (`_Layout.cshtml`)**:
+   - Excluded `Admin` from the top "Dashboard" navigation item (`!User.IsInRole("Welfare Manager") && !User.IsInRole("Admin")`).
+   - Reordered Admin navigation items to place **System Settings** (`/Settings`) first, followed by **Duty Accounts** and **User Accounts**.
+2. **Default Redirects (`Index.cshtml.cs`, `Login.cshtml.cs`, `FirstLoginChangePassword.cshtml.cs`)**:
+   - In `Index.cshtml.cs`: Redirected Admin users navigating to `/Index` directly to `/Settings/Index`.
+   - In `Login.cshtml.cs` & `FirstLoginChangePassword.cshtml.cs`: Redirected Admin users directly to `/Settings/Index` upon login and password reset.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

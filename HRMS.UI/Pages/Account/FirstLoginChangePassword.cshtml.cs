@@ -57,7 +57,7 @@ namespace HRMS.UI.Pages.Account
 
             if (!user.MustChangePassword)
             {
-                return RedirectToDashboard(user);
+                return await RedirectToDashboardAsync(user);
             }
 
             UserDisplayName = user.FullName;
@@ -108,11 +108,20 @@ namespace HRMS.UI.Pages.Account
             await _signInManager.RefreshSignInAsync(user);
 
             TempData["SuccessMessage"] = "Your password has been changed successfully! Welcome to Kanrich HRMS.";
-            return RedirectToDashboard(user);
+            return await RedirectToDashboardAsync(user);
         }
 
-        private IActionResult RedirectToDashboard(ApplicationUser user)
+        private async Task<IActionResult> RedirectToDashboardAsync(ApplicationUser user)
         {
+            var roles = await _userManager.GetRolesAsync(user);
+            if (roles.Contains("Admin"))
+            {
+                return RedirectToPage("/Settings/Index");
+            }
+            if (roles.Contains("Welfare Manager"))
+            {
+                return RedirectToPage("/Welfare/Approvals/DepartmentHeadApproval");
+            }
             return RedirectToPage("/Index");
         }
     }

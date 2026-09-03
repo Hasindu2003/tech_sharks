@@ -69,6 +69,17 @@ namespace HRMS.UI.Pages.Account
                 {
                     return RedirectToPage("/Account/FirstLoginChangePassword");
                 }
+
+                var roles = await _userManager.GetRolesAsync(user);
+                if (roles.Contains("Admin"))
+                {
+                    return RedirectToPage("/Settings/Index");
+                }
+                if (roles.Contains("Welfare Manager"))
+                {
+                    return RedirectToPage("/Welfare/Approvals/DepartmentHeadApproval");
+                }
+
                 return RedirectToPage("/Index");
             }
             else if (result.IsLockedOut)

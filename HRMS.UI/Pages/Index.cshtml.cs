@@ -99,6 +99,11 @@ namespace HRMS.UI.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
+            if (User.IsInRole("Admin"))
+            {
+                return RedirectToPage("/Settings/Index");
+            }
+
             if (User.IsInRole("Welfare Manager"))
             {
                 return RedirectToPage("/Welfare/Approvals/DepartmentHeadApproval");
