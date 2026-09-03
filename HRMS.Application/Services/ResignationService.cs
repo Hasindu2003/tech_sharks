@@ -1522,68 +1522,36 @@ namespace HRMS.Application.Services
             if (!string.IsNullOrEmpty(epfKey) && epfKey.StartsWith("duty", StringComparison.OrdinalIgnoreCase)) return true;
             if (!string.IsNullOrEmpty(eKey) && (eKey.StartsWith("duty-") || eKey.StartsWith("dh.") || eKey.StartsWith("bm.") || eKey.StartsWith("am.") || eKey.Contains("welfare") || eKey.Contains("admin") || eKey.Contains("manager") || eKey.Contains("head"))) return true;
 
-            var users = await _context.Users
-                .Where(u => (!string.IsNullOrEmpty(eKey) && ((u.Email != null && u.Email.ToLower() == eKey) || (u.UserName != null && u.UserName.ToLower() == eKey))) ||
-                            (!string.IsNullOrEmpty(epfKey) && u.EpfNumber != null && u.EpfNumber.ToLower() == epfKey))
-                .ToListAsync();
+            if (string.IsNullOrEmpty(eKey) && string.IsNullOrEmpty(epfKey)) return false;
 
-            foreach (var user in users)
-            {
-                if (IsManagerialTitle(user.Designation)) return true;
-                if (IsManagerialDept(user.Department)) return true;
-                if (!string.IsNullOrEmpty(user.EpfNumber) && user.EpfNumber.StartsWith("DUTY", StringComparison.OrdinalIgnoreCase)) return true;
-                if (!string.IsNullOrEmpty(user.UserName) && (user.UserName.StartsWith("dh.") || user.UserName.StartsWith("bm.") || user.UserName.StartsWith("am.") || user.UserName.Contains("welfare") || user.UserName.Contains("admin") || user.UserName.Contains("manager") || user.UserName.Contains("head"))) return true;
+            // Single fast query checking if user has any managerial role or title
+            var isUserMgr = await (from u in _context.Users
+                                   where (!string.IsNullOrEmpty(eKey) && ((u.Email != null && u.Email.ToLower() == eKey) || (u.UserName != null && u.UserName.ToLower() == eKey))) ||
+                                         (!string.IsNullOrEmpty(epfKey) && u.EpfNumber != null && u.EpfNumber.ToLower() == epfKey)
+                                   join ur in _context.UserRoles on u.Id equals ur.UserId into urGroup
+                                   from ur in urGroup.DefaultIfEmpty()
+                                   join r in _context.Roles on ur.RoleId equals r.Id into rGroup
+                                   from r in rGroup.DefaultIfEmpty()
+                                   where (r != null && (r.Name == "Department Head" || r.Name == "Branch Manager" || r.Name == "Area Manager" || r.Name == "Welfare Manager" || r.Name == "Admin" || r.Name == "HR Manager"))
+                                      || (u.Designation != null && (u.Designation.Contains("Manager") || u.Designation.Contains("Head") || u.Designation.Contains("Lead") || u.Designation.Contains("Director") || u.Designation.Contains("Chief") || u.Designation.Contains("Officer In Charge")))
+                                      || (u.Department != null && (u.Department.Contains("Managerial") || u.Department.Contains("Management")))
+                                      || (!string.IsNullOrEmpty(u.EpfNumber) && u.EpfNumber.StartsWith("DUTY"))
+                                      || (!string.IsNullOrEmpty(u.UserName) && (u.UserName.StartsWith("dh.") || u.UserName.StartsWith("bm.") || u.UserName.StartsWith("am.") || u.UserName.Contains("manager") || u.UserName.Contains("head")))
+                                   select u.Id).AnyAsync();
 
-                var roleNames = await (from ur in _context.UserRoles
-                                       join r in _context.Roles on ur.RoleId equals r.Id
-                                       where ur.UserId == user.Id
-                                       select r.Name).ToListAsync();
+            if (isUserMgr) return true;
 
-                if (roleNames.Any(r => r == "Department Head" || r == "Branch Manager" || r == "Area Manager" || r == "Welfare Manager" || r == "Admin" || r == "HR Manager"))
-                    return true;
+            // Single fast query checking if employee record has managerial designation or department
+            var isEmpMgr = await _context.Employees
+                .Where(e => (!string.IsNullOrEmpty(eKey) && e.Email != null && e.Email.ToLower() == eKey) ||
+                            (!string.IsNullOrEmpty(epfKey) && e.EPFNumber != null && e.EPFNumber.ToLower() == epfKey))
+                .Where(e => (e.Designation != null && (e.Designation.Title.Contains("Manager") || e.Designation.Title.Contains("Head") || e.Designation.Title.Contains("Lead") || e.Designation.Title.Contains("Director") || e.Designation.Title.Contains("Chief") || e.Designation.Title.Contains("Officer In Charge")))
+                         || (e.Department != null && (e.Department.Name.Contains("Managerial") || e.Department.Name.Contains("Management")))
+                         || (!string.IsNullOrEmpty(e.NIC) && e.NIC.StartsWith("DUTY"))
+                         || (!string.IsNullOrEmpty(e.EPFNumber) && e.EPFNumber.StartsWith("DUTY")))
+                .AnyAsync();
 
-                if (user.EmployeeId.HasValue)
-                {
-                    var linkedEmp = await _context.Employees
-                        .Include(e => e.Designation)
-                        .Include(e => e.Department)
-                        .FirstOrDefaultAsync(e => e.Id == user.EmployeeId.Value);
-                    if (linkedEmp != null)
-                    {
-                        if (IsManagerialTitle(linkedEmp.Designation?.Title)) return true;
-                        if (IsManagerialDept(linkedEmp.Department?.Name)) return true;
-                        if (linkedEmp.NIC.StartsWith("DUTY", StringComparison.OrdinalIgnoreCase) || linkedEmp.EPFNumber.StartsWith("DUTY", StringComparison.OrdinalIgnoreCase)) return true;
-                    }
-                }
-            }
-
-            var emp = await _context.Employees
-                .Include(e => e.Designation)
-                .Include(e => e.Department)
-                .FirstOrDefaultAsync(e => (!string.IsNullOrEmpty(eKey) && e.Email != null && e.Email.ToLower() == eKey) ||
-                                          (!string.IsNullOrEmpty(epfKey) && e.EPFNumber != null && e.EPFNumber.ToLower() == epfKey));
-
-            if (emp != null)
-            {
-                if (IsManagerialTitle(emp.Designation?.Title)) return true;
-                if (IsManagerialDept(emp.Department?.Name)) return true;
-                if (emp.NIC.StartsWith("DUTY", StringComparison.OrdinalIgnoreCase) || emp.EPFNumber.StartsWith("DUTY", StringComparison.OrdinalIgnoreCase)) return true;
-
-                var linkedUser = await _context.Users.FirstOrDefaultAsync(u => (emp.Id > 0 && u.EmployeeId == emp.Id) || (!string.IsNullOrEmpty(u.Email) && !string.IsNullOrEmpty(emp.Email) && u.Email.ToLower() == emp.Email.ToLower()));
-                if (linkedUser != null)
-                {
-                    if (IsManagerialTitle(linkedUser.Designation)) return true;
-                    if (IsManagerialDept(linkedUser.Department)) return true;
-                    var roleNames = await (from ur in _context.UserRoles
-                                           join r in _context.Roles on ur.RoleId equals r.Id
-                                           where ur.UserId == linkedUser.Id
-                                           select r.Name).ToListAsync();
-                    if (roleNames.Any(r => r == "Department Head" || r == "Branch Manager" || r == "Area Manager" || r == "Welfare Manager" || r == "Admin" || r == "HR Manager"))
-                        return true;
-                }
-            }
-
-            return false;
+            return isEmpMgr;
         }
 
         // ── Notification Helpers ─────────────────────────────────────────────

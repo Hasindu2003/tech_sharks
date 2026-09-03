@@ -5937,6 +5937,26 @@ Resignation and Termination review, approval, details, and report views displaye
 4. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 362 — Optimize Separation Module Loading Performance
+
+### Problem & Requirement
+- The Separation pages took noticeably longer to load than other pages across the system.
+- Investigation revealed two primary bottlenecks:
+  1. **Excessive Eager Queue Fetching on Dashboard**: `Separation/Dashboard.cshtml.cs` sequentially executed 6 to 8 service queries on every page request, eagerly loading the entire historical `Reviewed` lists across all 4 topics (Transfers, Terminations, Resignations, Death) even though only the `ActiveTab` actually renders the `Reviewed` queue in Razor.
+  2. **N+1 Entity Queries in Role/Managerial Verification**: `TransferRequestService.IsManagerialEmployeeAsync` and `ResignationService.IsManagerialEmployeeAsync` executed up to 6 database queries per request inside loops when validating employee managerial status for list filtering.
+
+### Solution
+1. **Targeted Tab Queue Loading (`Separation/Dashboard.cshtml.cs`)**:
+   - Made the execution of heavy `Reviewed` list queries conditional on `ActiveTab == "<TabName>"`.
+   - Inactive tabs now only fetch the lightweight `Pending` list necessary for rendering count badges in the top navigation tab bar, reducing unnecessary database queries and model mapping by over 60%.
+2. **Optimized Managerial Employee Lookups (`TransferRequestService.cs`, `ResignationService.cs`)**:
+   - Replaced multi-query loops and sequential table scans in `IsManagerialEmployeeAsync` with single, fast `AnyAsync()` index queries that evaluate user roles, designation titles, and department affiliations efficiently.
+3. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

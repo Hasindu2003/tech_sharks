@@ -140,60 +140,65 @@ namespace HRMS.UI.Pages.Separation
 
         private async Task LoadQueuesForRoleAsync(ApplicationUser user)
         {
+            bool isTransfersTab = ActiveTab.Equals("Transfers", StringComparison.OrdinalIgnoreCase);
+            bool isTerminationsTab = ActiveTab.Equals("Terminations", StringComparison.OrdinalIgnoreCase);
+            bool isResignationsTab = ActiveTab.Equals("Resignations", StringComparison.OrdinalIgnoreCase);
+            bool isDeathTab = ActiveTab.Equals("Death", StringComparison.OrdinalIgnoreCase);
+
             if (User.IsInRole("Department Head"))
             {
                 PendingTransfers = await _transferService.GetRequestsForDeptHeadAsync(UserBranch, UserDepartment);
-                ReviewedTransfers = await _transferService.GetReviewedByDeptHeadAsync(UserBranch, UserDepartment);
+                if (isTransfersTab) ReviewedTransfers = await _transferService.GetReviewedByDeptHeadAsync(UserBranch, UserDepartment);
 
                 PendingResignations = await _resignationService.GetPendingForDeptHeadAsync(UserBranch, UserDepartment);
-                ReviewedResignations = await _resignationService.GetReviewedByDeptHeadAsync(UserBranch, UserDepartment);
+                if (isResignationsTab) ReviewedResignations = await _resignationService.GetReviewedByDeptHeadAsync(UserBranch, UserDepartment);
 
                 PendingTerminations = await _terminationService.GetPendingForDeptHeadAsync(UserBranch, UserDepartment);
-                ReviewedTerminations = await _terminationService.GetReviewedByDeptHeadAsync(UserBranch, UserDepartment);
+                if (isTerminationsTab) ReviewedTerminations = await _terminationService.GetReviewedByDeptHeadAsync(UserBranch, UserDepartment);
             }
             else if (User.IsInRole("Branch Manager"))
             {
                 PendingTransfers = await _transferService.GetPendingRequestsForBranchManagerAsync(UserBranch);
-                ReviewedTransfers = await _transferService.GetReviewedByBranchManagerAsync(UserBranch);
+                if (isTransfersTab) ReviewedTransfers = await _transferService.GetReviewedByBranchManagerAsync(UserBranch);
 
                 PendingResignations = await _resignationService.GetPendingForBranchManagerAsync(UserBranch);
-                ReviewedResignations = await _resignationService.GetReviewedByBranchManagerAsync(UserBranch);
+                if (isResignationsTab) ReviewedResignations = await _resignationService.GetReviewedByBranchManagerAsync(UserBranch);
 
                 PendingTerminations = await _terminationService.GetPendingForBranchManagerAsync(UserBranch);
-                ReviewedTerminations = await _terminationService.GetReviewedByBranchManagerAsync(UserBranch);
+                if (isTerminationsTab) ReviewedTerminations = await _terminationService.GetReviewedByBranchManagerAsync(UserBranch);
 
                 PendingDeathRequests = await _deathService.GetAllPendingForBMAsync(UserBranch);
-                ReviewedDeathRequests = await _deathService.GetReviewedForBMAsync(UserBranch);
+                if (isDeathTab) ReviewedDeathRequests = await _deathService.GetReviewedForBMAsync(UserBranch);
             }
             else if (User.IsInRole("Area Manager"))
             {
                 PendingTransfers = await _transferService.GetRequestsForAreaManagerAsync();
-                ReviewedTransfers = await _transferService.GetReviewedByAreaManagerAsync();
+                if (isTransfersTab) ReviewedTransfers = await _transferService.GetReviewedByAreaManagerAsync();
 
                 PendingTerminations = await _terminationService.GetPendingForAreaManagerAsync(ManagedBranchIds, UserBranch);
-                ReviewedTerminations = await _terminationService.GetReviewedByAreaManagerAsync(ManagedBranchIds, UserBranch);
+                if (isTerminationsTab) ReviewedTerminations = await _terminationService.GetReviewedByAreaManagerAsync(ManagedBranchIds, UserBranch);
 
                 PendingResignations = await _resignationService.GetPendingForAreaManagerAsync(ManagedBranchIds, UserBranch);
-                ReviewedResignations = await _resignationService.GetReviewedByAreaManagerAsync(ManagedBranchIds, UserBranch);
+                if (isResignationsTab) ReviewedResignations = await _resignationService.GetReviewedByAreaManagerAsync(ManagedBranchIds, UserBranch);
 
                 PendingDeathRequests = await _deathService.GetAllPendingForAMAsync(ManagedBranchIds, UserBranch);
-                ReviewedDeathRequests = await _deathService.GetReviewedForAMAsync(ManagedBranchIds, UserBranch);
+                if (isDeathTab) ReviewedDeathRequests = await _deathService.GetReviewedForAMAsync(ManagedBranchIds, UserBranch);
             }
             else if (User.IsInRole("HR Officer") || User.IsInRole("HR Manager"))
             {
                 var managedIds = User.IsInRole("HR Officer") ? ManagedBranchIds : null;
 
                 PendingTransfers = await _transferService.GetRequestsForHRFinalizationAsync();
-                ReviewedTransfers = await _transferService.GetAllRequestsAsync();
+                if (isTransfersTab) ReviewedTransfers = await _transferService.GetAllRequestsAsync();
 
                 PendingTerminations = await _terminationService.GetPendingForHROfficerAsync(managedIds);
-                ReviewedTerminations = await _terminationService.GetReviewedByHROfficerAsync(managedIds);
+                if (isTerminationsTab) ReviewedTerminations = await _terminationService.GetReviewedByHROfficerAsync(managedIds);
 
                 PendingResignations = await _resignationService.GetPendingForHRManagerAsync(managedIds);
-                ReviewedResignations = await _resignationService.GetReviewedByHRManagerAsync(managedIds);
+                if (isResignationsTab) ReviewedResignations = await _resignationService.GetReviewedByHRManagerAsync(managedIds);
 
                 PendingDeathRequests = await _deathService.GetAllPendingForHRAsync();
-                ReviewedDeathRequests = await _deathService.GetReviewedForHRAsync();
+                if (isDeathTab) ReviewedDeathRequests = await _deathService.GetReviewedForHRAsync();
             }
         }
 
