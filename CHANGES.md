@@ -5849,6 +5849,22 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 357 — Remove Welfare Navigation Tab from Branch Manager, Department Head, and Area Manager Portals
+
+### Problem & Requirement
+- The sidebar navigation included Welfare / Welfare Approvals menu items for Branch Managers, Department Heads, and Area Managers.
+- The requirement was to remove the Welfare tab from the Branch Manager, Department Head, and Area Manager portals.
+
+### Solution
+1. **Sidebar Navigation (`Shared/_Layout.cshtml`)**:
+   - Removed the Welfare / Welfare Approvals navigation links for `Branch Manager`, `Department Head`, and `Area Manager`.
+   - Maintained Welfare navigation specifically for `Welfare Manager` (Approvals & Records), `HR Manager`/`HR Officer` (Payments), and regular `Employee` users (My Requests).
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 
