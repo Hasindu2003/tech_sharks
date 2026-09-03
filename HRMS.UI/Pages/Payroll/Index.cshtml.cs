@@ -332,6 +332,7 @@ namespace HRMS.UI.Pages.Payroll
             var monthEnd = monthStart.AddMonths(1).AddDays(-1);
             var maternityLeaves = await _context.Leaves
                 .Include(l => l.MaternityPayment)
+                .Include(l => l.Employee)
                 .Where(l => l.LeaveType == "Maternity" && l.Status == "Approved"
                          && l.Employee != null && l.Employee.BranchId == branchId
                          && l.StartDate <= monthEnd && l.EndDate >= monthStart)
