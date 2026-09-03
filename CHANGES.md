@@ -6077,6 +6077,22 @@ Resignation and Termination review, approval, details, and report views displaye
 3. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 370 — Fallback Avatar Displays First Letter of Last Name
+
+### Problem & Requirement
+- When an employee has not uploaded a profile picture, the top navigation avatar fallback should display the first letter of their last name (surname) instead of the first letter of their first name or full initials.
+
+### Solution
+1. **Extracted Last Name Initial for Avatar Fallback (`Shared/_Layout.cshtml`)**:
+   - Implemented `getLastNameInitial` function in the topbar layout helper.
+   - For an employee with `FullName = "Kasun Perera"`, it parses the last word (`"Perera"`) and renders `"P"`.
+   - Handles single names, multi-part names (e.g. `"W. A. Kasun Perera"` -> `"P"`), and username fallbacks.
+2. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

@@ -802,8 +802,28 @@
                                         User.IsInRole("Department Head");
 
                     int? currentEmployeeId = null;
-                    string employeeInitials = "U";
+                    string lastNameInitial = "U";
                     string employeeDisplayName = "My Profile";
+
+                    Func<string?, string> getLastNameInitial = (name) =>
+                    {
+                        if (string.IsNullOrWhiteSpace(name)) return "U";
+                        var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length > 0)
+                        {
+                            var last = parts[^1].Trim();
+                            if (!string.IsNullOrWhiteSpace(last))
+                            {
+                                foreach (var ch in last)
+                                {
+                                    if (char.IsLetterOrDigit(ch))
+                                        return char.ToUpper(ch).ToString();
+                                }
+                                return last[0].ToString().ToUpper();
+                            }
+                        }
+                        return "U";
+                    };
 
                     if (User.Identity?.IsAuthenticated == true)
                     {
@@ -820,10 +840,7 @@
                             if (emp != null)
                             {
                                 employeeDisplayName = emp.FullName ?? "My Profile";
-                                if (!string.IsNullOrWhiteSpace(emp.Initials))
-                                    employeeInitials = emp.Initials;
-                                else if (!string.IsNullOrWhiteSpace(emp.FullName))
-                                    employeeInitials = emp.FullName.Substring(0, 1).ToUpper();
+                                lastNameInitial = getLastNameInitial(emp.FullName);
                             }
                         }
                         else if (!string.IsNullOrEmpty(username))
@@ -833,19 +850,21 @@
                             {
                                 currentEmployeeId = emp.Id;
                                 employeeDisplayName = emp.FullName ?? "My Profile";
-                                if (!string.IsNullOrWhiteSpace(emp.Initials))
-                                    employeeInitials = emp.Initials;
-                                else if (!string.IsNullOrWhiteSpace(emp.FullName))
-                                    employeeInitials = emp.FullName.Substring(0, 1).ToUpper();
+                                lastNameInitial = getLastNameInitial(emp.FullName);
                             }
                             else if (!string.IsNullOrEmpty(loggedUser?.FullName))
                             {
                                 employeeDisplayName = loggedUser.FullName;
-                                employeeInitials = loggedUser.FullName.Substring(0, 1).ToUpper();
+                                lastNameInitial = getLastNameInitial(loggedUser.FullName);
                             }
                             else
                             {
-                                employeeInitials = username.Substring(0, 1).ToUpper();
+                                var cleanName = username.Contains('@') ? username.Split('@')[0] : username;
+                                var parts = cleanName.Split(new[] { '.', '_', '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                                if (parts.Length > 0)
+                                {
+                                    lastNameInitial = getLastNameInitial(parts[^1]);
+                                }
                             }
                         }
                     }
@@ -858,11 +877,11 @@
                             <img src="/uploads/avatars/emp_@(currentEmployeeId.Value).jpg" 
                                  alt="@employeeDisplayName"
                                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
-                            <span class="avatar-fallback" style="display:none;">@employeeInitials</span>
+                            <span class="avatar-fallback" style="display:none;">@lastNameInitial</span>
                         }
                         else
                         {
-                            <span class="avatar-fallback">@employeeInitials</span>
+                            <span class="avatar-fallback">@lastNameInitial</span>
                         }
                     </a>
                 }
