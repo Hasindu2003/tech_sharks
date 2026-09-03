@@ -41,14 +41,21 @@ namespace HRMS.UI.Pages.Payroll
             await LoadCurrentUserAsync();
 
             bool isCorporate = User.IsInRole("HR Manager") || User.IsInRole("HR Officer");
-            IsEmployee = !isCorporate;
+            bool isBranchManager = User.IsInRole("Branch Manager");
+            bool isAreaManager = User.IsInRole("Area Manager");
+            bool isManagerOrCorporate = isCorporate || isBranchManager || isAreaManager;
+            IsEmployee = !isManagerOrCorporate;
 
-            if (isCorporate)
+            if (isManagerOrCorporate)
             {
                 var username = User.Identity?.Name;
                 var userAccount = await _db.Users.FirstOrDefaultAsync(u => u.UserName == username || u.Email == username);
 
-                if (User.IsInRole("HR Officer"))
+                if (User.IsInRole("HR Manager"))
+                {
+                    ManagedBranchesList = await _db.Branches.OrderBy(b => b.Name).ToListAsync();
+                }
+                else if (User.IsInRole("HR Officer") || User.IsInRole("Area Manager"))
                 {
                     var allowedIds = ParseManagedBranches(userAccount?.ManagedBranches);
                     if (allowedIds != null && allowedIds.Any())
@@ -63,9 +70,26 @@ namespace HRMS.UI.Pages.Payroll
                         ManagedBranchesList = await _db.Branches.OrderBy(b => b.Name).ToListAsync();
                     }
                 }
-                else
+                else if (User.IsInRole("Branch Manager"))
                 {
-                    ManagedBranchesList = await _db.Branches.OrderBy(b => b.Name).ToListAsync();
+                    Branch? branch = null;
+                    if (userAccount?.EmployeeId.HasValue == true)
+                    {
+                        var emp = await _db.Employees.Include(e => e.Branch).FirstOrDefaultAsync(e => e.Id == userAccount.EmployeeId.Value);
+                        branch = emp?.Branch;
+                    }
+                    if (branch == null && !string.IsNullOrWhiteSpace(userAccount?.Branch))
+                    {
+                        branch = await _db.Branches.FirstOrDefaultAsync(b => b.Name.ToLower() == userAccount.Branch.ToLower());
+                    }
+                    if (branch != null)
+                    {
+                        ManagedBranchesList = new List<Branch> { branch };
+                    }
+                    else
+                    {
+                        ManagedBranchesList = await _db.Branches.OrderBy(b => b.Name).ToListAsync();
+                    }
                 }
 
                 if (!ManagedBranchesList.Any())

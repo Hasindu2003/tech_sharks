@@ -5864,6 +5864,27 @@ Resignation and Termination review, approval, details, and report views displaye
 2. **Build & Verification**:
    - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
 
+---
+
+## Change 358 — Enable Branch Managers to View Branch Employee Payslips in Payroll Tab
+
+### Problem & Requirement
+- In the Branch Manager portal, clicking the Payroll navigation tab previously treated Branch Managers as regular single employees, only displaying the Branch Manager's own individual payslip and denying access to other branch employee payslips / PDFs.
+- The requirement was to grant Branch Managers the ability to see all employee payslips within their branch.
+
+### Solution
+1. **Payslips Page Backend (`Payroll/PaySlips.cshtml.cs`)**:
+   - Updated manager role checks to include `Branch Manager` and `Area Manager`.
+   - For Branch Managers, scoped `ManagedBranchesList` and the employee payslip query to their assigned branch.
+   - Populated completed `PayrollRuns` and all employee payslips for the branch, supporting search, month filtering, and detailed breakdown modal.
+2. **Payslips View (`Payroll/PaySlips.cshtml`)**:
+   - Scoped corporate-only sub-navigation tabs (Dashboard, Attendance Review, Allowances, EPF & ETF) to `HR Manager` and `HR Officer`, while displaying the active Payslips view and branch header for Branch Managers.
+3. **Payslip PDF View (`Payroll/PaySlipPdf.cshtml.cs`)**:
+   - Extended authorization to allow Branch Managers to view and print PDF payslips for employees in their branch.
+4. **Build & Verification**:
+   - Verified clean build (`dotnet build HRMS.UI/HRMS.UI.csproj -c Release -r win-x86 --no-self-contained`) with 0 errors.
+
+
 
 
 

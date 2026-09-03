@@ -68,20 +68,50 @@ namespace HRMS.UI.Pages.Payroll
                 if (userAccount?.EmployeeId.HasValue == true)
                 {
                     employee = await _db.Employees
+                        .Include(e => e.Branch)
                         .FirstOrDefaultAsync(e => e.Id == userAccount.EmployeeId.Value && !e.NIC.StartsWith("DUTY") && e.NIC != "DUTY-ACC");
                 }
                 if (employee == null && !string.IsNullOrEmpty(userAccount?.Email))
                 {
                     employee = await _db.Employees
+                        .Include(e => e.Branch)
                         .FirstOrDefaultAsync(e => e.Email == userAccount.Email && !e.NIC.StartsWith("DUTY") && e.NIC != "DUTY-ACC");
                 }
                 if (employee == null && !string.IsNullOrEmpty(username))
                 {
                     employee = await _db.Employees
+                        .Include(e => e.Branch)
                         .FirstOrDefaultAsync(e => e.Email == username && !e.NIC.StartsWith("DUTY") && e.NIC != "DUTY-ACC");
                 }
 
-                if (employee == null || Payslip.EmployeeId != employee.Id)
+                bool hasAccess = false;
+                if (employee != null && Payslip.EmployeeId == employee.Id)
+                {
+                    hasAccess = true;
+                }
+                else if (User.IsInRole("Branch Manager"))
+                {
+                    int? bmBranchId = employee?.BranchId;
+                    if (!bmBranchId.HasValue && !string.IsNullOrWhiteSpace(userAccount?.Branch))
+                    {
+                        var b = await _db.Branches.FirstOrDefaultAsync(x => x.Name.ToLower() == userAccount.Branch.ToLower());
+                        bmBranchId = b?.Id;
+                    }
+                    if (bmBranchId.HasValue && Payslip.Employee?.BranchId == bmBranchId.Value)
+                    {
+                        hasAccess = true;
+                    }
+                }
+                else if (User.IsInRole("Area Manager"))
+                {
+                    var allowedIds = ParseManagedBranches(userAccount?.ManagedBranches);
+                    if (allowedIds != null && Payslip.Employee?.BranchId != null && allowedIds.Contains(Payslip.Employee.BranchId))
+                    {
+                        hasAccess = true;
+                    }
+                }
+
+                if (!hasAccess)
                     return Forbid();
             }
 
@@ -130,6 +160,15 @@ namespace HRMS.UI.Pages.Payroll
             }
 
             return Page();
+        }
+
+        private static List<int>? ParseManagedBranches(string? csv)
+        {
+            if (string.IsNullOrWhiteSpace(csv)) return null;
+            return csv.Split(',', StringSplitOptions.RemoveEmptyEntries)
+                      .Select(s => int.TryParse(s.Trim(), out var id) ? id : 0)
+                      .Where(id => id > 0)
+                      .ToList();
         }
     }
 }
